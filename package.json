@@ -1,5 +1,5 @@
 {
-  "name": "rolling-dice",
+  "name": "@rolling-dice-app/frontend",
   "type": "module",
   "private": true,
   "scripts": {

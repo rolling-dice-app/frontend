@@ -9,10 +9,7 @@ export default defineNuxtConfig({
   // SPA mode — no server required; migrate to SSR/hybrid when backend is ready
   ssr: false,
 
-  // baseURL set via NUXT_APP_BASE_URL env var
-  // - GitHub Pages (frozen demo) CI: '/rolling-dice/'
-  // - Vercel: '/'
-  // - local dev: '/'
+  // baseURL set via NUXT_APP_BASE_URL env var (Vercel = '/', local = '/')
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
     head: {

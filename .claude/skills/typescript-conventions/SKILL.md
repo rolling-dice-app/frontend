@@ -1,51 +1,59 @@
 ---
 name: typescript-conventions
-description: TypeScript 型別設計規範 — 避免 any、DTO/Response/Model 分層、安全 narrowing、命名慣例 (XxxDto/XxxResponse/XxxViewModel)。當編輯 .ts/.tsx/.vue 檔或設計型別邊界時自動參考。
+description: TypeScript type design conventions — avoid `any`, layer DTO / Response / Model, safe narrowing, naming conventions (XxxDto / XxxResponse / XxxViewModel). Auto-load when editing .ts / .tsx / .vue files or designing type boundaries.
 paths: app/**/*.ts,app/**/*.tsx,app/**/*.vue
 ---
 
-# TypeScript 規範
+# TypeScript Conventions
 
-當處理 TypeScript 相關內容時，請遵守以下規則。
+Apply these rules when writing or reviewing TypeScript in this repo.
 
-## 核心原則
+## Core Principles
 
-1. 型別是設計邊界的一部分，不是事後補充。
-2. 優先讓型別反映真實業務模型。
-3. 不要用 `any` 逃避設計問題。
-4. 不要用 assertion 假裝安全。
+1. Types are part of the design boundary, not an afterthought.
+2. Prefer types that model the real business shape over loose object shapes.
+3. Do not use `any` to escape a design problem.
+4. Do not use assertions to fake safety.
 
-## 型別設計
+## Cross-Repo Type Origin
 
-1. 優先使用明確 interface / type。
-2. DTO、response、domain model、UI model 在必要時應區分。
-3. optional 與 nullable 必須明確處理。
-4. 若資料可能不存在，請顯式反映在型別中。
+Persistent domain types, request / response DTOs, and shared enumerations come from `@rolling-dice-app/types`. **Do not redeclare these locally.** Local types in this repo cover UI-only concerns: form state, view models, derived display shapes, and frontend-only domain (dice history, navigation, etc.).
 
-## 安全性
+If a type starts to look like something the backend would also need, it belongs in the `types` repo, not here.
 
-1. 避免不安全的 `as unknown as ...`。
-2. 保留 narrowing 流程。
-3. 對外部資料來源應假設不可信。
-4. 不要讓函式回傳型別過度寬鬆。
+## Type Design
 
-## Vue / Nuxt 相關
+1. Prefer explicit `interface` / `type`.
+2. Distinguish DTO, response, domain model, and UI model when the distinction matters.
+3. Optional and nullable fields must be handled explicitly.
+4. If a value can be absent, reflect that explicitly in the type.
 
-1. props 型別需準確。
-2. emits payload 型別需準確。
-3. composable 回傳值需有穩定結構。
-4. API 資料應先經過型別約束或 mapping，再進入 UI。
+## Safety
 
-## 命名建議
+1. Avoid unsafe `as unknown as ...`.
+2. Preserve narrowing flow; don't shortcut it with assertions.
+3. Treat external data sources as untrusted.
+4. Do not let function return types be loosely typed.
 
-1. DTO 類型可使用 `XxxDto`。
-2. API response 類型可使用 `XxxResponse`。
-3. domain model 可使用 `Xxx`。
-4. UI 專用 model 可使用 `XxxViewModel` 或專案既定命名。
+## Vue / Nuxt
 
-## 避免事項
+1. Props types must be accurate.
+2. Emits payload types must be accurate.
+3. Composables return a stable, typed shape.
+4. API data passes through type constraints or mapping before reaching UI.
 
-1. 不要大量使用 `Record<string, any>`。
-2. 不要把所有欄位都做成 optional。
-3. 不要直接把未驗證外部資料視為可信型別。
-4. 不要因為求快而破壞型別可信度。
+## Naming
+
+1. DTOs: `XxxDto`.
+2. API responses: `XxxResponse`.
+3. Domain models: `Xxx`.
+4. UI-specific models: `XxxViewModel` or the project's established convention.
+5. Frontend-local form / draft shapes: `XxxFormState` or `XxxDraft`.
+
+## Anti-patterns
+
+1. Heavy use of `Record<string, any>`.
+2. Making every field optional to avoid declaring intent.
+3. Treating unverified external data as a trusted type.
+4. Trading type integrity for short-term speed.
+5. Locally redeclaring a type that already exists in `@rolling-dice-app/types`.

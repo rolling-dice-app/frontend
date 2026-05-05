@@ -1,78 +1,74 @@
 ---
 name: error-handling-conventions
-description: 錯誤處理規範 — error.vue 差異化呈現、API 錯誤 (useAsyncData/useFetch/$fetch)、HTTP status 對應、表單驗證錯誤、toast 集中管理、composable 三態回傳、Loading/Error/Empty。當處理錯誤情境或審查錯誤處理時自動參考。
+description: Error handling conventions — differentiated error.vue, API errors (useAsyncData / useFetch / $fetch), HTTP-status mapping, form validation errors, centralized toast, three-state composable returns, Loading / Error / Empty. Auto-load when handling or reviewing error scenarios.
 paths: app/**/*.vue,app/**/*.ts,app/pages/**/*.vue,app/composables/**/*.ts,app/server/**/*.ts
 ---
 
-# 錯誤處理規範
+# Error Handling Conventions
 
-當實作、審查或重構涉及錯誤處理的場景時，請遵守以下規則。
+Apply these rules when implementing, reviewing, or refactoring error-handling scenarios.
 
-> ⚠️ 本專案第一版 MVP 使用 SPA 模式（`ssr: false`）。CSR 錯誤處理規則為當前優先適用標準；Server Route 錯誤處理為前瞻性保留。
+> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR error rules are the active standard; server-route error rules are forward-looking.
 
-## 核心原則
+## Core Principles
 
-1. 錯誤處理是功能的一部分，不是事後或例外的補充。
-2. 每個可能失敗的操作都必須明確定義錯誤情境與對應行為。
-3. 使用者應在任何錯誤情境下都能獲得清楚的回饋，而不是空白畫面或靜默失敗。
-4. 錯誤呈現層（UI）與錯誤處理邏輯（業務）應明確分離。
+1. Error handling is part of the feature, not an afterthought.
+2. Every fallible operation has an explicitly defined error scenario and corresponding behavior.
+3. Users get clear feedback on every error path — no blank screens, no silent failures.
+4. Error presentation (UI) and error handling logic (business) are clearly separated.
 
-## 全域錯誤頁面
+## Global Error Page
 
-1. 使用 `error.vue` 作為 Nuxt 全域錯誤頁面，覆蓋 4xx / 5xx 錯誤。
-2. `error.vue` 應依 `statusCode` 提供差異化呈現：
-   - `404`：頁面不存在，提供導回首頁的路徑
-   - `403`：無存取權限，說明原因並提示正確操作
-   - `500`：系統異常，避免暴露技術細節，提供聯絡或重試引導
-3. 使用 `clearError` 讓使用者可從錯誤頁回復正常流程。
-4. 不要在 `error.vue` 中暴露 stack trace、API 路徑或 server 錯誤詳情。
+1. Use `error.vue` as the global Nuxt error page covering 4xx / 5xx errors.
+2. `error.vue` differentiates by `statusCode`:
+   - `404`: page not found; offer a path back to home.
+   - `403`: no access; explain why and indicate the right action.
+   - `500`: system error; do not expose technical detail; offer contact or retry.
+3. Use `clearError` so users can recover from the error page.
+4. `error.vue` does not expose stack traces, API paths, or server error detail.
 
-## API 錯誤處理
+## API Error Handling
 
-1. API 錯誤回應應統一處理，不要在每個 page 或 component 各自實作不同模式。
-2. `useAsyncData` / `useFetch` 的 `error` ref 必須明確處理，不可靜默忽略：
-
+1. API error responses use a unified handling pattern; do not reinvent it in each page or component.
+2. `useAsyncData` / `useFetch` `error` refs must be handled explicitly — not silently ignored:
    ```ts
    const { data, error, status } = await useAsyncData('key', fetcher)
 
    if (error.value) {
-     // 明確處理，而非只是 console.log
+     // Handle explicitly, not just console.log
    }
    ```
+3. `$fetch` calls go inside try / catch with status-specific handling:
+   - `400`: client input issue; reflect in the form UI.
+   - `401`: needs auth; redirect to login or trigger refresh-token flow.
+   - `403`: no permission; show a clear message — no silent redirect.
+   - `404`: resource missing; provide a sensible degradation.
+   - `422`: validation error; parse the response body and map to field-level errors.
+   - `5xx`: system issue; show a generic error and offer retry.
+4. Maintain a single error mapper that converts API error responses into a UI-friendly shape; do not parse error responses ad hoc.
 
-3. `$fetch` 呼叫應包在 try/catch 內，並對不同 error status 給出對應處理：
-   - `400`：通常是客戶端輸入問題，應反映在 UI 表單上
-   - `401`：需要登入，導向登入頁或觸發 refresh token 流程
-   - `403`：無權限，顯示明確提示，不做靜默跳轉
-   - `404`：資源不存在，提供合理的降級行為
-   - `422`：驗證錯誤，解析 response body 後對應顯示欄位錯誤
-   - `5xx`：系統問題，顯示通用錯誤提示，提供重試機制
+## Notifications (Toast / Alert)
 
-4. 建議建立統一的 error mapper，將 API error response 轉換為 UI 可用的錯誤結構，而非在各處各自 parse。
+1. Notification rendering is centrally managed; do not call toast directly from various components or composables.
+2. Trigger via the project's notification composable (`useToast`, defined in `app/composables/ui/useToast.ts` and shared as a module-level singleton) to keep coupling low.
+3. Error messages are meaningful to users — do not show raw HTTP status codes or technical messages.
+4. Transient errors (e.g., network timeout) use toast; decision-requiring errors (e.g., overwrite confirmation) use dialog.
+5. Success, warning, and error messages are visually and semantically distinct.
 
-## 錯誤通知（Toast / Alert）
+## Form Validation Errors
 
-1. 通知呈現邏輯應集中管理，不要在各 component 或 composable 各自直接呼叫 toast。
-2. 建議透過專用 composable（如 `useNotification`）集中觸發通知，降低耦合。
-3. 錯誤訊息必須對使用者有意義，不要直接顯示 HTTP status code 或技術錯誤訊息。
-4. 短暫性錯誤（如網路超時）使用 toast；需要決策的錯誤（如確認覆寫）使用 dialog。
-5. 成功、警告、錯誤訊息在視覺與語意上應有清楚的區分。
+1. Form validation has two layers — keep them separate:
+   - **Frontend validation**: instant feedback, prevents unnecessary API calls.
+   - **Backend validation**: API returns `422` or `400`; map back to field-level errors.
+2. Backend field errors map to the corresponding `<input>`, not just a banner at the top of the page.
+3. Multi-field errors display together; don't surface one error at a time.
+4. Validation pass / submitting / submission failed are three visually distinct UI states.
 
-## 表單驗證錯誤
+## Composable Error Handling
 
-1. 表單驗證分為兩層，必須清楚分開：
-   - **前端驗證**：即時反饋，阻止不必要的 API 呼叫
-   - **後端驗證**：API 回傳的 `422` 或 `400` 錯誤，需對應回欄位層級
-2. 後端欄位錯誤應對應至個別 input 欄位顯示，不要只顯示頁面頂部的通用錯誤。
-3. 多欄位錯誤應同時顯示，不要只顯示第一個錯誤後等使用者再次送出。
-4. 驗證通過後提交、提交中（loading）、提交失敗三個狀態需在 UI 上有明確差異。
-
-## Composable 錯誤處理
-
-1. composable 內的非同步操作需回傳 `error` 狀態，供呼叫端決定如何呈現。
-2. composable 不應自行決定錯誤的呈現方式（不要在 composable 內直接呼叫 toast）。
-3. 建議的回傳結構：
-
+1. Async operations inside a composable return an `error` state for the caller to render.
+2. Composables don't decide presentation (don't call toast inside).
+3. Recommended return shape:
    ```ts
    return {
      data,
@@ -81,55 +77,52 @@ paths: app/**/*.vue,app/**/*.ts,app/pages/**/*.vue,app/composables/**/*.ts,app/s
      execute,
    }
    ```
+4. If the composable needs side effects (e.g., toast), expose a callback or event for the caller.
 
-4. 若 composable 需要副作用（如 toast），應透過 callback 或 event 讓呼叫端控制。
+## CSR Error Handling (Active)
 
-## CSR 錯誤處理要點（當前適用）
+1. SPA error handling happens entirely on the client; network failure is the most common case.
+2. Every API call considers network interruption, timeout, and unexpected response.
+3. Initial page-load API failure has a complete degradation path — never a blank page.
+4. Consider Vue's global `errorHandler` or Nuxt's `vue:error` hook as a final safety net for uncaught errors.
 
-1. SPA 所有錯誤處理發生在 client 端，網路錯誤是最常見的失敗情境。
-2. 每個 API 呼叫都必須考慮網路中斷、timeout、非預期回應。
-3. 頁面初始載入時的 API 失敗需有完整降級方案，不可出現空白頁面。
-4. 可考慮全域的 Vue `errorHandler` 或 Nuxt `vue:error` hook 作為未捕獲錯誤的最後防線。
+## Server Route Error Handling (Future, Once SSR is Enabled)
 
-## Server Route 錯誤處理（未來啟用 SSR 後適用）
-
-1. server route 應使用 `createError` 回傳具語意的 HTTP 錯誤：
-
+1. Server routes use `createError` for semantic HTTP errors:
    ```ts
    throw createError({ statusCode: 404, statusMessage: 'Resource not found' })
    ```
-
-2. 不要讓 server route 靜默吞掉錯誤後回傳錯誤的資料結構。
-3. server route 的錯誤訊息不應包含 stack trace 或 server 內部資訊。
-4. 對外部 API 呼叫失敗應有明確的 fallback 或對應 error code 轉換。
+2. Don't silently swallow errors and return a malformed data shape.
+3. Server-route error messages exclude stack traces and internal server detail.
+4. External API failures have an explicit fallback or error-code translation.
 
 ## Loading / Error / Empty State
 
-每個資料驅動的 UI 區塊必須處理三種狀態：
+Every data-driven UI block handles three states:
 
-| 狀態        | 要求                                  |
-| ----------- | ------------------------------------- |
-| **Loading** | 骨架屏或 spinner，避免版面位移（CLS） |
-| **Error**   | 清楚的錯誤提示，提供重試入口          |
-| **Empty**   | 明確的空狀態說明，而非空白畫面        |
+| State       | Requirement                                                      |
+| ----------- | ---------------------------------------------------------------- |
+| **Loading** | Skeleton or spinner; avoid layout shift (CLS).                   |
+| **Error**   | Clear error message with a retry entry point.                    |
+| **Empty**   | Explicit empty-state message — not a blank canvas.               |
 
-缺少任一狀態都視為不完整的實作。
+Missing any of the three counts as incomplete implementation.
 
-## 避免事項
+## Anti-patterns
 
-1. 不要靜默吞掉錯誤（空 catch block 或只 `console.error`）。
-2. 不要把後端的技術錯誤訊息直接顯示給終端使用者。
-3. 不要讓錯誤處理邏輯散落在 template、composable、store、page 各處而無統一模式。
-4. 不要把 loading / error / data 三個狀態的判斷混在 template 中成為複雜條件樹。
-5. 不要在發生錯誤時只讓頁面停在 loading 狀態而不回饋給使用者。
-6. 不要讓 `error.vue` 暴露任何系統內部資訊。
+1. Silently swallowing errors (empty catch, or `console.error` only).
+2. Showing the backend's technical error message directly to end users.
+3. Scattering error handling across template, composable, store, and page with no unified pattern.
+4. Folding loading / error / data branches into a tangled conditional tree in the template.
+5. Leaving the page stuck in loading state with no user feedback on error.
+6. Letting `error.vue` expose any internal system information.
 
-## 輸出要求
+## Output Requirements
 
-當實作或審查錯誤處理時，應優先確認：
+When implementing or reviewing error handling, confirm:
 
-1. 所有可能失敗的操作都有明確的 error state
-2. loading / error / empty 三狀態都已處理
-3. 錯誤訊息對使用者有意義且不暴露系統細節
-4. 錯誤呈現邏輯集中管理，不散落各處
-5. server route 錯誤有統一的回傳結構
+1. Every fallible operation has an explicit error state.
+2. Loading / error / empty are all handled.
+3. Error messages are meaningful and don't leak system detail.
+4. Error presentation logic is centralized.
+5. Server-route errors return a unified shape.

@@ -1,19 +1,19 @@
 ---
 name: vue-conventions
-description: Vue SFC 撰寫規範 — script setup、props/emits/slots、computed vs watch、defineModel、provide/inject、元件責任與可及性基本要求。當編輯 .vue 檔或討論 Vue 元件設計時自動參考。
+description: Vue SFC conventions — `<script setup>`, props / emits / slots, computed vs watch, defineModel, provide / inject, component responsibility, basic accessibility. Auto-load when editing .vue files.
 paths: app/**/*.vue
 ---
 
-# Vue 元件規範
+# Vue Component Conventions
 
-當處理 Vue 單檔元件時，請遵守以下規則。
+Apply these rules when writing Vue single-file components.
 
-## 結構規範
+## Structure
 
-1. 預設使用 `<script setup lang="ts">`。
-2. 保持 template 易讀，避免深層巢狀與過長 inline expression。
-3. 複雜邏輯應移至具名 `computed`、helper function 或 composable。
-4. `script setup` 內部建議排列順序：
+1. Default to `<script setup lang="ts">`.
+2. Keep templates readable; avoid deep nesting and long inline expressions.
+3. Move complex logic into named `computed`, helper functions, or composables.
+4. Recommended `<script setup>` ordering:
    - imports
    - types
    - props / emits
@@ -24,68 +24,72 @@ paths: app/**/*.vue
 
 ## Props / Emits / Slots
 
-1. props 命名需具語意，不可過度抽象。
-2. emits 應優先表達業務意圖，而不是單純 DOM 動作。
-3. slots 應保留清楚的責任邊界。
-4. 不要為了可能的重用而設計過大 props API。
+1. Props names carry semantics; don't over-abstract.
+2. Emits express business intent, not raw DOM actions.
+3. Slots have a clear responsibility boundary.
+4. Don't design oversized props APIs for hypothetical reuse.
 
 ## Reactivity
 
-1. 推導值優先使用 `computed`。
-2. `watch` 只處理副作用，不作為主要資料推導工具。
-3. 避免不必要的 deep watch。
-4. 避免過度複雜的巢狀 reactive 結構。
+1. Derived values prefer `computed`.
+2. `watch` is for side effects, not as a default derivation tool.
+3. Avoid unnecessary deep watchers.
+4. Avoid over-nested reactive structures.
 
-## 元件責任
+## Component Responsibility
 
-1. 展示型元件應盡量保持單純。
-2. 容器型元件可以負責資料協調，但不要同時承擔過多職責。
-3. 若 component 同時負責：
+1. Presentation components stay simple.
+2. Container components may coordinate data, but not at the cost of taking on too many responsibilities at once.
+3. If a component handles all of:
    - fetching
    - mapping
    - rendering
    - navigation
    - side effects
 
-   應考慮拆分。
+   split it.
 
-## v-model 自訂元件
+## v-model on Custom Components
 
-1. 自訂 form 元件應透過 `defineModel()` 實作雙向綁定（Vue 3.4+），取代手動定義 `modelValue` prop 與 `update:modelValue` emit：
+1. Custom form components implement two-way binding via `defineModel()` (Vue 3.4+) instead of manually defining `modelValue` prop and `update:modelValue` emit:
    ```ts
    const model = defineModel<string>()
    ```
-2. 若需多個 v-model，使用具名 v-model：`defineModel('visible')`。
-3. v-model 元件應與原生 input 行為保持一致語意（value 改變時才 emit，而非每次 render）。
-4. 不要讓 v-model 元件同時承擔業務邏輯，應保持純 UI 職責。
+2. For multiple v-models, use named `defineModel('visible')`.
+3. v-model components keep semantics consistent with native inputs (emit only on actual value change, not on every render).
+4. Don't load v-model components with business logic; keep them UI-only.
 
 ## provide / inject
 
-1. `provide / inject` 適用於跨多層元件傳遞資料的場景，避免 prop drilling。
-2. 使用 Symbol 作為 injection key，並搭配型別定義，確保型別安全：
+1. `provide / inject` is for cross-multilevel-component data — avoid prop drilling.
+2. Use a `Symbol` as the injection key together with a typed declaration:
    ```ts
    const ThemeKey: InjectionKey<Ref<string>> = Symbol('theme')
    ```
-3. 不要濫用 `provide / inject` 替代正常 props / emits 傳遞，適用場景是 layout 層提供給深層元件的設定（如 theme、locale、form context）。
-4. 避免在 `inject` 端直接修改 provided 值，應由 provide 端提供修改方法。
+3. Don't use `provide / inject` to replace normal props / emits flow; the use case is layout-level configuration handed to deep descendants (theme, locale, form context).
+4. Don't mutate the provided value from the `inject` side; expose a setter from the provider.
 
-## 可及性基本要求
+## Type Origin
 
-1. 互動元素使用語意化 HTML，不以 `<div>` 模擬 `<button>`。
-2. Icon-only 按鈕必須有 `aria-label`。
-3. 自訂互動元件（modal、dropdown）需提供對應 ARIA 屬性與鍵盤支援。
-4. 動態更新的通知區塊應加上 `aria-live`。
-5. 詳細規範請參考 `accessibility-conventions` skill。
+Persistent domain types and DTOs used in templates come from `@rolling-dice-app/types`. Local types in `app/types/` are for UI-only concerns (form state, view models, navigation, etc.).
 
-## 型別
+## Accessibility Baseline
 
-1. props、emits、slots 型別需完整。
-2. 避免 `any`。
-3. 事件 payload 應具明確型別。
+1. Interactive elements use semantic HTML — don't simulate `<button>` with a `<div>`.
+2. Icon-only buttons require `aria-label`.
+3. Custom interactive components (modal, dropdown) provide ARIA attributes and keyboard support.
+4. Live-updating notification regions get `aria-live`.
+5. Detailed rules: see the `accessibility-conventions` skill.
 
-## 避免事項
+## Types
 
-1. 不要在 template 中寫過長條件運算。
-2. 不要把 API response raw shape 直接當作 UI model 使用。
-3. 不要為了理論重用而過早抽小元件。
-4. 不要在元件中直接混用過多商業流程邏輯。
+1. Props, emits, and slots have complete types.
+2. Avoid `any`.
+3. Event payloads have explicit types.
+
+## Anti-patterns
+
+1. Long conditional expressions inside the template.
+2. Treating raw API response shapes directly as UI models.
+3. Extracting tiny components for theoretical reuse.
+4. Mixing too much business flow logic into a component.

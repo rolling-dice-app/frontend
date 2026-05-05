@@ -1,102 +1,100 @@
 ---
 name: security-conventions
-description: 前端安全規範 — XSS 防護 (v-html sanitize)、敏感資料邊界 (token/PII/API key)、runtimeConfig public/private、認證授權以 server 為主、server route 輸入驗證。當處理輸入輸出/認證/外部資源時自動參考。
+description: Frontend security conventions — XSS protection (v-html sanitize), sensitive data boundaries (token / PII / API key), runtimeConfig public / private, server-authoritative auth, server-route input validation. Auto-load when handling input / output, auth, or external resources.
 paths: app/**/*.vue,app/**/*.ts,app/server/**/*.ts,app/composables/**/*.ts,app/plugins/**/*.ts
 ---
 
-# 安全性規範
+# Security Conventions
 
-當實作、審查或重構涉及資料輸入輸出、認證、設定或外部資源時，請遵守以下規則。
+Apply these rules whenever the work touches input / output, authentication, configuration, or external resources.
 
-> ⚠️ 本專案第一版 MVP 使用 SPA 模式（`ssr: false`）。CSR 安全規則為當前優先適用標準；Server Route 相關規則為前瞻性保留。
+> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR security rules are the active standard; server-route rules are forward-looking.
 
-## 核心原則
+## Core Principles
 
-1. 預設不信任任何外部輸入，包含 API response、URL 參數、使用者輸入。
-2. 安全問題通常無法事後補救，必須在設計與實作階段預防。
-3. 遵循最小權限原則：程式碼只存取它實際需要的資源。
-4. 敏感資訊不得出現在任何可被使用者或外部觀察到的位置。
+1. Treat all external input as untrusted by default — API responses, URL parameters, user input.
+2. Security problems are usually unfixable after the fact; prevent them at design and implementation time.
+3. Apply least privilege: code accesses only the resources it actually needs.
+4. Sensitive data must not appear anywhere a user or external observer can see it.
 
-## XSS 防護
+## XSS Protection
 
-1. **禁止**在未經嚴格 sanitize 的情況下使用 `v-html`。
-2. 若確實需要渲染 HTML 內容（如 CMS rich text），必須先使用 sanitize 函式處理：
-   - 僅允許白名單標籤與屬性
-   - 移除所有 `<script>`、`on*` 事件屬性、`javascript:` 協議
-3. 用戶生成內容（UGC）必須在 server 端完成 sanitize，不依賴 client 端處理。
-4. 避免動態組合 HTML 字串後插入 DOM。
-5. `innerText` / `textContent` 優先於 `innerHTML`，Vue 的 `{{ }}` 插值已自動 escape，應優先使用。
+1. **Do not** use `v-html` without strict sanitization.
+2. When rendering HTML content (e.g., CMS rich text), sanitize first:
+   - Allow only a whitelist of tags and attributes.
+   - Strip all `<script>`, `on*` event attributes, and `javascript:` protocols.
+3. User-generated content (UGC) must be sanitized server-side; do not rely on client-side sanitization alone.
+4. Avoid building HTML strings dynamically and inserting them into the DOM.
+5. Prefer `innerText` / `textContent` over `innerHTML`. Vue's `{{ }}` interpolation auto-escapes — use it.
 
-## 敏感資料處理
+## Sensitive Data Handling
 
-1. 以下資料**不得**出現在下列位置：
+1. The following data must **not** appear in the listed locations:
 
-   | 敏感資料             | 禁止位置                                   |
-   | -------------------- | ------------------------------------------ |
-   | Auth token / session | `localStorage`（建議使用 HttpOnly cookie） |
-   | 個人識別資訊（PII）  | URL query string、`console.log`、錯誤訊息  |
-   | API keys / secret    | client-side bundle、`runtimeConfig.public` |
-   | 密碼                 | client state、log、任何非加密傳輸          |
+   | Sensitive data        | Forbidden location                                       |
+   | --------------------- | -------------------------------------------------------- |
+   | Auth token / session  | `localStorage` (use HttpOnly cookie)                     |
+   | Personally identifiable info (PII) | URL query string, `console.log`, error messages |
+   | API keys / secrets    | Client-side bundle, `runtimeConfig.public`               |
+   | Passwords             | Client state, logs, any non-encrypted transport          |
 
-2. `runtimeConfig` 使用規範：
-   - `runtimeConfig.public` — 僅放可公開的設定（如 GA ID、API base URL）
-   - `runtimeConfig`（非 public）— 放 server-only secret，**絕對不能**在 client 存取
-3. 不要在 Pinia store 或 Vue reactive state 中儲存 access token；應由 server-side cookie 管理。
-4. `console.log` 中不得出現 token、使用者個資、完整的 API response（尤其在 production）。
+2. `runtimeConfig` boundaries:
+   - `runtimeConfig.public` — only public-safe configuration (GA ID, API base URL).
+   - `runtimeConfig` (non-public) — server-only secrets, **never** accessed from the client.
+3. Don't store access tokens in Pinia stores or Vue reactive state; use server-side cookies.
+4. `console.log` must not contain tokens, user PII, or full API responses (especially in production).
 
-## SPA / CSR 安全要點（當前適用）
+## SPA / CSR Security (Active)
 
-1. SPA 所有 API 呼叫透過外部服務，auth token 以 Authorization header 傳遞。
-2. Token 儲存方式需安全：HttpOnly cookie 優先；若無法使用，考慮 memory-only 方案，避免 `localStorage`。
-3. 無 server route 代表所有敏感邏輯必須由後端 API 保障，client 不可信任自身的權限判斷。
-4. CORS 設定由後端控制，前端應注意 API base URL 的安全管理（透過 `runtimeConfig.public`）。
+1. SPA calls external services; auth tokens are passed via the Authorization header.
+2. Token storage prefers HttpOnly cookies; if not possible, use memory-only storage and avoid `localStorage`.
+3. With no server route, all sensitive logic lives behind the backend API; the client cannot trust its own permission checks.
+4. CORS is configured on the backend; the frontend manages the API base URL safely via `runtimeConfig.public`.
 
-## 認證與授權
+## Authentication & Authorization
 
-1. Client 端的認證狀態僅用於 UI 呈現，不可作為安全邊界。
-2. Nuxt middleware 的 auth 檢查屬於 UX 導向（快速導向），不能取代後端 API 的真正授權驗證。
-3. 以下為未來啟用 SSR 後適用：
-   - 認證狀態的最終驗證必須發生在 server 端。
-   - 每個需要授權的 server route 都必須獨立驗證請求來源的身份，不依賴 client 傳入的 user ID。
-4. 若使用 JWT，驗證邏輯必須在後端執行，不在 client 端 decode 後自行判斷權限。
+1. Client-side auth state is for UI presentation only; it is not a security boundary.
+2. Nuxt middleware auth checks are UX-oriented (fast redirects); they do not replace backend authorization.
+3. (Future, once SSR is enabled):
+   - Final auth verification happens server-side.
+   - Every authorized server route independently verifies the requester's identity; do not trust a client-supplied user ID.
+4. With JWT, verification logic runs on the backend; do not decode and self-evaluate permissions on the client.
 
-## Server Route 安全（未來啟用 SSR 後適用）
+## Server Route Security (Future, Once SSR is Enabled)
 
-1. 所有 server route 的輸入參數（body、query、params）都必須驗證，不信任 client 傳入的資料。
-2. 建議使用 schema 驗證（如 `zod`）對 request body 進行型別與格式驗證：
-
+1. Every server route validates all input (body, query, params); do not trust client-supplied data.
+2. Use schema validation (e.g., `zod`) on request bodies:
    ```ts
    const body = await readValidatedBody(event, schema.parse)
    ```
+3. Don't pipe client-supplied parameters directly into database queries or shell commands (SQL / command injection risk).
+4. Response data includes only the necessary fields; do not return full DB rows or raw models.
+5. When calling external APIs, attach API keys server-side; never pass them through the client.
 
-3. 避免直接將 client 傳入的參數用於資料庫查詢或 shell 命令（SQL injection / command injection）。
-4. 回傳資料應僅包含必要欄位，不要直接回傳完整的 DB row 或 raw model。
-5. 對外部 API 呼叫時，API key 必須在 server 端附加，不可在 client 端傳遞 API key。
+## Dependency Security
 
-## 依賴安全
+1. Before adding a package, verify:
+   - Maintenance status (last update, issue volume).
+   - Known CVEs (`npm audit`).
+   - Source authenticity.
+2. Don't load third-party scripts from untrusted CDNs or unverified sources.
+3. When introducing third-party scripts (chat widgets, ads), evaluate whether CSP is needed.
 
-1. 引入新套件前，應確認：
-   - 套件維護狀態（最後更新時間、issue 數量）
-   - 已知 CVE 漏洞（可使用 `npm audit`）
-   - 套件的實際下載來源是否可信
-2. 不要從非官方 CDN 或未驗證來源動態載入第三方 script。
-3. 若需引入第三方 script（如聊天工具、廣告），應評估是否需要 CSP 設定。
+## Anti-patterns
 
-## 避免事項
+1. `eval()`, `new Function()`, or `setTimeout(string)` on the client.
+2. Server-only logic or configuration placed in `plugins/`, `composables/`, or other client-accessible areas.
+3. APIs returning more data than the frontend needs (over-fetching that exposes sensitive fields).
+4. Trusting `referer` / `origin` as the sole CSRF protection.
+5. Returning stack traces, DB structure, or internal paths in error messages.
+6. Shipping development debug info or mock endpoints to production.
 
-1. 不要在 client-side 使用 `eval()`、`new Function()` 或 `setTimeout(string)`。
-2. 不要把 server-only 邏輯或設定放到 `plugins/`、`composables/` 等前端可存取區域。
-3. 不要讓 API 回傳比前端實際需要更多的資料（避免 over-fetching 暴露敏感欄位）。
-4. 不要信任 `referer` 或 `origin` header 作為唯一的 CSRF 防護手段。
-5. 不要在錯誤訊息中回傳 stack trace、資料庫結構或內部路徑資訊。
-6. 不要讓開發用的 debug 資訊或 mock endpoint 部署到 production。
+## Output Requirements
 
-## 輸出要求
+When reviewing or implementing security-sensitive work, confirm:
 
-當審查或實作涉及安全敏感場景時，應優先確認：
-
-1. `v-html` 使用是否有 sanitize 防護
-2. 敏感資料是否存放在不安全位置
-3. server route 是否有輸入驗證
-4. `runtimeConfig` public / private 邊界是否正確
-5. client 端是否無意間暴露了不應公開的資訊
+1. Every `v-html` use has sanitization.
+2. Sensitive data is not stored in unsafe locations.
+3. Server routes validate input.
+4. `runtimeConfig` public / private boundaries are correct.
+5. The client surface does not leak anything it shouldn't.

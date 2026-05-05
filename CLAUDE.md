@@ -1,207 +1,228 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file gives Claude Code (claude.ai/code) the highest-priority instructions for working inside the `rolling-dice-app/frontend` repository.
 
-# Rolling Dice 專案全域指示
+This is the **frontend** repo of a multi-repo product. It is a Nuxt 4 + Vue 3 + TypeScript SPA. When this file conflicts with a sub-skill, this file wins.
 
-本專案使用 Vue 3 + Nuxt 3 + TypeScript 作為核心技術棧。本檔為 Claude Code 在本專案內的最高原則，優先於任何子 skill 規範。
+## Required Reading: Org-Level Guidelines
 
-## 常用指令
+Before any non-trivial change, read the four org-level constitution documents. They define the cross-repo product architecture, the contract flow between repos, ownership boundaries, and the protocol for handling boundary-violating requests. The rest of this file is **frontend-internal technical convention only** and assumes those rules are already in effect.
+
+- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/product-architecture.md>
+- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/frontend-skills.md>
+- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/backend-skills.md>
+- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/types-skills.md>
+
+In short: this repo is the **contract consumer**. Persistent shapes and API DTOs come from `@rolling-dice-app/types`; the backend is the authoritative implementation; the frontend renders and interacts.
+
+## Common Commands
 
 ```sh
-pnpm dev               # 開發伺服器 (http://localhost:3000)
+pnpm dev               # dev server (http://localhost:3000)
 pnpm type-check        # nuxi typecheck
-pnpm lint              # oxlint + eslint（含 --fix）
-pnpm lint:check        # 僅檢查，不修改
+pnpm lint              # oxlint + eslint (with --fix)
+pnpm lint:check        # check only, no auto-fix
 pnpm format            # prettier --write
-pnpm test:unit         # vitest（watch 模式）
-pnpm test:unit:ci      # vitest --run（CI / 單次）
-pnpm test:coverage     # 覆蓋率報告（門檻 80%）
-pnpm generate          # 產出靜態站（部署至 GitHub Pages）
-pnpm preview           # 預覽靜態產出
-pnpm update:ui         # 更新 packages/ui submodule 並重新 build
+pnpm test:unit         # vitest (watch mode)
+pnpm test:unit:ci      # vitest --run (CI / single run)
+pnpm test:coverage     # coverage report (80% threshold)
+pnpm generate          # static SSG (deployed to GitHub Pages)
+pnpm preview           # preview static output
+pnpm update:ui         # update packages/ui submodule and rebuild
 ```
 
-執行單一測試檔：`pnpm test:unit app/tests/unit/stores/character.spec.ts`
-單一測試名稱：`pnpm test:unit -t "部分名稱"`
+Single test file: `pnpm test:unit app/tests/unit/stores/character.spec.ts`
+By test name: `pnpm test:unit -t "partial name"`
 
-Git hooks 走 `.githooks/`（由 `prepare` script 設定 `core.hooksPath`）。
-`lint-staged` 會在 commit 前跑 oxlint → eslint → prettier，請勿用 `--no-verify` 繞過。
+Git hooks live in `.githooks/` (configured by the `prepare` script via `core.hooksPath`).
+`lint-staged` runs oxlint → eslint → prettier on commit. Do not bypass with `--no-verify`.
 
-## 架構總覽
+## Architecture
 
-### Monorepo 結構
+### Monorepo Layout (this repo only)
 
-- pnpm workspace（`pnpm-workspace.yaml`），兩個子專案：
-  - `app/` — Nuxt 應用（主產品），本 CLAUDE.md 與 `.claude/skills/` 的規範**只**適用於此。
-  - `packages/ui/` — Vue 元件庫，**git submodule**，獨立開發與 build pipeline。app 端**只消費、不修改**其原始碼；customize 請在 `app/components/` 自己重寫。
-- `@ui` alias 在 `nuxt.config.ts` 與 `vitest.config.ts` 皆有定義：Nuxt 端指向 `packages/ui/dist/index.js`（build 產物），測試端指向 `packages/ui`。**submodule 未 init 或未 build 時 app 會跑不起來**——首次 clone 需 `pnpm init:ui`。
+This repo is a pnpm workspace (`pnpm-workspace.yaml`) with two sub-projects:
 
-### 執行環境
+- `app/` — the Nuxt application. **All `.claude/skills/` and the rest of this file apply only here.**
+- `packages/ui/` — Vue component library, **git submodule**, with its own dev and build pipeline. The app **consumes only**; do not modify its source. Customizations belong in `app/components/`.
 
-- **SPA 模式**（`ssr: false`）。所有 `.claude/skills/` 中關於 SSR / server route 的規則為前瞻性保留，當前不強制；CSR 規則為現行標準。
-- 靜態部署（GitHub Pages），base URL 由 `NUXT_APP_BASE_URL` env 控制，見 `nuxt.config.ts`。
+The `@ui` alias is defined in both `nuxt.config.ts` (pointing to `packages/ui/dist/index.js`, the build output) and `vitest.config.ts` (pointing to `packages/ui`). **The submodule must be initialized and built or the app will not run.** First-time clone requires `pnpm init:ui`.
 
-### Auto-import 設定
+### Cross-Repo Dependencies
 
-`nuxt.config.ts` 擴充了 `imports.dirs`：
+- `@rolling-dice-app/types` — the shared contract package, published from the `types` repo to GitHub Packages (restricted scope `@rolling-dice-app`, install requires a `read:packages` PAT). Persistent domain types, request/response DTOs, and shared enumerations are imported from here. Local re-declaration of these shapes is forbidden.
+- `backend` API — once online, the only sanctioned channel for persistent data. Frontend speaks to it using the contracts in `@rolling-dice-app/types` and never assumes DB schema.
 
-- `helpers/` — 業務邏輯純函式（規則計算、分級判斷）
-- `composables/domain/` — 領域邏輯 composable
-- `composables/ui/` — UI 層 composable
+### Runtime Environment
 
-這三個目錄**不需 import 也能使用**。`utils/` 則走 Nuxt 預設 auto-import。
+- **SPA mode** (`ssr: false`) for the current MVP. SSR / server-route rules in skills are forward-looking; under CSR only the CSR rules are enforced.
+- Static deployment (GitHub Pages for the frozen demo; Vercel for the live product). Base URL controlled by `NUXT_APP_BASE_URL`; see `nuxt.config.ts`.
 
-### `app/` 分層
+### Auto-import Configuration
 
-- `components/{common,layout,business}/` — UI 層，business 為特定領域元件
-- `composables/{domain,ui}/` — 可重用邏輯，`domain` 為業務、`ui` 為 UI 行為
-- `helpers/` vs `utils/` — helpers 含業務語意（D&D 規則等），utils 為泛用工具
-- `stores/` — Pinia，僅跨元件 / 跨頁面共享才放這裡；一次性 page state 用 local state
-- `types/{business,common,layout}/` — domain type 分層放置
-- `pages/` — Nuxt file-based routing，page 僅組裝與 orchestration
+`nuxt.config.ts` extends `imports.dirs`:
 
-### 測試
+- `helpers/` — pure business-logic functions (rule calculation, tier resolution).
+- `composables/domain/` — domain-logic composables.
+- `composables/ui/` — UI-layer composables.
 
-- Vitest + `@vue/test-utils` + `happy-dom`/`jsdom` 雙環境（config 使用 jsdom）
-- setup 檔：`app/tests/setup.ts`
-- 測試檔位置：`app/tests/**/*.spec.ts`（**不是** colocated）
-- coverage 門檻 80%（lines / functions / branches / statements），排除 `types/`、`tests/`、`assets/`
-- `@vue/devtools-api` 有 mock（見 `vitest.config.ts`），pinia 被 inline 處理
+These three directories are **available without explicit import**. `utils/` follows Nuxt's default auto-import.
 
-### Lint 雙層
+### `app/` Layout
 
-`lint` 依序執行 `oxlint --fix` 再 `eslint --fix`。oxlint 為快速第一關，eslint（含 `@nuxt/eslint`）為完整規則。兩者皆通過才算合格。
+- `components/{common,layout,business}/` — UI layer; `business/` houses domain-specific components.
+- `composables/{domain,ui}/` — reusable logic; `domain/` for business, `ui/` for UI behavior.
+- `constants/` — static lookup tables, enum-like maps, storage keys. Pure data, no behavior.
+- `helpers/` vs `utils/` — `helpers/` carry domain semantics (D&D rules etc.); `utils/` are general-purpose.
+- `mocks/` — development fixture data used while the backend is unavailable; will be retired once the backend is wired.
+- `stores/` — Pinia. Reserved for cross-component / cross-page shared state. One-shot page state stays local.
+- `types/{business,layout}/` — type definitions organized by layer. **Persistent / contract types are imported from `@rolling-dice-app/types`**; what stays here is UI-only: form state, view models, navigation, dice / adventure history.
+- `pages/` — Nuxt file-based routing; pages handle assembly and orchestration only.
+- `app.vue` / `error.vue` — top-level entry and global Nuxt error page (4xx / 5xx).
 
-## 專案範圍
+### Testing
 
-1. 本專案為 pnpm monorepo，包含 `app/`（Nuxt 應用）與 `packages/ui/`（Vue 元件庫）。
-2. 所有 `.claude/skills/` 下的規範**僅適用於 `app/` 內的程式碼**。
-3. `packages/ui/` 為獨立子專案，有各自的開發慣例與 build pipeline，不受 Nuxt 生態規範約束。
-4. app 可消費 UI library 的元件與 CSS `token（透過 `@ui` alias），但不應修改 UI library 的內部實作。
-5. **禁止**從 app 修改 `packages/ui/` 的程式碼。元件問題應另提需求描述；客製化需求應在 `app/components/` 自行實作。
+- Vitest + `@vue/test-utils` + `happy-dom` / `jsdom` (config uses `jsdom`).
+- Setup file: `app/tests/setup.ts`.
+- Test file location: `app/tests/**/*.spec.ts` (**not** colocated).
+- Coverage threshold: 80% (lines / functions / branches / statements). Excludes `types/`, `tests/`, `assets/`.
+- `@vue/devtools-api` is mocked (see `vitest.config.ts`); pinia is inlined.
 
-## 執行環境
+### Linting (Two-Pass)
 
-1. 第一版 MVP 使用 SPA 模式（`ssr: false`）。
-2. **CSR 規則為當前優先適用標準**。
-3. 各 skill 中關於 SSR、server route 的規則為前瞻性保留，SPA 模式下不強制適用。
-4. 當未來切換至 SSR 模式時，相關規則自動生效。
+`lint` runs `oxlint --fix` then `eslint --fix`. oxlint is the fast first pass; eslint (with `@nuxt/eslint`) is the comprehensive second pass. Both must be green.
 
-## 核心原則
+## Repo-Internal Scope
 
-1. 優先最小必要改動，不做無授權的大範圍重寫。
-2. 優先可讀性、可維護性、可審查性，不追求炫技式抽象。
-3. 優先符合 Vue / Nuxt 慣例，而不是套用通用但不貼合框架的模式。
-4. 清楚區分 UI、狀態、資料取得、資料轉換與副作用。
-5. 型別安全是基本要求，除非明確允許，否則不要使用 `any`。
-6. 注意執行環境差異：SPA 模式下以 CSR 為準，未來啟用 SSR 後需遵守 SSR / CSR 邊界約束。
-7. 除非明確要求，不要新增第三方套件。
-8. 產出的程式碼必須讓人類工程師容易理解、容易 review、容易接手。
-9. 偏實務導向，偏符合 Vue / Nuxt idiomatic 寫法。
-10. 偏清楚責任分離，但不過度抽象。
+1. This is a pnpm monorepo containing `app/` (the Nuxt application) and `packages/ui/` (a Vue component library).
+2. All `.claude/skills/` conventions apply **only to code under `app/`**.
+3. `packages/ui/` is an independent sub-project with its own conventions and build pipeline; it is not bound by Nuxt-ecosystem rules.
+4. The app consumes the UI library's components and CSS tokens via the `@ui` alias but does not modify the library's internals.
+5. **Do not** edit `packages/ui/` from within the app. File issues against the library separately; build customizations inside `app/components/`.
 
-## Vue 規則（摘要）
+## Runtime Environment Rules
 
-1. Vue SFC 預設使用 `<script setup lang="ts">`。
-2. 可推導資料優先使用 `computed`。
-3. `watch` 只用於副作用、同步行為或監聽外部變化，不作為預設資料推導工具。
-4. 避免把複雜邏輯直接寫在 template。
-5. props、emits、slots 必須具備清楚語意。
-6. 不要為了理論上的重用而過度抽象元件。
-7. 不要在單一 component 中混合 rendering、fetching、navigation、資料轉換與流程控制。
+1. The current MVP runs in SPA mode (`ssr: false`).
+2. **CSR rules are the active standard.**
+3. SSR / server-route rules in skills are reserved for future activation; they do not apply under SPA.
+4. When SSR is enabled in the future, those rules become live.
 
-詳細規範請參考 `.claude/skills/vue-conventions/`。
+## Core Principles
 
-## Nuxt 規則（摘要）
+1. Prefer the smallest necessary change. No unauthorized large rewrites.
+2. Prefer readability, maintainability, and reviewability over clever abstractions.
+3. Prefer Vue / Nuxt idiomatic patterns over generic patterns that fit the framework poorly.
+4. Clearly separate UI, state, data fetching, data transformation, and side effects.
+5. Type safety is baseline. Do not use `any` unless explicitly permitted.
+6. Respect runtime boundaries: under SPA, CSR rules govern; once SSR ships, SSR / CSR boundary rules apply.
+7. Do not add third-party packages without explicit authorization.
+8. Code must be easy for a human engineer to read, review, and inherit.
+9. Practical first; idiomatic Vue / Nuxt second.
+10. Clear separation of concerns, but not over-abstracted.
 
-1. 必須明確區分 server 與 client 執行環境。
-2. 首屏 SSR 關鍵資料優先考慮 `useAsyncData`。
-3. `useFetch` 只在符合其資源型取得語意時使用。
-4. 事件驅動或非初始載入請求，可考慮使用 `$fetch`。
-5. 未加 client guard 時，不可直接使用 `window`、`document`、`localStorage`。
-6. page 應以頁面組裝與 orchestration 為主，不承擔過多底層 transport 細節。
-7. 涉及私密資訊、聚合邏輯或安全邊界時，優先考慮 server routes。
+## Vue (summary)
 
-詳細規範請參考 `.claude/skills/nuxt-conventions/`。
+1. Vue SFCs default to `<script setup lang="ts">`.
+2. Derivable values use `computed`.
+3. `watch` is reserved for side effects, synchronization, and external-change reactions — not as a default derivation tool.
+4. Avoid heavy logic in templates.
+5. props, emits, slots have clear semantics.
+6. Do not over-abstract components for theoretical reuse.
+7. Do not mix rendering, fetching, navigation, transformation, and flow control in a single component.
 
-## TypeScript 規則（摘要）
+Detailed rules: `.claude/skills/vue-conventions/`.
 
-1. 避免 `any`。
-2. 優先使用明確的 domain type，而不是寬鬆物件結構。
-3. DTO、API response、UI model 在需要時應分層。
-4. 不要用不安全 assertion 掩蓋型別設計問題。
-5. 保留 narrowing、nullable safety 與 optional 欄位處理。
+## Nuxt (summary)
 
-詳細規範請參考 `.claude/skills/typescript-conventions/`。
+1. Server vs client execution must be explicit.
+2. First-screen SSR-critical data prefers `useAsyncData`.
+3. `useFetch` is for resource-style fetches that match its semantics.
+4. Event-driven or non-initial requests may use `$fetch`.
+5. Do not directly use `window`, `document`, `localStorage` without a client guard.
+6. Pages handle assembly and orchestration; they do not carry low-level transport detail.
+7. Sensitive data, aggregation logic, or security boundaries belong in server routes.
 
-## 狀態管理規則（摘要）
+Detailed rules: `.claude/skills/nuxt-conventions/`.
 
-1. 預設先使用 local state。
-2. 只有在真正跨 component 或跨 page 共享時，才考慮 Pinia。
-3. 不要把一次性 page UI state 隨意提升到全域 store。
-4. store action 應保持聚焦，不要讓 store 變成雜湊 service 容器。
+## TypeScript (summary)
 
-詳細規範請參考 `.claude/skills/pinia-conventions/`。
+1. Avoid `any`.
+2. Prefer explicit domain types over loose object shapes.
+3. Layer DTO / API response / UI model when needed.
+4. Do not use unsafe assertions to mask design issues.
+5. Preserve narrowing, nullable safety, and optional-field handling.
 
-## 補充規範索引
+Detailed rules: `.claude/skills/typescript-conventions/`.
 
-各主題詳細規範存放於 `.claude/skills/`，Claude 會依編輯的檔案路徑自動載入相應 skill：
+## State Management (summary)
 
-| Skill                        | 主題                                   | 觸發範圍                                                                     |
-| ---------------------------- | -------------------------------------- | ---------------------------------------------------------------------------- |
-| `vue-conventions`            | Vue SFC 結構、reactivity、元件責任     | `app/**/*.vue`                                                               |
-| `nuxt-conventions`           | SSR/CSR 邊界、data fetching、error.vue | `app/{pages,layouts,middleware,plugins,composables,server}/**`               |
-| `pinia-conventions`          | Store 設計、storeToRefs、非同步 action | `app/stores/**`、`app/**/*store*.ts`                                         |
-| `typescript-conventions`     | 型別設計、安全性、命名慣例             | `app/**/*.{ts,tsx,vue}`                                                      |
-| `tailwind-conventions`       | Class 排列、響應式、token、@apply      | `app/**/*.{vue,tsx,jsx}`、`app/components/**`                                |
-| `testing-conventions`        | Vitest、@vue/test-utils、覆蓋率        | `app/**/*.spec.ts`、`app/tests/**`、`vitest.config.*`                        |
-| `accessibility-conventions`  | 語意 HTML、ARIA、鍵盤、WCAG AA         | `app/**/*.vue`、`app/components/**`、`app/pages/**`                          |
-| `security-conventions`       | XSS、敏感資料、server route 驗證       | `app/**/*.{vue,ts}`、`app/server/**`、`app/composables/**`、`app/plugins/**` |
-| `error-handling-conventions` | 三態處理、API 錯誤、表單錯誤           | `app/**/*.{vue,ts}`、`app/pages/**`、`app/composables/**`、`app/server/**`   |
-| `performance-conventions`    | 載入優化、Web Vitals、Bundle 管理      | `app/**/*.{vue,ts}`、`app/pages/**`、`app/composables/**`、`nuxt.config.ts`  |
-| `structure-conventions`      | Monorepo 架構、資料夾結構、分層原則    | `app/**`                                                                     |
-| `review-conventions`         | Code review 完整檢查清單               | `app/**`                                                                     |
+1. Default to local state.
+2. Promote to Pinia only when state is genuinely shared across components or pages.
+3. Do not promote one-shot page UI state to a global store.
+4. Store actions stay focused; do not let stores become miscellaneous service containers.
 
-## 預設輸出期待
+Detailed rules: `.claude/skills/pinia-conventions/`.
 
-當使用者要求實作時，通常應輸出：
+## Skill Index
 
-1. 任務理解或問題分析
-2. 建議方案
-3. 程式碼或 diff
-4. 風險與驗證建議
+Detailed conventions live in `.claude/skills/`. Claude auto-loads the relevant skill based on the file paths being edited.
 
-當使用者要求 review 時，通常應輸出：
+| Skill                        | Topic                                          | Trigger paths                                                                |
+| ---------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| `vue-conventions`            | Vue SFC structure, reactivity, component duty  | `app/**/*.vue`                                                               |
+| `nuxt-conventions`           | SSR/CSR boundary, data fetching, error.vue     | `app/{pages,layouts,middleware,plugins,composables,server}/**`               |
+| `pinia-conventions`          | Store design, storeToRefs, async actions       | `app/stores/**`, `app/**/*store*.ts`                                         |
+| `typescript-conventions`     | Type design, safety, naming                    | `app/**/*.{ts,tsx,vue}`                                                      |
+| `tailwind-conventions`       | Class ordering, responsive, tokens, @apply     | `app/**/*.{vue,tsx,jsx}`, `app/components/**`                                |
+| `testing-conventions`        | Vitest, @vue/test-utils, coverage              | `app/**/*.spec.ts`, `app/tests/**`, `vitest.config.*`                        |
+| `accessibility-conventions`  | Semantic HTML, ARIA, keyboard, WCAG AA         | `app/**/*.vue`, `app/components/**`, `app/pages/**`                          |
+| `security-conventions`       | XSS, sensitive data, server-route validation   | `app/**/*.{vue,ts}`, `app/server/**`, `app/composables/**`, `app/plugins/**` |
+| `error-handling-conventions` | Three-state UI, API errors, form errors        | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `app/server/**`   |
+| `performance-conventions`    | Load optimization, Web Vitals, bundle hygiene  | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `nuxt.config.ts`  |
+| `structure-conventions`      | Monorepo layout, folder structure, layering    | `app/**`                                                                     |
+| `review-conventions`         | Code review checklist                          | `app/**`                                                                     |
 
-1. 問題列表
-2. 風險等級
-3. 最小修正方案
-4. 可選的深入重構方向
+## Default Output Expectations
 
-當使用者要求 debug 時，通常應輸出：
+When asked to **implement**, typically output:
 
-1. 最可能根因
-2. 驗證方式
-3. 最小修正方案
-4. 次要可能性
+1. Task understanding or problem analysis
+2. Proposed approach
+3. Code or diff
+4. Risks and verification suggestions
 
-## 應避免的反模式
+When asked to **review**, typically output:
 
-1. 可用 `computed` 解決的問題卻使用 `watch`
-2. 單一 composable 同時承擔 fetching、routing、toast、submit、UI orchestration
-3. 把一次性 local UI state 放進 Pinia
-4. page 直接依賴不穩定的 raw API response shape
-5. 在 SSR 環境直接使用瀏覽器 API
-6. 未經授權的大範圍重構
-7. 沒有證明需求前就新增抽象層
+1. Issue list
+2. Risk levels
+3. Minimal-fix proposals
+4. Optional deeper-refactor directions
 
-## 範圍控制
+When asked to **debug**, typically output:
 
-除非使用者明確要求，否則不要：
+1. Most likely root cause
+2. How to verify
+3. Minimal fix
+4. Secondary possibilities
 
-- 大範圍重新命名檔案
-- 新增新套件
-- 重設資料夾結構
-- 變更既有對外 component API
-- 修改不相關模組
+## Anti-patterns
+
+1. Using `watch` for problems solvable by `computed`.
+2. A single composable mixing fetching, routing, toast, submit, and UI orchestration.
+3. Promoting one-shot local UI state to Pinia.
+4. Pages depending on unstable raw API response shapes.
+5. Touching browser APIs in SSR context without guards.
+6. Unauthorized large refactors.
+7. Adding abstraction layers without demonstrated need.
+8. Locally re-declaring persistent or contract types instead of importing from `@rolling-dice-app/types`.
+
+## Scope Control
+
+Unless explicitly requested, do not:
+
+- Rename files broadly.
+- Add new packages.
+- Restructure folders.
+- Change existing public component APIs.
+- Modify unrelated modules.
+- Author or modify shared contract types here (those changes route through the `types` repo per the org-level guideline).

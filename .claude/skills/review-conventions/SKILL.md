@@ -1,95 +1,96 @@
 ---
 name: review-conventions
-description: Code review 完整檢查清單 — Vue/Nuxt/TypeScript/State/錯誤處理/安全/效能/可及性/測試 九大面向檢查項目，以及風險等級與最小修正優先的輸出格式。當使用者要求 review、審查或重構建議時自動參考。
+description: Code review checklist — Vue / Nuxt / TypeScript / State / error handling / security / performance / accessibility / testing across nine review dimensions, plus risk-grading and minimal-fix-first output format. Auto-load when the user asks for review or refactor suggestions.
 paths: app/**
 ---
 
-# Code Review 規範
+# Code Review Conventions
 
-當使用者要求 review、審查、重構建議時，請優先從以下角度檢查。
+When the user asks for a review, audit, or refactor proposal, prioritize the following dimensions.
 
-## Vue 檢查項目
+## Vue Checks
 
-1. template 是否過於複雜
-2. props / emits 是否具語意
-3. `computed` / `watch` 使用是否合理
-4. component 是否責任過重
-5. 是否存在可抽離但未抽離的重複邏輯
+1. Is the template overly complex?
+2. Do props / emits carry semantics?
+3. Are `computed` / `watch` used appropriately?
+4. Is the component carrying too much responsibility?
+5. Is there duplicated logic that should be extracted?
 
-## Nuxt 檢查項目
+## Nuxt Checks
 
-1. SSR / CSR 邊界是否清楚
-2. 是否可能產生 hydration mismatch
-3. data fetching 方式是否合理
-4. page / layout / middleware / plugin 責任是否混亂
-5. 是否誤用 client-only API
+1. Is the SSR / CSR boundary clear?
+2. Could this produce a hydration mismatch?
+3. Is the data-fetching pattern appropriate?
+4. Are page / layout / middleware / plugin responsibilities cleanly separated?
+5. Is a client-only API being misused?
 
-## TypeScript 檢查項目
+## TypeScript Checks
 
-1. 是否濫用 `any`
-2. optional / nullable 是否安全
-3. DTO / UI model 是否混用
-4. 是否存在不安全 assertion
-5. 型別邊界是否模糊
+1. Is `any` being abused?
+2. Are optional / nullable values handled safely?
+3. Are DTO and UI model types being conflated?
+4. Are there unsafe assertions?
+5. Are type boundaries vague?
+6. Are persistent / contract types being redeclared locally instead of imported from `@rolling-dice-app/types`?
 
-## State 檢查項目
+## State Checks
 
-1. local state / composable / store 邊界是否合理
-2. store 是否過度承擔責任
-3. 是否把一次性狀態錯放進全域
-4. state 更新流程是否清楚
+1. Is the local state / composable / store boundary appropriate?
+2. Is the store taking on too much responsibility?
+3. Has one-off state been incorrectly promoted to global?
+4. Is the state-update flow clear?
 
-## 錯誤處理檢查項目
+## Error Handling Checks
 
-1. 可能失敗的操作是否都有明確的 error state
-2. loading / error / empty 三種情境是否都已處理，不存在空白畫面或靜默失敗
-3. 錯誤訊息是否對使用者有意義，而非直接暴露技術細節
-4. 錯誤通知（toast / alert）是否由統一入口管理，未散落各處
-5. 表單錯誤是否有欄位層級的回饋
+1. Does every fallible operation have an explicit error state?
+2. Are loading / error / empty states all handled — no blank screens, no silent failure?
+3. Are error messages meaningful to the user, without leaking technical detail?
+4. Are error notifications routed through `useToast` (the single entry point) rather than scattered toast / alert calls?
+5. Do form errors surface at the field level?
 
-## 安全性檢查項目
+## Security Checks
 
-1. 是否有未 sanitize 的 `v-html` 使用
-2. 是否有敏感資料（token、PII）存放在不安全位置
-3. server route 是否對輸入參數進行驗證
-4. `runtimeConfig` public / private 邊界是否正確
-5. 是否有 client-side 不應出現的敏感資訊
+1. Is `v-html` used without sanitization?
+2. Is sensitive data (token, PII) stored in an unsafe location?
+3. Do server routes validate input parameters?
+4. Is the `runtimeConfig` public / private boundary correct?
+5. Is any client-side surface leaking information it shouldn't?
 
-## 效能檢查項目
+## Performance Checks
 
-1. 是否有不必要的重渲染（template 直接呼叫 function 而非 computed）
-2. 大型或非首屏元件是否使用 lazy loading
-3. 大量清單渲染是否有正確 `:key`，資料量大時是否考慮虛擬捲動
-4. 高頻事件 handler 是否有節流處理
-5. 首屏資料是否在 server 端完成取得
+1. Are there unnecessary re-renders (template calling a function instead of a `computed`)?
+2. Are large or off-screen components lazy-loaded?
+3. Do large lists have stable `:key`s, and have you considered virtual scrolling for large datasets?
+4. Are high-frequency event handlers throttled?
+5. Is first-screen data fetched server-side when SSR is in play?
 
-## 可及性檢查項目
+## Accessibility Checks
 
-1. 互動元素是否使用語意化 HTML（`<button>`、`<a>`）而非 `<div>`
-2. 所有 `<input>` 是否有對應 `<label>`
-3. 自訂互動元件是否有完整 ARIA 屬性
-4. 元件是否支援鍵盤操作
-5. 圖片是否有 `alt` 屬性，icon-only 按鈕是否有 `aria-label`
+1. Are interactive elements semantic HTML (`<button>`, `<a>`) rather than `<div>`?
+2. Does every `<input>` have a corresponding `<label>`?
+3. Do custom interactive components have full ARIA attributes?
+4. Do components support keyboard operation?
+5. Do images have `alt`, and do icon-only buttons have `aria-label`?
 
-## 測試覆蓋檢查項目
+## Test Coverage Checks
 
-1. 新增的 composable 是否有對應的單元測試
-2. 新增的 utils 是否有完整的純函式測試
-3. store action 是否涵蓋錯誤分支的測試
-4. 關鍵元件互動行為（props / emits）是否有 component 測試
+1. Do new composables have corresponding unit tests?
+2. Do new utils have complete pure-function tests?
+3. Do store actions cover the error branches?
+4. Do critical component interactions (props / emits) have component tests?
 
-## Review 輸出格式
+## Review Output Format
 
-當進行 review 時，輸出應優先包含：
+When delivering a review, prioritize:
 
-1. 問題列表
-2. 風險等級
-3. 最小修正建議
-4. 可選的進一步重構方向
+1. Issue list
+2. Risk levels
+3. Minimal-fix proposals
+4. Optional deeper-refactor directions
 
-## 原則
+## Principles
 
-1. 優先指出高風險問題，而不是列出大量低價值瑣事。
-2. 優先提供可落地的修正方向。
-3. 若存在多種合理方案，需說明取捨。
-4. 不要假裝只有一種正解。
+1. Prioritize high-risk issues over a long list of low-value nitpicks.
+2. Favor proposals that can land directly.
+3. When multiple reasonable approaches exist, name the trade-offs.
+4. Don't pretend there is only one correct answer.

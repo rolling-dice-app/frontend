@@ -1,81 +1,84 @@
 ---
 name: nuxt-conventions
-description: Nuxt 3 規範 — SSR/CSR 執行環境邊界、page 職責、data fetching (useAsyncData/useFetch/$fetch)、middleware、plugin、SEO、error.vue 與資料生命週期。當編輯 pages/layouts/middleware/plugins/composables/server 下檔案時自動參考。
+description: Nuxt 3 conventions — SSR / CSR boundary, page responsibility, data fetching (useAsyncData / useFetch / $fetch), middleware, plugin, SEO, error.vue, data lifecycle. Auto-load when editing pages / layouts / middleware / plugins / composables / server.
 paths: app/pages/**,app/layouts/**,app/middleware/**,app/plugins/**,app/composables/**,app/server/**
 ---
 
-# Nuxt 規範
+# Nuxt Conventions
 
-當處理 Nuxt 相關檔案時，請遵守以下規則。
+Apply these rules when working in Nuxt-managed directories.
 
-> ⚠️ 本專案第一版 MVP 使用 SPA 模式（`ssr: false`）。CSR 規則為當前優先適用標準；SSR / server route 規則為前瞻性保留，SPA 模式下不強制適用。
+> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR rules are the active standard; SSR / server-route rules are forward-looking and not enforced under SPA.
 
-## CSR 執行環境（當前適用）
+## CSR Runtime (Active)
 
-1. SPA 模式下不存在 hydration mismatch 問題。
-2. 瀏覽器 API（`window`、`document`、`localStorage`）可直接使用，不需 client guard。
-3. `onMounted` 是最早可存取 DOM 的生命週期。
-4. 所有資料取得皆發生在 client 端，應注意初始 loading state 的使用者體驗。
+1. SPA mode has no hydration mismatch concern.
+2. Browser APIs (`window`, `document`, `localStorage`) may be used directly without a client guard.
+3. `onMounted` is the earliest lifecycle for DOM access.
+4. All data fetching happens on the client; pay attention to initial loading UX.
 
-## SSR / CSR 邊界（未來啟用 SSR 後適用）
+## SSR / CSR Boundary (Future, Once SSR is Enabled)
 
-1. 所有實作都必須先確認執行環境。
-2. 不可在 server context 直接使用 `window`、`document`、`localStorage`。
-3. 若需使用瀏覽器 API，必須加上 client guard 或改為 client-only 流程。
-4. 需避免 hydration mismatch。
+1. Every implementation must first identify its execution context.
+2. Do not use `window`, `document`, `localStorage` in server context.
+3. Browser APIs require a client guard or a client-only flow.
+4. Avoid hydration mismatch.
 
-## Page 職責
+## Page Responsibility
 
-1. page 主要負責頁面組裝、資料協調與 SEO/meta 設定。
-2. page 不應承擔過多底層 transport、mapping、複雜狀態細節。
-3. 若 page 過胖，優先考慮抽出 composable 或 data layer。
+1. Pages handle composition, data orchestration, and SEO / meta.
+2. Pages don't carry low-level transport, mapping, or complex state detail.
+3. If a page becomes heavy, extract a composable or data layer first.
 
 ## Data Fetching
 
-1. `useAsyncData` 可用於自動快取與 key 管理，SPA 下行為等同 client-side fetch。
-2. `useFetch` 僅在符合其使用語意時使用。
-3. 互動後才觸發的請求，可考慮 `$fetch`。
-4. 避免序列 waterfall，多個獨立請求應並行處理。
-5. 不要讓 page 同時管理太多分散的 fetch lifecycle。
-6. 必須考慮 loading、error、empty state。
-7. 頁面切換時的 loading 體驗需明確處理（skeleton / spinner）。
+1. `useAsyncData` provides automatic caching and key management; under SPA it behaves like a client-side fetch.
+2. Use `useFetch` only when its semantics fit the call site.
+3. Interaction-triggered requests prefer `$fetch`.
+4. Avoid serial waterfalls; parallelize independent requests.
+5. Don't let a single page juggle many disjoint fetch lifecycles.
+6. Loading, error, and empty states must all be handled.
+7. Page-transition loading needs explicit treatment (skeleton / spinner).
 
-## Server Routes（未來啟用 SSR 後適用）
+## API Contract
 
-1. 涉及私密邏輯、server-only config、資料聚合時，優先 server routes。
-2. 不要把不安全的後端資訊直接暴露在前端。
-3. server route 回傳資料時，應盡量提供穩定結構。
+1. Request and response shapes come from `@rolling-dice-app/types`. Do not assume DB schema.
+2. The backend is authoritative; frontend treats its responses as the contract truth.
+
+## Server Routes (Future, Once SSR is Enabled)
+
+1. Anything that involves private logic, server-only config, or aggregation belongs in a server route.
+2. Don't expose unsafe backend information to the frontend.
+3. Server route responses should provide stable shapes.
 
 ## Middleware / Plugins
 
-1. middleware 主要處理路由守衛、權限檢查、導向，不承擔完整業務流程。
-2. plugin 不應成為大型雜物箱。
-3. runtimeConfig 必須明確區分 public / private。
+1. Middleware handles route guards, permission checks, and redirects — not full business flows.
+2. Plugins are not a miscellaneous junk drawer.
+3. `runtimeConfig` clearly separates `public` from server-only.
 
 ## SEO / Meta
 
-1. page 層應集中管理 SEO 與 meta。
-2. 需要時補上 title、description、canonical、open graph。
-3. 不要將 SEO 邏輯分散在多處。
+1. SEO and meta concerns concentrate at the page layer.
+2. Add `title`, `description`, `canonical`, OpenGraph as needed.
+3. Do not scatter SEO logic across multiple layers.
 
-## 錯誤頁面
+## Error Page
 
-1. 必須提供 `error.vue` 作為全域錯誤頁面，覆蓋 4xx / 5xx 錯誤情境。
-2. 依 `error.statusCode` 提供差異化呈現：`404` 導引使用者、`403` 說明權限、`500` 顯示通用提示。
-3. `error.vue` 絕對不可暴露 stack trace、API 路徑或 server 內部資訊。
-4. 使用 `clearError({ redirect: '/' })` 讓使用者可從錯誤頁回復正常流程。
+1. Provide `error.vue` as the global error page covering 4xx / 5xx.
+2. Differentiate by `error.statusCode`: 404 → guide back, 403 → explain permission, 500 → generic fallback.
+3. `error.vue` never exposes stack traces, API paths, or internal server detail.
+4. Use `clearError({ redirect: '/' })` to return users to a known good state.
 
-## 資料生命週期管理
+## Data Lifecycle
 
-1. 當需要強制重新取得已快取資料時，使用 `refreshNuxtData(key)` 觸發。
-2. 離開頁面或特定行為後需清除快取資料，使用 `clearNuxtData(key)`。
-3. 避免在不必要的情況下呼叫 `refreshNuxtData`，應优先依賴 Nuxt 的自動快取機制。
-4. 若頁面相同 key 的資料在不同路由間共用，需明確管理其生命週期，避免顯示過期資料。
+1. To force a refetch on cached data, use `refreshNuxtData(key)`.
+2. To clear cached data on leave or after a state change, use `clearNuxtData(key)`.
+3. Don't call `refreshNuxtData` reflexively; rely on Nuxt's caching where it works.
+4. When the same key is shared across routes, manage its lifecycle explicitly to avoid stale displays.
 
-## 避免事項
+## Anti-patterns
 
-1. 不要在 page 直接耦合多個 raw API response。
-2. 不要讓 middleware 或 plugin 承擔過多不相干責任。
-3. 以下為未來啟用 SSR 後適用：
-   - 不要忽略 server/client 執行差異。
-   - 不要使用 client-only 資料破壞首屏一致性。
+1. Pages directly coupled to multiple raw API response shapes.
+2. Middleware or plugins carrying unrelated responsibilities.
+3. (Future, once SSR is enabled): ignoring server / client execution differences; using client-only data that breaks first-screen consistency.

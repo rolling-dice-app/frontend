@@ -40,12 +40,21 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      '~': fileURLToPath(new URL('./app', import.meta.url)),
-      '@ui': fileURLToPath(new URL('./packages/ui', import.meta.url)),
-      '@vue/devtools-api': fileURLToPath(
-        new URL('./app/tests/__mocks__/@vue/devtools-api.ts', import.meta.url),
-      ),
-    },
+    alias: [
+      {
+        // Vue compiler 把 `<img src="~/assets/...">` 轉成 `import 'assets/...'`，
+        // 補上 alias 讓 vitest 在元件測試中能解析該 image import。
+        find: /^assets\//,
+        replacement: fileURLToPath(new URL('./app/assets/', import.meta.url)),
+      },
+      { find: '~', replacement: fileURLToPath(new URL('./app', import.meta.url)) },
+      { find: '@ui', replacement: fileURLToPath(new URL('./packages/ui', import.meta.url)) },
+      {
+        find: '@vue/devtools-api',
+        replacement: fileURLToPath(
+          new URL('./app/tests/__mocks__/@vue/devtools-api.ts', import.meta.url),
+        ),
+      },
+    ],
   },
 })

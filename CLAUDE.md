@@ -167,20 +167,20 @@ Detailed rules: `.claude/skills/pinia-conventions/`.
 
 Detailed conventions live in `.claude/skills/`. Claude auto-loads the relevant skill based on the file paths being edited.
 
-| Skill                        | Topic                                          | Trigger paths                                                                |
-| ---------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| `vue-conventions`            | Vue SFC structure, reactivity, component duty  | `app/**/*.vue`                                                               |
-| `nuxt-conventions`           | SSR/CSR boundary, data fetching, error.vue     | `app/{pages,layouts,middleware,plugins,composables,server}/**`               |
-| `pinia-conventions`          | Store design, storeToRefs, async actions       | `app/stores/**`, `app/**/*store*.ts`                                         |
-| `typescript-conventions`     | Type design, safety, naming                    | `app/**/*.{ts,tsx,vue}`                                                      |
-| `tailwind-conventions`       | Class ordering, responsive, tokens, @apply     | `app/**/*.{vue,tsx,jsx}`, `app/components/**`                                |
-| `testing-conventions`        | Vitest, @vue/test-utils, coverage              | `app/**/*.spec.ts`, `app/tests/**`, `vitest.config.*`                        |
-| `accessibility-conventions`  | Semantic HTML, ARIA, keyboard, WCAG AA         | `app/**/*.vue`, `app/components/**`, `app/pages/**`                          |
-| `security-conventions`       | XSS, sensitive data, server-route validation   | `app/**/*.{vue,ts}`, `app/server/**`, `app/composables/**`, `app/plugins/**` |
-| `error-handling-conventions` | Three-state UI, API errors, form errors        | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `app/server/**`   |
-| `performance-conventions`    | Load optimization, Web Vitals, bundle hygiene  | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `nuxt.config.ts`  |
-| `structure-conventions`      | Monorepo layout, folder structure, layering    | `app/**`                                                                     |
-| `review-conventions`         | Code review checklist                          | `app/**`                                                                     |
+| Skill                        | Topic                                         | Trigger paths                                                                |
+| ---------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------- |
+| `vue-conventions`            | Vue SFC structure, reactivity, component duty | `app/**/*.vue`                                                               |
+| `nuxt-conventions`           | SSR/CSR boundary, data fetching, error.vue    | `app/{pages,layouts,middleware,plugins,composables,server}/**`               |
+| `pinia-conventions`          | Store design, storeToRefs, async actions      | `app/stores/**`, `app/**/*store*.ts`                                         |
+| `typescript-conventions`     | Type design, safety, naming                   | `app/**/*.{ts,tsx,vue}`                                                      |
+| `tailwind-conventions`       | Class ordering, responsive, tokens, @apply    | `app/**/*.{vue,tsx,jsx}`, `app/components/**`                                |
+| `testing-conventions`        | Vitest, @vue/test-utils, coverage             | `app/**/*.spec.ts`, `app/tests/**`, `vitest.config.*`                        |
+| `accessibility-conventions`  | Semantic HTML, ARIA, keyboard, WCAG AA        | `app/**/*.vue`, `app/components/**`, `app/pages/**`                          |
+| `security-conventions`       | XSS, sensitive data, server-route validation  | `app/**/*.{vue,ts}`, `app/server/**`, `app/composables/**`, `app/plugins/**` |
+| `error-handling-conventions` | Three-state UI, API errors, form errors       | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `app/server/**`   |
+| `performance-conventions`    | Load optimization, Web Vitals, bundle hygiene | `app/**/*.{vue,ts}`, `app/pages/**`, `app/composables/**`, `nuxt.config.ts`  |
+| `structure-conventions`      | Monorepo layout, folder structure, layering   | `app/**`                                                                     |
+| `review-conventions`         | Code review checklist                         | `app/**`                                                                     |
 
 ## Default Output Expectations
 

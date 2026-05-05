@@ -31,12 +31,12 @@ Apply these rules whenever the work touches input / output, authentication, conf
 
 1. The following data must **not** appear in the listed locations:
 
-   | Sensitive data        | Forbidden location                                       |
-   | --------------------- | -------------------------------------------------------- |
-   | Auth token / session  | `localStorage` (use HttpOnly cookie)                     |
+   | Sensitive data                     | Forbidden location                              |
+   | ---------------------------------- | ----------------------------------------------- |
+   | Auth token / session               | `localStorage` (use HttpOnly cookie)            |
    | Personally identifiable info (PII) | URL query string, `console.log`, error messages |
-   | API keys / secrets    | Client-side bundle, `runtimeConfig.public`               |
-   | Passwords             | Client state, logs, any non-encrypted transport          |
+   | API keys / secrets                 | Client-side bundle, `runtimeConfig.public`      |
+   | Passwords                          | Client state, logs, any non-encrypted transport |
 
 2. `runtimeConfig` boundaries:
    - `runtimeConfig.public` — only public-safe configuration (GA ID, API base URL).

@@ -188,7 +188,7 @@ app/
 
 - Static lookup tables, enum-like maps, and named constants with no behavior — pure data, not pure functions.
 - Examples in this repo: D&D class lists, profession options, spell slot tables, storage key strings, navigation menu definitions.
-- Distinct from `helpers/` (functions) and `types/` (shapes); `constants/` ships *values*.
+- Distinct from `helpers/` (functions) and `types/` (shapes); `constants/` ships _values_.
 - Distinct from `@rolling-dice-app/types` enums: those are contract enums shared with backend; `constants/` is frontend-only static data and UI metadata.
 
 ### `mocks`
@@ -338,7 +338,7 @@ app/
    - toast
    - form submission
    - UI orchestration
-   unless these responsibilities sit within an acceptable bounded scope.
+     unless these responsibilities sit within an acceptable bounded scope.
 
 ## File-Placement Decision Order
 

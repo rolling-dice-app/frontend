@@ -91,12 +91,12 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
 
 ## Web Vitals
 
-| Metric                      | Description                              | Priority Strategy                                                                      |
-| --------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
-| **LCP** Largest Contentful Paint | First-screen main content load time | Image optimization, reduce render-blocking, lower bundle size under SPA               |
-| **INP** Interaction to Next Paint | Interaction response delay         | Avoid long tasks, reduce JS execution                                                  |
-| **CLS** Cumulative Layout Shift   | Unexpected shift during page load  | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space  |
-| **TTFB** Time to First Byte       | Server response latency            | Under SPA, depends on static-asset hosting; once SSR is on, server-route cache, CDN, edge |
+| Metric                            | Description                         | Priority Strategy                                                                         |
+| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| **LCP** Largest Contentful Paint  | First-screen main content load time | Image optimization, reduce render-blocking, lower bundle size under SPA                   |
+| **INP** Interaction to Next Paint | Interaction response delay          | Avoid long tasks, reduce JS execution                                                     |
+| **CLS** Cumulative Layout Shift   | Unexpected shift during page load   | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space     |
+| **TTFB** Time to First Byte       | Server response latency             | Under SPA, depends on static-asset hosting; once SSR is on, server-route cache, CDN, edge |
 
 ## Nuxt Specifics
 

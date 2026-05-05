@@ -22,6 +22,7 @@ Apply these baseline accessibility requirements when implementing, reviewing, or
    - Page navigation → `<a href="...">`
    - Data input → `<input>` / `<select>` / `<textarea>`
 2. Don't use `<div>` or `<span>` to fake a button without sufficient ARIA support:
+
    ```html
    <!-- Avoid -->
    <div @click="submit">Submit</div>
@@ -29,6 +30,7 @@ Apply these baseline accessibility requirements when implementing, reviewing, or
    <!-- Correct -->
    <button type="button" @click="submit">Submit</button>
    ```
+
 3. Page structure uses semantic block elements: `<header>`, `<main>`, `<nav>`, `<footer>`, `<section>`, `<article>`.
 4. Heading levels (`<h1>` → `<h6>`) reflect information architecture; do not pick a level for visual sizing.
 

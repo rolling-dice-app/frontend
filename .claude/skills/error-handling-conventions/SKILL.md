@@ -31,6 +31,7 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
 
 1. API error responses use a unified handling pattern; do not reinvent it in each page or component.
 2. `useAsyncData` / `useFetch` `error` refs must be handled explicitly — not silently ignored:
+
    ```ts
    const { data, error, status } = await useAsyncData('key', fetcher)
 
@@ -38,6 +39,7 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
      // Handle explicitly, not just console.log
    }
    ```
+
 3. `$fetch` calls go inside try / catch with status-specific handling:
    - `400`: client input issue; reflect in the form UI.
    - `401`: needs auth; redirect to login or trigger refresh-token flow.
@@ -100,11 +102,11 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
 
 Every data-driven UI block handles three states:
 
-| State       | Requirement                                                      |
-| ----------- | ---------------------------------------------------------------- |
-| **Loading** | Skeleton or spinner; avoid layout shift (CLS).                   |
-| **Error**   | Clear error message with a retry entry point.                    |
-| **Empty**   | Explicit empty-state message — not a blank canvas.               |
+| State       | Requirement                                        |
+| ----------- | -------------------------------------------------- |
+| **Loading** | Skeleton or spinner; avoid layout shift (CLS).     |
+| **Error**   | Clear error message with a retry entry point.      |
+| **Empty**   | Explicit empty-state message — not a blank canvas. |
 
 Missing any of the three counts as incomplete implementation.
 

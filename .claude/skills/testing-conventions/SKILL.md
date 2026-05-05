@@ -62,7 +62,12 @@ By value, highest to lowest:
    - User interactions (click, input) and emitted events.
    - Slot rendering.
 4. Don't assert CSS class details unless the class has observable functional meaning.
-5. Select elements via `data-testid`, not CSS class or HTML structure.
+5. **Element selection priority** (testing-library style — pick the first that fits):
+   1. **ARIA-driven**: `aria-label`, `aria-labelledby`, `role`, `aria-pressed`, `aria-disabled`, `aria-expanded`, etc. Drives behavior tests **and** surfaces a11y gaps — if the component has no ARIA hook to grab, the component's accessibility is incomplete.
+   2. **Visible text content**: only when the text is stable and not subject to i18n churn (`wrapper.text().toContain('已穩定')`).
+   3. **`data-testid`**: fallback when no semantic anchor exists, or for dynamic list items needing a stable key (e.g., `data-testid="character-card-${id}"`). Add a `data-testid` to the production component only when steps 1–2 cannot reach the element.
+   4. **Avoid**: CSS class names, structural selectors (`div > div > button:nth-child(2)`), and `id`. These couple tests to styling / structure that may change for non-behavioral reasons.
+6. ARIA attributes used as selectors are part of the component's contract — removing them in production code should fail tests, signaling either a regression or an intentional contract change.
 
 ## Store Tests
 

@@ -9,7 +9,10 @@ export default defineNuxtConfig({
   // SPA mode — no server required; migrate to SSR/hybrid when backend is ready
   ssr: false,
 
-  // GitHub Pages base URL (set via NUXT_APP_BASE_URL env var in CI)
+  // baseURL set via NUXT_APP_BASE_URL env var
+  // - GitHub Pages (frozen demo) CI: '/rolling-dice/'
+  // - Vercel: '/'
+  // - local dev: '/'
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
     head: {
@@ -22,6 +25,16 @@ export default defineNuxtConfig({
       ],
       title: 'Rolling Dice',
       titleTemplate: '%s | Rolling Dice',
+    },
+  },
+
+  // Runtime config exposed to client; override via NUXT_PUBLIC_* env vars
+  // - deployTarget: 'github-pages' (frozen demo) | 'vercel' | 'local'
+  // - apiBase: backend API origin; empty until M0
+  runtimeConfig: {
+    public: {
+      deployTarget: 'github-pages',
+      apiBase: '',
     },
   },
 

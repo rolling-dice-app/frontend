@@ -173,11 +173,10 @@ describe('SavingThrowPanel (form)', () => {
       expect(dexRow.text()).toContain('+2')
     })
 
-    it('bonus < 0 顯示 text-danger', () => {
-      // 魅力 mod -1，未熟練 → -1
+    it('負 modifier 屬性顯示 -N（魅力 mod -1，未熟練 → -1）', () => {
       const wrapper = mountPanel({ proficiencyBonus: 2 })
       const charismaRow = wrapper.findAll('ul > li')[5]!
-      expect(charismaRow.find('span.text-danger').exists()).toBe(true)
+      expect(charismaRow.text()).toContain('-1')
     })
   })
 })

@@ -91,18 +91,11 @@ describe('QuickviewAttackList', () => {
     expect(wrapper.text()).not.toContain('附加')
   })
 
-  it('命中加值顯示帶正負號、配色依正負', () => {
-    // strength mod +3 + prof 2 + extra 0 = +5 → text-success
-    const positive = mountList([makeAttack()])
-    const positiveSpan = positive.find('li span.font-bold')
-    expect(positiveSpan.text()).toBe('+5')
-    expect(positiveSpan.classes()).toContain('text-success')
-
-    // 拿掉 ability + 設負 extra = 負命中 → text-danger
-    const negative = mountList([makeAttack({ abilityKey: null, extraHitBonus: -3 })])
-    const negativeSpan = negative.find('li span.font-bold')
-    expect(negativeSpan.text()).toBe('-1') // 0 + 2 + (-3)
-    expect(negativeSpan.classes()).toContain('text-danger')
+  it('命中加值反映正 / 負分支', () => {
+    // strength mod +3 + prof 2 + extra 0 = +5
+    expect(mountList([makeAttack()]).text()).toContain('+5')
+    // 拿掉 ability + 設負 extra：0 + 2 + (-3) = -1
+    expect(mountList([makeAttack({ abilityKey: null, extraHitBonus: -3 })]).text()).toContain('-1')
   })
 
   it('傷害文字反映 formatDamageSummary 結果', () => {

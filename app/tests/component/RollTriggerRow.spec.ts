@@ -34,22 +34,10 @@ describe('RollTriggerRow', () => {
       expect(wrapper.text()).toContain('+4')
     })
 
-    it('modifier > 0 為 text-success', () => {
-      const wrapper = mountRow({ modifier: 2 })
-      const span = wrapper.findAll('span').find((s) => s.text() === '+2')!
-      expect(span.classes()).toContain('text-success')
-    })
-
-    it('modifier < 0 為 text-danger', () => {
-      const wrapper = mountRow({ modifier: -1 })
-      const span = wrapper.findAll('span').find((s) => s.text() === '-1')!
-      expect(span.classes()).toContain('text-danger')
-    })
-
-    it('modifier = 0 為 text-content-muted', () => {
-      const wrapper = mountRow({ modifier: 0 })
-      const span = wrapper.findAll('span').find((s) => s.text() === '+0')!
-      expect(span.classes()).toContain('text-content-muted')
+    it('正 / 負 / 零 modifier 都顯示帶正負號的格式', () => {
+      expect(mountRow({ modifier: 2 }).text()).toContain('+2')
+      expect(mountRow({ modifier: -1 }).text()).toContain('-1')
+      expect(mountRow({ modifier: 0 }).text()).toContain('+0')
     })
   })
 

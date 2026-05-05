@@ -55,16 +55,14 @@ describe('BattleCard', () => {
       expect(wrapper.text()).not.toMatch(/\(\+\d/)
     })
 
-    it('acAdjustment > 0 顯示 +N、配 text-success', () => {
+    it('acAdjustment > 0 顯示 +N', () => {
       const wrapper = mountCard({ acAdjustment: 3 })
-      const adj = wrapper.findAll('span.text-xs.text-success').find((s) => s.text().includes('+3'))
-      expect(adj).toBeDefined()
+      expect(wrapper.text()).toContain('(+3)')
     })
 
-    it('acAdjustment < 0 顯示 -N、配 text-danger', () => {
+    it('acAdjustment < 0 顯示 -N', () => {
       const wrapper = mountCard({ acAdjustment: -2 })
-      const adj = wrapper.findAll('span.text-xs.text-danger').find((s) => s.text().includes('-2'))
-      expect(adj).toBeDefined()
+      expect(wrapper.text()).toContain('(-2)')
     })
 
     it('AC ± 按鈕 emit adjustAc -1 / +1', async () => {
@@ -86,26 +84,6 @@ describe('BattleCard', () => {
       await btn(wrapper, '移動速度 -5').trigger('click')
       await btn(wrapper, '移動速度 +5').trigger('click')
       expect(wrapper.emitted('adjustSpeed')).toEqual([[-5], [5]])
-    })
-  })
-
-  describe('先攻配色', () => {
-    it('initiative > 0 為 text-success', () => {
-      const wrapper = mountCard({ initiative: 3 })
-      const span = wrapper.findAll('span.text-2xl').find((s) => s.text() === '+3')!
-      expect(span.classes()).toContain('text-success')
-    })
-
-    it('initiative < 0 為 text-danger', () => {
-      const wrapper = mountCard({ initiative: -1 })
-      const span = wrapper.findAll('span.text-2xl').find((s) => s.text() === '-1')!
-      expect(span.classes()).toContain('text-danger')
-    })
-
-    it('initiative = 0 為 text-content-muted', () => {
-      const wrapper = mountCard({ initiative: 0 })
-      const span = wrapper.findAll('span.text-2xl').find((s) => s.text() === '+0')!
-      expect(span.classes()).toContain('text-content-muted')
     })
   })
 

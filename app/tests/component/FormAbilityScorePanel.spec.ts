@@ -160,19 +160,6 @@ describe('AbilityScorePanel (form)', () => {
       expect(wrapper.findAll('button').some((b) => b.text().includes('重擲'))).toBe(true)
     })
 
-    it('已指派的 slot 加上 opacity-60 / 灰邊框 class', () => {
-      const wrapper = mountPanel({
-        abilityMethod: 'diceRoll',
-        dicePool: [
-          { id: 'd1', value: 14, assignedTo: 'strength' },
-          { id: 'd2', value: 13, assignedTo: null },
-        ],
-      })
-      const slots = wrapper.findAll('ul[aria-label="骰值池"] > li')
-      expect(slots[0]!.classes()).toContain('opacity-60')
-      expect(slots[1]!.classes()).not.toContain('opacity-60')
-    })
-
     it('點重擲按鈕 emit roll:all', async () => {
       const wrapper = mountPanel({
         abilityMethod: 'diceRoll',

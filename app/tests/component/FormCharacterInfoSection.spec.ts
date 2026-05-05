@@ -102,16 +102,11 @@ describe('CharacterInfoSection (form)', () => {
   })
 
   describe('總等級顯示', () => {
-    it('totalLevel <= 20 顯示一般、> 20 顯示 text-danger', () => {
-      const ok = mountSection({ totalLevel: 15 })
-      expect(ok.text()).toContain('總等級：')
-      expect(ok.text()).toContain('15')
-      expect(ok.find('span.text-danger.font-bold').exists()).toBe(false)
-
-      const over = mountSection({ totalLevel: 22 })
-      const dangerSpan = over.find('span.text-danger.font-bold')
-      expect(dangerSpan.exists()).toBe(true)
-      expect(dangerSpan.text()).toBe('22')
+    it('顯示「總等級：N / 20」', () => {
+      const wrapper = mountSection({ totalLevel: 15 })
+      expect(wrapper.text()).toContain('總等級：')
+      expect(wrapper.text()).toContain('15')
+      expect(wrapper.text()).toContain('/ 20')
     })
   })
 

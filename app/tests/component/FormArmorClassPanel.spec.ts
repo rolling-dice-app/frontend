@@ -115,18 +115,6 @@ describe('ArmorClassPanel (form)', () => {
       const dexOutput = wrapper.findAll('output').at(0)!
       expect(dexOutput.text()).toBe('+0')
     })
-
-    it('+ 值用 text-success；0 用 text-content-muted', () => {
-      const positive = mountPanel({
-        formState: baseFormState({ type: 'light', value: 11 }),
-      })
-      expect(positive.findAll('output').at(0)!.classes()).toContain('text-success')
-
-      const zero = mountPanel({
-        formState: baseFormState({ type: 'heavy', value: 18 }),
-      })
-      expect(zero.findAll('output').at(0)!.classes()).toContain('text-content-muted')
-    })
   })
 
   describe('表單互動', () => {

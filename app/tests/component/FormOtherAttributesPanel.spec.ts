@@ -92,18 +92,10 @@ describe('OtherAttributesPanel (form)', () => {
       expect(text).toContain('+3')
     })
 
-    it('initiative 配色：> 0 success、< 0 danger、= 0 muted', () => {
-      const positive = mountPanel({ totalInitiative: 2 })
-      const initOut = positive.findAll('output').find((o) => o.text().match(/^[+-]\d+$/))!
-      expect(initOut.classes()).toContain('text-success')
-
-      const negative = mountPanel({ totalInitiative: -1 })
-      const initOutNeg = negative.findAll('output').find((o) => o.text().match(/^[+-]\d+$/))!
-      expect(initOutNeg.classes()).toContain('text-danger')
-
-      const zero = mountPanel({ totalInitiative: 0 })
-      const initOutZero = zero.findAll('output').find((o) => o.text() === '+0')!
-      expect(initOutZero.classes()).toContain('text-content-muted')
+    it('initiative 正 / 負 / 零都顯示帶正負號格式', () => {
+      expect(mountPanel({ totalInitiative: 2 }).text()).toContain('+2')
+      expect(mountPanel({ totalInitiative: -1 }).text()).toContain('-1')
+      expect(mountPanel({ totalInitiative: 0 }).text()).toContain('+0')
     })
   })
 

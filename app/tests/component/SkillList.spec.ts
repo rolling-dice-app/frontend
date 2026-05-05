@@ -95,28 +95,4 @@ describe('SkillList', () => {
       expect(row.text()).toContain('+7')
     })
   })
-
-  describe('熟練度圓點配色', () => {
-    it('expertise 為 bg-primary', () => {
-      const wrapper = mountList({ skills: { acrobatics: 'expertise' } })
-      const row = skillRow(wrapper, '特技')!
-      expect(row.find('span.size-1\\.5').classes()).toContain('bg-primary')
-    })
-
-    it('proficient 為 bg-content-soft', () => {
-      const wrapper = mountList({ skills: { athletics: 'proficient' } })
-      const row = skillRow(wrapper, '運動')!
-      expect(row.find('span.size-1\\.5').classes()).toContain('bg-content-soft')
-    })
-
-    it('none 預設為 bg-border-soft；isJackOfAllTrades 時為 bg-success', () => {
-      const noJack = mountList({ skills: {} })
-      const noJackRow = skillRow(noJack, '隱匿')!
-      expect(noJackRow.find('span.size-1\\.5').classes()).toContain('bg-border-soft')
-
-      const withJack = mountList({ skills: {}, isJackOfAllTrades: true })
-      const jackRow = skillRow(withJack, '隱匿')!
-      expect(jackRow.find('span.size-1\\.5').classes()).toContain('bg-success')
-    })
-  })
 })

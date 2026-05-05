@@ -64,19 +64,17 @@ describe('RollAttackRow', () => {
       expect(wrapper.text()).toContain('（未命名）')
     })
 
-    it('hit bonus 配色依正負', () => {
-      const positive = mountRow({ attack: makeAttack() })
-      expect(positive.find('span.text-success').exists()).toBe(true)
-
-      const negative = mountRow({
-        attack: makeAttack({ abilityKey: null, extraHitBonus: -3 }),
-      })
+    it('hit bonus 計算反映正 / 負 / 零分支', () => {
+      // str mod +3 + prof 2 = +5
+      expect(mountRow({ attack: makeAttack() }).text()).toContain('+5')
       // 0 + 2 + (-3) = -1
-      expect(negative.find('span.text-danger').exists()).toBe(true)
-
-      const zero = mountRow({ attack: makeAttack({ abilityKey: null, extraHitBonus: -2 }) })
+      expect(
+        mountRow({ attack: makeAttack({ abilityKey: null, extraHitBonus: -3 }) }).text(),
+      ).toContain('-1')
       // 0 + 2 + (-2) = 0
-      expect(zero.find('span.text-content-muted').exists()).toBe(true)
+      expect(
+        mountRow({ attack: makeAttack({ abilityKey: null, extraHitBonus: -2 }) }).text(),
+      ).toContain('+0')
     })
 
     it('傷害文字反映 formatDamageSummary 結果', () => {

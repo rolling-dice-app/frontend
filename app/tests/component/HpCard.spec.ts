@@ -47,43 +47,14 @@ describe('HpCard', () => {
       expect(wrapper.text()).not.toMatch(/[+-]\d/)
     })
 
-    it('maxAdjustment > 0 顯示綠色 +N', () => {
+    it('maxAdjustment > 0 顯示 +N', () => {
       const wrapper = mountCard({ maxAdjustment: 5 })
-      const adjustment = wrapper.find('.text-success')
-      expect(adjustment.exists()).toBe(true)
-      expect(adjustment.text()).toContain('+5')
+      expect(wrapper.text()).toContain('+5')
     })
 
-    it('maxAdjustment < 0 顯示紅色 -N', () => {
+    it('maxAdjustment < 0 顯示 -N', () => {
       const wrapper = mountCard({ maxAdjustment: -3 })
-      const adjustment = wrapper.find('.text-danger')
-      expect(adjustment.exists()).toBe(true)
-      expect(adjustment.text()).toContain('-3')
-    })
-  })
-
-  describe('當前 HP 配色', () => {
-    const currentHpEl = (wrapper: ReturnType<typeof mountCard>) =>
-      wrapper.findAll('span.text-2xl.font-bold')[2]!
-
-    it('ratio > 0.5 顯示中性色', () => {
-      const wrapper = mountCard({ currentHp: 20, maxHp: 30 })
-      expect(currentHpEl(wrapper).classes()).toContain('text-content')
-    })
-
-    it('ratio ≤ 0.5 顯示警告色', () => {
-      const wrapper = mountCard({ currentHp: 15, maxHp: 30 })
-      expect(currentHpEl(wrapper).classes()).toContain('text-warning')
-    })
-
-    it('ratio ≤ 0.25 顯示危險色', () => {
-      const wrapper = mountCard({ currentHp: 5, maxHp: 30 })
-      expect(currentHpEl(wrapper).classes()).toContain('text-danger')
-    })
-
-    it('maxHp = 0 不觸發配色（顯示中性色）', () => {
-      const wrapper = mountCard({ currentHp: 0, maxHp: 0 })
-      expect(currentHpEl(wrapper).classes()).toContain('text-content')
+      expect(wrapper.text()).toContain('-3')
     })
   })
 

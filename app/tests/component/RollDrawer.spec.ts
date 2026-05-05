@@ -1,0 +1,341 @@
+import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
+import { MOCK_CHARACTERS } from '~/mocks/characters'
+import RollDrawer from '~/components/business/character/quickview/RollDrawer.vue'
+import { getAbilityModifier } from '~/helpers/ability'
+import { getSavingThrowBonus, getSkillBonus } from '~/helpers/character'
+import { getAttackHit } from '~/helpers/combat'
+import type { AttackEntry, Character } from '@rolling-dice-app/types'
+import type { TotalAbilityScores } from '~/types/business/character-form'
+
+vi.mock('~/helpers/dice', () => ({
+  rollD20: vi.fn(),
+  rollDice: vi.fn(),
+  rollDie: vi.fn(),
+}))
+
+const { rollD20, rollDice } = await import('~/helpers/dice')
+
+const push = vi.fn()
+const clear = vi.fn()
+const entries = ref<unknown[]>([])
+
+beforeEach(() => {
+  push.mockClear()
+  clear.mockClear()
+  entries.value = []
+  vi.stubGlobal('useDiceRollLog', () => ({ push, clear, entries }))
+  vi.stubGlobal('getAbilityModifier', getAbilityModifier)
+  vi.stubGlobal('getSavingThrowBonus', getSavingThrowBonus)
+  vi.stubGlobal('getSkillBonus', getSkillBonus)
+  vi.stubGlobal('getAttackHit', getAttackHit)
+  vi.mocked(rollD20).mockReset()
+  vi.mocked(rollDice).mockReset()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+const ABILITY_SCORES: TotalAbilityScores = {
+  strength: 16, // mod +3
+  dexterity: 14, // mod +2
+  constitution: 12, // mod +1
+  intelligence: 10, // mod 0
+  wisdom: 10,
+  charisma: 10,
+}
+
+const DrawerStub = {
+  name: 'Drawer',
+  props: ['modelValue', 'placement', 'size', 'title', 'bgColor', 'textColor', 'borderColor'],
+  emits: ['update:modelValue'],
+  template: `<div data-drawer><slot v-if="modelValue" /></div>`,
+}
+
+const TriggerRowStub = {
+  name: 'BusinessCharacterQuickviewRollTriggerRow',
+  props: ['label', 'modifier'],
+  emits: ['roll'],
+  template: `<li data-trigger-row :data-label="label" :data-modifier="modifier" />`,
+}
+
+const AttackRowStub = {
+  name: 'BusinessCharacterQuickviewRollAttackRow',
+  props: ['attack', 'abilityScores', 'proficiencyBonus'],
+  emits: ['rollHit', 'rollDamage'],
+  template: `<li data-attack-row :data-name="attack.name" />`,
+}
+
+const OutputListStub = {
+  name: 'BusinessCharacterQuickviewRollOutputList',
+  props: ['entries'],
+  emits: ['clear'],
+  template: `<div data-output-list />`,
+}
+
+const makeAttack = (overrides: Partial<AttackEntry> = {}): AttackEntry => ({
+  id: overrides.id ?? `atk-${Math.random()}`,
+  name: '長劍',
+  abilityKey: 'strength',
+  damageDice: [{ id: 'd-1', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' }],
+  extraHitBonus: null,
+  applyAbilityToDamage: true,
+  comment: null,
+  ...overrides,
+})
+
+const makeCharacter = (overrides: Partial<Character> = {}): Character => ({
+  ...(MOCK_CHARACTERS[0] as Character),
+  ...overrides,
+})
+
+const mountDrawer = (
+  params: {
+    character?: Character
+    abilityScores?: TotalAbilityScores
+    proficiencyBonus?: number
+    savingThrowProficiencies?: (
+      | 'strength'
+      | 'dexterity'
+      | 'constitution'
+      | 'intelligence'
+      | 'wisdom'
+      | 'charisma'
+    )[]
+    savingThrowAdjustments?: Partial<Record<string, number>>
+  } = {},
+) =>
+  mount(RollDrawer, {
+    props: {
+      character: params.character ?? makeCharacter(),
+      abilityScores: params.abilityScores ?? ABILITY_SCORES,
+      proficiencyBonus: params.proficiencyBonus ?? 2,
+      savingThrowProficiencies: params.savingThrowProficiencies ?? [],
+      savingThrowAdjustments: params.savingThrowAdjustments ?? {},
+    },
+    global: {
+      stubs: {
+        Icon: true,
+        Drawer: DrawerStub,
+        BusinessCharacterQuickviewRollTriggerRow: TriggerRowStub,
+        BusinessCharacterQuickviewRollAttackRow: AttackRowStub,
+        BusinessCharacterQuickviewRollOutputList: OutputListStub,
+      },
+    },
+  })
+
+const triggerBtn = (wrapper: ReturnType<typeof mountDrawer>) =>
+  wrapper.find('button[aria-label="開啟擲骰面板"]')
+
+const openDrawer = async (wrapper: ReturnType<typeof mountDrawer>) => {
+  await triggerBtn(wrapper).trigger('click')
+  await nextTick()
+}
+
+const triggerRows = (wrapper: ReturnType<typeof mountDrawer>) =>
+  wrapper.findAllComponents(TriggerRowStub)
+
+const findRowByLabel = (wrapper: ReturnType<typeof mountDrawer>, label: string) =>
+  triggerRows(wrapper).find((row) => row.props('label') === label)
+
+describe('RollDrawer', () => {
+  describe('Drawer 開合', () => {
+    it('預設關閉，aria-expanded = false', () => {
+      const wrapper = mountDrawer()
+      expect(triggerBtn(wrapper).attributes('aria-expanded')).toBe('false')
+    })
+
+    it('點觸發按鈕後 aria-expanded = true', async () => {
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      expect(triggerBtn(wrapper).attributes('aria-expanded')).toBe('true')
+    })
+  })
+
+  describe('行數與計算', () => {
+    it('開啟後渲染 6 個 ability row、6 個 saving-throw row、18 個 skill row', async () => {
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      // 6 ability + 6 saving + 18 skill = 30
+      expect(triggerRows(wrapper)).toHaveLength(6 + 6 + 18)
+    })
+
+    it('ability row 的 modifier 對應 abilityScores 的 mod', async () => {
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '力量')
+      expect(row?.props('modifier')).toBe(3) // mod +3
+    })
+
+    it('saving-throw 不熟練時 modifier = ability mod + adjustment', async () => {
+      const wrapper = mountDrawer({
+        savingThrowAdjustments: { strength: 1 },
+      })
+      await openDrawer(wrapper)
+      // 力量豁免在 ability 與 saving 兩 section 都會出現「力量」label
+      // saving-throw section 在 ability section 之後
+      const rows = triggerRows(wrapper)
+      const strengthSavingRow = rows.filter((r) => r.props('label') === '力量')[1]!
+      expect(strengthSavingRow.props('modifier')).toBe(3 + 1) // 不熟練：mod +3 + adjust +1
+    })
+
+    it('saving-throw 有熟練時 modifier 加 proficiencyBonus', async () => {
+      const wrapper = mountDrawer({
+        savingThrowProficiencies: ['strength'],
+        proficiencyBonus: 3,
+      })
+      await openDrawer(wrapper)
+      const strengthSavingRow = triggerRows(wrapper).filter((r) => r.props('label') === '力量')[1]!
+      expect(strengthSavingRow.props('modifier')).toBe(3 + 3) // mod +3 + prof 3
+    })
+
+    it('isJackOfAllTrades 時 proficiency=none 的 skill 加 floor(prof/2)', async () => {
+      const wrapper = mountDrawer({
+        character: makeCharacter({ isJackOfAllTrades: true, skills: {} }),
+        proficiencyBonus: 4,
+      })
+      await openDrawer(wrapper)
+      // 運動（力量）proficiency none、jack +2 → mod +3 + 2 = +5
+      const row = findRowByLabel(wrapper, '運動')
+      expect(row?.props('modifier')).toBe(3 + 2)
+    })
+  })
+
+  describe('Attack section 條件渲染', () => {
+    it('character.attacks 為空時不渲染攻擊區', async () => {
+      const wrapper = mountDrawer({ character: makeCharacter({ attacks: [] }) })
+      await openDrawer(wrapper)
+      expect(wrapper.find('section[aria-labelledby="roll-section-attack"]').exists()).toBe(false)
+      expect(wrapper.findAllComponents(AttackRowStub)).toHaveLength(0)
+    })
+
+    it('character.attacks 有資料時渲染攻擊區與對應行數', async () => {
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          attacks: [makeAttack({ id: 'a' }), makeAttack({ id: 'b' })],
+        }),
+      })
+      await openDrawer(wrapper)
+      expect(wrapper.find('section[aria-labelledby="roll-section-attack"]').exists()).toBe(true)
+      expect(wrapper.findAllComponents(AttackRowStub)).toHaveLength(2)
+    })
+  })
+
+  describe('handleD20Roll', () => {
+    it('chosen = 20 → push isCritical=true、total = chosen + modifier', async () => {
+      vi.mocked(rollD20).mockReturnValueOnce({ rolls: [20], chosen: 20 })
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '力量')!
+      row.vm.$emit('roll', 'normal')
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'ability',
+          label: '力量',
+          chosen: 20,
+          modifier: 3,
+          total: 23,
+          isCritical: true,
+          isFumble: false,
+        }),
+      )
+    })
+
+    it('chosen = 1 → push isFumble=true', async () => {
+      vi.mocked(rollD20).mockReturnValueOnce({ rolls: [1], chosen: 1 })
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '力量')!
+      row.vm.$emit('roll', 'normal')
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ chosen: 1, isFumble: true, isCritical: false }),
+      )
+    })
+  })
+
+  describe('handleAttackHit', () => {
+    it('攻擊命中 push label 含攻擊名 + 命中、kind = attack-hit', async () => {
+      vi.mocked(rollD20).mockReturnValueOnce({ rolls: [10], chosen: 10 })
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          attacks: [makeAttack({ id: 'a', name: '長劍' })],
+        }),
+      })
+      await openDrawer(wrapper)
+      const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
+      attackRow.vm.$emit('rollHit', 'normal')
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'attack-hit',
+          label: '長劍 命中',
+        }),
+      )
+    })
+  })
+
+  describe('handleAttackDamage', () => {
+    it('一般傷害：count 不翻倍、push entry total 正確', async () => {
+      // 1d8+0 ability mod +3（applyAbilityToDamage true, str mod +3） → 骰 [5] + 3 = 8
+      vi.mocked(rollDice).mockReturnValueOnce([5])
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          attacks: [makeAttack({ id: 'a', name: '長劍' })],
+        }),
+      })
+      await openDrawer(wrapper)
+      const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
+      attackRow.vm.$emit('rollDamage', false)
+      expect(rollDice).toHaveBeenCalledWith(1, 8)
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'attack-damage',
+          label: '長劍 傷害',
+          isCritical: false,
+          total: 8,
+        }),
+      )
+    })
+
+    it('暴擊：rollDice 用 count*2 呼叫', async () => {
+      vi.mocked(rollDice).mockReturnValueOnce([5, 6])
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          attacks: [makeAttack({ id: 'a', name: '長劍' })],
+        }),
+      })
+      await openDrawer(wrapper)
+      const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
+      attackRow.vm.$emit('rollDamage', true)
+      expect(rollDice).toHaveBeenCalledWith(2, 8)
+      expect(push).toHaveBeenCalledWith(expect.objectContaining({ isCritical: true }))
+    })
+
+    it('renderable 為空（純 0 加值且無骰）時不 push', async () => {
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          attacks: [
+            makeAttack({
+              id: 'a',
+              applyAbilityToDamage: false, // 排除 ability mod
+              damageDice: [{ id: 'd-1', dieType: null, count: 0, bonus: 0, damageType: null }],
+            }),
+          ],
+        }),
+      })
+      await openDrawer(wrapper)
+      const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
+      attackRow.vm.$emit('rollDamage', false)
+      expect(push).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('character 切換', () => {
+    it('character.id 變動時呼叫 clear', async () => {
+      const wrapper = mountDrawer({ character: makeCharacter({ id: 'c-1' }) })
+      await wrapper.setProps({ character: makeCharacter({ id: 'c-2' }) })
+      expect(clear).toHaveBeenCalled()
+    })
+  })
+})

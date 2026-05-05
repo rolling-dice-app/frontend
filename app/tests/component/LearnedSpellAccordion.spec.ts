@@ -12,8 +12,7 @@ import {
 } from '~/helpers/spell'
 import { useCharacterStore } from '~/stores/character'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import type { Character } from '~/types/business/character'
-import type { Spell } from '~/types/business/spell'
+import type { Character, Spell } from '@rolling-dice-app/types'
 
 const CHAR_ID = 'lsa-001'
 const FIREBALL_ID = 'cccccccc-0000-0000-0000-000000000001'

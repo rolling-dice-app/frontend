@@ -40,8 +40,8 @@
 
 <script setup lang="ts">
 import { ABILITY_NAMES } from '~/constants/dnd'
-import type { TotalAbilityScores } from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { TotalAbilityScores } from '~/types/business/character-form'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   selectedAbilities: AbilityKey[]

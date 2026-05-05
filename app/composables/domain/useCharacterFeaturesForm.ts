@@ -1,4 +1,4 @@
-import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character'
+import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
 /** 角色特性（CharacterCapabilities.features）的 form mutation 包裝 */
 export function useCharacterFeaturesForm(formState: CharacterUpdateFormState) {

@@ -1,4 +1,4 @@
-import type { CharacterCurrency } from '~/types/business/character'
+import type { CharacterCurrency } from '@rolling-dice-app/types'
 
 /** 單筆冒險 / 團務紀錄 */
 export interface AdventureEntry {

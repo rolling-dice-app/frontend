@@ -246,13 +246,17 @@
 import { Modal, Button, Icon, Toggle, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import type {
-  TotalAbilityScores,
-  AttackDraft,
   AttackEntry,
-  CharacterUpdateFormState,
   DamageDieEntry,
-} from '~/types/business/character'
-import type { AbilityKey, DamageDieType, DamageTypeKey } from '~/types/business/dnd'
+  AbilityKey,
+  DamageDieType,
+  DamageTypeKey,
+} from '@rolling-dice-app/types'
+import type {
+  AttackDraft,
+  CharacterUpdateFormState,
+  TotalAbilityScores,
+} from '~/types/business/character-form'
 import {
   ABILITY_NAMES,
   DAMAGE_DIE_TYPES,

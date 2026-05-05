@@ -1,9 +1,5 @@
-import type {
-  Character,
-  CharacterFormState,
-  CharacterUpdateFormState,
-} from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { Character, AbilityKey } from '@rolling-dice-app/types'
+import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import { ABILITY_KEYS } from '~/constants/dnd'
 import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
 import {

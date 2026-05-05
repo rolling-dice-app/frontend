@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { useCharacterFeaturesForm } from '~/composables/domain/useCharacterFeaturesForm'
 import { createMockUpdateFormState } from '~/tests/fixtures/character'
-import type { FeatureDraft } from '~/types/business/character'
+import type { FeatureDraft } from '~/types/business/character-form'
 
 function setup() {
   const formState = reactive(createMockUpdateFormState())

@@ -1,13 +1,17 @@
 import type {
   ArmorClassConfig,
   CharacterAbilityScores,
-  CharacterFormStateBase,
   CharacterTier,
-  CharacterWritablePatch,
   ProfessionEntry,
+  AbilityKey,
+  ArmorType,
+  ProficiencyLevel,
+} from '@rolling-dice-app/types'
+import type {
+  CharacterFormStateBase,
+  CharacterWritablePatch,
   TotalAbilityScores,
-} from '~/types/business/character'
-import type { AbilityKey, ArmorType, ProficiencyLevel } from '~/types/business/dnd'
+} from '~/types/business/character-form'
 import { ABILITY_KEYS, PROFESSION_CONFIG, UNARMORED_AC_BASE } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
 

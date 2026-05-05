@@ -135,8 +135,13 @@ import {
   CUSTOM_ABILITY_MIN,
   POINT_BUY_BUDGET,
 } from '~/constants/dnd'
-import type { AbilityMethod, AbilityScores, DiceCell, DiceSlot } from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type {
+  AbilityMethod,
+  AbilityScores,
+  DiceCell,
+  DiceSlot,
+} from '~/types/business/character-form'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   abilities: AbilityScores

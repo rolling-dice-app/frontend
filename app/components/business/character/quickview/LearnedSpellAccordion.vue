@@ -119,8 +119,7 @@
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Checkbox, Icon } from '@ui'
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import type { Character } from '~/types/business/character'
-import type { Spell } from '~/types/business/spell'
+import type { Character, Spell } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   character: Character

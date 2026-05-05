@@ -1,8 +1,12 @@
 import { ABILITY_KEYS, POINT_BUY_DEFAULT_SCORE, UNASSIGNED_ABILITY_SCORE } from '~/constants/dnd'
 import { createDicePool, tryCalculateSpentPoints } from '~/helpers/ability'
 import { calculateTotalLevel } from '~/helpers/character'
-import type { AbilityMethod, AbilityScores, CharacterFormState } from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type {
+  AbilityMethod,
+  AbilityScores,
+  CharacterFormState,
+} from '~/types/business/character-form'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 export type BuildTab = 'basic' | 'profile'
 

@@ -5,8 +5,8 @@ import {
   POINT_BUY_MIN_SCORE,
 } from '~/constants/dnd'
 import { rollDice } from '~/helpers/dice'
-import type { AbilityKey } from '~/types/business/dnd'
-import type { AbilityScoreEntry, DiceSlot } from '~/types/business/character'
+import type { AbilityKey, AbilityScoreEntry } from '@rolling-dice-app/types'
+import type { DiceSlot } from '~/types/business/character-form'
 
 /**
  * 計算屬性總分（origin + 種族加值 + 後天 bonus）

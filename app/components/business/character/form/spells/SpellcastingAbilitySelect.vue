@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 const abilities = defineModel<AbilityKey[]>('abilities', { required: true })
 

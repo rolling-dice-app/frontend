@@ -1,5 +1,4 @@
-import type { SkillProficiencies } from '~/types/business/character'
-import type { ProficiencyLevel, SkillKey } from '~/types/business/dnd'
+import type { SkillProficiencies, ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
 
 /** 套用技能熟練度；level 為 'none' 時刪除該 key。 */
 export function applySkillProficiency(

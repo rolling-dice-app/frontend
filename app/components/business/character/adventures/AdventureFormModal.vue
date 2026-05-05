@@ -106,7 +106,7 @@
 import { Button, Modal, TextArea } from '@ui'
 import { DEFAULT_CURRENCY } from '~/constants/inventory'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
-import type { CharacterCurrency } from '~/types/business/character'
+import type { CharacterCurrency } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   modelValue: boolean

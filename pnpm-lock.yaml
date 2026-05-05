@@ -11,6 +11,9 @@ importers:
       '@pinia/nuxt':
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.2)(pinia@3.0.4(typescript@6.0.2)(vue@3.5.32(typescript@6.0.2)))
+      '@rolling-dice-app/types':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
@@ -1383,6 +1386,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-rc.14':
     resolution: {integrity: sha512-ktoSqSpdex3xml4M3wV//KiF8MiQkMz8bz2e7SUJvCK9qyL/XjAnLLB+UO3+uE9RLxqUhuDzddc7Cf+EaZ169Q==}
+
+  '@rolling-dice-app/types@0.1.0':
+    resolution: {integrity: sha512-6OTVO/xildSWFyrifCngysmwnEuLD6opVTuVSxkpSWfwcoVqPQmNIhm1HMyk1it8KSg9XlG20RmEpjJ5zQDnwA==, tarball: https://npm.pkg.github.com/download/@rolling-dice-app/types/0.1.0/7a98f39895752e1d07825bbf46d39f8ba99b9148}
 
   '@rollup/plugin-alias@6.0.0':
     resolution: {integrity: sha512-tPCzJOtS7uuVZd+xPhoy5W4vThe6KWXNmsFCNktaAh5RTqcLiSfT4huPQIXkgJ6YCOjJHvecOAzQxLFhPxKr+g==}
@@ -6387,6 +6393,8 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.13': {}
 
   '@rolldown/pluginutils@1.0.0-rc.14': {}
+
+  '@rolling-dice-app/types@0.1.0': {}
 
   '@rollup/plugin-alias@6.0.0(rollup@4.60.1)':
     optionalDependencies:

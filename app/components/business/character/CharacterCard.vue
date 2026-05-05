@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { Badge, Card, Icon } from '@ui'
 import { PROFESSION_CONFIG } from '~/constants/dnd'
-import type { Character, CharacterTier } from '~/types/business/character'
+import type { Character, CharacterTier } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   character: Character

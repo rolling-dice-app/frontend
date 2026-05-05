@@ -4,7 +4,7 @@ import { useId } from 'vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import SpellcastingAbilitySelect from '~/components/business/character/form/spells/SpellcastingAbilitySelect.vue'
 import { ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 vi.stubGlobal('useId', useId)
 

@@ -1,4 +1,4 @@
-import type { ProfessionKey } from '~/types/business/dnd'
+import type { ProfessionKey } from '@rolling-dice-app/types'
 
 const imageModules = import.meta.glob<string>('../assets/images/professions/*.png', {
   eager: true,

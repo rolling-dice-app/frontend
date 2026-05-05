@@ -213,13 +213,8 @@ import {
   FEATURE_SOURCE_BADGE_STYLES,
   FEATURE_SOURCE_LABELS,
 } from '~/constants/features'
-import type {
-  CharacterFeature,
-  CharacterUpdateFormState,
-  FeatureDraft,
-  FeatureSource,
-  FeatureUsageRecovery,
-} from '~/types/business/character'
+import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/types'
+import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
 const DESCRIPTION_MAX_LENGTH = 500
 

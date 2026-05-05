@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { Button } from '@ui'
-import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character'
+import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

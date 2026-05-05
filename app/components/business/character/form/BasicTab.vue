@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character'
+import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

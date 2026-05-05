@@ -39,8 +39,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { Character } from '~/types/business/character'
-import type { Spell } from '~/types/business/spell'
+import type { Character, Spell } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   character: Character

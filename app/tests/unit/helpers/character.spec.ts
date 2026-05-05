@@ -13,12 +13,8 @@ import {
   getSpellSaveDc,
   getTotalArmorClass,
 } from '~/helpers/character'
-import type {
-  TotalAbilityScores,
-  ArmorClassConfig,
-  CharacterAbilityScores,
-  CharacterFormStateBase,
-} from '~/types/business/character'
+import type { ArmorClassConfig, CharacterAbilityScores } from '@rolling-dice-app/types'
+import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 
 describe('getCharacterTier', () => {
   describe('common 等級 (1–4)', () => {

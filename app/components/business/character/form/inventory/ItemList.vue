@@ -222,12 +222,8 @@ import { Badge, Button, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { ITEM_TYPE_LABELS } from '~/constants/inventory'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
-import type {
-  InventoryItem,
-  InventoryItemDraft,
-  InventoryLocation,
-  ItemType,
-} from '~/types/business/character'
+import type { InventoryItem, InventoryLocation, ItemType } from '@rolling-dice-app/types'
+import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const props = defineProps<{
   items: InventoryItem[]

@@ -1,6 +1,5 @@
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import type { SpellEntry } from '~/types/business/character'
-import type { Spell, SpellDto } from '~/types/business/spell'
+import type { SpellEntry, Spell, SpellDto } from '@rolling-dice-app/types'
 
 const VALID_SCHOOLS = new Set(Object.keys(SPELL_SCHOOL_LABELS))
 

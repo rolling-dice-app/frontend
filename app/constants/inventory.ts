@@ -1,4 +1,4 @@
-import type { CharacterCurrency, ItemType } from '~/types/business/character'
+import type { CharacterCurrency, ItemType } from '@rolling-dice-app/types'
 
 export const ITEM_TYPE_LABELS: Readonly<Record<ItemType, string>> = {
   weapon: '武器',

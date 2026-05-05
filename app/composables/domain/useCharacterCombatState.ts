@@ -2,8 +2,13 @@ import type { Ref } from 'vue'
 import { PROFESSION_CONFIG } from '~/constants/dnd'
 import { getCombatStateStorageKey } from '~/constants/storage'
 import { calculateTotalLevel } from '~/helpers/character'
-import type { CombatState, ProfessionEntry, SpellLevel } from '~/types/business/character'
-import type { AbilityKey, ProfessionKey } from '~/types/business/dnd'
+import type {
+  CombatState,
+  ProfessionEntry,
+  SpellLevel,
+  AbilityKey,
+  ProfessionKey,
+} from '@rolling-dice-app/types'
 
 const PERSIST_DEBOUNCE_MS = 300
 

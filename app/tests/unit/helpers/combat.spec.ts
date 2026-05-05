@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { formatDamageSummary, getHitBonusColorClass } from '~/helpers/combat'
 import { getAbilityModifier } from '~/helpers/ability'
-import type { AttackDraft, TotalAbilityScores } from '~/types/business/character'
+import type { AttackDraft, TotalAbilityScores } from '~/types/business/character-form'
 
 vi.stubGlobal('getAbilityModifier', getAbilityModifier)
 

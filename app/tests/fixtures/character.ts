@@ -1,9 +1,9 @@
+import type { Character } from '@rolling-dice-app/types'
 import type {
   AttackDraft,
-  Character,
   CharacterFormState,
   CharacterUpdateFormState,
-} from '~/types/business/character'
+} from '~/types/business/character-form'
 
 export function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {

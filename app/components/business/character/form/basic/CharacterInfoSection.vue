@@ -240,8 +240,13 @@ import { Button, Icon } from '@ui'
 import type { SelectOption } from '@ui'
 import { ALIGNMENT_NAMES, GENDER_NAMES, PROFESSION_CONFIG, PROFESSION_KEYS } from '~/constants/dnd'
 import { SUBPROFESSION_BY_PROFESSION, SUBPROFESSION_CONFIG } from '~/constants/subprofession'
-import type { CharacterFormStateBase } from '~/types/business/character'
-import type { AlignmentKey, GenderKey, ProfessionKey, SubprofessionKey } from '~/types/business/dnd'
+import type { CharacterFormStateBase } from '~/types/business/character-form'
+import type {
+  AlignmentKey,
+  GenderKey,
+  ProfessionKey,
+  SubprofessionKey,
+} from '@rolling-dice-app/types'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

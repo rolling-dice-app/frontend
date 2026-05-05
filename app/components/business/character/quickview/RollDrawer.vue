@@ -101,8 +101,8 @@
 import { Drawer, Icon } from '@ui'
 import { ABILITY_KEYS, ABILITY_NAMES, SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import { rollD20, rollDice } from '~/helpers/dice'
-import type { AttackEntry, Character, TotalAbilityScores } from '~/types/business/character'
-import type { AbilityKey, ProficiencyLevel } from '~/types/business/dnd'
+import type { AttackEntry, Character, AbilityKey, ProficiencyLevel } from '@rolling-dice-app/types'
+import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { D20RollEntry, DamageRollEntry, DamageRollLine, RollMode } from '~/types/business/dice'
 
 const props = defineProps<{

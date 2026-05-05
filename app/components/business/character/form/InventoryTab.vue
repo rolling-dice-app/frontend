@@ -51,11 +51,8 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { formatWeight } from '~/helpers/inventory'
-import type {
-  CharacterCurrency,
-  InventoryItem,
-  InventoryItemDraft,
-} from '~/types/business/character'
+import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/types'
+import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const props = defineProps<{
   backpackItems: InventoryItem[]

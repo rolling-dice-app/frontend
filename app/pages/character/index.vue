@@ -171,7 +171,7 @@
 import { Icon, Select, Button, Modal } from '@ui'
 import type { SelectOption } from '@ui'
 import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
-import type { Character } from '~/types/business/character'
+import type { Character } from '@rolling-dice-app/types'
 
 useHead({ title: '角色卡' })
 

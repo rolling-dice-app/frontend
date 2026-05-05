@@ -10,8 +10,8 @@ import type {
   ProficiencyLevel,
   SizeKey,
   SkillKey,
-} from '~/types/business/dnd'
-import type { SpellSchool } from '~/types/business/spell'
+  SpellSchool,
+} from '@rolling-dice-app/types'
 
 // ─── Profession ───────────────────────────────────────────────────────────────
 

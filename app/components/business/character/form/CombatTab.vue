@@ -36,11 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  TotalAbilityScores,
-  CharacterUpdateFormState,
-  ProfessionEntry,
-} from '~/types/business/character'
+import type { ProfessionEntry } from '@rolling-dice-app/types'
+import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

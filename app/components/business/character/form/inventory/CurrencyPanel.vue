@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CharacterCurrency } from '~/types/business/character'
+import type { CharacterCurrency } from '@rolling-dice-app/types'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
 
 type CoinKey = keyof CharacterCurrency

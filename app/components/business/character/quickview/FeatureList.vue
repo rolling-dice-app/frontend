@@ -82,7 +82,7 @@ import {
   FEATURE_SOURCE_BADGE_STYLES,
   FEATURE_SOURCE_LABELS,
 } from '~/constants/features'
-import type { CharacterFeature } from '~/types/business/character'
+import type { CharacterFeature } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   features: CharacterFeature[]

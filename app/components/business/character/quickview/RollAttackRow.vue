@@ -71,7 +71,8 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { formatDamageSummary, getAttackHit } from '~/helpers/combat'
-import type { AttackEntry, TotalAbilityScores } from '~/types/business/character'
+import type { AttackEntry } from '@rolling-dice-app/types'
+import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { RollMode } from '~/types/business/dice'
 
 const props = defineProps<{

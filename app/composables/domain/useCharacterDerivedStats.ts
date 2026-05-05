@@ -1,12 +1,7 @@
 import { computed } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
-import type {
-  TotalAbilityScores,
-  Character,
-  CharacterUpdateFormState,
-  ProfessionEntry,
-} from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { Character, ProfessionEntry, AbilityKey } from '@rolling-dice-app/types'
+import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 import {
   calculatePassiveScore,
   calculateSavingThrowProficiencies,

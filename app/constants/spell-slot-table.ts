@@ -1,5 +1,9 @@
-import type { SpellLevel, SpellSlots } from '~/types/business/character'
-import type { ProfessionKey, SubprofessionKey } from '~/types/business/dnd'
+import type {
+  SpellLevel,
+  SpellSlots,
+  ProfessionKey,
+  SubprofessionKey,
+} from '@rolling-dice-app/types'
 
 export type CasterCategory = 'full' | 'half' | 'third' | 'warlock' | 'none'
 

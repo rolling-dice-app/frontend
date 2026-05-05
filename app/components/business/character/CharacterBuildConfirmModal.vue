@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { Button, Modal } from '@ui'
 import { ABILITY_KEYS, ABILITY_NAMES, PROFESSION_CONFIG } from '~/constants/dnd'
-import type { TotalAbilityScores, FormProfessionEntry } from '~/types/business/character'
+import type { FormProfessionEntry, TotalAbilityScores } from '~/types/business/character-form'
 
 const props = defineProps<{
   modelValue: boolean

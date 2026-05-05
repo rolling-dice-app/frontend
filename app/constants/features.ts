@@ -1,4 +1,4 @@
-import type { FeatureSource, FeatureUsageRecovery } from '~/types/business/character'
+import type { FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/types'
 
 /** 特性來源顯示文字 */
 export const FEATURE_SOURCE_LABELS: Readonly<Record<FeatureSource, string>> = {

@@ -1,11 +1,8 @@
 import { ATTUNEMENT_SLOT_COUNT, DEFAULT_CURRENCY } from '~/constants/inventory'
 import { getTotalScore } from '~/helpers/ability'
 import { calculateBackpackLoad, calculateMaxCarryWeight } from '~/helpers/inventory'
-import type {
-  CharacterCurrency,
-  InventoryItem,
-  InventoryItemDraft,
-} from '~/types/business/character'
+import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/types'
+import type { InventoryItemDraft } from '~/types/business/character-form'
 
 export function useCharacterInventory(characterId: string) {
   const store = useCharacterStore()

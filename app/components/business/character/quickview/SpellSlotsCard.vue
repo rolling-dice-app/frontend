@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { SpellLevel, SpellSlots } from '~/types/business/character'
+import type { SpellLevel, SpellSlots } from '@rolling-dice-app/types'
 
 type SlotTab = 'regular' | 'pact'
 

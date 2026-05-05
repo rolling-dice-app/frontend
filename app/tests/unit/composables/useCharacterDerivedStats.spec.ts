@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { useCharacterDerivedStats } from '~/composables/domain/useCharacterDerivedStats'
-import type { CharacterUpdateFormState } from '~/types/business/character'
+import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
 function createFormState(
   overrides: Partial<CharacterUpdateFormState> = {},

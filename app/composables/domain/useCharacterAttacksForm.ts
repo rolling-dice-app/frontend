@@ -1,4 +1,4 @@
-import type { AttackDraft, CharacterUpdateFormState } from '~/types/business/character'
+import type { AttackDraft, CharacterUpdateFormState } from '~/types/business/character-form'
 
 /** 角色自訂攻擊（CharacterCapabilities.attacks）的 form mutation 包裝 */
 export function useCharacterAttacksForm(formState: CharacterUpdateFormState) {

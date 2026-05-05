@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import { Button, Tab, Tabs } from '@ui'
 import { ABILITY_KEYS } from '~/constants/dnd'
-import type { TotalAbilityScores } from '~/types/business/character'
+import type { TotalAbilityScores } from '~/types/business/character-form'
 
 useHead({ title: '建立角色卡' })
 

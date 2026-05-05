@@ -1,4 +1,4 @@
-import type { CharacterUpdateFormState } from '~/types/business/character'
+import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
 /** 角色法術（CharacterCapabilities.spells）的 form mutation 包裝 */
 export function useCharacterSpellsForm(formState: CharacterUpdateFormState) {

@@ -7,7 +7,7 @@ import {
   tryCalculateSpentPoints,
 } from '~/helpers/ability'
 import { rollDice } from '~/helpers/dice'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 vi.mock('~/helpers/dice', () => ({
   rollDice: vi.fn(),

@@ -4,8 +4,7 @@ import {
   getSuggestedRegularSpellSlots,
   mergeSlots,
 } from '~/helpers/spell-slots'
-import type { ProfessionEntry } from '~/types/business/character'
-import type { ProfessionKey } from '~/types/business/dnd'
+import type { ProfessionEntry, ProfessionKey } from '@rolling-dice-app/types'
 
 const entry = (profession: ProfessionKey, level: number): ProfessionEntry => ({
   profession,

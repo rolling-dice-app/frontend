@@ -1,5 +1,6 @@
 import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
-import type { TotalAbilityScores, AttackDraft, DamageDieEntry } from '~/types/business/character'
+import type { DamageDieEntry } from '@rolling-dice-app/types'
+import type { AttackDraft, TotalAbilityScores } from '~/types/business/character-form'
 
 /** 計算攻擊命中加值：屬性調整值 + 熟練加值 + 額外命中 */
 export function getAttackHit(

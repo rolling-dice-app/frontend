@@ -1,5 +1,5 @@
 import { createDefaultArmorClass } from '~/helpers/character'
-import type { Character } from '~/types/business/character'
+import type { Character } from '@rolling-dice-app/types'
 
 export const MOCK_CHARACTERS: Character[] = [
   {

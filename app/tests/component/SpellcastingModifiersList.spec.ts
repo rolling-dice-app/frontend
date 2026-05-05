@@ -5,8 +5,8 @@ import AppInput from '~/components/common/AppInput.vue'
 import SpellcastingModifiersList from '~/components/business/character/form/spells/SpellcastingModifiersList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { parseIntegerInput } from '~/utils/parse'
-import type { TotalAbilityScores } from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { TotalAbilityScores } from '~/types/business/character-form'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 const ABILITY_SCORES: TotalAbilityScores = {
   strength: 10,

@@ -23,8 +23,8 @@
 
 <script setup lang="ts">
 import { SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
-import type { TotalAbilityScores } from '~/types/business/character'
-import type { ProficiencyLevel, SkillKey } from '~/types/business/dnd'
+import type { TotalAbilityScores } from '~/types/business/character-form'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
 
 const props = defineProps<{
   abilityScores: TotalAbilityScores

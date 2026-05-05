@@ -172,8 +172,8 @@
 import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
 import { SPELL_LEVEL_OPTIONS, SPELL_SCHOOL_OPTIONS } from '~/constants/spell-options'
-import type { CharacterUpdateFormState } from '~/types/business/character'
-import type { Spell, SpellSchool } from '~/types/business/spell'
+import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import type { Spell, SpellSchool } from '@rolling-dice-app/types'
 
 type SchoolFilter = SpellSchool | ''
 

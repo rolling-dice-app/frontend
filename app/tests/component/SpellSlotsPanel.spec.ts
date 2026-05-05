@@ -2,8 +2,13 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import SpellSlotsPanel from '~/components/business/character/form/spells/SpellSlotsPanel.vue'
-import type { FormProfessionEntry, SpellLevel, SpellSlotsDelta } from '~/types/business/character'
-import type { ProfessionKey, SubprofessionKey } from '~/types/business/dnd'
+import type {
+  SpellLevel,
+  SpellSlotsDelta,
+  ProfessionKey,
+  SubprofessionKey,
+} from '@rolling-dice-app/types'
+import type { FormProfessionEntry } from '~/types/business/character-form'
 
 vi.stubGlobal('useId', useId)
 

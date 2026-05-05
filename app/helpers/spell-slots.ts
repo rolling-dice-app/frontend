@@ -5,8 +5,13 @@ import {
   WARLOCK_SLOT_TABLE,
   type CasterCategory,
 } from '~/constants/spell-slot-table'
-import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '~/types/business/character'
-import type { ProfessionKey, SubprofessionKey } from '~/types/business/dnd'
+import type {
+  SpellLevel,
+  SpellSlots,
+  SpellSlotsDelta,
+  ProfessionKey,
+  SubprofessionKey,
+} from '@rolling-dice-app/types'
 
 const SPELL_LEVELS: readonly SpellLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const SLOT_MAX = 9

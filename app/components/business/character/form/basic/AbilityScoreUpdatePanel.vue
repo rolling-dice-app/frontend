@@ -78,8 +78,8 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { ABILITY_HARD_MAX, ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
-import type { CharacterUpdateFormState } from '~/types/business/character'
-import type { AbilityKey } from '~/types/business/dnd'
+import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import type { AbilityKey } from '@rolling-dice-app/types'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

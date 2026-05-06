@@ -9,6 +9,7 @@ function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
   return {
     id: SPELL_ID_1,
     name: '火焰箭',
+    engName: 'Fire Bolt',
     level: 1,
     school: 'evocation',
     castingTime: '1 個動作',
@@ -19,6 +20,8 @@ function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
     duration: '瞬間',
     concentration: false,
     ritual: false,
+    source: 'PHB',
+    classes: [],
     desc: '測試描述',
     ...overrides,
   }

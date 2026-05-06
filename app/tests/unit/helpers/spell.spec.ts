@@ -19,6 +19,7 @@ function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
   return {
     id: 'test-spell-id-0000-0000-000000000001',
     name: '火焰箭',
+    engName: 'Fire Bolt',
     level: 1,
     school: 'evocation',
     castingTime: '1 個動作',
@@ -29,6 +30,8 @@ function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
     duration: '瞬間',
     concentration: false,
     ritual: false,
+    source: 'PHB',
+    classes: [],
     desc: '測試描述',
     ...overrides,
   }
@@ -132,6 +135,7 @@ function makeSpell(name: string, level: number, school: Spell['school'] = 'evoca
   return {
     id: `test-spell-id-${String(++_spellCounter).padStart(4, '0')}-000000000000`,
     name,
+    engName: 'Test Spell',
     level,
     school,
     castingTime: '1 個動作',
@@ -142,6 +146,8 @@ function makeSpell(name: string, level: number, school: Spell['school'] = 'evoca
     duration: '瞬間',
     concentration: false,
     ritual: false,
+    source: 'PHB',
+    classes: [],
     desc: '',
   }
 }

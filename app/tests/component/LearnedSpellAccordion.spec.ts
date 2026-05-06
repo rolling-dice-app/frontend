@@ -21,6 +21,7 @@ const CANTRIP_ID = 'cccccccc-0000-0000-0000-000000000003'
 
 function makeSpell(overrides: Partial<Spell> & Pick<Spell, 'id' | 'name' | 'level'>): Spell {
   return {
+    engName: 'Test Spell',
     school: 'evocation',
     castingTime: '1 個動作',
     range: '90 英尺',
@@ -30,6 +31,8 @@ function makeSpell(overrides: Partial<Spell> & Pick<Spell, 'id' | 'name' | 'leve
     duration: '瞬間',
     concentration: false,
     ritual: false,
+    source: 'PHB',
+    classes: [],
     desc: '',
     ...overrides,
   }

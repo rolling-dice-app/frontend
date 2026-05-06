@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { Badge, Icon } from '@ui'
 import { PROFESSION_CONFIG } from '~/constants/dnd'
-import type { Character, CharacterTier } from '@rolling-dice-app/types'
+import type { Character, CharacterTier } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   character: Character

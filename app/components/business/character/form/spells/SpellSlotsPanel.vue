@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { getSuggestedPactSlots, getSuggestedRegularSpellSlots } from '~/helpers/spell-slots'
-import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '@rolling-dice-app/types'
+import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '@rolling-dice-app/core'
 import type { FormProfessionEntry } from '~/types/business/character-form'
 
 type SlotTab = 'regular' | 'pact'

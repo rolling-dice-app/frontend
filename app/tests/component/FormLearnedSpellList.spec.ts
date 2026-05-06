@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import LearnedSpellList from '~/components/business/character/form/spells/LearnedSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
-import type { Spell, SpellEntry } from '@rolling-dice-app/types'
+import type { Spell, SpellEntry } from '@rolling-dice-app/core'
 
 const spellMap = new Map<string, Spell>()
 

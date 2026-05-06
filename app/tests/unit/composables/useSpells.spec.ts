@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { SpellDto, SpellSchool } from '@rolling-dice-app/types'
+import type { SpellDto, SpellSchool } from '@rolling-dice-app/core'
 import { useSpells } from '~/composables/domain/useSpells'
 
 const SPELL_ID_1 = 'aaaaaaaa-0000-0000-0000-000000000001'

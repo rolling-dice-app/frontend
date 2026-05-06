@@ -7,7 +7,7 @@ import {
   validateSpell,
   withToggledFlag,
 } from '~/helpers/spell'
-import type { SpellEntry, Spell, SpellDto, SpellSchool } from '@rolling-dice-app/types'
+import type { SpellEntry, Spell, SpellDto, SpellSchool } from '@rolling-dice-app/core'
 
 const makeEntry = (id: string, isPrepared = false, isFavorite = false): SpellEntry => ({
   id,

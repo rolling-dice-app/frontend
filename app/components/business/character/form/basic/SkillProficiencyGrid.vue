@@ -45,7 +45,7 @@
 import { Toggle } from '@ui'
 import { PROFICIENCY_OPTIONS, SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
-import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 import { PROFESSION_CONFIG } from '~/constants/dnd'
-import type { ProfessionKey } from '@rolling-dice-app/types'
+import type { ProfessionKey } from '@rolling-dice-app/core'
 
 useHead({ titleTemplate: '%s' })
 

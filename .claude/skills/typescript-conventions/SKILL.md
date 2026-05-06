@@ -17,7 +17,7 @@ Apply these rules when writing or reviewing TypeScript in this repo.
 
 ## Cross-Repo Type Origin
 
-Persistent domain types, request / response DTOs, and shared enumerations come from `@rolling-dice-app/types`. **Do not redeclare these locally.** Local types in this repo cover UI-only concerns: form state, view models, derived display shapes, and frontend-only domain (dice history, navigation, etc.).
+Persistent domain types, request / response DTOs, and shared enumerations come from `@rolling-dice-app/core`. **Do not redeclare these locally.** Local types in this repo cover UI-only concerns: form state, view models, derived display shapes, and frontend-only domain (dice history, navigation, etc.).
 
 If a type starts to look like something the backend would also need, it belongs in the `types` repo, not here.
 
@@ -56,4 +56,4 @@ If a type starts to look like something the backend would also need, it belongs 
 2. Making every field optional to avoid declaring intent.
 3. Treating unverified external data as a trusted type.
 4. Trading type integrity for short-term speed.
-5. Locally redeclaring a type that already exists in `@rolling-dice-app/types`.
+5. Locally redeclaring a type that already exists in `@rolling-dice-app/core`.

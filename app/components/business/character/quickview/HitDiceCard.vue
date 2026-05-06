@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { Badge, Icon } from '@ui'
 import { PROFESSION_CONFIG } from '~/constants/dnd'
-import type { ProfessionEntry, ProfessionKey } from '@rolling-dice-app/types'
+import type { ProfessionEntry, ProfessionKey } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   professions: ProfessionEntry[]

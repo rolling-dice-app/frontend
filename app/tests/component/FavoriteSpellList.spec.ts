@@ -4,7 +4,7 @@ import { useId } from 'vue'
 import FavoriteSpellList from '~/components/business/character/quickview/FavoriteSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import type { Character, Spell } from '@rolling-dice-app/types'
+import type { Character, Spell } from '@rolling-dice-app/core'
 
 const FIREBALL_ID = 'fav-spell-001'
 const FROST_RAY_ID = 'fav-spell-002'

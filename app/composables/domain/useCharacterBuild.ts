@@ -6,7 +6,7 @@ import type {
   AbilityScores,
   CharacterFormState,
 } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 export type BuildTab = 'basic' | 'profile'
 

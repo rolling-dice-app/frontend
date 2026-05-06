@@ -160,7 +160,7 @@ import { Toggle } from '@ui'
 import type { SelectOption } from '@ui'
 
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 import { ABILITY_NAMES } from '~/constants/dnd'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })

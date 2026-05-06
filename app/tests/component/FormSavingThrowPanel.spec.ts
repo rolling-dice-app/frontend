@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SavingThrowPanel from '~/components/business/character/form/combat/SavingThrowPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus } from '~/helpers/character'
-import type { ProfessionEntry } from '@rolling-dice-app/types'
+import type { ProfessionEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 beforeEach(() => {

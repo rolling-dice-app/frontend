@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockCharacter, createMockFormState } from '~/tests/fixtures/character'
 import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
 import { useCharacterStore } from '~/stores/character'
-import type { Character } from '@rolling-dice-app/types'
+import type { Character } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
 const MOCK_CHARACTER = createMockCharacter({ isTough: true })

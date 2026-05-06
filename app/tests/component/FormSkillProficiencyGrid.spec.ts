@@ -6,7 +6,7 @@ import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
 import { applySkillProficiency } from '~/helpers/skill'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
-import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)

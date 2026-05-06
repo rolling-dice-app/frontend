@@ -141,7 +141,7 @@ import type {
   DiceCell,
   DiceSlot,
 } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   abilities: AbilityScores

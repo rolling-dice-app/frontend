@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import type { SelectItem, SelectOptionGroup } from '@ui'
 import { ATTUNEMENT_SLOT_COUNT, ITEM_TYPE_LABELS } from '~/constants/inventory'
-import type { InventoryItem, ItemType } from '@rolling-dice-app/types'
+import type { InventoryItem, ItemType } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   allItems: InventoryItem[]

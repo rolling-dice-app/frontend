@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import CurrencyPanel from '~/components/business/character/form/inventory/CurrencyPanel.vue'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
-import type { CharacterCurrency } from '@rolling-dice-app/types'
+import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('calculateCurrencyWeight', calculateCurrencyWeight)

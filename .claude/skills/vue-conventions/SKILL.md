@@ -71,7 +71,7 @@ Apply these rules when writing Vue single-file components.
 
 ## Type Origin
 
-Persistent domain types and DTOs used in templates come from `@rolling-dice-app/types`. Local types in `app/types/` are for UI-only concerns (form state, view models, navigation, etc.).
+Persistent domain types and DTOs used in templates come from `@rolling-dice-app/core`. Local types in `app/types/` are for UI-only concerns (form state, view models, navigation, etc.).
 
 ## Accessibility Baseline
 

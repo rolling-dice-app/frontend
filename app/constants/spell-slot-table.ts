@@ -3,7 +3,7 @@ import type {
   SpellSlots,
   ProfessionKey,
   SubprofessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 export type CasterCategory = 'full' | 'half' | 'third' | 'warlock' | 'none'
 

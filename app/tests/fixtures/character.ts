@@ -1,4 +1,4 @@
-import type { Character } from '@rolling-dice-app/types'
+import type { Character } from '@rolling-dice-app/core'
 import type {
   AttackDraft,
   CharacterFormState,

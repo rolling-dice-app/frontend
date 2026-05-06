@@ -70,7 +70,7 @@ import { Icon } from '@ui'
 import { ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
 import { getSpellSaveDc } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   abilityScores: TotalAbilityScores

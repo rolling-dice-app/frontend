@@ -31,7 +31,7 @@ When the user asks for a review, audit, or refactor proposal, prioritize the fol
 3. Are DTO and UI model types being conflated?
 4. Are there unsafe assertions?
 5. Are type boundaries vague?
-6. Are persistent / contract types being redeclared locally instead of imported from `@rolling-dice-app/types`?
+6. Are persistent / contract types being redeclared locally instead of imported from `@rolling-dice-app/core`?
 
 ## State Checks
 

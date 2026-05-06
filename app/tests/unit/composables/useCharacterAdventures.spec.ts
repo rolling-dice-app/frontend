@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHARACTERS_STORAGE_KEY, getAdventuresStorageKey } from '~/constants/storage'
 import { createMockCharacter } from '~/tests/fixtures/character'
 import type { AdventureEntry, AdventureEntryDraft, AdventureLog } from '~/types/business/adventure'
-import type { CharacterCurrency } from '@rolling-dice-app/types'
+import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 const CHAR_ID = 'adv-001'
 

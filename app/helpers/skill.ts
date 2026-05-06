@@ -1,4 +1,4 @@
-import type { SkillProficiencies, ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
+import type { SkillProficiencies, ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 /** 套用技能熟練度；level 為 'none' 時刪除該 key。 */
 export function applySkillProficiency(

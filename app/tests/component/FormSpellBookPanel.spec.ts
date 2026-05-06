@@ -7,7 +7,7 @@ import SpellBookPanel from '~/components/business/character/form/spells/SpellBoo
 import { useCharacterSpellsForm } from '~/composables/domain/useCharacterSpellsForm'
 import { formatSpellComponents, formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { debounce } from '~/utils/timing'
-import type { Spell, SpellEntry } from '@rolling-dice-app/types'
+import type { Spell, SpellEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
 const allSpells = ref<Spell[]>([])

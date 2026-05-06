@@ -1,4 +1,4 @@
-import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/types'
+import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
 import { CARRY_WEIGHT_PER_STR, COINS_PER_LB, DEFAULT_CURRENCY } from '~/constants/inventory'
 
 /** 計算物品列表的總重量（每件 weight × quantity 加總） */

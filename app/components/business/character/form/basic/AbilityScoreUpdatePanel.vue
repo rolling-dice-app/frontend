@@ -79,7 +79,7 @@
 import { Icon } from '@ui'
 import { ABILITY_HARD_MAX, ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

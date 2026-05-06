@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import HitDiceCard from '~/components/business/character/quickview/HitDiceCard.vue'
-import type { ProfessionEntry } from '@rolling-dice-app/types'
+import type { ProfessionEntry } from '@rolling-dice-app/core'
 
 const BadgeStub = {
   name: 'Badge',

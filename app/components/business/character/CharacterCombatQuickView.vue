@@ -110,7 +110,7 @@ import {
   getSuggestedRegularSpellSlots,
   mergeSlots,
 } from '~/helpers/spell-slots'
-import type { Character } from '@rolling-dice-app/types'
+import type { Character } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   character: Character

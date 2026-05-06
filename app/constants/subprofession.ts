@@ -1,4 +1,4 @@
-import type { ProfessionKey, SubprofessionKey } from '@rolling-dice-app/types'
+import type { ProfessionKey, SubprofessionKey } from '@rolling-dice-app/core'
 
 /**
  * 子職業中文 label，依主職業分組以避免子職業 key 同名衝突（如 cleric 與 druid 皆有 moon）。

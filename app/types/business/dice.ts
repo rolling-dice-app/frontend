@@ -1,4 +1,4 @@
-import type { DamageTypeKey } from '@rolling-dice-app/types'
+import type { DamageTypeKey } from '@rolling-dice-app/core'
 
 /** 擲骰模式 */
 export type RollMode = 'normal' | 'advantage' | 'disadvantage'

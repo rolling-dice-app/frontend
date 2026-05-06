@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { AccordionItem, Icon } from '@ui'
 import type { AdventureEntry } from '~/types/business/adventure'
-import type { CharacterCurrency } from '@rolling-dice-app/types'
+import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   entry: AdventureEntry

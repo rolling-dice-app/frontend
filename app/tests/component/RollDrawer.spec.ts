@@ -6,7 +6,7 @@ import RollDrawer from '~/components/business/character/quickview/RollDrawer.vue
 import { getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus, getSkillBonus } from '~/helpers/character'
 import { getAttackHit } from '~/helpers/combat'
-import type { AttackEntry, Character } from '@rolling-dice-app/types'
+import type { AttackEntry, Character } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 
 vi.mock('~/helpers/dice', () => ({

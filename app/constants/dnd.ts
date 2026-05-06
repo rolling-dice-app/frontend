@@ -11,7 +11,7 @@ import type {
   SizeKey,
   SkillKey,
   SpellSchool,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 // ─── Profession ───────────────────────────────────────────────────────────────
 

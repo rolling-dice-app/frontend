@@ -5,7 +5,7 @@ import {
   POINT_BUY_MIN_SCORE,
 } from '~/constants/dnd'
 import { rollDice } from '~/helpers/dice'
-import type { AbilityKey, AbilityScoreEntry } from '@rolling-dice-app/types'
+import type { AbilityKey, AbilityScoreEntry } from '@rolling-dice-app/core'
 import type { DiceSlot } from '~/types/business/character-form'
 
 /**

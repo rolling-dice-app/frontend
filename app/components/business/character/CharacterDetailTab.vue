@@ -275,7 +275,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Character, AbilityKey, ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
+import type { Character, AbilityKey, ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import {
   ABILITY_KEYS,

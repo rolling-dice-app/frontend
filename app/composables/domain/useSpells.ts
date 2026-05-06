@@ -1,5 +1,5 @@
 import { validateSpell } from '~/helpers/spell'
-import type { Spell, SpellDto } from '@rolling-dice-app/types'
+import type { Spell, SpellDto } from '@rolling-dice-app/core'
 
 export interface SkippedSpell {
   name: string

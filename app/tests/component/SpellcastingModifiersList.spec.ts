@@ -6,7 +6,7 @@ import SpellcastingModifiersList from '~/components/business/character/form/spel
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { parseIntegerInput } from '~/utils/parse'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 const ABILITY_SCORES: TotalAbilityScores = {
   strength: 10,

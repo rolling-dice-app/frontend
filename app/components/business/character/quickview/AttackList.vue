@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AttackEntry } from '@rolling-dice-app/types'
+import type { AttackEntry } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 
 defineProps<{

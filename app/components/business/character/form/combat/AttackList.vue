@@ -251,7 +251,7 @@ import type {
   AbilityKey,
   DamageDieType,
   DamageTypeKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 import type {
   AttackDraft,
   CharacterUpdateFormState,

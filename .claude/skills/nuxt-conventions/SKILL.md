@@ -42,7 +42,7 @@ Apply these rules when working in Nuxt-managed directories.
 
 ## API Contract
 
-1. Request and response shapes come from `@rolling-dice-app/types`. Do not assume DB schema.
+1. Request and response shapes come from `@rolling-dice-app/core`. Do not assume DB schema.
 2. The backend is authoritative; frontend treats its responses as the contract truth.
 
 ## Server Routes (Future, Once SSR is Enabled)

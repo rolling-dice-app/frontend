@@ -7,7 +7,7 @@ import type {
   SpellSlotsDelta,
   ProfessionKey,
   SubprofessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 import type { FormProfessionEntry } from '~/types/business/character-form'
 
 vi.stubGlobal('useId', useId)

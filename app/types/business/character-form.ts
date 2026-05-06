@@ -16,7 +16,7 @@ import type {
   SpellEntry,
   SpellSlotsDelta,
   SubprofessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 // ─── Form-only Profession Entry ──────────────────────────────────────────────
 

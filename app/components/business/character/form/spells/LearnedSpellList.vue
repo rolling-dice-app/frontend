@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SpellEntry, Spell } from '@rolling-dice-app/types'
+import type { SpellEntry, Spell } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   spells: SpellEntry[]

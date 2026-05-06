@@ -4,7 +4,7 @@ import SavingThrowList from '~/components/business/character/quickview/SavingThr
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus, getSpellSaveDc } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/types'
+import type { AbilityKey } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)

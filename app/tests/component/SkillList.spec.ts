@@ -4,7 +4,7 @@ import SkillList from '~/components/business/character/quickview/SkillList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/types'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)

@@ -6,7 +6,7 @@ import type {
   AbilityKey,
   ArmorType,
   ProficiencyLevel,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 import type {
   CharacterFormStateBase,
   CharacterWritablePatch,

@@ -246,7 +246,7 @@ import type {
   GenderKey,
   ProfessionKey,
   SubprofessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

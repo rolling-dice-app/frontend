@@ -11,7 +11,7 @@ import type {
   SpellSlotsDelta,
   ProfessionKey,
   SubprofessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 const SPELL_LEVELS: readonly SpellLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const SLOT_MAX = 9

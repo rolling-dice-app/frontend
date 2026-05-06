@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import type { InventoryItem } from '@rolling-dice-app/types'
+import type { InventoryItem } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const CHAR_ID = 'inv-001'

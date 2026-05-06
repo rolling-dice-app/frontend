@@ -8,7 +8,7 @@ import type {
   SpellLevel,
   AbilityKey,
   ProfessionKey,
-} from '@rolling-dice-app/types'
+} from '@rolling-dice-app/core'
 
 const PERSIST_DEBOUNCE_MS = 300
 

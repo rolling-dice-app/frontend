@@ -8,7 +8,7 @@ import { useCharacterAttacksForm } from '~/composables/domain/useCharacterAttack
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { formatDamageSummary, getAttackHit, getHitBonusColorClass } from '~/helpers/combat'
 import { parseIntegerInput } from '~/utils/parse'
-import type { AttackEntry } from '@rolling-dice-app/types'
+import type { AttackEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 beforeEach(() => {

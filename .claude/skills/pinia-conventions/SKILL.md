@@ -32,7 +32,7 @@ Apply these rules when working with Pinia stores.
 
 1. Store state types are explicit.
 2. External data is mapped before entering the store; raw response shapes don't leak into state.
-3. Persistent domain shapes used in stores come from `@rolling-dice-app/types`. Do not redeclare them in the store.
+3. Persistent domain shapes used in stores come from `@rolling-dice-app/core`. Do not redeclare them in the store.
 
 ## storeToRefs
 

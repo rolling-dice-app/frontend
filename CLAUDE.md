@@ -13,7 +13,7 @@ Before any non-trivial change, read the four org-level constitution documents. T
 - <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/backend-skills.md>
 - <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/types-skills.md>
 
-In short: this repo is the **contract consumer**. Persistent shapes and API DTOs come from `@rolling-dice-app/types`; the backend is the authoritative implementation; the frontend renders and interacts.
+In short: this repo is the **contract consumer**. Persistent shapes and API DTOs come from `@rolling-dice-app/core`; the backend is the authoritative implementation; the frontend renders and interacts.
 
 ## Common Commands
 
@@ -50,8 +50,8 @@ The `@ui` alias is defined in both `nuxt.config.ts` (pointing to `packages/ui/di
 
 ### Cross-Repo Dependencies
 
-- `@rolling-dice-app/types` — the shared contract package, published from the `types` repo to GitHub Packages (restricted scope `@rolling-dice-app`, install requires a `read:packages` PAT). Persistent domain types, request/response DTOs, and shared enumerations are imported from here. Local re-declaration of these shapes is forbidden.
-- `backend` API — once online, the only sanctioned channel for persistent data. Frontend speaks to it using the contracts in `@rolling-dice-app/types` and never assumes DB schema.
+- `@rolling-dice-app/core` — the shared contract package, published from the `core` repo to GitHub Packages (restricted scope `@rolling-dice-app`, install requires a `read:packages` PAT). Persistent domain types, request/response DTOs, and shared enumerations are imported from here. Local re-declaration of these shapes is forbidden.
+- `backend` API — once online, the only sanctioned channel for persistent data. Frontend speaks to it using the contracts in `@rolling-dice-app/core` and never assumes DB schema.
 
 ### Runtime Environment
 
@@ -76,7 +76,7 @@ These three directories are **available without explicit import**. `utils/` foll
 - `helpers/` vs `utils/` — `helpers/` carry domain semantics (D&D rules etc.); `utils/` are general-purpose.
 - `mocks/` — development fixture data used while the backend is unavailable; will be retired once the backend is wired.
 - `stores/` — Pinia. Reserved for cross-component / cross-page shared state. One-shot page state stays local.
-- `types/{business,layout}/` — type definitions organized by layer. **Persistent / contract types are imported from `@rolling-dice-app/types`**; what stays here is UI-only: form state, view models, navigation, dice / adventure history.
+- `types/{business,layout}/` — type definitions organized by layer. **Persistent / contract types are imported from `@rolling-dice-app/core`**; what stays here is UI-only: form state, view models, navigation, dice / adventure history.
 - `pages/` — Nuxt file-based routing; pages handle assembly and orchestration only.
 - `app.vue` / `error.vue` — top-level entry and global Nuxt error page (4xx / 5xx).
 
@@ -214,7 +214,7 @@ When asked to **debug**, typically output:
 5. Touching browser APIs in SSR context without guards.
 6. Unauthorized large refactors.
 7. Adding abstraction layers without demonstrated need.
-8. Locally re-declaring persistent or contract types instead of importing from `@rolling-dice-app/types`.
+8. Locally re-declaring persistent or contract types instead of importing from `@rolling-dice-app/core`.
 
 ## Scope Control
 
@@ -225,4 +225,4 @@ Unless explicitly requested, do not:
 - Restructure folders.
 - Change existing public component APIs.
 - Modify unrelated modules.
-- Author or modify shared contract types here (those changes route through the `types` repo per the org-level guideline).
+- Author or modify shared contract types here (those changes route through the `core` repo per the org-level guideline).

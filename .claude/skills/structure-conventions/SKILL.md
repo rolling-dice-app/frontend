@@ -81,7 +81,7 @@ import { Button, Modal } from '@ui'
 
 ## Cross-Repo: Where Contract Types Come From
 
-Persistent domain types, request / response DTOs, and shared enumerations live in the `@rolling-dice-app/types` package — published from the `types` repo. They are imported into the app and **never** redeclared locally.
+Persistent domain types, request / response DTOs, and shared enumerations live in the `@rolling-dice-app/core` package — published from the `types` repo. They are imported into the app and **never** redeclared locally.
 
 Local types in `app/types/` cover UI-only concerns: form state, view models, navigation, dice / adventure history, etc.
 
@@ -178,7 +178,7 @@ app/
 ### `types/business`
 
 - Frontend-only domain shapes: form state, view models, derived/display types, frontend-only domain that has no backend counterpart (dice history, adventure log, etc.).
-- **Persistent / contract types do not live here** — they come from `@rolling-dice-app/types`.
+- **Persistent / contract types do not live here** — they come from `@rolling-dice-app/core`.
 
 ### `types/layout`
 
@@ -189,7 +189,7 @@ app/
 - Static lookup tables, enum-like maps, and named constants with no behavior — pure data, not pure functions.
 - Examples in this repo: D&D class lists, profession options, spell slot tables, storage key strings, navigation menu definitions.
 - Distinct from `helpers/` (functions) and `types/` (shapes); `constants/` ships _values_.
-- Distinct from `@rolling-dice-app/types` enums: those are contract enums shared with backend; `constants/` is frontend-only static data and UI metadata.
+- Distinct from `@rolling-dice-app/core` enums: those are contract enums shared with backend; `constants/` is frontend-only static data and UI metadata.
 
 ### `mocks`
 
@@ -270,7 +270,7 @@ app/
 
 ### `types/`
 
-1. Shared TypeScript types under `app/types/` cover frontend-only concerns. Contract types come from `@rolling-dice-app/types` and are imported, not redeclared.
+1. Shared TypeScript types under `app/types/` cover frontend-only concerns. Contract types come from `@rolling-dice-app/core` and are imported, not redeclared.
 2. Layer locally by purpose:
    - `types/business` — frontend-only domain (form state, view models, dice / adventure shapes)
    - `types/layout` — navigation / layout shapes
@@ -311,11 +311,11 @@ app/
 
 1. Centralize shared types rather than scattering them next to components.
 2. Component-related types live close to the component, or under `types/business` if reused across features.
-3. API DTOs and response shapes come from `@rolling-dice-app/types`; don't restate them under `types/`.
+3. API DTOs and response shapes come from `@rolling-dice-app/core`; don't restate them under `types/`.
 4. Distinguish domain model and UI model by naming.
 5. Suggested naming:
-   - `XxxDto` (from `@rolling-dice-app/types`)
-   - `XxxResponse` (from `@rolling-dice-app/types`)
+   - `XxxDto` (from `@rolling-dice-app/core`)
+   - `XxxResponse` (from `@rolling-dice-app/core`)
    - `XxxModel` / `XxxViewModel` (frontend-local)
    - `XxxFormState` / `XxxDraft` (frontend-local form shapes)
 
@@ -369,7 +369,7 @@ When adding a file, decide in this order:
 7. Creating deep nested folders without a clear need.
 8. Scattering test files without a unified strategy; pick centralized vs. co-located early and stay consistent.
 9. Mixing production code, shared mocks, and test logic inside `tests/` without clear layering.
-10. Locally restating types that belong in `@rolling-dice-app/types`.
+10. Locally restating types that belong in `@rolling-dice-app/core`.
 
 ## Output Requirements
 

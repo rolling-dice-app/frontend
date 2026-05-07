@@ -88,6 +88,7 @@ const makeSpell = (overrides: Partial<Spell> = {}): Spell =>
   ({
     id: overrides.id ?? `s-${Math.random()}`,
     name: '魔法飛彈',
+    engName: 'Magic Missile',
     level: 1,
     school: 'evocation',
     castingTime: '1 動作',
@@ -98,6 +99,8 @@ const makeSpell = (overrides: Partial<Spell> = {}): Spell =>
     desc: '射出三道魔力箭',
     ritual: false,
     concentration: false,
+    classes: ['wizard'],
+    source: 'PHB',
     ...overrides,
   }) as Spell
 
@@ -257,6 +260,76 @@ describe('SpellBookPanel (form)', () => {
       } finally {
         vi.useRealTimers()
       }
+    })
+
+    it('keyword filter 也比對 engName（debounce 後生效）', async () => {
+      vi.useFakeTimers()
+      try {
+        const wrapper = mountPanel({
+          spells: [
+            makeSpell({ id: 'a', name: '魔法飛彈', engName: 'Magic Missile', level: 1 }),
+            makeSpell({ id: 'b', name: '冰雪風暴', engName: 'Ice Storm', level: 4 }),
+          ],
+        })
+        const search = wrapper.find('input[type="search"]')
+        await search.setValue('missile')
+        vi.advanceTimersByTime(250)
+        await nextTick()
+        const items = wrapper.findAllComponents(AccordionItemStub)
+        expect(items).toHaveLength(1)
+        expect(wrapper.text()).toContain('魔法飛彈')
+        expect(wrapper.text()).not.toContain('冰雪風暴')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('學派多選 filter 啟用後僅顯示所選學派的法術', async () => {
+      const wrapper = mountPanel({
+        spells: [
+          makeSpell({ id: 'a', name: '魔法飛彈', school: 'evocation' }),
+          makeSpell({ id: 'b', name: '幻影殺手', school: 'illusion' }),
+        ],
+      })
+      const schoolSelect = wrapper.findAllComponents(AppSelect).at(1)!
+      schoolSelect.vm.$emit('update:modelValue', ['evocation'])
+      await nextTick()
+      const items = wrapper.findAllComponents(AccordionItemStub)
+      expect(items).toHaveLength(1)
+      expect(wrapper.text()).toContain('魔法飛彈')
+      expect(wrapper.text()).not.toContain('幻影殺手')
+    })
+
+    it('職業 filter 啟用後僅顯示包含該職業的法術', async () => {
+      const wrapper = mountPanel({
+        spells: [
+          makeSpell({ id: 'a', name: '魔法飛彈', classes: ['wizard'] }),
+          makeSpell({ id: 'b', name: '治療之觸', classes: ['cleric'] }),
+        ],
+      })
+      const classesSelect = wrapper.findAllComponents(AppSelect).at(2)!
+      classesSelect.vm.$emit('update:modelValue', ['wizard'])
+      await nextTick()
+      const items = wrapper.findAllComponents(AccordionItemStub)
+      expect(items).toHaveLength(1)
+      expect(wrapper.text()).toContain('魔法飛彈')
+      expect(wrapper.text()).not.toContain('治療之觸')
+    })
+
+    it('資源 filter 啟用後僅顯示該資源的法術', async () => {
+      const wrapper = mountPanel({
+        spells: [
+          makeSpell({ id: 'a', name: '魔法飛彈', source: 'PHB' }),
+          makeSpell({ id: 'b', name: '彈性反擊', source: 'XGE' }),
+        ],
+      })
+      const sourcesSelect = wrapper.findAllComponents(AppSelect).at(3)!
+      sourcesSelect.vm.$emit('update:modelValue', ['PHB'])
+      await nextTick()
+      const items = wrapper.findAllComponents(AccordionItemStub)
+      expect(items).toHaveLength(1)
+      expect(wrapper.text()).toContain('魔法飛彈')
+      expect(wrapper.text()).not.toContain('彈性反擊')
     })
 
     it('儀式 toggle 啟用後僅顯示儀式法術', async () => {

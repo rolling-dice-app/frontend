@@ -5,7 +5,7 @@
     </header>
 
     <!-- Filter bar -->
-    <div class="mb-4 space-y-3 rounded-lg border border-border-soft bg-canvas p-3">
+    <div class="mb-4 space-y-3 rounded-lg border border-border-soft bg-canvas/80 p-3">
       <CommonAppInput
         :radius="0"
         :model-value="keywordInput"
@@ -17,7 +17,7 @@
         @update:model-value="onKeywordInput"
       />
 
-      <div class="flex flex-wrap items-end gap-2">
+      <div class="flex flex-wrap items-end gap-1 sm:gap-2">
         <div>
           <label :for="levelSelectId" class="mb-1 block text-xs text-content">環數</label>
           <CommonAppSelect
@@ -35,11 +35,39 @@
           <label :for="schoolSelectId" class="mb-1 block text-xs text-content">學派</label>
           <CommonAppSelect
             :id="schoolSelectId"
-            :model-value="filter.school"
+            v-model="filter.schools"
             :options="SPELL_SCHOOL_OPTIONS"
+            multiple
+            multiple-display="count"
+            placeholder="-"
             size="sm"
-            class="w-24"
-            @update:model-value="filter.school = ($event ?? '') as SchoolFilter"
+            class="w-32"
+          />
+        </div>
+        <div>
+          <label :for="classesSelectId" class="mb-1 block text-xs text-content">職業</label>
+          <CommonAppSelect
+            :id="classesSelectId"
+            v-model="filter.classes"
+            :options="SPELL_PROFESSION_OPTIONS"
+            multiple
+            multiple-display="count"
+            placeholder="-"
+            size="sm"
+            class="w-32"
+          />
+        </div>
+        <div>
+          <label :for="sourcesSelectId" class="mb-1 block text-xs text-content">資源</label>
+          <CommonAppSelect
+            :id="sourcesSelectId"
+            v-model="filter.sources"
+            :options="SPELL_SOURCE_OPTIONS"
+            multiple
+            multiple-display="count"
+            placeholder="-"
+            size="sm"
+            class="w-32"
           />
         </div>
         <Button
@@ -171,11 +199,14 @@
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import { SPELL_LEVEL_OPTIONS, SPELL_SCHOOL_OPTIONS } from '~/constants/spell-options'
+import {
+  SPELL_LEVEL_OPTIONS,
+  SPELL_PROFESSION_OPTIONS,
+  SPELL_SCHOOL_OPTIONS,
+  SPELL_SOURCE_OPTIONS,
+} from '~/constants/spell-options'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { Spell, SpellSchool } from '@rolling-dice-app/core'
-
-type SchoolFilter = SpellSchool | ''
+import type { ProfessionKey, Spell, SourceKey, SpellSchool } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)
@@ -185,13 +216,17 @@ const { spells } = useSpells()
 const headingId = useId()
 const levelSelectId = useId()
 const schoolSelectId = useId()
+const classesSelectId = useId()
+const sourcesSelectId = useId()
 
 // ─── Filter ─────────────────────────────────────────────────────────────────
 
 interface SpellFilter {
   keyword: string
   level: number[]
-  school: SpellSchool | ''
+  schools: SpellSchool[]
+  classes: ProfessionKey[]
+  sources: SourceKey[]
   ritual: boolean
   concentration: boolean
 }
@@ -199,7 +234,9 @@ interface SpellFilter {
 const defaultFilter = (): SpellFilter => ({
   keyword: '',
   level: [],
-  school: '',
+  schools: [],
+  classes: [],
+  sources: [],
   ritual: false,
   concentration: false,
 })
@@ -224,7 +261,9 @@ const hasActiveFilter = computed(
   () =>
     filter.keyword !== '' ||
     filter.level.length > 0 ||
-    filter.school !== '' ||
+    filter.schools.length > 0 ||
+    filter.classes.length > 0 ||
+    filter.sources.length > 0 ||
     filter.ritual ||
     filter.concentration,
 )
@@ -238,12 +277,20 @@ const resetFilter = () => {
 const filteredSpells = computed<Spell[]>(() => {
   const keyword = filter.keyword.trim().toLowerCase()
   const levels = filter.level.length > 0 ? new Set(filter.level) : null
-  const school = filter.school === '' ? null : filter.school
+  const schools = filter.schools.length > 0 ? new Set(filter.schools) : null
+  const classes = filter.classes.length > 0 ? new Set(filter.classes) : null
+  const sources = filter.sources.length > 0 ? new Set(filter.sources) : null
 
   return spells.value.filter((s) => {
-    if (keyword && !s.name.toLowerCase().includes(keyword)) return false
+    if (keyword) {
+      const name = s.name.toLowerCase()
+      const eng = s.engName.toLowerCase()
+      if (!name.includes(keyword) && !eng.includes(keyword)) return false
+    }
     if (levels && !levels.has(s.level)) return false
-    if (school && s.school !== school) return false
+    if (schools && !schools.has(s.school)) return false
+    if (classes && !s.classes.some((c) => classes.has(c))) return false
+    if (sources && !sources.has(s.source)) return false
     if (filter.ritual && !s.ritual) return false
     if (filter.concentration && !s.concentration) return false
     return true

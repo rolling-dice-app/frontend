@@ -17,16 +17,32 @@
           <span class="hidden text-sm text-content sm:inline">
             {{ auth.user?.displayName }}
           </span>
-          <Button size="sm" outline @click="onLogout">登出</Button>
+          <Button
+            size="sm"
+            border-color="var(--color-primary)"
+            text-color="var(--color-primary)"
+            outline
+            @click="onLogout"
+          >
+            <span class="font-display flex items-center gap-1">
+              Log out
+              <Icon name="logout" />
+            </span>
+          </Button>
         </template>
-        <Button v-else size="sm" @click="onLogin">登入</Button>
+        <Button v-else bg-color="var(--color-primary)" size="sm" @click="onLogin">
+          <span class="font-display flex items-center gap-1">
+            Log in
+            <Icon name="login" />
+          </span>
+        </Button>
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { Button } from '@ui'
+import { Button, Icon } from '@ui'
 
 const auth = useAuthStore()
 const route = useRoute()

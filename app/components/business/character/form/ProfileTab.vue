@@ -90,8 +90,10 @@
 
 <script setup lang="ts">
 import { TextArea } from '@ui'
-import { APPEARANCE_MAX_LENGTH, STORY_MAX_LENGTH } from '~/constants/character'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
+
+const APPEARANCE_MAX_LENGTH = 200
+const STORY_MAX_LENGTH = 2000
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 </script>

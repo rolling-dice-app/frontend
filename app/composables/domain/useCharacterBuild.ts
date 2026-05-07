@@ -30,7 +30,7 @@ function createDefaultFormState(): CharacterFormState {
     race: null,
     subrace: null,
     alignment: null,
-    professions: [{ profession: null, level: 1, subprofession: null }],
+    classes: [{ classKey: null, level: 1, subclass: null }],
     abilities: createDefaultAbilities(),
     abilityMethod: 'custom',
     dicePool: [],
@@ -56,7 +56,7 @@ export function useCharacterBuild() {
   const activeTab = ref<BuildTab>('basic')
   const formState = reactive<CharacterFormState>(createDefaultFormState())
 
-  const totalLevel = computed(() => calculateTotalLevel(formState.professions))
+  const totalLevel = computed(() => calculateTotalLevel(formState.classes))
 
   // ─── Dice Roll ────────────────────────────────────────────────────────
 
@@ -128,7 +128,7 @@ export function useCharacterBuild() {
     () =>
       !isSubmitting.value &&
       formState.name.trim().length > 0 &&
-      formState.professions.every((p) => p.profession !== null) &&
+      formState.classes.every((entry) => entry.classKey !== null) &&
       isDiceAssignmentComplete.value,
   )
 

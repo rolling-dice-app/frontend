@@ -18,7 +18,7 @@
 
       <BusinessCharacterFormCombatSavingThrowPanel
         v-model:form-state="formState"
-        :professions="professions"
+        :classes="classes"
         :ability-scores="abilityScores"
         :proficiency-bonus="proficiencyBonus"
       />
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ProfessionEntry } from '@rolling-dice-app/core'
+import type { ClassEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
@@ -49,6 +49,6 @@ defineProps<{
   totalPassivePerception: number
   totalPassiveInsight: number
   proficiencyBonus: number
-  professions: ProfessionEntry[]
+  classes: ClassEntry[]
 }>()
 </script>

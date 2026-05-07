@@ -100,7 +100,7 @@ export const useCharacterStore = defineStore('character', () => {
 
     const previous = characters.value[index]!
     const patch = formStateToCharacterPatch(formState)
-    const baselineSavingThrows = calculateSavingThrowProficiencies(patch.professions)
+    const baselineSavingThrows = calculateSavingThrowProficiencies(patch.classes)
     const baselineSet = new Set(baselineSavingThrows)
     const savingThrowExtras = formState.savingThrowExtras.filter((key) => !baselineSet.has(key))
 

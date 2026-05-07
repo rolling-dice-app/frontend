@@ -178,15 +178,15 @@ describe('createDefaultArmorClass', () => {
 describe('calculateSavingThrowProficiencies', () => {
   it('主職業為 fighter 時，回傳 strength + constitution', () => {
     expect(
-      calculateSavingThrowProficiencies([{ profession: 'fighter', level: 3, subprofession: null }]),
+      calculateSavingThrowProficiencies([{ classKey: 'fighter', level: 3, subclass: null }]),
     ).toEqual(['strength', 'constitution'])
   })
 
   it('多職業時，以第一個職業為主職業決定豁免熟練', () => {
     expect(
       calculateSavingThrowProficiencies([
-        { profession: 'wizard', level: 5, subprofession: null },
-        { profession: 'fighter', level: 3, subprofession: null },
+        { classKey: 'wizard', level: 5, subclass: null },
+        { classKey: 'fighter', level: 3, subclass: null },
       ]),
     ).toEqual(['intelligence', 'wisdom'])
   })
@@ -195,14 +195,14 @@ describe('calculateSavingThrowProficiencies', () => {
     expect(calculateSavingThrowProficiencies([])).toEqual([])
   })
 
-  it('回傳陣列為新的陣列（不與 PROFESSION_CONFIG 共享參照）', () => {
+  it('回傳陣列為新的陣列（不與 CLASS_CONFIG 共享參照）', () => {
     const result = calculateSavingThrowProficiencies([
-      { profession: 'wizard', level: 1, subprofession: null },
+      { classKey: 'wizard', level: 1, subclass: null },
     ])
     result.push('charisma')
     // 第二次呼叫仍為原始結果，代表回傳陣列是獨立副本
     expect(
-      calculateSavingThrowProficiencies([{ profession: 'wizard', level: 1, subprofession: null }]),
+      calculateSavingThrowProficiencies([{ classKey: 'wizard', level: 1, subclass: null }]),
     ).toEqual(['intelligence', 'wisdom'])
   })
 })
@@ -217,7 +217,7 @@ describe('formStateToCharacterPatch', () => {
       race: 'human',
       subrace: null,
       alignment: 'trueNeutral',
-      professions: [{ profession: 'fighter', level: 3, subprofession: null }],
+      classes: [{ classKey: 'fighter', level: 3, subclass: null }],
       skills: {},
       background: null,
       isJackOfAllTrades: false,
@@ -236,16 +236,16 @@ describe('formStateToCharacterPatch', () => {
     }
   }
 
-  it('基本 happy path：欄位原樣帶入，professions 不變', () => {
+  it('基本 happy path：欄位原樣帶入，classes 不變', () => {
     const form = createBaseFormState({
       name: '法師小明',
-      professions: [{ profession: 'wizard', level: 5, subprofession: null }],
+      classes: [{ classKey: 'wizard', level: 5, subclass: null }],
       faith: '無神論',
       age: 25,
     })
     const patch = formStateToCharacterPatch(form)
     expect(patch.name).toBe('法師小明')
-    expect(patch.professions).toEqual([{ profession: 'wizard', level: 5, subprofession: null }])
+    expect(patch.classes).toEqual([{ classKey: 'wizard', level: 5, subclass: null }])
     expect(patch.faith).toBe('無神論')
     expect(patch.age).toBe(25)
   })
@@ -256,44 +256,44 @@ describe('formStateToCharacterPatch', () => {
     expect(patch.gender).toBeNull()
   })
 
-  it('professions 含 null 條目時應過濾掉 null', () => {
+  it('classes 含 null 條目時應過濾掉 null', () => {
     const form = createBaseFormState({
-      professions: [
-        { profession: 'fighter', level: 3, subprofession: null },
-        { profession: null, level: 2, subprofession: null },
-        { profession: 'wizard', level: 1, subprofession: null },
+      classes: [
+        { classKey: 'fighter', level: 3, subclass: null },
+        { classKey: null, level: 2, subclass: null },
+        { classKey: 'wizard', level: 1, subclass: null },
       ],
     })
     const patch = formStateToCharacterPatch(form)
-    expect(patch.professions).toEqual([
-      { profession: 'fighter', level: 3, subprofession: null },
-      { profession: 'wizard', level: 1, subprofession: null },
+    expect(patch.classes).toEqual([
+      { classKey: 'fighter', level: 3, subclass: null },
+      { classKey: 'wizard', level: 1, subclass: null },
     ])
   })
 
-  it('professions 含 subprofession key 時應原樣保留', () => {
+  it('classes 含 subclass key 時應原樣保留', () => {
     const form = createBaseFormState({
-      professions: [
-        { profession: 'fighter', level: 5, subprofession: 'battleMaster' },
-        { profession: 'wizard', level: 3, subprofession: null },
+      classes: [
+        { classKey: 'fighter', level: 5, subclass: 'battleMaster' },
+        { classKey: 'wizard', level: 3, subclass: null },
       ],
     })
     const patch = formStateToCharacterPatch(form)
-    expect(patch.professions).toEqual([
-      { profession: 'fighter', level: 5, subprofession: 'battleMaster' },
-      { profession: 'wizard', level: 3, subprofession: null },
+    expect(patch.classes).toEqual([
+      { classKey: 'fighter', level: 5, subclass: 'battleMaster' },
+      { classKey: 'wizard', level: 3, subclass: null },
     ])
   })
 
-  it('professions 全為 null 時，professions 為空陣列', () => {
+  it('classes 全為 null 時，classes 為空陣列', () => {
     const form = createBaseFormState({
-      professions: [
-        { profession: null, level: 1, subprofession: null },
-        { profession: null, level: 2, subprofession: null },
+      classes: [
+        { classKey: null, level: 1, subclass: null },
+        { classKey: null, level: 2, subclass: null },
       ],
     })
     const patch = formStateToCharacterPatch(form)
-    expect(patch.professions).toEqual([])
+    expect(patch.classes).toEqual([])
   })
 
   it('所有可選文字欄位為 null 時，patch 欄位保持 null', () => {
@@ -353,7 +353,7 @@ describe('calculateTotalHp', () => {
     // class HP: 10 + avg(6) × 2 = 22；CON 加值：2 × 3 = 6；total = 28
     expect(
       calculateTotalHp({
-        professions: [{ profession: 'fighter', level: 3, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 3, subclass: null }],
         conModifier: 2,
         isTough: false,
         customHpBonus: 0,
@@ -367,9 +367,9 @@ describe('calculateTotalHp', () => {
     // total = 16 + 4 + 4 + 2 = 26
     expect(
       calculateTotalHp({
-        professions: [
-          { profession: 'fighter', level: 2, subprofession: null },
-          { profession: 'wizard', level: 1, subprofession: null },
+        classes: [
+          { classKey: 'fighter', level: 2, subclass: null },
+          { classKey: 'wizard', level: 1, subclass: null },
         ],
         conModifier: 2,
         isTough: false,
@@ -382,7 +382,7 @@ describe('calculateTotalHp', () => {
     // fighter lv3 = 22 class HP + 6 CON = 28；tough: 3×2=6 → 34
     expect(
       calculateTotalHp({
-        professions: [{ profession: 'fighter', level: 3, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 3, subclass: null }],
         conModifier: 2,
         isTough: true,
         customHpBonus: 0,
@@ -393,7 +393,7 @@ describe('calculateTotalHp', () => {
   it('customHpBonus 加值應直接疊加', () => {
     expect(
       calculateTotalHp({
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
         conModifier: 1,
         isTough: false,
         customHpBonus: 5,
@@ -401,10 +401,10 @@ describe('calculateTotalHp', () => {
     ).toBe(10 + 1 + 5)
   })
 
-  it('professions 為空時，僅回傳 customHpBonus（無健壯加值）', () => {
-    expect(
-      calculateTotalHp({ professions: [], conModifier: 3, isTough: true, customHpBonus: 7 }),
-    ).toBe(7)
+  it('classes 為空時，僅回傳 customHpBonus（無健壯加值）', () => {
+    expect(calculateTotalHp({ classes: [], conModifier: 3, isTough: true, customHpBonus: 7 })).toBe(
+      7,
+    )
   })
 })
 

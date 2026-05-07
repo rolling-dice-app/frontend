@@ -43,12 +43,10 @@
           </Badge>
         </div>
 
-        <!-- Right: profession + level badge -->
+        <!-- Right: classKey + level badge -->
         <div class="ml-auto flex shrink-0 items-center gap-2">
           <span class="text-xs text-content-muted md:text-sm">
-            {{
-              character.professions.map((p) => PROFESSION_CONFIG[p.profession].label).join(' / ')
-            }}
+            {{ character.classes.map((p) => CLASS_CONFIG[p.classKey].label).join(' / ') }}
           </span>
           <div
             class="rounded-full px-2.5 py-0.5 text-xs font-bold md:px-3 md:text-sm"
@@ -76,7 +74,7 @@
 
 <script setup lang="ts">
 import { Badge, Icon } from '@ui'
-import { PROFESSION_CONFIG } from '~/constants/dnd'
+import { CLASS_CONFIG } from '~/constants/dnd'
 import type { Character, CharacterTier } from '@rolling-dice-app/core'
 
 const props = defineProps<{
@@ -114,7 +112,7 @@ const TIER_CONFIG: Record<
   },
 }
 
-const totalLevel = computed(() => calculateTotalLevel(props.character.professions))
+const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
 const tier = computed(() => getCharacterTier(totalLevel.value))
 const tierConfig = computed(() => TIER_CONFIG[tier.value])
 const isMaxLevel = computed(() => totalLevel.value === 20)
@@ -135,9 +133,7 @@ watch(
 
 const hasAvatar = computed(() => !!props.character.avatar && !coverError.value)
 const coverSrc = computed(() =>
-  hasAvatar.value
-    ? props.character.avatar!
-    : PROFESSION_IMAGES[props.character.professions[0]!.profession],
+  hasAvatar.value ? props.character.avatar! : CLASS_IMAGES[props.character.classes[0]!.classKey],
 )
 
 const onCoverError = () => {

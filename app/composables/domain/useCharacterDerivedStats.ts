@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
-import type { Character, ProfessionEntry, AbilityKey } from '@rolling-dice-app/core'
+import type { Character, ClassEntry, AbilityKey } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 import {
   calculatePassiveScore,
@@ -20,7 +20,7 @@ export interface CharacterDerivedStats {
   totalAbilityScores: ComputedRef<TotalAbilityScores>
   proficiencyBonus: ComputedRef<number>
   savingThrowProficiencies: ComputedRef<AbilityKey[]>
-  validProfessions: ComputedRef<ProfessionEntry[]>
+  validClasses: ComputedRef<ClassEntry[]>
   totalHp: ComputedRef<number>
   totalArmorClass: ComputedRef<number>
   totalInitiative: ComputedRef<number>
@@ -37,21 +37,21 @@ export function useCharacterDerivedStats(
 ): CharacterDerivedStats {
   const totalAbilityScores = computed(() => calculateTotalAbilityScores(formState.abilities))
 
-  const totalLevel = computed(() => calculateTotalLevel(formState.professions))
+  const totalLevel = computed(() => calculateTotalLevel(formState.classes))
   const proficiencyBonus = computed(() => getProficiencyBonus(totalLevel.value))
 
-  const validProfessions = computed<ProfessionEntry[]>(() =>
-    formState.professions.filter((p): p is ProfessionEntry => p.profession !== null),
+  const validClasses = computed<ClassEntry[]>(() =>
+    formState.classes.filter((entry): entry is ClassEntry => entry.classKey !== null),
   )
 
   const savingThrowProficiencies = computed<AbilityKey[]>(() => [
-    ...calculateSavingThrowProficiencies(validProfessions.value),
+    ...calculateSavingThrowProficiencies(validClasses.value),
     ...formState.savingThrowExtras,
   ])
 
   const totalHp = computed(() =>
     calculateTotalHp({
-      professions: validProfessions.value,
+      classes: validClasses.value,
       conModifier: getAbilityModifier(totalAbilityScores.value.constitution),
       isTough: formState.isTough,
       customHpBonus: formState.customHpBonus,
@@ -99,7 +99,7 @@ export function useCharacterDerivedStats(
     totalAbilityScores,
     proficiencyBonus,
     savingThrowProficiencies,
-    validProfessions,
+    validClasses,
     totalHp,
     totalArmorClass,
     totalInitiative,
@@ -118,19 +118,19 @@ export function useCharacterDerivedStatsFromCharacter(
 ): CharacterDerivedStats {
   const totalAbilityScores = computed(() => calculateTotalAbilityScores(character.value.abilities))
 
-  const totalLevel = computed(() => calculateTotalLevel(character.value.professions))
+  const totalLevel = computed(() => calculateTotalLevel(character.value.classes))
   const proficiencyBonus = computed(() => getProficiencyBonus(totalLevel.value))
 
   const savingThrowProficiencies = computed<AbilityKey[]>(() => [
-    ...calculateSavingThrowProficiencies(character.value.professions),
+    ...calculateSavingThrowProficiencies(character.value.classes),
     ...character.value.savingThrowExtras,
   ])
 
-  const validProfessions = computed(() => character.value.professions)
+  const validClasses = computed(() => character.value.classes)
 
   const totalHp = computed(() =>
     calculateTotalHp({
-      professions: character.value.professions,
+      classes: character.value.classes,
       conModifier: getAbilityModifier(totalAbilityScores.value.constitution),
       isTough: character.value.isTough,
       customHpBonus: character.value.customHpBonus,
@@ -178,7 +178,7 @@ export function useCharacterDerivedStatsFromCharacter(
     totalAbilityScores,
     proficiencyBonus,
     savingThrowProficiencies,
-    validProfessions,
+    validClasses,
     totalHp,
     totalArmorClass,
     totalInitiative,

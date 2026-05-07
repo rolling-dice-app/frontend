@@ -1,13 +1,13 @@
-import type { ProfessionKey } from '@rolling-dice-app/core'
+import type { ClassKey } from '@rolling-dice-app/core'
 
-const imageModules = import.meta.glob<string>('../assets/images/professions/*.png', {
+const imageModules = import.meta.glob<string>('../assets/images/classes/*.png', {
   eager: true,
   import: 'default',
 })
 
-export const PROFESSION_IMAGES: Partial<Record<ProfessionKey, string>> = Object.fromEntries(
+export const CLASS_IMAGES: Partial<Record<ClassKey, string>> = Object.fromEntries(
   Object.entries(imageModules).map(([path, url]) => {
-    const key = path.split('/').pop()!.replace('.png', '') as ProfessionKey
+    const key = path.split('/').pop()!.replace('.png', '') as ClassKey
     return [key, url]
   }),
-) as Partial<Record<ProfessionKey, string>>
+) as Partial<Record<ClassKey, string>>

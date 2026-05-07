@@ -1,7 +1,7 @@
 import {
   CASTER_CATEGORY,
   SHARED_CASTER_SLOTS,
-  SUBPROFESSION_CASTER_OVERRIDE,
+  SUBCLASS_CASTER_OVERRIDE,
   WARLOCK_SLOT_TABLE,
   type CasterCategory,
 } from '~/constants/spell-slot-table'
@@ -9,45 +9,43 @@ import type {
   SpellLevel,
   SpellSlots,
   SpellSlotsDelta,
-  ProfessionKey,
-  SubprofessionKey,
+  ClassKey,
+  SubclassKey,
 } from '@rolling-dice-app/core'
 
 const SPELL_LEVELS: readonly SpellLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const SLOT_MAX = 9
 
-interface ProfessionLike {
-  profession: ProfessionKey | null
+interface ClassLike {
+  classKey: ClassKey | null
   level: number
-  subprofession: SubprofessionKey | null
+  subclass: SubclassKey | null
 }
 
-const resolveCategory = (entry: ProfessionLike): CasterCategory => {
-  if (entry.profession === null) return 'none'
-  const base = CASTER_CATEGORY[entry.profession]
+const resolveCategory = (entry: ClassLike): CasterCategory => {
+  if (entry.classKey === null) return 'none'
+  const base = CASTER_CATEGORY[entry.classKey]
   if (base !== 'none') return base
-  if (entry.subprofession === null) return 'none'
-  return SUBPROFESSION_CASTER_OVERRIDE[entry.subprofession] ?? 'none'
+  if (entry.subclass === null) return 'none'
+  return SUBCLASS_CASTER_OVERRIDE[entry.subclass] ?? 'none'
 }
 
 /** 一般施法者建議環位（全 / 半 / 三分之一合併計算）；artificer 向上取整，其他 third-caster 向下取整 */
-export const getSuggestedRegularSpellSlots = (
-  professions: readonly ProfessionLike[],
-): SpellSlots => {
+export const getSuggestedRegularSpellSlots = (classes: readonly ClassLike[]): SpellSlots => {
   let fullLevels = 0
   let halfLevels = 0
   let thirdNonArtificerLevels = 0
   let artificerLevels = 0
 
-  for (const entry of professions) {
-    if (entry.profession === null || entry.level <= 0) continue
+  for (const entry of classes) {
+    if (entry.classKey === null || entry.level <= 0) continue
     const category = resolveCategory(entry)
     if (category === 'full') {
       fullLevels += entry.level
     } else if (category === 'half') {
       halfLevels += entry.level
     } else if (category === 'third') {
-      if (entry.profession === 'artificer') artificerLevels += entry.level
+      if (entry.classKey === 'artificer') artificerLevels += entry.level
       else thirdNonArtificerLevels += entry.level
     }
   }
@@ -63,11 +61,11 @@ export const getSuggestedRegularSpellSlots = (
 }
 
 /** 契術師 pact magic 建議環位；多次契術師等級加總後查表 */
-export const getSuggestedPactSlots = (professions: readonly ProfessionLike[]): SpellSlots => {
+export const getSuggestedPactSlots = (classes: readonly ClassLike[]): SpellSlots => {
   let warlockLevels = 0
-  for (const entry of professions) {
-    if (entry.profession === null || entry.level <= 0) continue
-    if (CASTER_CATEGORY[entry.profession] === 'warlock') warlockLevels += entry.level
+  for (const entry of classes) {
+    if (entry.classKey === null || entry.level <= 0) continue
+    if (CASTER_CATEGORY[entry.classKey] === 'warlock') warlockLevels += entry.level
   }
 
   if (warlockLevels < 1 || warlockLevels > 20) return {}

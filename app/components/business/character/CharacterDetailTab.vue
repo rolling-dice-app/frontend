@@ -79,7 +79,7 @@
         </div>
         <!-- 職業資訊 -->
         <div class="flex flex-col gap-4 flex-1">
-          <h2 id="section-professions" class="font-display text-lg font-bold text-content">職業</h2>
+          <h2 id="section-classes" class="font-display text-lg font-bold text-content">職業</h2>
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-border-soft text-left text-xs text-content-muted">
@@ -94,14 +94,14 @@
             <tbody>
               <tr
                 v-for="row in classHpRows"
-                :key="row.profession"
+                :key="row.classKey"
                 class="border-b border-border-soft"
               >
                 <td class="py-2 pr-2 text-content-soft">
                   <div class="flex items-center gap-1.5">
                     <img
-                      v-if="PROFESSION_IMAGES[row.profession]"
-                      :src="PROFESSION_IMAGES[row.profession]"
+                      v-if="CLASS_IMAGES[row.classKey]"
+                      :src="CLASS_IMAGES[row.classKey]"
                       alt=""
                       class="size-4"
                       loading="lazy"
@@ -109,10 +109,10 @@
                     />
                     <span>{{ row.label }}</span>
                     <span
-                      v-if="row.subprofessionLabel"
+                      v-if="row.subclassLabel"
                       class="text-xs text-content-muted hidden xs:inline"
                     >
-                      （{{ row.subprofessionLabel }}）
+                      （{{ row.subclassLabel }}）
                     </span>
                   </div>
                 </td>
@@ -282,11 +282,11 @@ import {
   ABILITY_NAMES,
   ALIGNMENT_NAMES,
   GENDER_NAMES,
-  PROFESSION_CONFIG,
+  CLASS_CONFIG,
   SKILL_NAMES,
   SKILL_TO_ABILITY_MAP,
 } from '~/constants/dnd'
-import { SUBPROFESSION_CONFIG } from '~/constants/subprofession'
+import { SUBCLASS_CONFIG } from '~/constants/subclass'
 
 const props = defineProps<{
   character: Character
@@ -346,17 +346,15 @@ const totalInitiative = computed(() =>
 )
 
 const classHpRows = computed(() =>
-  props.character.professions.map((entry, index) => {
-    const config = PROFESSION_CONFIG[entry.profession]
+  props.character.classes.map((entry, index) => {
+    const config = CLASS_CONFIG[entry.classKey]
     const hp = getClassHitPoints(config.hitDie, entry.level, index === 0)
     const conBonus = conModifier.value * entry.level
     return {
-      profession: entry.profession,
+      classKey: entry.classKey,
       label: config.label,
-      subprofessionLabel:
-        entry.subprofession === null
-          ? null
-          : (SUBPROFESSION_CONFIG[entry.profession][entry.subprofession] ?? null),
+      subclassLabel:
+        entry.subclass === null ? null : (SUBCLASS_CONFIG[entry.classKey][entry.subclass] ?? null),
       level: entry.level,
       hitDie: config.hitDie,
       hp,
@@ -365,10 +363,10 @@ const classHpRows = computed(() =>
   }),
 )
 
-const totalLevel = computed(() => calculateTotalLevel(props.character.professions))
+const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
 
 const savingThrowProficiencies = computed<AbilityKey[]>(() => [
-  ...calculateSavingThrowProficiencies(props.character.professions),
+  ...calculateSavingThrowProficiencies(props.character.classes),
   ...props.character.savingThrowExtras,
 ])
 

@@ -1,14 +1,9 @@
-import type {
-  SpellLevel,
-  SpellSlots,
-  ProfessionKey,
-  SubprofessionKey,
-} from '@rolling-dice-app/core'
+import type { SpellLevel, SpellSlots, ClassKey, SubclassKey } from '@rolling-dice-app/core'
 
 export type CasterCategory = 'full' | 'half' | 'third' | 'warlock' | 'none'
 
-/** 各職業的施法者分類；artificer 為 third-caster 但向上取整，其他 third-caster (EK / AT) 為 fighter / rogue 之 subclass，不在 ProfessionKey 範圍內 */
-export const CASTER_CATEGORY: Readonly<Record<ProfessionKey, CasterCategory>> = {
+/** 各職業的施法者分類；artificer 為 third-caster 但向上取整，其他 third-caster (EK / AT) 為 fighter / rogue 之 subclass，不在 ClassKey 範圍內 */
+export const CASTER_CATEGORY: Readonly<Record<ClassKey, CasterCategory>> = {
   bard: 'full',
   cleric: 'full',
   druid: 'full',
@@ -25,9 +20,7 @@ export const CASTER_CATEGORY: Readonly<Record<ProfessionKey, CasterCategory>> = 
 }
 
 /** 子職業對施法者類別的覆寫；主職業 CASTER_CATEGORY 為 'none' 時才生效。目前僅祕法騎士 / 奧法詭術師為 third-caster */
-export const SUBPROFESSION_CASTER_OVERRIDE: Readonly<
-  Partial<Record<SubprofessionKey, CasterCategory>>
-> = {
+export const SUBCLASS_CASTER_OVERRIDE: Readonly<Partial<Record<SubclassKey, CasterCategory>>> = {
   eldritchKnight: 'third',
   arcaneTrickster: 'third',
 }

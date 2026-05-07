@@ -5,18 +5,18 @@ import type {
   DamageDieType,
   DamageTypeKey,
   GenderKey,
-  ProfessionData,
-  ProfessionKey,
+  ClassData,
+  ClassKey,
   ProficiencyLevel,
   SizeKey,
   SkillKey,
   SpellSchool,
 } from '@rolling-dice-app/core'
 
-// ─── Profession ───────────────────────────────────────────────────────────────
+// ─── Class ────────────────────────────────────────────────────────────────────
 
 /** 各職業靜態設定（D&D 5e PHB 標準） */
-export const PROFESSION_CONFIG: Readonly<Record<ProfessionKey, ProfessionData>> = {
+export const CLASS_CONFIG: Readonly<Record<ClassKey, ClassData>> = {
   artificer: {
     label: '奇械師',
     hitDie: 8,
@@ -281,10 +281,8 @@ export const ABILITY_KEYS: readonly AbilityKey[] = [
 /** 所有 SkillKey，用於迭代 */
 export const SKILL_KEYS: readonly SkillKey[] = Object.keys(SKILL_NAMES) as SkillKey[]
 
-/** 所有 ProfessionKey，用於迭代 */
-export const PROFESSION_KEYS: readonly ProfessionKey[] = Object.keys(
-  PROFESSION_CONFIG,
-) as ProfessionKey[]
+/** 所有 ClassKey，用於迭代 */
+export const CLASS_KEYS: readonly ClassKey[] = Object.keys(CLASS_CONFIG) as ClassKey[]
 
 /** 所有 AlignmentKey，用於迭代 */
 export const ALIGNMENT_KEYS: readonly AlignmentKey[] = Object.keys(

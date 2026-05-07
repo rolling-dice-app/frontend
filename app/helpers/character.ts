@@ -2,7 +2,7 @@ import type {
   ArmorClassConfig,
   CharacterAbilityScores,
   CharacterTier,
-  ProfessionEntry,
+  ClassEntry,
   AbilityKey,
   ArmorType,
   ProficiencyLevel,
@@ -12,7 +12,7 @@ import type {
   CharacterWritablePatch,
   TotalAbilityScores,
 } from '~/types/business/character-form'
-import { ABILITY_KEYS, PROFESSION_CONFIG, UNARMORED_AC_BASE } from '~/constants/dnd'
+import { ABILITY_KEYS, CLASS_CONFIG, UNARMORED_AC_BASE } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
 
 /** D&D 5e 角色預設移動速度（呎/回合） */
@@ -26,8 +26,8 @@ export function getCharacterTier(level: number): CharacterTier {
 }
 
 /** 計算總職業等級（兼職時為各職業等級之和） */
-export function calculateTotalLevel(professions: ReadonlyArray<{ level: number }>): number {
-  return professions.reduce((sum, p) => sum + p.level, 0)
+export function calculateTotalLevel(classes: ReadonlyArray<{ level: number }>): number {
+  return classes.reduce((sum, entry) => sum + entry.level, 0)
 }
 
 /**
@@ -164,17 +164,17 @@ export function calculateTotalAbilityScores(abilities: CharacterAbilityScores): 
  * 每等 CON 調整值、健壯加值（totalLevel × 2）、額外加值。
  */
 export function calculateTotalHp(input: {
-  professions: ProfessionEntry[]
+  classes: ClassEntry[]
   conModifier: number
   isTough: boolean
   customHpBonus: number
 }): number {
-  const classHp = input.professions.reduce((sum, entry, index) => {
-    const config = PROFESSION_CONFIG[entry.profession]
+  const classHp = input.classes.reduce((sum, entry, index) => {
+    const config = CLASS_CONFIG[entry.classKey]
     const hp = getClassHitPoints(config.hitDie, entry.level, index === 0)
     return sum + hp + input.conModifier * entry.level
   }, 0)
-  const totalLevel = calculateTotalLevel(input.professions)
+  const totalLevel = calculateTotalLevel(input.classes)
   const toughBonus = input.isTough ? totalLevel * 2 : 0
   return classHp + toughBonus + input.customHpBonus
 }
@@ -201,10 +201,10 @@ export function calculateTotalInitiative(input: {
  * 由（已過濾的）職業陣列取得豁免熟練屬性，
  * 規則：取主職業（第一個 entry）的 savingThrowProficiencies；無主職業時回傳空陣列。
  */
-export function calculateSavingThrowProficiencies(professions: ProfessionEntry[]): AbilityKey[] {
-  const primary = professions[0]
+export function calculateSavingThrowProficiencies(classes: ClassEntry[]): AbilityKey[] {
+  const primary = classes[0]
   if (!primary) return []
-  return [...PROFESSION_CONFIG[primary.profession].savingThrowProficiencies]
+  return [...CLASS_CONFIG[primary.classKey].savingThrowProficiencies]
 }
 
 /**
@@ -222,9 +222,7 @@ export function formStateToCharacterPatch(
   const alignment = formState.alignment
 
   // progression
-  const professions = formState.professions.filter(
-    (p): p is ProfessionEntry => p.profession !== null,
-  )
+  const classes = formState.classes.filter((entry): entry is ClassEntry => entry.classKey !== null)
 
   // skills & toggles
   const skills = { ...formState.skills }
@@ -252,7 +250,7 @@ export function formStateToCharacterPatch(
     race,
     subrace,
     alignment,
-    professions,
+    classes,
     skills,
     isJackOfAllTrades,
     isTough,

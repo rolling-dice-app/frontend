@@ -1,13 +1,13 @@
 import type { Ref } from 'vue'
-import { PROFESSION_CONFIG } from '~/constants/dnd'
+import { CLASS_CONFIG } from '~/constants/dnd'
 import { getCombatStateStorageKey } from '~/constants/storage'
 import { calculateTotalLevel } from '~/helpers/character'
 import type {
   CombatState,
-  ProfessionEntry,
+  ClassEntry,
   SpellLevel,
   AbilityKey,
-  ProfessionKey,
+  ClassKey,
 } from '@rolling-dice-app/core'
 
 const PERSIST_DEBOUNCE_MS = 300
@@ -76,27 +76,27 @@ function sumUsedSlots(used: Partial<Record<SpellLevel, number>>): number {
 
 /** 長休：總回復額為 floor(totalLevel/2)（至少 1），依骰面由大到小貪婪分配 */
 function recoverHitDice(
-  used: Partial<Record<ProfessionKey, number>>,
-  professions: readonly ProfessionEntry[],
-): Partial<Record<ProfessionKey, number>> {
-  const totalLevel = calculateTotalLevel(professions)
+  used: Partial<Record<ClassKey, number>>,
+  classes: readonly ClassEntry[],
+): Partial<Record<ClassKey, number>> {
+  const totalLevel = calculateTotalLevel(classes)
   if (totalLevel === 0) return {}
 
-  const sorted = [...professions].sort(
-    (a, b) => PROFESSION_CONFIG[b.profession].hitDie - PROFESSION_CONFIG[a.profession].hitDie,
+  const sorted = [...classes].sort(
+    (a, b) => CLASS_CONFIG[b.classKey].hitDie - CLASS_CONFIG[a.classKey].hitDie,
   )
 
   let pool = Math.max(1, Math.floor(totalLevel / 2))
-  const result: Partial<Record<ProfessionKey, number>> = {}
+  const result: Partial<Record<ClassKey, number>> = {}
 
   for (const entry of sorted) {
-    const currentlyUsed = used[entry.profession] ?? 0
+    const currentlyUsed = used[entry.classKey] ?? 0
     if (currentlyUsed === 0) continue
     const recover = pool > 0 ? Math.min(currentlyUsed, pool) : 0
     pool -= recover
     const remaining = currentlyUsed - recover
     if (remaining > 0) {
-      result[entry.profession] = remaining
+      result[entry.classKey] = remaining
     }
   }
 
@@ -262,21 +262,21 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   // ─── Hit dice ─────────────────────────────────────────────────────────
 
   /** 取得指定職業已使用生命骰數，未追蹤時回傳 0 */
-  function getHitDiceUsed(profession: ProfessionKey): number {
-    return state.hitDiceUsed[profession] ?? 0
+  function getHitDiceUsed(classKey: ClassKey): number {
+    return state.hitDiceUsed[classKey] ?? 0
   }
 
   /** 設定指定職業已使用生命骰數，clamp 至 [0, level] */
-  function setHitDiceUsed(profession: ProfessionKey, value: number, level: number): void {
+  function setHitDiceUsed(classKey: ClassKey, value: number, level: number): void {
     const clamped = Math.min(Math.max(0, value), level)
-    state.hitDiceUsed = setSparseRecord(state.hitDiceUsed, profession, clamped, 0)
+    state.hitDiceUsed = setSparseRecord(state.hitDiceUsed, classKey, clamped, 0)
     touch()
   }
 
   /** 調整指定職業已使用生命骰數，clamp 至 [0, level] */
-  function adjustHitDiceUsed(profession: ProfessionKey, delta: number, level: number): void {
+  function adjustHitDiceUsed(classKey: ClassKey, delta: number, level: number): void {
     if (delta === 0) return
-    setHitDiceUsed(profession, getHitDiceUsed(profession) + delta, level)
+    setHitDiceUsed(classKey, getHitDiceUsed(classKey) + delta, level)
   }
 
   // ─── Spell slots ──────────────────────────────────────────────────────
@@ -342,7 +342,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
    * 由 caller 排除即可保留次數。
    */
   function longRest(
-    professions: readonly ProfessionEntry[] = [],
+    classes: readonly ClassEntry[] = [],
     longRestFeatureIds: readonly string[] = [],
   ): void {
     state.hp.current = null
@@ -357,7 +357,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
         Object.entries(state.featureUsesSpent).filter(([k]) => !targets.has(k)),
       ) as Partial<Record<string, number>>
     }
-    state.hitDiceUsed = recoverHitDice(state.hitDiceUsed, professions)
+    state.hitDiceUsed = recoverHitDice(state.hitDiceUsed, classes)
     state.spellSlotsUsed = {}
     state.pactSlotsUsed = {}
     state.deathSaves.successes = 0

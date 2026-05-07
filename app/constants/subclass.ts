@@ -1,11 +1,11 @@
-import type { ProfessionKey, SubprofessionKey } from '@rolling-dice-app/core'
+import type { ClassKey, SubclassKey } from '@rolling-dice-app/core'
 
 /**
  * 子職業中文 label，依主職業分組以避免子職業 key 同名衝突（如 cleric 與 druid 皆有 moon）。
- * 查詢方式：SUBPROFESSION_CONFIG[profession][subprofessionKey]
+ * 查詢方式：SUBCLASS_CONFIG[classKey][subclassKey]
  */
-export const SUBPROFESSION_CONFIG: Readonly<
-  Record<ProfessionKey, Readonly<Partial<Record<SubprofessionKey, string>>>>
+export const SUBCLASS_CONFIG: Readonly<
+  Record<ClassKey, Readonly<Partial<Record<SubclassKey, string>>>>
 > = {
   barbarian: {
     berserker: '狂戰士道途',
@@ -161,9 +161,7 @@ export const SUBPROFESSION_CONFIG: Readonly<
 }
 
 /** 各主職業可選的子職業 key 列表（依官方來源順序） */
-export const SUBPROFESSION_BY_PROFESSION: Readonly<
-  Record<ProfessionKey, readonly SubprofessionKey[]>
-> = {
+export const SUBCLASSES_BY_CLASS: Readonly<Record<ClassKey, readonly SubclassKey[]>> = {
   barbarian: [
     'berserker',
     'totemWarrior',

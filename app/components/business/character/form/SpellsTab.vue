@@ -25,7 +25,7 @@
         <BusinessCharacterFormSpellsSpellSlotsPanel
           v-model:spell-slots-delta="formState.spellSlotsDelta"
           v-model:pact-slots-delta="formState.pactSlotsDelta"
-          :professions="formState.professions"
+          :classes="formState.classes"
         />
         <BusinessCharacterFormSpellsLearnedSpellList
           :spells="formState.spells"

@@ -11,23 +11,23 @@ import type {
   CharacterFeature,
   GenderKey,
   InventoryItem,
-  ProfessionKey,
+  ClassKey,
   SkillProficiencies,
   SpellEntry,
   SpellSlotsDelta,
-  SubprofessionKey,
+  SubclassKey,
 } from '@rolling-dice-app/core'
 
-// ─── Form-only Profession Entry ──────────────────────────────────────────────
+// ─── Form-only Class Entry ───────────────────────────────────────────────────
 
 /** 表單用職業條目：允許尚未選擇職業的空值狀態 */
-export interface FormProfessionEntry {
+export interface FormClassEntry {
   /** 職業（null 表示尚未選擇） */
-  profession: ProfessionKey | null
+  classKey: ClassKey | null
   /** 該職業等級（1–20） */
   level: number
   /** 流派 / 範型，未選以 null 表示 */
-  subprofession: SubprofessionKey | null
+  subclass: SubclassKey | null
 }
 
 // ─── Ability Form Aliases ────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ export interface CharacterFormStateBase {
   race: string | null
   subrace: string | null
   alignment: AlignmentKey | null
-  professions: FormProfessionEntry[]
+  classes: FormClassEntry[]
   skills: SkillProficiencies
   background: string | null
   isJackOfAllTrades: boolean
@@ -157,7 +157,7 @@ export type CharacterWritablePatch = Pick<
   | 'race'
   | 'subrace'
   | 'alignment'
-  | 'professions'
+  | 'classes'
   | 'skills'
   | 'background'
   | 'isJackOfAllTrades'

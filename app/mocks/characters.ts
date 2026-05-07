@@ -9,9 +9,9 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '矮人',
     subrace: '丘陵矮人',
     alignment: 'lawfulNeutral',
-    professions: [
-      { profession: 'monk', level: 3, subprofession: null },
-      { profession: 'fighter', level: 2, subprofession: null },
+    classes: [
+      { classKey: 'monk', level: 3, subclass: null },
+      { classKey: 'fighter', level: 2, subclass: null },
     ],
     abilities: {
       strength: { origin: 14, race: 0, bonusScore: 0 },
@@ -62,7 +62,7 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '精靈',
     subrace: '高等精靈',
     alignment: 'chaoticGood',
-    professions: [{ profession: 'wizard', level: 3, subprofession: null }],
+    classes: [{ classKey: 'wizard', level: 3, subclass: null }],
     abilities: {
       strength: { origin: 8, race: 0, bonusScore: 0 },
       dexterity: { origin: 14, race: 0, bonusScore: 0 },
@@ -112,7 +112,7 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '提夫林',
     subrace: null,
     alignment: 'chaoticNeutral',
-    professions: [{ profession: 'rogue', level: 7, subprofession: null }],
+    classes: [{ classKey: 'rogue', level: 7, subclass: null }],
     abilities: {
       strength: { origin: 10, race: 0, bonusScore: 0 },
       dexterity: { origin: 18, race: 0, bonusScore: 0 },
@@ -167,9 +167,9 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '半精靈',
     subrace: null,
     alignment: 'neutralGood',
-    professions: [
-      { profession: 'sorcerer', level: 10, subprofession: null },
-      { profession: 'warlock', level: 3, subprofession: null },
+    classes: [
+      { classKey: 'sorcerer', level: 10, subclass: null },
+      { classKey: 'warlock', level: 3, subclass: null },
     ],
     abilities: {
       strength: { origin: 8, race: 0, bonusScore: 0 },
@@ -220,9 +220,9 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '人類',
     subrace: null,
     alignment: 'lawfulGood',
-    professions: [
-      { profession: 'paladin', level: 14, subprofession: null },
-      { profession: 'cleric', level: 4, subprofession: null },
+    classes: [
+      { classKey: 'paladin', level: 14, subclass: null },
+      { classKey: 'cleric', level: 4, subclass: null },
     ],
     abilities: {
       strength: { origin: 18, race: 0, bonusScore: 0 },
@@ -278,10 +278,10 @@ export const MOCK_CHARACTERS: Character[] = [
     race: '龍裔',
     subrace: '金龍裔',
     alignment: 'chaoticGood',
-    professions: [
-      { profession: 'barbarian', level: 12, subprofession: null },
-      { profession: 'fighter', level: 5, subprofession: null },
-      { profession: 'ranger', level: 3, subprofession: null },
+    classes: [
+      { classKey: 'barbarian', level: 12, subclass: null },
+      { classKey: 'fighter', level: 5, subclass: null },
+      { classKey: 'ranger', level: 3, subclass: null },
     ],
     abilities: {
       strength: { origin: 20, race: 0, bonusScore: 0 },

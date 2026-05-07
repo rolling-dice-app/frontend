@@ -19,7 +19,7 @@
         />
         <div class="grid items-start gap-4 sm:grid-cols-2">
           <BusinessCharacterQuickviewHitDiceCard
-            :professions="character.professions"
+            :classes="character.classes"
             :hit-dice-used="state.hitDiceUsed"
             @adjust="adjustHitDiceUsed"
           />
@@ -153,12 +153,12 @@ const {
 
 const spellSlotsBase = computed(() =>
   mergeSlots(
-    getSuggestedRegularSpellSlots(props.character.professions),
+    getSuggestedRegularSpellSlots(props.character.classes),
     props.character.spellSlotsDelta,
   ),
 )
 const pactSlotsBase = computed(() =>
-  mergeSlots(getSuggestedPactSlots(props.character.professions), props.character.pactSlotsDelta),
+  mergeSlots(getSuggestedPactSlots(props.character.classes), props.character.pactSlotsDelta),
 )
 const hasAnySlot = computed(
   () => Object.keys(spellSlotsBase.value).length + Object.keys(pactSlotsBase.value).length > 0,
@@ -178,7 +178,7 @@ const onLongRest = (): void => {
         f.usage.hasUses && (f.usage.recovery === 'shortRest' || f.usage.recovery === 'longRest'),
     )
     .map((f) => f.id)
-  longRest(props.character.professions, ids)
+  longRest(props.character.classes, ids)
   useToast().success('長休完成')
 }
 </script>

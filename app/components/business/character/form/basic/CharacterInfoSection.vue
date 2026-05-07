@@ -154,11 +154,7 @@
     </div>
     <!-- 職業設定 -->
     <div class="space-y-4">
-      <div
-        v-for="(entry, index) in formState.professions"
-        :key="index"
-        class="flex items-end gap-2"
-      >
+      <div v-for="(entry, index) in formState.classes" :key="index" class="flex items-end gap-2">
         <div class="w-26">
           <label :for="`prof-${index}`" class="mb-1 block text-xs text-content">
             {{ index === 0 ? '主職業' : `兼職 ${index}` }}
@@ -166,13 +162,13 @@
           </label>
           <CommonAppSelect
             :id="`prof-${index}`"
-            :model-value="entry.profession || null"
-            :options="getProfessionOptions(index)"
+            :model-value="entry.classKey || null"
+            :options="getClassOptions(index)"
             class="w-full"
             size="sm"
             :placeholder="index === 0 ? '主職業' : '兼職'"
-            :disabled="lockPrimaryProfession && index === 0"
-            @update:model-value="updateProfessionKey(index, $event as string)"
+            :disabled="lockPrimaryClass && index === 0"
+            @update:model-value="updateClassKey(index, $event as string)"
           />
         </div>
         <div class="flex-1">
@@ -180,14 +176,12 @@
           <CommonAppSelect
             :id="`prof-sub-${index}`"
             class="w-full"
-            :model-value="entry.subprofession || null"
-            :options="getSubprofessionOptions(entry.profession)"
-            :disabled="entry.profession === null"
+            :model-value="entry.subclass || null"
+            :options="getSubclassOptions(entry.classKey)"
+            :disabled="entry.classKey === null"
             placeholder=""
             size="sm"
-            @update:model-value="
-              updateProfessionSubprofession(index, $event as SubprofessionKey | null)
-            "
+            @update:model-value="updateClassSubclass(index, $event as SubclassKey | null)"
           />
         </div>
         <div class="max-w-12">
@@ -198,7 +192,7 @@
             class="w-full"
             size="sm"
             :model-value="String(entry.level)"
-            @update:model-value="updateProfessionLevel(index, $event)"
+            @update:model-value="updateClassLevel(index, $event)"
           />
         </div>
         <button
@@ -206,7 +200,7 @@
           type="button"
           class="flex items-center justify-center border-content bg-danger shrink-0 size-8 rounded text-content transition-colors hover:bg-danger-hover"
           aria-label="移除此職業"
-          @click="removeProfession(index)"
+          @click="removeClass(index)"
         >
           <Icon name="close" :size="20" />
         </button>
@@ -221,7 +215,7 @@
           text-color="var(--color-primary)"
           border-color="var(--color-primary)"
           :radius="8"
-          @click="addProfession"
+          @click="addClass"
         >
           + 新增職業
         </Button>
@@ -238,24 +232,19 @@
 <script setup lang="ts">
 import { Button, Icon } from '@ui'
 import type { SelectOption } from '@ui'
-import { ALIGNMENT_NAMES, GENDER_NAMES, PROFESSION_CONFIG, PROFESSION_KEYS } from '~/constants/dnd'
-import { SUBPROFESSION_BY_PROFESSION, SUBPROFESSION_CONFIG } from '~/constants/subprofession'
+import { ALIGNMENT_NAMES, GENDER_NAMES, CLASS_CONFIG, CLASS_KEYS } from '~/constants/dnd'
+import { SUBCLASSES_BY_CLASS, SUBCLASS_CONFIG } from '~/constants/subclass'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
-import type {
-  AlignmentKey,
-  GenderKey,
-  ProfessionKey,
-  SubprofessionKey,
-} from '@rolling-dice-app/core'
+import type { AlignmentKey, GenderKey, ClassKey, SubclassKey } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 
 withDefaults(
   defineProps<{
     totalLevel: number
-    lockPrimaryProfession?: boolean
+    lockPrimaryClass?: boolean
   }>(),
-  { lockPrimaryProfession: false },
+  { lockPrimaryClass: false },
 )
 
 const genderOptions: SelectOption[] = Object.entries(GENDER_NAMES).map(([value, label]) => ({
@@ -268,52 +257,53 @@ const alignmentOptions: SelectOption[] = Object.entries(ALIGNMENT_NAMES).map(([v
   label,
 }))
 
-const professionOptions: SelectOption[] = Object.entries(PROFESSION_CONFIG).map(
-  ([value, { label }]) => ({ value, label }),
-)
+const classOptions: SelectOption[] = Object.entries(CLASS_CONFIG).map(([value, { label }]) => ({
+  value,
+  label,
+}))
 
-const getProfessionOptions = (index: number): SelectOption[] => {
-  return professionOptions.filter((option) => {
-    return formState.value.professions.every(
-      (entry, i) => i === index || entry.profession !== option.value,
+const getClassOptions = (index: number): SelectOption[] => {
+  return classOptions.filter((option) => {
+    return formState.value.classes.every(
+      (entry, i) => i === index || entry.classKey !== option.value,
     )
   })
 }
 
 const isButtonDisabled = computed(() => {
-  const professionsOver = formState.value.professions.length >= PROFESSION_KEYS.length
-  const hasUnselected = formState.value.professions.some((entry) => !entry.profession)
-  return professionsOver || hasUnselected
+  const classesOver = formState.value.classes.length >= CLASS_KEYS.length
+  const hasUnselected = formState.value.classes.some((entry) => !entry.classKey)
+  return classesOver || hasUnselected
 })
 
-const addProfession = (): void => {
-  formState.value.professions.push({ profession: null, level: 1, subprofession: null })
+const addClass = (): void => {
+  formState.value.classes.push({ classKey: null, level: 1, subclass: null })
 }
 
-const removeProfession = (index: number): void => {
-  if (formState.value.professions.length <= 1) return
-  formState.value.professions.splice(index, 1)
+const removeClass = (index: number): void => {
+  if (formState.value.classes.length <= 1) return
+  formState.value.classes.splice(index, 1)
 }
 
-const updateProfessionKey = (index: number, value: string): void => {
-  const entry = formState.value.professions[index]!
-  entry.profession = value as ProfessionKey
-  entry.subprofession = null
+const updateClassKey = (index: number, value: string): void => {
+  const entry = formState.value.classes[index]!
+  entry.classKey = value as ClassKey
+  entry.subclass = null
 }
 
-const updateProfessionLevel = (index: number, value: string): void => {
+const updateClassLevel = (index: number, value: string): void => {
   const level = parseIntegerInput(value, 1)
-  formState.value.professions[index]!.level = Math.max(1, Math.min(20, level))
+  formState.value.classes[index]!.level = Math.max(1, Math.min(20, level))
 }
 
-const updateProfessionSubprofession = (index: number, value: SubprofessionKey | null): void => {
-  formState.value.professions[index]!.subprofession = value
+const updateClassSubclass = (index: number, value: SubclassKey | null): void => {
+  formState.value.classes[index]!.subclass = value
 }
 
-const getSubprofessionOptions = (profession: ProfessionKey | null): SelectOption[] => {
-  if (profession === null) return []
-  const labels = SUBPROFESSION_CONFIG[profession]
-  return SUBPROFESSION_BY_PROFESSION[profession].map((key) => ({
+const getSubclassOptions = (classKey: ClassKey | null): SelectOption[] => {
+  if (classKey === null) return []
+  const labels = SUBCLASS_CONFIG[classKey]
+  return SUBCLASSES_BY_CLASS[classKey].map((key) => ({
     value: key,
     label: labels[key] ?? key,
   }))

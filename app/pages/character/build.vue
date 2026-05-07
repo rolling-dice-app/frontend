@@ -59,7 +59,7 @@
 
     <BusinessCharacterBuildConfirmModal
       v-model="isConfirmOpen"
-      :professions="formState.professions"
+      :classes="formState.classes"
       :abilities="totalAbilityScores"
       @cancel="isConfirmOpen = false"
       @confirm="confirmSubmit"

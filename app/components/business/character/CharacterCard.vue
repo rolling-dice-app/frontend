@@ -12,7 +12,7 @@
       :bg-color="'var(--rd--color-bg-elevated)'"
       class="overflow-hidden border border-border transition-colors duration-200"
     >
-      <!-- Cover: profession image -->
+      <!-- Cover: classKey image -->
       <template #cover>
         <div class="relative h-52 overflow-hidden">
           <img
@@ -41,13 +41,13 @@
         <div>
           <div class="flex items-center gap-2">
             <img
-              v-show="!professionIconError"
-              :src="PROFESSION_IMAGES[character.professions[0]!.profession]"
+              v-show="!classIconError"
+              :src="CLASS_IMAGES[character.classes[0]!.classKey]"
               alt=""
               class="size-4"
               loading="lazy"
               decoding="async"
-              @error="onProfessionIconError"
+              @error="onClassIconError"
             />
             <h3
               class="truncate font-display text-base font-bold"
@@ -67,9 +67,7 @@
               {{ character.race ?? '-' }}
             </Badge>
             <span class="text-xs text-content-muted">
-              {{
-                character.professions.map((p) => PROFESSION_CONFIG[p.profession].label).join(' / ')
-              }}
+              {{ character.classes.map((p) => CLASS_CONFIG[p.classKey].label).join(' / ') }}
             </span>
           </div>
         </div>
@@ -89,7 +87,7 @@
 
 <script setup lang="ts">
 import { Badge, Card, Icon } from '@ui'
-import { PROFESSION_CONFIG } from '~/constants/dnd'
+import { CLASS_CONFIG } from '~/constants/dnd'
 import type { Character, CharacterTier } from '@rolling-dice-app/core'
 
 const props = defineProps<{
@@ -131,7 +129,7 @@ const TIER_CONFIG: Record<
   },
 }
 
-const totalLevel = computed(() => calculateTotalLevel(props.character.professions))
+const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
 const tier = computed(() => getCharacterTier(totalLevel.value))
 const tierConfig = computed(() => TIER_CONFIG[tier.value])
 const isMaxLevel = computed(() => totalLevel.value === 20)
@@ -142,7 +140,7 @@ const cardShadowStyle = computed(() => {
 })
 
 const coverError = ref(false)
-const professionIconError = ref(false)
+const classIconError = ref(false)
 
 watch(
   () => props.character.avatar,
@@ -153,16 +151,14 @@ watch(
 
 const hasAvatar = computed(() => !!props.character.avatar && !coverError.value)
 const coverSrc = computed(() =>
-  hasAvatar.value
-    ? props.character.avatar!
-    : PROFESSION_IMAGES[props.character.professions[0]!.profession],
+  hasAvatar.value ? props.character.avatar! : CLASS_IMAGES[props.character.classes[0]!.classKey],
 )
 
 const onCoverError = () => {
   coverError.value = true
 }
 
-const onProfessionIconError = () => {
-  professionIconError.value = true
+const onClassIconError = () => {
+  classIconError.value = true
 }
 </script>

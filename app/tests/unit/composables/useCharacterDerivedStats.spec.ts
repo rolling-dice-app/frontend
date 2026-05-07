@@ -13,7 +13,7 @@ function createFormState(
     race: 'human',
     subrace: null,
     alignment: 'trueNeutral',
-    professions: [{ profession: 'fighter', level: 3, subprofession: null }],
+    classes: [{ classKey: 'fighter', level: 3, subclass: null }],
     abilities: {
       strength: { origin: 15, race: 0, bonusScore: 0 },
       dexterity: { origin: 14, race: 0, bonusScore: 0 }, // +2
@@ -76,9 +76,9 @@ describe('useCharacterDerivedStats', () => {
 
   it('totalLevel 應為所有職業等級之和', () => {
     const formState = createFormState({
-      professions: [
-        { profession: 'fighter', level: 5, subprofession: null },
-        { profession: 'wizard', level: 3, subprofession: null },
+      classes: [
+        { classKey: 'fighter', level: 5, subclass: null },
+        { classKey: 'wizard', level: 3, subclass: null },
       ],
     })
     const { totalLevel } = useCharacterDerivedStats(formState)
@@ -138,11 +138,11 @@ describe('useCharacterDerivedStats', () => {
     expect(totalHp.value).toBe(33 + 6) // fighter lv3 tough: 3×2=6
   })
 
-  it('professions 新增未選擇職業的空 row 時，不影響 totalHp', () => {
+  it('classes 新增未選擇職業的空 row 時，不影響 totalHp', () => {
     const formState = createFormState()
     const { totalHp } = useCharacterDerivedStats(formState)
     const before = totalHp.value
-    formState.professions.push({ profession: null, level: 1, subprofession: null })
+    formState.classes.push({ classKey: null, level: 1, subclass: null })
     expect(totalHp.value).toBe(before)
   })
 })

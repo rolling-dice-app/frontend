@@ -50,10 +50,10 @@ describe('useCharacterBuild — 初始狀態', () => {
     expect(formState.abilityMethod).toBe('custom')
   })
 
-  it('formState.professions 應有一筆預設職業、等級為 1', async () => {
+  it('formState.classes 應有一筆預設職業、等級為 1', async () => {
     const { formState } = await getComposable()
-    expect(formState.professions).toHaveLength(1)
-    expect(formState.professions[0]!.level).toBe(1)
+    expect(formState.classes).toHaveLength(1)
+    expect(formState.classes[0]!.level).toBe(1)
   })
 
   it('所有屬性初始值 origin 應為 8（購點制預設值），race 應為 0', async () => {
@@ -79,8 +79,8 @@ describe('useCharacterBuild — 初始狀態', () => {
 describe('useCharacterBuild — 職業管理', () => {
   it('totalLevel 應正確計算所有職業等級總和', async () => {
     const { formState, totalLevel } = await getComposable()
-    formState.professions[0]!.level = 5
-    formState.professions.push({ profession: null, level: 3, subprofession: null })
+    formState.classes[0]!.level = 5
+    formState.classes.push({ classKey: null, level: 3, subclass: null })
     expect(totalLevel.value).toBe(8)
   })
 })
@@ -241,7 +241,7 @@ describe('useCharacterBuild — canSubmit', () => {
   it('名稱與職業皆填寫時 canSubmit 應為 true', async () => {
     const { formState, canSubmit } = await getComposable()
     formState.name = '完整角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
     expect(canSubmit.value).toBe(true)
   })
 
@@ -253,7 +253,7 @@ describe('useCharacterBuild — canSubmit', () => {
   it('角色名稱為空白時 canSubmit 應為 false', async () => {
     const { formState, canSubmit } = await getComposable()
     formState.name = '   '
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
     expect(canSubmit.value).toBe(false)
   })
 
@@ -266,7 +266,7 @@ describe('useCharacterBuild — canSubmit', () => {
   it('擲骰模式下骰值池未全部指派時 canSubmit 應為 false', async () => {
     const { formState, abilities, canSubmit } = await getComposable()
     formState.name = '擲骰角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
     abilities.setAbilityMethod('diceRoll')
     expect(canSubmit.value).toBe(false)
 
@@ -278,7 +278,7 @@ describe('useCharacterBuild — canSubmit', () => {
   it('擲骰模式下 6 個 slot 全部指派後 canSubmit 應為 true', async () => {
     const { formState, abilities, canSubmit } = await getComposable()
     formState.name = '擲骰角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
     abilities.setAbilityMethod('diceRoll')
 
     const keys: ReadonlyArray<keyof typeof formState.abilities> = [
@@ -306,7 +306,7 @@ describe('useCharacterBuild — submit', () => {
 
     const { formState, submit } = await getComposable()
     formState.name = '提交角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
 
     await submit()
     expect(addSpy).toHaveBeenCalledOnce()
@@ -316,7 +316,7 @@ describe('useCharacterBuild — submit', () => {
   it('submit 後 isSubmitting 應為 true，canSubmit 應為 false（防重複點擊）', async () => {
     const { formState, isSubmitting, canSubmit, submit } = await getComposable()
     formState.name = '防重複角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
 
     expect(isSubmitting.value).toBe(false)
     const pending = submit()
@@ -332,7 +332,7 @@ describe('useCharacterBuild — submit', () => {
 
     const { formState, submit } = await getComposable()
     formState.name = '重複測試'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
 
     await Promise.all([submit(), submit()])
     expect(addSpy).toHaveBeenCalledOnce()
@@ -357,7 +357,7 @@ describe('useCharacterBuild — submit', () => {
 
     const { formState, isSubmitting, submit } = await getComposable()
     formState.name = '失敗角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
 
     await submit()
     expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
@@ -372,7 +372,7 @@ describe('useCharacterBuild — submit', () => {
 
     const { formState, submit } = await getComposable()
     formState.name = '加總角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
     formState.abilities.strength.origin = 15
     formState.abilities.strength.race = 2
     formState.abilities.dexterity.origin = 14
@@ -396,7 +396,7 @@ describe('useCharacterBuild — submit', () => {
 
     const { formState, isSubmitting, submit } = await getComposable()
     formState.name = '例外角色'
-    formState.professions[0]!.profession = 'fighter'
+    formState.classes[0]!.classKey = 'fighter'
 
     await submit()
     expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')

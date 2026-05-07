@@ -49,7 +49,7 @@
           <CommonAppSelect
             :id="classesSelectId"
             v-model="filter.classes"
-            :options="SPELL_PROFESSION_OPTIONS"
+            :options="SPELL_CLASS_OPTIONS"
             multiple
             multiple-display="count"
             placeholder="-"
@@ -201,12 +201,12 @@ import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
 import {
   SPELL_LEVEL_OPTIONS,
-  SPELL_PROFESSION_OPTIONS,
+  SPELL_CLASS_OPTIONS,
   SPELL_SCHOOL_OPTIONS,
   SPELL_SOURCE_OPTIONS,
 } from '~/constants/spell-options'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { ProfessionKey, Spell, SourceKey, SpellSchool } from '@rolling-dice-app/core'
+import type { ClassKey, Spell, SourceKey, SpellSchool } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)
@@ -225,7 +225,7 @@ interface SpellFilter {
   keyword: string
   level: number[]
   schools: SpellSchool[]
-  classes: ProfessionKey[]
+  classes: ClassKey[]
   sources: SourceKey[]
   ritual: boolean
   concentration: boolean

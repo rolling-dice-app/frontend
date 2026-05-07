@@ -38,7 +38,7 @@
             v-model:form-state="formState"
             :total-level="totalLevel"
             :ability-scores="totalAbilityScores"
-            :lock-primary-profession="true"
+            :lock-primary-class="true"
           >
             <template #ability-panel>
               <BusinessCharacterFormBasicAbilityScoreUpdatePanel v-model:form-state="formState" />
@@ -73,7 +73,7 @@
             :total-passive-perception="totalPassivePerception"
             :total-passive-insight="totalPassiveInsight"
             :proficiency-bonus="proficiencyBonus"
-            :professions="validProfessions"
+            :classes="validClasses"
           />
         </Tab>
 
@@ -107,7 +107,7 @@ const {
   totalLevel,
   totalAbilityScores,
   proficiencyBonus,
-  validProfessions,
+  validClasses,
   totalHp,
   totalInitiative,
   totalSpeed,

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SavingThrowPanel from '~/components/business/character/form/combat/SavingThrowPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus } from '~/helpers/character'
-import type { ProfessionEntry } from '@rolling-dice-app/core'
+import type { ClassEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 beforeEach(() => {
@@ -51,7 +51,7 @@ const baseFormState = (
 const mountPanel = (
   params: {
     formState?: CharacterUpdateFormState
-    professions?: ProfessionEntry[]
+    classes?: ClassEntry[]
     proficiencyBonus?: number
   } = {},
 ) => {
@@ -60,7 +60,7 @@ const mountPanel = (
     props: {
       formState,
       'onUpdate:formState': (next: CharacterUpdateFormState) => Object.assign(formState, next),
-      professions: params.professions ?? [],
+      classes: params.classes ?? [],
       abilityScores: ABILITY_SCORES,
       proficiencyBonus: params.proficiencyBonus ?? 2,
     },
@@ -95,7 +95,7 @@ describe('SavingThrowPanel (form)', () => {
   describe('主職業 baseline 鎖定', () => {
     it('fighter 鎖定 strength / constitution，checkbox disabled', () => {
       const wrapper = mountPanel({
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
       })
       expect(checkboxFor(wrapper, '力量').attributes('disabled')).toBeDefined()
       expect(checkboxFor(wrapper, '體質').attributes('disabled')).toBeDefined()
@@ -104,14 +104,14 @@ describe('SavingThrowPanel (form)', () => {
 
     it('鎖定的 row aria-label 包含「主職業，不可變更」', () => {
       const wrapper = mountPanel({
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
       })
       expect(checkboxFor(wrapper, '力量').attributes('aria-label')).toContain('主職業，不可變更')
     })
 
     it('鎖定屬性 checkbox 顯示已勾（proficient）', () => {
       const wrapper = mountPanel({
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
       })
       expect((checkboxFor(wrapper, '力量').element as HTMLInputElement).checked).toBe(true)
     })
@@ -146,7 +146,7 @@ describe('SavingThrowPanel (form)', () => {
       const formState = baseFormState({ savingThrowExtras: [] })
       const wrapper = mountPanel({
         formState,
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
       })
       // 鎖定的 checkbox 是 disabled，但測試 onToggle guard：強制 setValue 不應寫入
       const cb = checkboxFor(wrapper, '力量')
@@ -159,7 +159,7 @@ describe('SavingThrowPanel (form)', () => {
     it('熟練屬性 bonus = mod + prof', () => {
       // 力量熟練（fighter）：mod +3 + prof 2 = +5
       const wrapper = mountPanel({
-        professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
         proficiencyBonus: 2,
       })
       const strengthRow = wrapper.findAll('ul > li')[0]!

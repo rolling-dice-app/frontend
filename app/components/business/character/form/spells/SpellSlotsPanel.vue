@@ -78,7 +78,7 @@
 import { Icon } from '@ui'
 import { getSuggestedPactSlots, getSuggestedRegularSpellSlots } from '~/helpers/spell-slots'
 import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '@rolling-dice-app/core'
-import type { FormProfessionEntry } from '~/types/business/character-form'
+import type { FormClassEntry } from '~/types/business/character-form'
 
 type SlotTab = 'regular' | 'pact'
 
@@ -86,7 +86,7 @@ const SPELL_LEVELS: readonly SpellLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const SLOT_MAX = 9
 
 const props = defineProps<{
-  professions: FormProfessionEntry[]
+  classes: FormClassEntry[]
 }>()
 
 const spellSlotsDelta = defineModel<SpellSlotsDelta>('spellSlotsDelta', { required: true })
@@ -119,8 +119,8 @@ const onTabJump = async (idx: number): Promise<void> => {
   tabButtons.value[idx]?.focus()
 }
 
-const regularBase = computed<SpellSlots>(() => getSuggestedRegularSpellSlots(props.professions))
-const pactBase = computed<SpellSlots>(() => getSuggestedPactSlots(props.professions))
+const regularBase = computed<SpellSlots>(() => getSuggestedRegularSpellSlots(props.classes))
+const pactBase = computed<SpellSlots>(() => getSuggestedPactSlots(props.classes))
 
 const activeBase = computed<SpellSlots>(() =>
   activeTab.value === 'pact' ? pactBase.value : regularBase.value,

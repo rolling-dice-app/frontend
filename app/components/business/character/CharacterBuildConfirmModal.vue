@@ -13,15 +13,12 @@
         主職業與屬性建立後將無法變更，確認送出嗎？
       </p>
 
-      <section aria-labelledby="confirm-primary-profession">
-        <h3
-          id="confirm-primary-profession"
-          class="mb-2 font-display text-sm font-bold text-content"
-        >
+      <section aria-labelledby="confirm-primary-class">
+        <h3 id="confirm-primary-class" class="mb-2 font-display text-sm font-bold text-content">
           主職業
         </h3>
         <p class="rounded-lg border border-border-soft bg-surface px-3 py-2 text-sm text-content">
-          {{ primaryProfessionLabel }}
+          {{ primaryClassLabel }}
         </p>
       </section>
 
@@ -62,12 +59,12 @@
 
 <script setup lang="ts">
 import { Button, Modal } from '@ui'
-import { ABILITY_KEYS, ABILITY_NAMES, PROFESSION_CONFIG } from '~/constants/dnd'
-import type { FormProfessionEntry, TotalAbilityScores } from '~/types/business/character-form'
+import { ABILITY_KEYS, ABILITY_NAMES, CLASS_CONFIG } from '~/constants/dnd'
+import type { FormClassEntry, TotalAbilityScores } from '~/types/business/character-form'
 
 const props = defineProps<{
   modelValue: boolean
-  professions: FormProfessionEntry[]
+  classes: FormClassEntry[]
   abilities: TotalAbilityScores
 }>()
 
@@ -77,9 +74,9 @@ const emit = defineEmits<{
   confirm: []
 }>()
 
-const primaryProfessionLabel = computed(() => {
-  const primary = props.professions[0]?.profession
-  return primary ? PROFESSION_CONFIG[primary].label : '—'
+const primaryClassLabel = computed(() => {
+  const primary = props.classes[0]?.classKey
+  return primary ? CLASS_CONFIG[primary].label : '—'
 })
 
 const abilityRows = computed(() =>

@@ -4,12 +4,12 @@ import {
   getSuggestedRegularSpellSlots,
   mergeSlots,
 } from '~/helpers/spell-slots'
-import type { ProfessionEntry, ProfessionKey } from '@rolling-dice-app/core'
+import type { ClassEntry, ClassKey } from '@rolling-dice-app/core'
 
-const entry = (profession: ProfessionKey, level: number): ProfessionEntry => ({
-  profession,
+const entry = (classKey: ClassKey, level: number): ClassEntry => ({
+  classKey,
   level,
-  subprofession: null,
+  subclass: null,
 })
 
 describe('getSuggestedRegularSpellSlots', () => {
@@ -73,29 +73,27 @@ describe('getSuggestedRegularSpellSlots', () => {
     it('戰士 9 + 祕法騎士 → effective 3 → 1:4, 2:2', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: 'fighter', level: 9, subprofession: 'eldritchKnight' },
+          { classKey: 'fighter', level: 9, subclass: 'eldritchKnight' },
         ]),
       ).toEqual({ 1: 4, 2: 2 })
     })
 
     it('戰士 9 + 鬥士（非施法子職業）→ {}', () => {
       expect(
-        getSuggestedRegularSpellSlots([
-          { profession: 'fighter', level: 9, subprofession: 'champion' },
-        ]),
+        getSuggestedRegularSpellSlots([{ classKey: 'fighter', level: 9, subclass: 'champion' }]),
       ).toEqual({})
     })
 
-    it('戰士 9（無 subprofession）→ {}', () => {
+    it('戰士 9（無 subclass）→ {}', () => {
       expect(
-        getSuggestedRegularSpellSlots([{ profession: 'fighter', level: 9, subprofession: null }]),
+        getSuggestedRegularSpellSlots([{ classKey: 'fighter', level: 9, subclass: null }]),
       ).toEqual({})
     })
 
     it('遊蕩者 12 + 奧法詭術師 → effective 4 → 1:4, 2:3', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: 'rogue', level: 12, subprofession: 'arcaneTrickster' },
+          { classKey: 'rogue', level: 12, subclass: 'arcaneTrickster' },
         ]),
       ).toEqual({ 1: 4, 2: 3 })
     })
@@ -103,8 +101,8 @@ describe('getSuggestedRegularSpellSlots', () => {
     it('法師 5 + 戰士 3（祕法騎士）→ effective 6 → 1:4, 2:3, 3:3', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: 'wizard', level: 5, subprofession: null },
-          { profession: 'fighter', level: 3, subprofession: 'eldritchKnight' },
+          { classKey: 'wizard', level: 5, subclass: null },
+          { classKey: 'fighter', level: 3, subclass: 'eldritchKnight' },
         ]),
       ).toEqual({ 1: 4, 2: 3, 3: 3 })
     })
@@ -112,7 +110,7 @@ describe('getSuggestedRegularSpellSlots', () => {
     it('遊蕩者 3 + 奧法詭術師 → floor(3/3) = 1 → effective 1 → 1:2', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: 'rogue', level: 3, subprofession: 'arcaneTrickster' },
+          { classKey: 'rogue', level: 3, subclass: 'arcaneTrickster' },
         ]),
       ).toEqual({ 1: 2 })
     })
@@ -120,7 +118,7 @@ describe('getSuggestedRegularSpellSlots', () => {
     it('遊蕩者 2 + 奧法詭術師 → floor(2/3) = 0 → {}', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: 'rogue', level: 2, subprofession: 'arcaneTrickster' },
+          { classKey: 'rogue', level: 2, subclass: 'arcaneTrickster' },
         ]),
       ).toEqual({})
     })
@@ -165,11 +163,11 @@ describe('getSuggestedRegularSpellSlots', () => {
       expect(getSuggestedRegularSpellSlots([])).toEqual({})
     })
 
-    it('null profession 與等級 0 應略過', () => {
+    it('null classKey 與等級 0 應略過', () => {
       expect(
         getSuggestedRegularSpellSlots([
-          { profession: null, level: 5, subprofession: null },
-          { profession: 'wizard', level: 0, subprofession: null },
+          { classKey: null, level: 5, subclass: null },
+          { classKey: 'wizard', level: 0, subclass: null },
         ]),
       ).toEqual({})
     })
@@ -205,8 +203,8 @@ describe('getSuggestedPactSlots', () => {
     expect(getSuggestedPactSlots([])).toEqual({})
   })
 
-  it('null profession 應略過', () => {
-    expect(getSuggestedPactSlots([{ profession: null, level: 5, subprofession: null }])).toEqual({})
+  it('null classKey 應略過', () => {
+    expect(getSuggestedPactSlots([{ classKey: null, level: 5, subclass: null }])).toEqual({})
   })
 })
 

@@ -13,7 +13,7 @@ export function createMockCharacter(overrides: Partial<Character> = {}): Charact
     race: 'human',
     subrace: null,
     alignment: 'trueNeutral',
-    professions: [{ profession: 'fighter', level: 5, subprofession: null }],
+    classes: [{ classKey: 'fighter', level: 5, subclass: null }],
     abilities: {
       strength: { origin: 15, race: 0, bonusScore: 0 },
       dexterity: { origin: 14, race: 0, bonusScore: 0 },
@@ -68,7 +68,7 @@ export function createMockFormState(
     race: null,
     subrace: null,
     alignment: null,
-    professions: [{ profession: 'fighter', level: 1, subprofession: null }],
+    classes: [{ classKey: 'fighter', level: 1, subclass: null }],
     abilities: {
       strength: { origin: 8, race: 0 },
       dexterity: { origin: 8, race: 0 },
@@ -107,7 +107,7 @@ export function createMockUpdateFormState(
     race: null,
     subrace: null,
     alignment: null,
-    professions: [{ profession: 'fighter', level: 5, subprofession: null }],
+    classes: [{ classKey: 'fighter', level: 5, subclass: null }],
     abilities: {
       strength: { origin: 15, race: 0, bonusScore: 0 },
       dexterity: { origin: 14, race: 0, bonusScore: 0 },

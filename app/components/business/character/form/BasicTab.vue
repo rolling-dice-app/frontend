@@ -4,7 +4,7 @@
       v-model:form-state="formState"
       class="w-full md:w-1/3"
       :total-level="totalLevel"
-      :lock-primary-profession="lockPrimaryProfession"
+      :lock-primary-class="lockPrimaryClass"
     />
 
     <BusinessCharacterFormBasicSkillProficiencyGrid
@@ -30,9 +30,9 @@ const props = withDefaults(
   defineProps<{
     totalLevel: number
     abilityScores: TotalAbilityScores
-    lockPrimaryProfession?: boolean
+    lockPrimaryClass?: boolean
   }>(),
-  { lockPrimaryProfession: false },
+  { lockPrimaryClass: false },
 )
 
 const proficiencyBonus = computed(() => getProficiencyBonus(props.totalLevel))

@@ -13,7 +13,7 @@ const MOCK_FORM_STATE = createMockFormState({
   gender: 'female',
   race: 'elf',
   alignment: 'chaoticGood',
-  professions: [{ profession: 'wizard', level: 3, subprofession: null }],
+  classes: [{ classKey: 'wizard', level: 3, subclass: null }],
   abilities: {
     strength: { origin: 8, race: 0 },
     dexterity: { origin: 14, race: 0 },
@@ -87,10 +87,10 @@ describe('useCharacterStore — addCharacter', () => {
     expect(created!.createdAt).toBeTruthy()
   })
 
-  it('新增後 professions 應正確儲存', () => {
+  it('新增後 classes 應正確儲存', () => {
     const store = useCharacterStore()
     const created = store.addCharacter(MOCK_FORM_STATE)
-    expect(created!.professions).toEqual([{ profession: 'wizard', level: 3, subprofession: null }])
+    expect(created!.classes).toEqual([{ classKey: 'wizard', level: 3, subclass: null }])
   })
 
   it('新增後應同步寫入 localStorage', () => {
@@ -193,9 +193,9 @@ const MOCK_UPDATE_FORM_STATE: CharacterUpdateFormState = {
   race: 'elf',
   subrace: null,
   alignment: 'chaoticGood',
-  professions: [
-    { profession: 'wizard', level: 5, subprofession: null },
-    { profession: 'cleric', level: 3, subprofession: null },
+  classes: [
+    { classKey: 'wizard', level: 5, subclass: null },
+    { classKey: 'cleric', level: 3, subclass: null },
   ],
   abilities: {
     strength: { origin: 15, race: 0, bonusScore: 2 },
@@ -251,13 +251,13 @@ describe('useCharacterStore — updateCharacter', () => {
     expect(updated!.age).toBe(120)
   })
 
-  it('更新後 professions 應正確儲存', () => {
+  it('更新後 classes 應正確儲存', () => {
     localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([MOCK_CHARACTER]))
     const store = useCharacterStore()
     const updated = store.updateCharacter('test-001', MOCK_UPDATE_FORM_STATE)
-    expect(updated!.professions).toEqual([
-      { profession: 'wizard', level: 5, subprofession: null },
-      { profession: 'cleric', level: 3, subprofession: null },
+    expect(updated!.classes).toEqual([
+      { classKey: 'wizard', level: 5, subclass: null },
+      { classKey: 'cleric', level: 3, subclass: null },
     ])
   })
 

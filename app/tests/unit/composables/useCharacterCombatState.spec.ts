@@ -301,9 +301,9 @@ describe('useCharacterCombatState — 生命骰', () => {
     adjustHitDiceUsed('rogue', 1, 1)
     // totalLevel 8 → pool 4；hitDie: fighter d10 > rogue d8 > wizard d6
     longRest([
-      { profession: 'fighter', level: 5, subprofession: null },
-      { profession: 'wizard', level: 2, subprofession: null },
-      { profession: 'rogue', level: 1, subprofession: null },
+      { classKey: 'fighter', level: 5, subclass: null },
+      { classKey: 'wizard', level: 2, subclass: null },
+      { classKey: 'rogue', level: 1, subclass: null },
     ])
     expect(getHitDiceUsed('fighter')).toBe(1)
     expect(getHitDiceUsed('rogue')).toBe(1)
@@ -319,8 +319,8 @@ describe('useCharacterCombatState — 生命骰', () => {
     adjustHitDiceUsed('wizard', 4, 4)
     // totalLevel 8 → pool 4；fighter 用完 2 後池剩 2 接著回 wizard 2 顆
     longRest([
-      { profession: 'fighter', level: 4, subprofession: null },
-      { profession: 'wizard', level: 4, subprofession: null },
+      { classKey: 'fighter', level: 4, subclass: null },
+      { classKey: 'wizard', level: 4, subclass: null },
     ])
     expect(getHitDiceUsed('fighter')).toBe(0)
     expect(getHitDiceUsed('wizard')).toBe(2)
@@ -332,13 +332,13 @@ describe('useCharacterCombatState — 生命骰', () => {
       ref(30),
     )
     adjustHitDiceUsed('fighter', 1, 1)
-    longRest([{ profession: 'fighter', level: 1, subprofession: null }])
+    longRest([{ classKey: 'fighter', level: 1, subclass: null }])
     expect(getHitDiceUsed('fighter')).toBe(0)
   })
 
   it('longRest 對未使用的職業不增條目', () => {
     const { longRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    longRest([{ profession: 'fighter', level: 5, subprofession: null }])
+    longRest([{ classKey: 'fighter', level: 5, subclass: null }])
     expect(state.hitDiceUsed).toEqual({})
   })
 

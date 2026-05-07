@@ -23,30 +23,22 @@
 
         <!-- Outer ring -->
         <div
-          v-for="(prof, i) in OUTER_RING_PROFESSIONS"
+          v-for="(prof, i) in OUTER_RING_CLASSES"
           :key="`outer-${prof}`"
           class="orbit-outer"
           :style="{ '--i': i }"
         >
-          <img
-            :src="PROFESSION_IMAGES[prof]"
-            :alt="PROFESSION_CONFIG[prof].label"
-            class="ring-img"
-          />
+          <img :src="CLASS_IMAGES[prof]" :alt="CLASS_CONFIG[prof].label" class="ring-img" />
         </div>
 
         <!-- Inner ring -->
         <div
-          v-for="(prof, i) in INNER_RING_PROFESSIONS"
+          v-for="(prof, i) in INNER_RING_CLASSES"
           :key="`inner-${prof}`"
           class="orbit-inner"
           :style="{ '--i': i }"
         >
-          <img
-            :src="PROFESSION_IMAGES[prof]"
-            :alt="PROFESSION_CONFIG[prof].label"
-            class="ring-img"
-          />
+          <img :src="CLASS_IMAGES[prof]" :alt="CLASS_CONFIG[prof].label" class="ring-img" />
         </div>
 
         <!-- Center content -->
@@ -62,13 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import { PROFESSION_CONFIG } from '~/constants/dnd'
-import type { ProfessionKey } from '@rolling-dice-app/core'
+import { CLASS_CONFIG } from '~/constants/dnd'
+import type { ClassKey } from '@rolling-dice-app/core'
 
 useHead({ titleTemplate: '%s' })
 
-// ─── Profession ring data ──────────────────────────────────────────────────────
-const OUTER_RING_PROFESSIONS: ProfessionKey[] = [
+// ─── Class ring data ──────────────────────────────────────────────────────
+const OUTER_RING_CLASSES: ClassKey[] = [
   'artificer',
   'bard',
   'cleric',
@@ -78,7 +70,7 @@ const OUTER_RING_PROFESSIONS: ProfessionKey[] = [
   'wizard',
 ]
 
-const INNER_RING_PROFESSIONS: ProfessionKey[] = [
+const INNER_RING_CLASSES: ClassKey[] = [
   'barbarian',
   'fighter',
   'monk',

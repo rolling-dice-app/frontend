@@ -16,10 +16,10 @@ function characterToFormState(character: Character): CharacterUpdateFormState {
     race: character.race,
     subrace: character.subrace,
     alignment: character.alignment,
-    professions: character.professions.map((p) => ({
-      profession: p.profession,
-      level: p.level,
-      subprofession: p.subprofession,
+    classes: character.classes.map((entry) => ({
+      classKey: entry.classKey,
+      level: entry.level,
+      subclass: entry.subclass,
     })),
     abilities: Object.fromEntries(
       ABILITY_KEYS.map((key) => [
@@ -76,7 +76,7 @@ function createEmptyUpdateFormState(): CharacterUpdateFormState {
     race: null,
     subrace: null,
     alignment: null,
-    professions: [{ profession: null, level: 1, subprofession: null }],
+    classes: [{ classKey: null, level: 1, subclass: null }],
     abilities: Object.fromEntries(
       ABILITY_KEYS.map((key) => [key, { origin: POINT_BUY_DEFAULT_SCORE, race: 0, bonusScore: 0 }]),
     ) as CharacterUpdateFormState['abilities'],
@@ -134,7 +134,7 @@ export function useCharacterUpdate(id: string) {
     () =>
       !isSubmitting.value &&
       formState.name.trim() !== '' &&
-      formState.professions.some((p) => p.profession !== null),
+      formState.classes.some((entry) => entry.classKey !== null),
   )
 
   // ─── Submit ───────────────────────────────────────────────────────────

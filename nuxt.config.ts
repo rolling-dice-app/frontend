@@ -27,11 +27,12 @@ export default defineNuxtConfig({
 
   // Runtime config exposed to client; override via NUXT_PUBLIC_* env vars
   // - deployTarget: 'github-pages' (frozen demo) | 'vercel' | 'local'
-  // - apiBase: backend API origin; empty until M0
+  // - apiBase: backend API origin; default = local dev backend.
+  //   Override per env via NUXT_PUBLIC_API_BASE (Vercel preview / prod).
   runtimeConfig: {
     public: {
       deployTarget: 'github-pages',
-      apiBase: '',
+      apiBase: 'http://localhost:3001',
     },
   },
 

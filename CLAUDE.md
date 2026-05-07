@@ -11,7 +11,7 @@ Before any non-trivial change, read the four org-level constitution documents. T
 - <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/product-architecture.md>
 - <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/frontend-skills.md>
 - <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/backend-skills.md>
-- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/types-skills.md>
+- <https://raw.githubusercontent.com/rolling-dice-app/guideline/main/core-skills.md>
 
 In short: this repo is the **contract consumer**. Persistent shapes and API DTOs come from `@rolling-dice-app/core`; the backend is the authoritative implementation; the frontend renders and interacts.
 

@@ -95,6 +95,8 @@
 <script setup lang="ts">
 import { Button, Tab, Tabs } from '@ui'
 
+definePageMeta({ middleware: 'auth' })
+
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 

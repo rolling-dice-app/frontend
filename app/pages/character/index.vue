@@ -173,6 +173,8 @@ import type { SelectOption } from '@ui'
 import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
 import type { Character } from '@rolling-dice-app/core'
 
+definePageMeta({ middleware: 'auth' })
+
 useHead({ title: '角色卡' })
 
 const isDev = import.meta.dev

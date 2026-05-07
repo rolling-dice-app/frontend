@@ -72,6 +72,8 @@ import { Button, Tab, Tabs } from '@ui'
 import { ABILITY_KEYS } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 
+definePageMeta({ middleware: 'auth' })
+
 useHead({ title: '建立角色卡' })
 
 const { activeTab, formState, totalLevel, isSubmitting, canSubmit, abilities, submit } =

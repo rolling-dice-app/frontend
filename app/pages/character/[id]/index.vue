@@ -82,6 +82,8 @@
 <script setup lang="ts">
 import { Tab, Tabs } from '@ui'
 
+definePageMeta({ middleware: 'auth' })
+
 useHead({ title: '角色卡詳情' })
 
 const activeTab = ref('profile')

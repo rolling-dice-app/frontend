@@ -24,7 +24,7 @@ withDefaults(
   }>(),
   {
     borderColor: 'var(--color-primary)',
-    dropdownBg: 'var(--color-canvas)',
+    dropdownBg: 'var(--color-canvas-elevated)',
     optionHoverColor: 'var(--color-canvas-inset)',
     optionSelectedColor: 'var(--color-canvas-muted)',
   },

@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SpellEntry, Spell } from '@rolling-dice-app/core'
+import type { SpellEntry, SpellDto } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   spells: SpellEntry[]
@@ -57,7 +57,7 @@ const { getSpell } = useSpells()
 const headingId = useId()
 
 const learnedSpellDetails = computed(() => {
-  const found: Spell[] = []
+  const found: SpellDto[] = []
   const missing: string[] = []
   for (const entry of props.spells) {
     const spell = getSpell(entry.id)

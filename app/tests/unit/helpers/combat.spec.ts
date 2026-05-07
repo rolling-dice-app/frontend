@@ -32,8 +32,8 @@ describe('formatDamageSummary', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
       damageDice: [
-        { id: 'a', dieType: 'd6', count: 0, bonus: 0, damageType: 'fire' },
-        { id: 'b', dieType: 'd8', count: 1, bonus: null, damageType: null },
+        { id: 'a', dieType: 6, count: 0, bonus: 0, damageType: 'fire' },
+        { id: 'b', dieType: 8, count: 1, bonus: null, damageType: null },
       ],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('1d8')
@@ -58,7 +58,7 @@ describe('formatDamageSummary', () => {
   it('未指定類型的行只顯示骰數', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
-      damageDice: [{ id: 'a', dieType: 'd6', count: 2, bonus: null, damageType: null }],
+      damageDice: [{ id: 'a', dieType: 6, count: 2, bonus: null, damageType: null }],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('2d6')
   })
@@ -66,7 +66,7 @@ describe('formatDamageSummary', () => {
   it('有類型的行附中文 label', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
-      damageDice: [{ id: 'a', dieType: 'd4', count: 2, bonus: null, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 4, count: 2, bonus: null, damageType: 'slashing' }],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('2d4 劈砍')
   })
@@ -74,7 +74,7 @@ describe('formatDamageSummary', () => {
   it('行內正 bonus 緊接 dice 顯示為 +N', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: 5, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: 5, damageType: 'slashing' }],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('1d8+5 劈砍')
   })
@@ -82,7 +82,7 @@ describe('formatDamageSummary', () => {
   it('行內負 bonus 緊接 dice 顯示為 -N', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: -2, damageType: null }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: -2, damageType: null }],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('1d8-2')
   })
@@ -99,8 +99,8 @@ describe('formatDamageSummary', () => {
     const draft: AttackDraft = {
       ...baseDraft(),
       damageDice: [
-        { id: 'a', dieType: 'd8', count: 1, bonus: 5, damageType: 'slashing' },
-        { id: 'b', dieType: 'd8', count: 4, bonus: 10, damageType: 'radiant' },
+        { id: 'a', dieType: 8, count: 1, bonus: 5, damageType: 'slashing' },
+        { id: 'b', dieType: 8, count: 4, bonus: 10, damageType: 'radiant' },
       ],
     }
     expect(formatDamageSummary(draft, emptyScores())).toBe('1d8+5 劈砍 + 4d8+10 光耀')
@@ -113,7 +113,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: null,
       applyAbilityToDamage: true,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: null, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8 劈砍')
@@ -124,7 +124,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: true,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: null, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8+3 劈砍')
@@ -135,7 +135,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: false,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: null, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8 劈砍')
@@ -146,7 +146,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: true,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: 2, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: 2, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8+5 劈砍')
@@ -157,7 +157,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: false,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: 2, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: 2, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8+2 劈砍')
@@ -168,7 +168,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: true,
-      damageDice: [{ id: 'a', dieType: 'd8', count: 1, bonus: -3, damageType: 'slashing' }],
+      damageDice: [{ id: 'a', dieType: 8, count: 1, bonus: -3, damageType: 'slashing' }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
     expect(formatDamageSummary(draft, scores)).toBe('1d8 劈砍')
@@ -191,8 +191,8 @@ describe('formatDamageSummary', () => {
       abilityKey: 'strength',
       applyAbilityToDamage: true,
       damageDice: [
-        { id: 'a', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' },
-        { id: 'b', dieType: 'd8', count: 2, bonus: null, damageType: 'radiant' },
+        { id: 'a', dieType: 8, count: 1, bonus: null, damageType: 'slashing' },
+        { id: 'b', dieType: 8, count: 2, bonus: null, damageType: 'radiant' },
       ],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
@@ -206,7 +206,7 @@ describe('formatDamageSummary', () => {
       applyAbilityToDamage: true,
       damageDice: [
         { id: 'a', dieType: null, count: 0, bonus: null, damageType: null },
-        { id: 'b', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' },
+        { id: 'b', dieType: 8, count: 1, bonus: null, damageType: 'slashing' },
       ],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 16 }
@@ -229,7 +229,7 @@ describe('formatDamageSummary', () => {
       ...baseDraft(),
       abilityKey: 'strength',
       applyAbilityToDamage: true,
-      damageDice: [{ id: 'a', dieType: 'd6', count: 1, bonus: null, damageType: null }],
+      damageDice: [{ id: 'a', dieType: 6, count: 1, bonus: null, damageType: null }],
     }
     const scores: TotalAbilityScores = { ...emptyScores(), strength: 8 }
     expect(formatDamageSummary(draft, scores)).toBe('1d6-1')

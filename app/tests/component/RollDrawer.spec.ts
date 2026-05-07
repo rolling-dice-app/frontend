@@ -79,7 +79,7 @@ const makeAttack = (overrides: Partial<AttackEntry> = {}): AttackEntry => ({
   id: overrides.id ?? `atk-${Math.random()}`,
   name: '長劍',
   abilityKey: 'strength',
-  damageDice: [{ id: 'd-1', dieType: 'd8', count: 1, bonus: null, damageType: 'slashing' }],
+  damageDice: [{ id: 'd-1', dieType: 8, count: 1, bonus: null, damageType: 'slashing' }],
   extraHitBonus: null,
   applyAbilityToDamage: true,
   comment: null,

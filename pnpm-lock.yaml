@@ -12,8 +12,8 @@ importers:
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.2)(pinia@3.0.4(typescript@6.0.2)(vue@3.5.32(typescript@6.0.2)))
       '@rolling-dice-app/core':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^3.1.0
+        version: 3.1.0
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
@@ -1387,8 +1387,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.14':
     resolution: {integrity: sha512-ktoSqSpdex3xml4M3wV//KiF8MiQkMz8bz2e7SUJvCK9qyL/XjAnLLB+UO3+uE9RLxqUhuDzddc7Cf+EaZ169Q==}
 
-  '@rolling-dice-app/core@2.0.0':
-    resolution: {integrity: sha512-yPal+HT5vu0VEP0FLhc0RVLaPP3G15WkIvFTYUoC4cNcLcEuRf2Up1LuXXWVvYz9Kye3k6calyQTpsPEUVS9MA==, tarball: https://npm.pkg.github.com/download/@rolling-dice-app/core/2.0.0/ab50141582c779ae5c44bc138cab1e65825d6427}
+  '@rolling-dice-app/core@3.1.0':
+    resolution: {integrity: sha512-DEKhhDiUA7AZ/P6LcPzo2aJ+/WeIxqY7IyUuFyV0dDXzQOn3BA3OOLrzEhVQ6QaysLuR7caJumeVMlORSX54KA==, tarball: https://npm.pkg.github.com/download/@rolling-dice-app/core/3.1.0/39866496cb0d4f8491e6b97c26a8306d85669230}
 
   '@rollup/plugin-alias@6.0.0':
     resolution: {integrity: sha512-tPCzJOtS7uuVZd+xPhoy5W4vThe6KWXNmsFCNktaAh5RTqcLiSfT4huPQIXkgJ6YCOjJHvecOAzQxLFhPxKr+g==}
@@ -3072,8 +3072,8 @@ packages:
   h3@1.15.11:
     resolution: {integrity: sha512-L3THSe2MPeBwgIZVSH5zLdBBU90TOxarvhK9d04IDY2AmVS8j2Jz2LIWtwsGOU3lu2I5jCN7FNvVfY2+XyF+mg==}
 
-  h3@2.0.1-rc.20:
-    resolution: {integrity: sha512-28ljodXuUp0fZovdiSRq4G9OgrxCztrJe5VdYzXAB7ueRvI7pIUqLU14Xi3XqdYJ/khXjfpUOOD2EQa6CmBgsg==}
+  h3@2.0.1-rc.22:
+    resolution: {integrity: sha512-Esv0DMIuPkCTSWCA0vO73vcTqwzH1wjSrAO1TXNu/K3up1sZHa9EKMapbmxCDYBeymC3fVTk4qxp7ogQWQ+KgA==}
     engines: {node: '>=20.11.1'}
     hasBin: true
     peerDependencies:
@@ -5956,7 +5956,7 @@ snapshots:
       fake-indexeddb: 6.2.5
       get-port-please: 3.2.0
       h3: 1.15.11
-      h3-next: h3@2.0.1-rc.20(crossws@0.4.4(srvx@0.11.15))
+      h3-next: h3@2.0.1-rc.22(crossws@0.4.4(srvx@0.11.15))
       local-pkg: 1.1.2
       magic-string: 0.30.21
       node-fetch-native: 1.6.7
@@ -6394,7 +6394,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.14': {}
 
-  '@rolling-dice-app/core@2.0.0': {}
+  '@rolling-dice-app/core@3.1.0': {}
 
   '@rollup/plugin-alias@6.0.0(rollup@4.60.1)':
     optionalDependencies:
@@ -8118,7 +8118,7 @@ snapshots:
       ufo: 1.6.3
       uncrypto: 0.1.3
 
-  h3@2.0.1-rc.20(crossws@0.4.4(srvx@0.11.15)):
+  h3@2.0.1-rc.22(crossws@0.4.4(srvx@0.11.15)):
     dependencies:
       rou3: 0.8.1
       srvx: 0.11.15

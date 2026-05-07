@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Checkbox, Icon } from '@ui'
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import type { Character, Spell } from '@rolling-dice-app/core'
+import type { Character, SpellDto } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   character: Character
@@ -131,7 +131,7 @@ const { getSpell } = useSpells()
 const headingId = useId()
 
 const learnedSpellDetails = computed(() => {
-  const found: Spell[] = []
+  const found: SpellDto[] = []
   const missing: string[] = []
   for (const entry of props.character.spells) {
     const spell = getSpell(entry.id)
@@ -148,7 +148,7 @@ const isPrepared = (id: string): boolean => {
   return props.character.spells.some((entry) => entry.id === id && entry.isPrepared)
 }
 
-const onTogglePrepared = (spell: Spell): void => {
+const onTogglePrepared = (spell: SpellDto): void => {
   if (spell.level === 0) return
   const latest = characterStore.getById(props.character.id)
   if (!latest) return
@@ -161,7 +161,7 @@ const isFavorite = (id: string): boolean => {
   return props.character.spells.some((entry) => entry.id === id && entry.isFavorite)
 }
 
-const onToggleFavorite = (spell: Spell): void => {
+const onToggleFavorite = (spell: SpellDto): void => {
   const latest = characterStore.getById(props.character.id)
   if (!latest) return
   characterStore.patchCharacter(props.character.id, {

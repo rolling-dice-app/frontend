@@ -1,7 +1,6 @@
 import type {
   ArmorClassConfig,
   CharacterAbilityScores,
-  CharacterTier,
   ClassEntry,
   AbilityKey,
   ArmorType,
@@ -14,6 +13,9 @@ import type {
 } from '~/types/business/character-form'
 import { ABILITY_KEYS, CLASS_CONFIG, UNARMORED_AC_BASE } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
+
+/** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */
+export type CharacterTier = 'common' | 'elite' | 'master' | 'legendary'
 
 /** D&D 5e 角色預設移動速度（呎/回合） */
 export const BASE_MOVEMENT_SPEED = 30

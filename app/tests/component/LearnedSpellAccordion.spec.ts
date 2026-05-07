@@ -12,16 +12,18 @@ import {
 } from '~/helpers/spell'
 import { useCharacterStore } from '~/stores/character'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import type { Character, Spell } from '@rolling-dice-app/core'
+import type { Character, SpellDto } from '@rolling-dice-app/core'
 
 const CHAR_ID = 'lsa-001'
 const FIREBALL_ID = 'cccccccc-0000-0000-0000-000000000001'
 const FROST_RAY_ID = 'cccccccc-0000-0000-0000-000000000002'
 const CANTRIP_ID = 'cccccccc-0000-0000-0000-000000000003'
 
-function makeSpell(overrides: Partial<Spell> & Pick<Spell, 'id' | 'name' | 'level'>): Spell {
+function makeSpell(
+  overrides: Partial<SpellDto> & Pick<SpellDto, 'id' | 'name' | 'level'>,
+): SpellDto {
   return {
-    engName: 'Test Spell',
+    engName: 'Test SpellDto',
     school: 'evocation',
     castingTime: '1 個動作',
     range: '90 英尺',
@@ -38,7 +40,7 @@ function makeSpell(overrides: Partial<Spell> & Pick<Spell, 'id' | 'name' | 'leve
   }
 }
 
-const SPELLS: Record<string, Spell> = {
+const SPELLS: Record<string, SpellDto> = {
   [FIREBALL_ID]: makeSpell({ id: FIREBALL_ID, name: '火焰箭', level: 1 }),
   [FROST_RAY_ID]: makeSpell({ id: FROST_RAY_ID, name: '寒冰射線', level: 1 }),
   [CANTRIP_ID]: makeSpell({ id: CANTRIP_ID, name: '火焰術', level: 0 }),

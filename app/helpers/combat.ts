@@ -27,7 +27,7 @@ function formatDamageEntry(entry: DamageDieEntry): string {
   const bonus = entry.bonus ?? 0
   const typeLabel = entry.damageType ? ` ${DAMAGE_TYPE_LABELS[entry.damageType]}` : ''
   if (hasDicePart(entry)) {
-    const dice = `${entry.count}${entry.dieType}`
+    const dice = `${entry.count}d${entry.dieType}`
     const bonusStr = bonus > 0 ? `+${bonus}` : bonus < 0 ? String(bonus) : ''
     return `${dice}${bonusStr}${typeLabel}`
   }

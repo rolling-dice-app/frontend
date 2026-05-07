@@ -7,7 +7,7 @@ import {
   validateSpell,
   withToggledFlag,
 } from '~/helpers/spell'
-import type { SpellEntry, Spell, SpellDto, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellEntry, SpellDto, SpellSchool } from '@rolling-dice-app/core'
 
 const makeEntry = (id: string, isPrepared = false, isFavorite = false): SpellEntry => ({
   id,
@@ -131,11 +131,15 @@ describe('formatSpellComponents', () => {
 // ─── groupSpellsByLevel ───────────────────────────────────────────────────────
 
 let _spellCounter = 0
-function makeSpell(name: string, level: number, school: Spell['school'] = 'evocation'): Spell {
+function makeSpell(
+  name: string,
+  level: number,
+  school: SpellDto['school'] = 'evocation',
+): SpellDto {
   return {
     id: `test-spell-id-${String(++_spellCounter).padStart(4, '0')}-000000000000`,
     name,
-    engName: 'Test Spell',
+    engName: 'Test SpellDto',
     level,
     school,
     castingTime: '1 個動作',

@@ -203,7 +203,7 @@ const handleAttackDamage = (attack: AttackEntry, isCritical: boolean): void => {
         subtotal: totalBonus,
       }
     }
-    const sides = Number.parseInt(entry.dieType.slice(1), 10)
+    const sides = entry.dieType
     const count = isCritical ? entry.count * 2 : entry.count
     const rolls = rollDice(count, sides)
     const subtotal = rolls.reduce((s, r) => s + r, 0) + totalBonus

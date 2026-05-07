@@ -1,44 +1,58 @@
-import type {
-  AbilityKey,
-  AlignmentKey,
-  ArmorType,
-  DamageDieType,
-  DamageTypeKey,
-  GenderKey,
-  ClassData,
-  ClassKey,
-  ProficiencyLevel,
-  SizeKey,
-  SkillKey,
-  SpellSchool,
+import {
+  CLASS_HIT_DICE,
+  CLASS_SAVING_THROW_PROFICIENCIES,
+  type AbilityKey,
+  type AlignmentKey,
+  type ArmorType,
+  type DamageDieType,
+  type DamageTypeKey,
+  type DieType,
+  type GenderKey,
+  type ClassKey,
+  type ProficiencyLevel,
+  type SizeKey,
+  type SkillKey,
+  type SpellSchool,
 } from '@rolling-dice-app/core'
 
 // ─── Class ────────────────────────────────────────────────────────────────────
 
-/** 各職業靜態設定（D&D 5e PHB 標準） */
-export const CLASS_CONFIG: Readonly<Record<ClassKey, ClassData>> = {
-  artificer: {
-    label: '奇械師',
-    hitDie: 8,
-    savingThrowProficiencies: ['constitution', 'intelligence'],
-  },
-  barbarian: {
-    label: '野蠻人',
-    hitDie: 12,
-    savingThrowProficiencies: ['strength', 'constitution'],
-  },
-  bard: { label: '吟遊詩人', hitDie: 8, savingThrowProficiencies: ['dexterity', 'charisma'] },
-  cleric: { label: '牧師', hitDie: 8, savingThrowProficiencies: ['wisdom', 'charisma'] },
-  druid: { label: '德魯伊', hitDie: 8, savingThrowProficiencies: ['intelligence', 'wisdom'] },
-  fighter: { label: '戰士', hitDie: 10, savingThrowProficiencies: ['strength', 'constitution'] },
-  monk: { label: '武僧', hitDie: 8, savingThrowProficiencies: ['strength', 'dexterity'] },
-  paladin: { label: '聖武士', hitDie: 10, savingThrowProficiencies: ['wisdom', 'charisma'] },
-  ranger: { label: '遊俠', hitDie: 10, savingThrowProficiencies: ['strength', 'dexterity'] },
-  rogue: { label: '遊蕩者', hitDie: 8, savingThrowProficiencies: ['dexterity', 'intelligence'] },
-  sorcerer: { label: '術士', hitDie: 6, savingThrowProficiencies: ['constitution', 'charisma'] },
-  warlock: { label: '契術師', hitDie: 8, savingThrowProficiencies: ['wisdom', 'charisma'] },
-  wizard: { label: '法師', hitDie: 6, savingThrowProficiencies: ['intelligence', 'wisdom'] },
+/** 職業靜態設定：label 由 frontend 擁有，hitDie / savingThrowProficiencies 由 core 提供 */
+export interface ClassData {
+  label: string
+  hitDie: DieType
+  savingThrowProficiencies: readonly AbilityKey[]
 }
+
+const CLASS_LABELS: Readonly<Record<ClassKey, string>> = {
+  artificer: '奇械師',
+  barbarian: '野蠻人',
+  bard: '吟遊詩人',
+  cleric: '牧師',
+  druid: '德魯伊',
+  fighter: '戰士',
+  monk: '武僧',
+  paladin: '聖武士',
+  ranger: '遊俠',
+  rogue: '遊蕩者',
+  sorcerer: '術士',
+  warlock: '契術師',
+  wizard: '法師',
+}
+
+/** 各職業靜態設定（D&D 5e PHB 標準） */
+export const CLASS_CONFIG: Readonly<Record<ClassKey, ClassData>> = Object.freeze(
+  Object.fromEntries(
+    (Object.keys(CLASS_LABELS) as ClassKey[]).map((key) => [
+      key,
+      {
+        label: CLASS_LABELS[key],
+        hitDie: CLASS_HIT_DICE[key],
+        savingThrowProficiencies: CLASS_SAVING_THROW_PROFICIENCIES[key],
+      },
+    ]),
+  ) as Record<ClassKey, ClassData>,
+)
 
 // ─── Ability ──────────────────────────────────────────────────────────────────
 
@@ -153,14 +167,8 @@ export const SPELL_SCHOOL_LABELS: Readonly<Record<SpellSchool, string>> = {
 
 // ─── Damage Dice ──────────────────────────────────────────────────────────────
 
-/** 傷害骰類型，用於攻擊模組的傷害計算 */
-export const DAMAGE_DIE_TYPES = [
-  'd4',
-  'd6',
-  'd8',
-  'd10',
-  'd12',
-] as const satisfies readonly DamageDieType[]
+/** 傷害骰面數，用於攻擊模組的傷害計算 */
+export const DAMAGE_DIE_TYPES = [4, 6, 8, 10, 12] as const satisfies readonly DamageDieType[]
 
 // ─── Damage Type ──────────────────────────────────────────────────────────────
 

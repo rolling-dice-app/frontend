@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import LearnedSpellList from '~/components/business/character/form/spells/LearnedSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
-import type { Spell, SpellEntry } from '@rolling-dice-app/core'
+import type { SpellDto, SpellEntry } from '@rolling-dice-app/core'
 
-const spellMap = new Map<string, Spell>()
+const spellMap = new Map<string, SpellDto>()
 
-const stubGetSpell = (id: string): Spell | undefined => spellMap.get(id)
+const stubGetSpell = (id: string): SpellDto | undefined => spellMap.get(id)
 
 beforeEach(() => {
   spellMap.clear()
@@ -21,7 +21,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const makeSpell = (overrides: Partial<Spell> = {}): Spell =>
+const makeSpell = (overrides: Partial<SpellDto> = {}): SpellDto =>
   ({
     id: overrides.id ?? `s-${Math.random()}`,
     name: '魔法飛彈',
@@ -36,7 +36,7 @@ const makeSpell = (overrides: Partial<Spell> = {}): Spell =>
     ritual: false,
     concentration: false,
     ...overrides,
-  }) as Spell
+  }) as SpellDto
 
 const mountList = (spells: SpellEntry[] = []) =>
   mount(LearnedSpellList, {

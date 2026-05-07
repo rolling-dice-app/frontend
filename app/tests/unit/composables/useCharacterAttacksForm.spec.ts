@@ -58,7 +58,7 @@ describe('useCharacterAttacksForm', () => {
     attacks.updateAttack(id, {
       name: '長劍',
       abilityKey: 'strength',
-      damageDice: [{ id: 'd-1', dieType: 'd8', count: 1, bonus: 3, damageType: 'slashing' }],
+      damageDice: [{ id: 'd-1', dieType: 8, count: 1, bonus: 3, damageType: 'slashing' }],
       extraHitBonus: 2,
       applyAbilityToDamage: true,
       comment: '輕型武器，可雙持',
@@ -67,7 +67,7 @@ describe('useCharacterAttacksForm', () => {
       id,
       name: '長劍',
       abilityKey: 'strength',
-      damageDice: [{ id: 'd-1', dieType: 'd8', count: 1, bonus: 3, damageType: 'slashing' }],
+      damageDice: [{ id: 'd-1', dieType: 8, count: 1, bonus: 3, damageType: 'slashing' }],
       extraHitBonus: 2,
       applyAbilityToDamage: true,
       comment: '輕型武器，可雙持',

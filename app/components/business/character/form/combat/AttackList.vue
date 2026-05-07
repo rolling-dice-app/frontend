@@ -280,7 +280,7 @@ const abilityOptions: SelectOption[] = [
 
 const dieTypeOptions: SelectOption[] = [
   { value: '', label: '—' },
-  ...DAMAGE_DIE_TYPES.map((die) => ({ value: die, label: die })),
+  ...DAMAGE_DIE_TYPES.map((die) => ({ value: die, label: `d${die}` })),
 ]
 
 const damageTypeOptions: SelectOption[] = [

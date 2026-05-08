@@ -1,5 +1,5 @@
 import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
-import { CARRY_WEIGHT_PER_STR, COINS_PER_LB, DEFAULT_CURRENCY } from '~/constants/inventory'
+import { CARRY_WEIGHT_PER_STR, COINS_PER_LB } from '~/constants/inventory'
 
 /** 計算物品列表的總重量（每件 weight × quantity 加總） */
 export function calculateItemsWeight(items: InventoryItem[]): number {
@@ -20,14 +20,6 @@ export function calculateBackpackLoad(items: InventoryItem[], currency: Characte
 /** 計算最大負重（STR score × CARRY_WEIGHT_PER_STR） */
 export function calculateMaxCarryWeight(strScore: number): number {
   return strScore * CARRY_WEIGHT_PER_STR
-}
-
-/** 建立預設空 inventory 欄位 */
-export function createDefaultInventory(): { items: InventoryItem[]; currency: CharacterCurrency } {
-  return {
-    items: [],
-    currency: { ...DEFAULT_CURRENCY },
-  }
 }
 
 /** 格式化重量數值：整數直接顯示，小數取至最多兩位有效小數 */

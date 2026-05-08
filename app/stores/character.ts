@@ -1,13 +1,13 @@
-import type { Character, AbilityKey } from '@rolling-dice-app/core'
+import {
+  createDefaultArmorClass,
+  createDefaultInventory,
+  type Character,
+  type AbilityKey,
+} from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import { ABILITY_KEYS } from '~/constants/dnd'
 import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
-import {
-  calculateSavingThrowProficiencies,
-  createDefaultArmorClass,
-  formStateToCharacterPatch,
-} from '~/helpers/character'
-import { createDefaultInventory } from '~/helpers/inventory'
+import { calculateSavingThrowProficiencies, formStateToCharacterPatch } from '~/helpers/character'
 import { MOCK_CHARACTERS } from '~/mocks/characters'
 
 /** 可由外部 patch 的欄位（排除身分識別與建立時間） */
@@ -51,9 +51,11 @@ export const useCharacterStore = defineStore('character', () => {
       ]),
     ) as Record<AbilityKey, { origin: number; race: number; bonusScore: number }>
 
+    const now = new Date().toISOString()
     const character: Character = {
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       ...patch,
       abilities,
       savingThrowExtras: [],
@@ -107,6 +109,7 @@ export const useCharacterStore = defineStore('character', () => {
     const updated: Character = {
       ...previous,
       ...patch,
+      updatedAt: new Date().toISOString(),
       abilities: JSON.parse(JSON.stringify(formState.abilities)),
       savingThrowExtras,
       customHpBonus: formState.customHpBonus,
@@ -145,6 +148,7 @@ export const useCharacterStore = defineStore('character', () => {
     characters.value[index] = {
       ...previous,
       ...(JSON.parse(JSON.stringify(patch)) as CharacterMutablePatch),
+      updatedAt: new Date().toISOString(),
     }
     if (!saveToStorage(characters.value)) {
       characters.value[index] = previous

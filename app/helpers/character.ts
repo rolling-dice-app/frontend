@@ -1,17 +1,18 @@
-import type {
-  ArmorClassConfig,
-  CharacterAbilityScores,
-  ClassEntry,
-  AbilityKey,
-  ArmorType,
-  ProficiencyLevel,
+import {
+  UNARMORED_AC_BASE,
+  type ArmorClassConfig,
+  type CharacterAbilityScores,
+  type ClassEntry,
+  type AbilityKey,
+  type ArmorType,
+  type ProficiencyLevel,
 } from '@rolling-dice-app/core'
 import type {
   CharacterFormStateBase,
   CharacterWritablePatch,
   TotalAbilityScores,
 } from '~/types/business/character-form'
-import { ABILITY_KEYS, CLASS_CONFIG, UNARMORED_AC_BASE } from '~/constants/dnd'
+import { ABILITY_KEYS, CLASS_CONFIG } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
 
 /** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */
@@ -124,14 +125,6 @@ export function getTotalArmorClass(
   }
 
   return ac + config.shieldValue
-}
-
-/**
- * 建立 Character 預設的護甲設定：無甲、基礎值 10、無額外屬性、無盾牌。
- * 用於新增角色或尚未設定戰鬥資訊時的初始值。
- */
-export function createDefaultArmorClass(): ArmorClassConfig {
-  return { type: 'none', value: UNARMORED_AC_BASE, abilityKey: null, shieldValue: 0 }
 }
 
 /**

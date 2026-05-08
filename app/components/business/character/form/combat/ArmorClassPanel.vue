@@ -89,8 +89,8 @@
 <script setup lang="ts">
 import type { SelectOption } from '@ui'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
-import type { AbilityKey, ArmorType } from '@rolling-dice-app/core'
-import { ABILITY_NAMES, ARMOR_TYPE_NAMES, UNARMORED_AC_BASE } from '~/constants/dnd'
+import { UNARMORED_AC_BASE, type AbilityKey, type ArmorType } from '@rolling-dice-app/core'
+import { ABILITY_NAMES, ARMOR_TYPE_NAMES } from '~/constants/dnd'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

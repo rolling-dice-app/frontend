@@ -104,9 +104,8 @@
 
 <script setup lang="ts">
 import { Button, Modal, TextArea } from '@ui'
-import { DEFAULT_CURRENCY } from '~/constants/inventory'
+import { DEFAULT_CURRENCY, type CharacterCurrency } from '@rolling-dice-app/core'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
-import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   modelValue: boolean

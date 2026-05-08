@@ -6,14 +6,17 @@ import {
   calculateTotalHp,
   calculateTotalInitiative,
   calculateTotalSpeed,
-  createDefaultArmorClass,
   formStateToCharacterPatch,
   getBaseArmorClass,
   getCharacterTier,
   getSpellSaveDc,
   getTotalArmorClass,
 } from '~/helpers/character'
-import type { ArmorClassConfig, CharacterAbilityScores } from '@rolling-dice-app/core'
+import {
+  createDefaultArmorClass,
+  type ArmorClassConfig,
+  type CharacterAbilityScores,
+} from '@rolling-dice-app/core'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 
 describe('getCharacterTier', () => {

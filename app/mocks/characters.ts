@@ -1,5 +1,4 @@
-import { createDefaultArmorClass } from '~/helpers/character'
-import type { Character } from '@rolling-dice-app/core'
+import { createDefaultArmorClass, type Character } from '@rolling-dice-app/core'
 
 export const MOCK_CHARACTERS: Character[] = [
   {
@@ -27,6 +26,7 @@ export const MOCK_CHARACTERS: Character[] = [
     skills: { athletics: 'proficient', acrobatics: 'proficient' },
     background: '隱士',
     createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
     faith: null,
     age: null,
     height: null,
@@ -77,6 +77,7 @@ export const MOCK_CHARACTERS: Character[] = [
     skills: { arcana: 'proficient', history: 'proficient', investigation: 'proficient' },
     background: '學者',
     createdAt: '2025-01-15T00:00:00.000Z',
+    updatedAt: '2025-01-15T00:00:00.000Z',
     faith: null,
     age: null,
     height: null,
@@ -132,6 +133,7 @@ export const MOCK_CHARACTERS: Character[] = [
     },
     background: '罪犯',
     createdAt: '2025-02-01T00:00:00.000Z',
+    updatedAt: '2025-02-01T00:00:00.000Z',
     faith: null,
     age: null,
     height: null,
@@ -185,6 +187,7 @@ export const MOCK_CHARACTERS: Character[] = [
     skills: { persuasion: 'proficient', deception: 'proficient', arcana: 'proficient' },
     background: '貴族',
     createdAt: '2025-03-01T00:00:00.000Z',
+    updatedAt: '2025-03-01T00:00:00.000Z',
     faith: null,
     age: null,
     height: null,
@@ -244,6 +247,7 @@ export const MOCK_CHARACTERS: Character[] = [
     background: '侍祭',
     faith: '樂翠拿',
     createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
     age: null,
     height: null,
     weight: null,
@@ -302,6 +306,7 @@ export const MOCK_CHARACTERS: Character[] = [
     },
     background: '異鄉人',
     createdAt: '2025-05-01T00:00:00.000Z',
+    updatedAt: '2025-05-01T00:00:00.000Z',
     faith: null,
     age: null,
     height: null,

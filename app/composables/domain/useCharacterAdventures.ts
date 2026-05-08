@@ -1,6 +1,5 @@
-import { DEFAULT_CURRENCY } from '~/constants/inventory'
+import { DEFAULT_CURRENCY, type CharacterCurrency } from '@rolling-dice-app/core'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
-import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 type CurrencyKey = keyof CharacterCurrency
 

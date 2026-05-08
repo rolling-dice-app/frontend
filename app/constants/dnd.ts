@@ -215,11 +215,6 @@ export const ARMOR_TYPE_NAMES: Readonly<Record<ArmorType, string>> = {
   heavy: '重甲',
 }
 
-// ─── Armor Class ──────────────────────────────────────────────────────────────
-
-/** 無甲 AC 基礎值（D&D 5e：10 + DEX 或職業特性） */
-export const UNARMORED_AC_BASE = 10
-
 // ─── Point Buy ────────────────────────────────────────────────────────────────
 
 /** 購點制總預算（D&D 5e 標準）*/

@@ -1,4 +1,4 @@
-import type { CharacterCurrency, ItemType } from '@rolling-dice-app/core'
+import type { ItemType } from '@rolling-dice-app/core'
 
 export const ITEM_TYPE_LABELS: Readonly<Record<ItemType, string>> = {
   weapon: '武器',
@@ -15,10 +15,3 @@ export const ATTUNEMENT_SLOT_COUNT = 3
 
 /** 50 枚硬幣重 1 磅 */
 export const COINS_PER_LB = 50
-
-export const DEFAULT_CURRENCY: Readonly<CharacterCurrency> = {
-  cp: 0,
-  sp: 0,
-  gp: 0,
-  pp: 0,
-}

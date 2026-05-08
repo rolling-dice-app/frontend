@@ -42,6 +42,45 @@ describe('t() — 動態 path（template literal）', () => {
   })
 })
 
+describe('t() — spell namespace（法術 UI 用詞）', () => {
+  it('環位 / 級別', () => {
+    expect(t('spell.cantrip')).toBe('戲法')
+    expect(t('spell.level')).toBe('環')
+    expect(t('spell.slot')).toBe('環位')
+    expect(t('spell.pactSlot')).toBe('契術環位')
+  })
+
+  it('metadata 屬性 label', () => {
+    expect(t('spell.attribute.castingTime')).toBe('施法時間')
+    expect(t('spell.attribute.duration')).toBe('持續時間')
+    expect(t('spell.attribute.range')).toBe('距離')
+  })
+
+  it('flag / state', () => {
+    expect(t('spell.ritual')).toBe('儀式')
+    expect(t('spell.concentration')).toBe('專注')
+    expect(t('spell.prepared')).toBe('已準備')
+    expect(t('spell.favorite')).toBe('常用')
+  })
+
+  it('section / panel 名稱', () => {
+    expect(t('spell.book')).toBe('法術書')
+    expect(t('spell.database')).toBe('法術資料庫')
+    expect(t('spell.castingModule')).toBe('施法模組')
+  })
+
+  it('互動 / filter', () => {
+    expect(t('spell.favoriteAction')).toBe('標記為常用')
+    expect(t('spell.searchPlaceholder')).toBe('搜尋法術名稱')
+    expect(t('spell.filterRitual')).toBe('只顯示儀式法術')
+  })
+
+  it('school enum 仍可取（T1 並存）', () => {
+    const { messages } = useI18n()
+    expect(typeof messages.value.spell.school).toBe('object')
+  })
+})
+
 describe('t() — ui namespace（通用 UI 用詞）', () => {
   it('action 動詞', () => {
     expect(t('ui.action.save')).toBe('儲存')

@@ -42,6 +42,30 @@ describe('t() — 動態 path（template literal）', () => {
   })
 })
 
+describe('t() — ui namespace（通用 UI 用詞）', () => {
+  it('action 動詞', () => {
+    expect(t('ui.action.save')).toBe('儲存')
+    expect(t('ui.action.cancel')).toBe('取消')
+    expect(t('ui.action.delete')).toBe('刪除')
+  })
+
+  it('form 提示', () => {
+    expect(t('ui.form.required')).toBe('必填')
+    expect(t('ui.form.selectPlaceholder')).toBe('請選擇')
+  })
+
+  it('auth 入口 / 流程', () => {
+    expect(t('ui.auth.login')).toBe('登入')
+    expect(t('ui.auth.logout')).toBe('登出')
+    expect(t('ui.auth.loginRequired')).toBe('請先登入後再訪問此頁')
+  })
+
+  it('message 通用提示', () => {
+    expect(t('ui.message.saveFailed')).toBe('儲存失敗，請稍後再試')
+    expect(t('ui.message.unknownError')).toBe('發生未知錯誤，請稍後再試')
+  })
+})
+
 describe('useI18n — messages tree 走原生結構（動態列舉用）', () => {
   it('inventory.armorType 與 itemType 都可取整個 Record', () => {
     const { messages } = useI18n()

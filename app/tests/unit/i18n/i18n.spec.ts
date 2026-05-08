@@ -42,6 +42,56 @@ describe('t() — 動態 path（template literal）', () => {
   })
 })
 
+describe('t() — combat namespace（戰鬥 / 規則用詞）', () => {
+  it('HP / 受傷 / 治療', () => {
+    expect(t('combat.hp')).toBe('生命值')
+    expect(t('combat.hpCurrent')).toBe('當前生命')
+    expect(t('combat.hpTemp')).toBe('臨時生命')
+    expect(t('combat.damage')).toBe('受傷')
+    expect(t('combat.heal')).toBe('治療')
+  })
+
+  it('衍生加值 / 規則計算', () => {
+    expect(t('combat.proficiencyBonus')).toBe('熟練加值')
+    expect(t('combat.initiative')).toBe('先攻')
+    expect(t('combat.passivePerception')).toBe('被動察覺')
+    expect(t('combat.speed')).toBe('移動速度')
+    expect(t('combat.jackOfAllTrades')).toBe('全能高手')
+    expect(t('combat.tough')).toBe('健壯')
+  })
+
+  it('豁免 / 死亡豁免', () => {
+    expect(t('combat.savingThrow')).toBe('豁免')
+    expect(t('combat.deathSave')).toBe('死亡豁免')
+  })
+
+  it('AC 相關', () => {
+    expect(t('combat.ac')).toBe('護甲等級')
+    expect(t('combat.shield')).toBe('盾牌')
+    expect(t('combat.unarmored')).toBe('無甲防禦')
+  })
+
+  it('攻擊 / 傷害', () => {
+    expect(t('combat.attack')).toBe('攻擊')
+    expect(t('combat.addAttack')).toBe('新增攻擊')
+    expect(t('combat.damageRoll')).toBe('傷害骰')
+    expect(t('combat.applyAbilityToDamage')).toBe('套用屬性調整到傷害')
+  })
+
+  it('特性 / 擲骰 / 休息', () => {
+    expect(t('combat.feature')).toBe('特性')
+    expect(t('combat.roll')).toBe('擲骰')
+    expect(t('combat.shortRest')).toBe('短休')
+    expect(t('combat.longRest')).toBe('長休')
+  })
+
+  it('damageType enum 仍可取（T1 並存）', () => {
+    const { messages } = useI18n()
+    expect(typeof messages.value.combat.damageType).toBe('object')
+    expect(typeof messages.value.combat.featureRecovery).toBe('object')
+  })
+})
+
 describe('t() — spell namespace（法術 UI 用詞）', () => {
   it('環位 / 級別', () => {
     expect(t('spell.cantrip')).toBe('戲法')

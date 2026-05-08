@@ -42,6 +42,68 @@ describe('t() — 動態 path（template literal）', () => {
   })
 })
 
+describe('t() — character namespace 擴張（基本資料 / tab / 列表）', () => {
+  it('基本資料欄位', () => {
+    expect(t('character.race')).toBe('種族')
+    expect(t('character.background')).toBe('背景')
+    expect(t('character.faith')).toBe('信仰')
+    expect(t('character.appearance')).toBe('外貌')
+  })
+
+  it('屬性分配 panel', () => {
+    expect(t('character.abilityScores')).toBe('屬性分配')
+    expect(t('character.racial')).toBe('種族加值')
+    expect(t('character.unassigned')).toBe('未指派')
+  })
+
+  it('tab / section 名稱', () => {
+    expect(t('character.basicInfo')).toBe('基本資訊')
+    expect(t('character.combatQuickView')).toBe('戰鬥速查')
+    expect(t('character.adventure')).toBe('冒險')
+  })
+
+  it('列表 / 互動', () => {
+    expect(t('character.createCharacter')).toBe('建立角色卡')
+    expect(t('character.deleteConfirm')).toBe('刪除後無法復原，確定要刪除這張角色卡嗎？')
+    expect(t('character.empty')).toBe('尚無角色卡')
+  })
+})
+
+describe('t() — class namespace 擴張', () => {
+  it('主職業 / 兼職 / 等級', () => {
+    expect(t('class.className')).toBe('職業')
+    expect(t('class.primary')).toBe('主職業')
+    expect(t('class.multiclass')).toBe('兼職')
+    expect(t('class.level')).toBe('等級')
+  })
+
+  it('生命骰 / 技能熟練', () => {
+    expect(t('class.hitDie')).toBe('生命骰')
+    expect(t('class.skillProficiency')).toBe('技能熟練')
+  })
+})
+
+describe('t() — inventory namespace 擴張', () => {
+  it('物品操作', () => {
+    expect(t('inventory.item')).toBe('物品')
+    expect(t('inventory.addItem')).toBe('新增物品')
+    expect(t('inventory.itemDescription')).toBe('物品說明')
+  })
+
+  it('存放位置 / 同調', () => {
+    expect(t('inventory.backpack')).toBe('背包')
+    expect(t('inventory.dimensionalBag')).toBe('次元袋')
+    expect(t('inventory.attunement')).toBe('同調')
+    expect(t('inventory.attuned')).toBe('已同調')
+  })
+
+  it('金幣 / 資產', () => {
+    expect(t('inventory.cp')).toBe('銅幣 (cp)')
+    expect(t('inventory.gp')).toBe('金幣 (gp)')
+    expect(t('inventory.asset')).toBe('資產')
+  })
+})
+
 describe('t() — combat namespace（戰鬥 / 規則用詞）', () => {
   it('HP / 受傷 / 治療', () => {
     expect(t('combat.hp')).toBe('生命值')

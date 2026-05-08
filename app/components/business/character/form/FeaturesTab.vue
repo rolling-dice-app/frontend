@@ -208,11 +208,8 @@
 <script setup lang="ts">
 import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import {
-  FEATURE_RECOVERY_LABELS,
-  FEATURE_SOURCE_BADGE_STYLES,
-  FEATURE_SOURCE_LABELS,
-} from '~/constants/features'
+import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
+import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 

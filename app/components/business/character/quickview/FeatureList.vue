@@ -77,11 +77,8 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Icon } from '@ui'
-import {
-  FEATURE_RECOVERY_LABELS,
-  FEATURE_SOURCE_BADGE_STYLES,
-  FEATURE_SOURCE_LABELS,
-} from '~/constants/features'
+import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
+import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature } from '@rolling-dice-app/core'
 
 const props = defineProps<{

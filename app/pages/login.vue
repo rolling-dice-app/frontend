@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-md px-4 py-12 h-120 flex flex-col justify-center items-center">
+  <div class="mx-auto max-w-md px-4 py-12 h-120 flex flex-col gap-4 justify-center items-center">
     <h1 class="mb-6 font-display text-2xl">跳轉中...</h1>
 
     <p

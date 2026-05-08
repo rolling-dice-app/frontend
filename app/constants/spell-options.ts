@@ -8,7 +8,7 @@ export const SPELL_LEVEL_OPTIONS: readonly SelectOption[] = [
   ...Array.from({ length: 9 }, (_, i) => ({ value: i + 1, label: `${i + 1} 環` })),
 ]
 
-/** 學派下拉選項：八大學派（多選使用，無「全部」選項） */
+/** 學派下拉選項：八大學派 */
 export const SPELL_SCHOOL_OPTIONS: readonly SelectOption[] = SPELL_SCHOOLS.map((key) => ({
   value: key,
   label: SPELL_SCHOOL_LABELS[key],

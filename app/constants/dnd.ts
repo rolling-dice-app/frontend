@@ -24,7 +24,7 @@ export interface ClassData {
   savingThrowProficiencies: readonly AbilityKey[]
 }
 
-const CLASS_LABELS: Readonly<Record<ClassKey, string>> = {
+export const CLASS_LABELS: Readonly<Record<ClassKey, string>> = {
   artificer: '奇械師',
   barbarian: '野蠻人',
   bard: '吟遊詩人',

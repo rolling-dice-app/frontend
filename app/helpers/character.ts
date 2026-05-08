@@ -1,4 +1,5 @@
 import {
+  ABILITY_KEYS,
   UNARMORED_AC_BASE,
   type ArmorClassConfig,
   type CharacterAbilityScores,
@@ -12,7 +13,7 @@ import type {
   CharacterWritablePatch,
   TotalAbilityScores,
 } from '~/types/business/character-form'
-import { ABILITY_KEYS, CLASS_CONFIG } from '~/constants/dnd'
+import { CLASS_CONFIG } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
 
 /** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */

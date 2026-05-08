@@ -1,6 +1,6 @@
 import type { SelectOption } from '@ui'
-import type { SourceKey } from '@rolling-dice-app/core'
-import { CLASS_CONFIG, CLASS_KEYS, SPELL_SCHOOLS, SPELL_SCHOOL_LABELS } from './dnd'
+import { CLASS_KEYS, type SourceKey } from '@rolling-dice-app/core'
+import { CLASS_CONFIG, SPELL_SCHOOLS, SPELL_SCHOOL_LABELS } from './dnd'
 
 /** 環數下拉選項：戲法(0) ~ 9 環 */
 export const SPELL_LEVEL_OPTIONS: readonly SelectOption[] = [

@@ -33,9 +33,9 @@
 
 <script setup lang="ts">
 import { Checkbox } from '@ui'
-import { ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
+import { ABILITY_NAMES } from '~/constants/dnd'
 import { calculateSavingThrowProficiencies } from '~/helpers/character'
-import type { ClassEntry, AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, type ClassEntry, type AbilityKey } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })

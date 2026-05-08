@@ -1,11 +1,6 @@
-import {
-  ABILITY_KEYS,
-  POINT_BUY_COST_TABLE,
-  POINT_BUY_MAX_SCORE,
-  POINT_BUY_MIN_SCORE,
-} from '~/constants/dnd'
+import { POINT_BUY_COST_TABLE, POINT_BUY_MAX_SCORE, POINT_BUY_MIN_SCORE } from '~/constants/dnd'
 import { rollDice } from '~/helpers/dice'
-import type { AbilityKey, AbilityScoreEntry } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, type AbilityKey, type AbilityScoreEntry } from '@rolling-dice-app/core'
 import type { DiceSlot } from '~/types/business/character-form'
 
 /**

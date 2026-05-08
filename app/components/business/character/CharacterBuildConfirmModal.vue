@@ -59,7 +59,8 @@
 
 <script setup lang="ts">
 import { Button, Modal } from '@ui'
-import { ABILITY_KEYS, ABILITY_NAMES, CLASS_CONFIG } from '~/constants/dnd'
+import { ABILITY_KEYS } from '@rolling-dice-app/core'
+import { ABILITY_NAMES, CLASS_CONFIG } from '~/constants/dnd'
 import type { FormClassEntry, TotalAbilityScores } from '~/types/business/character-form'
 
 const props = defineProps<{

@@ -232,10 +232,16 @@
 <script setup lang="ts">
 import { Button, Icon } from '@ui'
 import type { SelectOption } from '@ui'
-import { ALIGNMENT_NAMES, GENDER_NAMES, CLASS_CONFIG, CLASS_KEYS } from '~/constants/dnd'
+import { ALIGNMENT_NAMES, GENDER_NAMES, CLASS_CONFIG } from '~/constants/dnd'
 import { SUBCLASSES_BY_CLASS, SUBCLASS_CONFIG } from '~/constants/subclass'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
-import type { AlignmentKey, GenderKey, ClassKey, SubclassKey } from '@rolling-dice-app/core'
+import {
+  CLASS_KEYS,
+  type AlignmentKey,
+  type GenderKey,
+  type ClassKey,
+  type SubclassKey,
+} from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { Button, Tab, Tabs } from '@ui'
-import { ABILITY_KEYS } from '~/constants/dnd'
+import { ABILITY_KEYS } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 
 definePageMeta({ middleware: 'auth' })

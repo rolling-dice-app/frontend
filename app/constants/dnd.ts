@@ -269,28 +269,9 @@ export const POINT_BUY_DEFAULT_SCORE = 8
 /** 擲骰模式下，尚未指派骰值的屬性顯示分數 */
 export const UNASSIGNED_ABILITY_SCORE = 8
 
-/** 所有 AbilityKey，用於迭代 */
-export const ABILITY_KEYS: readonly AbilityKey[] = [
-  'strength',
-  'dexterity',
-  'constitution',
-  'intelligence',
-  'wisdom',
-  'charisma',
-] as const
-
 // ─── Iteration Keys ───────────────────────────────────────────────────────────
-
-/** 所有 SkillKey，用於迭代 */
-export const SKILL_KEYS: readonly SkillKey[] = Object.keys(SKILL_NAMES) as SkillKey[]
-
-/** 所有 ClassKey，用於迭代 */
-export const CLASS_KEYS: readonly ClassKey[] = Object.keys(CLASS_CONFIG) as ClassKey[]
-
-/** 所有 AlignmentKey，用於迭代 */
-export const ALIGNMENT_KEYS: readonly AlignmentKey[] = Object.keys(
-  ALIGNMENT_NAMES,
-) as AlignmentKey[]
+// AbilityKey / SkillKey / ClassKey / AlignmentKey 的迭代陣列（ABILITY_KEYS / SKILL_KEYS /
+// CLASS_KEYS / ALIGNMENT_KEYS）由 `@rolling-dice-app/core` 提供，請直接從 core import。
 
 /** 所有 ArmorType，用於迭代 */
 export const ARMOR_TYPES: readonly ArmorType[] = Object.keys(ARMOR_TYPE_NAMES) as ArmorType[]

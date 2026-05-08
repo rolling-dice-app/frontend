@@ -1,11 +1,11 @@
 import {
+  ABILITY_KEYS,
   createDefaultArmorClass,
   createDefaultInventory,
   type Character,
   type AbilityKey,
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
-import { ABILITY_KEYS } from '~/constants/dnd'
 import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
 import { calculateSavingThrowProficiencies, formStateToCharacterPatch } from '~/helpers/character'
 import { MOCK_CHARACTERS } from '~/mocks/characters'

@@ -129,7 +129,6 @@
 <script setup lang="ts">
 import { Button, Icon, type SelectOption } from '@ui'
 import {
-  ABILITY_KEYS,
   ABILITY_NAMES,
   CUSTOM_ABILITY_MAX,
   CUSTOM_ABILITY_MIN,
@@ -141,7 +140,7 @@ import type {
   DiceCell,
   DiceSlot,
 } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
 const props = defineProps<{
   abilities: AbilityScores

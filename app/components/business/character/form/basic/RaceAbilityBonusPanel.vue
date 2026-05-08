@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_KEYS, ABILITY_NAMES } from '~/constants/dnd'
+import { ABILITY_NAMES } from '~/constants/dnd'
 import type { CharacterFormState } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterFormState>('formState', { required: true })
 

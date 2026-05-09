@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { MOCK_CHARACTERS } from '~/mocks/characters'
+import { createMockCharacter } from '~/tests/fixtures/character'
 import RollDrawer from '~/components/business/character/quickview/RollDrawer.vue'
 import { getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus, getSkillBonus } from '~/helpers/character'
@@ -86,10 +86,8 @@ const makeAttack = (overrides: Partial<AttackEntry> = {}): AttackEntry => ({
   ...overrides,
 })
 
-const makeCharacter = (overrides: Partial<Character> = {}): Character => ({
-  ...(MOCK_CHARACTERS[0] as Character),
-  ...overrides,
-})
+const makeCharacter = (overrides: Partial<Character> = {}): Character =>
+  createMockCharacter(overrides)
 
 const mountDrawer = (
   params: {

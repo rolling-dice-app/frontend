@@ -15,14 +15,32 @@
       </template>
     </CommonPageHeader>
 
+    <!-- Loading -->
+    <div
+      v-if="status === 'pending'"
+      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      載入中...
+    </div>
+
     <CommonNotFound
-      v-if="!character"
+      v-else-if="status === 'error' || !character"
       message="找不到此角色"
       back-to="/character"
       back-label="返回角色列表"
     />
 
     <template v-else>
+      <!-- Read-only banner -->
+      <div
+        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
+        role="status"
+      >
+        編輯功能尚未開放，目前僅供預覽，無法儲存修改。待後端編輯端點上線後恢復。
+      </div>
+
       <Tabs
         v-model="activeTab"
         type="border"
@@ -101,6 +119,14 @@ const route = useRoute()
 const id = getRouteParam(route.params.id)
 
 useHead({ title: '編輯角色卡' })
+
+const characterStore = useCharacterStore()
+
+const { status } = await useAsyncData(
+  () => `character-${id}`,
+  () => characterStore.loadDetail(id),
+  { lazy: false, watch: [() => id] },
+)
 
 const { activeTab, character, formState, isSubmitting, canSubmit, derived, submit } =
   useCharacterUpdate(id)

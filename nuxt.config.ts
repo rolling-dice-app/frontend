@@ -37,7 +37,7 @@ export default defineNuxtConfig({
   },
 
   imports: {
-    dirs: ['helpers', 'composables/domain', 'composables/ui'],
+    dirs: ['helpers', 'composables/domain', 'composables/ui', 'composables/api'],
   },
 
   modules: ['@pinia/nuxt', '@nuxt/eslint', '@nuxt/fonts'],

@@ -1,7 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createMockCharacter } from '~/tests/fixtures/character'
-import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
+import { createMockCharacter, seedCharacterInStore } from '~/tests/fixtures/character'
 
 const mockNavigateTo = vi.fn()
 
@@ -47,7 +46,7 @@ beforeEach(() => {
   vi.resetModules()
   setActivePinia(createPinia())
   vi.stubGlobal('navigateTo', mockNavigateTo)
-  localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([MOCK_CHARACTER]))
+  seedCharacterInStore(MOCK_CHARACTER)
 })
 
 afterEach(() => {
@@ -104,7 +103,7 @@ describe('useCharacterUpdate — 初始狀態', () => {
         { classKey: 'wizard', level: 3, subclass: null },
       ],
     })
-    localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([character]))
+    seedCharacterInStore(character)
     const { formState } = await getComposable('update-sub-001')
     expect(formState.classes[0]!.subclass).toBe('battleMaster')
     expect(formState.classes[1]!.subclass).toBeNull()
@@ -120,7 +119,7 @@ describe('useCharacterUpdate — 初始狀態', () => {
       id: 'update-spell-001',
       spellcastingAbilities: ['intelligence', 'charisma'],
     })
-    localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([character]))
+    seedCharacterInStore(character)
     const { formState } = await getComposable('update-spell-001')
     expect(formState.spellcastingAbilities).toEqual(['intelligence', 'charisma'])
   })
@@ -130,7 +129,7 @@ describe('useCharacterUpdate — 初始狀態', () => {
       id: 'update-spell-002',
       customSpellcastingBonuses: { intelligence: 2 },
     })
-    localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([character]))
+    seedCharacterInStore(character)
     const { formState } = await getComposable('update-spell-002')
     expect(formState.customSpellcastingBonuses).toEqual({ intelligence: 2 })
   })
@@ -162,96 +161,20 @@ describe('useCharacterUpdate — 職業管理', () => {
   })
 })
 
-// ─── canSubmit ──────────────────────────────────────────────────────────────
+// ─── 編輯功能尚未開放（backend 未實作 update endpoint） ───────────────────────
 
-describe('useCharacterUpdate — canSubmit', () => {
-  it('角色名稱有值時 canSubmit 應為 true', async () => {
-    const { canSubmit } = await getComposable('update-001')
-    expect(canSubmit.value).toBe(true)
-  })
-
-  it('角色名稱為空字串時 canSubmit 應為 false', async () => {
-    const { formState, canSubmit } = await getComposable('update-001')
-    formState.name = ''
+describe('useCharacterUpdate — 編輯尚未開放', () => {
+  it('canSubmit 永遠為 false（不論 formState 內容）', async () => {
+    const { canSubmit, formState } = await getComposable('update-001')
+    expect(canSubmit.value).toBe(false)
+    formState.name = '其他名字'
     expect(canSubmit.value).toBe(false)
   })
 
-  it('角色名稱為空白時 canSubmit 應為 false', async () => {
-    const { formState, canSubmit } = await getComposable('update-001')
-    formState.name = '   '
-    expect(canSubmit.value).toBe(false)
-  })
-})
-
-// ─── submit ────────────────────────────────────────────────────────────────
-
-describe('useCharacterUpdate — submit', () => {
-  it('submit 應呼叫 store.updateCharacter 並導航至角色詳情頁', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    const updateSpy = vi.spyOn(store, 'updateCharacter')
-
+  it('submit 呼叫顯示「編輯功能尚未開放」toast，不導航', async () => {
     const { submit } = await getComposable('update-001')
     await submit()
-    expect(updateSpy).toHaveBeenCalledOnce()
-    expect(mockNavigateTo).toHaveBeenCalledWith('/character/update-001')
-  })
-
-  it('submit 後 isSubmitting 應為 true，canSubmit 應為 false', async () => {
-    const { isSubmitting, canSubmit, submit } = await getComposable('update-001')
-    const pending = submit()
-    expect(isSubmitting.value).toBe(true)
-    expect(canSubmit.value).toBe(false)
-    await pending
-  })
-
-  it('submit 後再次呼叫 submit 不應重複執行', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    const updateSpy = vi.spyOn(store, 'updateCharacter')
-
-    const { submit } = await getComposable('update-001')
-    await Promise.all([submit(), submit()])
-    expect(updateSpy).toHaveBeenCalledOnce()
-    expect(mockNavigateTo).toHaveBeenCalledOnce()
-  })
-
-  it('canSubmit 為 false 時 submit 不應執行任何動作', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    const updateSpy = vi.spyOn(store, 'updateCharacter')
-
-    const { formState, submit } = await getComposable('update-001')
-    formState.name = ''
-    await submit()
-    expect(updateSpy).not.toHaveBeenCalled()
+    expect(mockToastError).toHaveBeenCalledWith('編輯功能尚未開放')
     expect(mockNavigateTo).not.toHaveBeenCalled()
-  })
-
-  it('store.updateCharacter 回傳 null 時應顯示錯誤 toast 且不導航', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    vi.spyOn(store, 'updateCharacter').mockReturnValue(null)
-
-    const { isSubmitting, submit } = await getComposable('update-001')
-    await submit()
-    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
-    expect(mockNavigateTo).not.toHaveBeenCalled()
-    expect(isSubmitting.value).toBe(false)
-  })
-
-  it('store.updateCharacter 拋出例外時應顯示錯誤 toast 且不導航', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    vi.spyOn(store, 'updateCharacter').mockImplementation(() => {
-      throw new Error('unexpected')
-    })
-
-    const { isSubmitting, submit } = await getComposable('update-001')
-    await submit()
-    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
-    expect(mockNavigateTo).not.toHaveBeenCalled()
-    expect(isSubmitting.value).toBe(false)
   })
 })

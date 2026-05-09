@@ -1,18 +1,46 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <CommonPageHeader title="Character Detail" :show-back="true">
-      <template #actions>
-        <NuxtLink
-          v-if="character"
-          :to="`/character/${character.id}/update`"
-          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-soft transition-colors hover:bg-surface-2 hover:text-content"
+      <template v-if="character" #actions>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="編輯功能尚未開放"
+          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-faint cursor-not-allowed opacity-60"
         >
           編輯
-        </NuxtLink>
+        </button>
       </template>
     </CommonPageHeader>
 
-    <div v-if="character">
+    <!-- Loading -->
+    <div
+      v-if="status === 'pending'"
+      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      載入中...
+    </div>
+
+    <!-- Error / Not found -->
+    <CommonNotFound
+      v-else-if="status === 'error' || !character"
+      message="找不到此角色"
+      back-to="/character"
+      back-label="返回角色列表"
+    />
+
+    <div v-else>
+      <!-- Read-only banner -->
+      <div
+        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
+        role="status"
+      >
+        目前為唯讀模式，背包與冒險編輯尚未開放，待後端編輯端點上線後恢復。
+      </div>
+
       <Tabs
         v-model="activeTab"
         type="border"
@@ -50,12 +78,12 @@
             :backpack-load="backpackLoad"
             :max-carry-weight="maxCarryWeight"
             :is-over-encumbered="isOverEncumbered"
-            @add-item="addItem"
-            @remove-item="removeItem"
-            @update-item="updateItem"
-            @move-item="moveItem"
-            @update-currency="updateCurrency"
-            @update-attunement="setAttunement"
+            @add-item="notifyReadOnly"
+            @remove-item="notifyReadOnly"
+            @update-item="notifyReadOnly"
+            @move-item="notifyReadOnly"
+            @update-currency="notifyReadOnly"
+            @update-attunement="notifyReadOnly"
           />
         </Tab>
         <Tab value="adventures">
@@ -66,16 +94,14 @@
             :entries="adventureEntries"
             :total-exp-earned="totalExpEarned"
             :sync-money-to-currency="syncMoneyToCurrency"
-            @add="addAdventure"
-            @update="updateAdventure"
-            @remove="removeAdventure"
-            @update:sync-money-to-currency="setSyncMoneyToCurrency"
+            @add="notifyReadOnly"
+            @update="notifyReadOnly"
+            @remove="notifyReadOnly"
+            @update:sync-money-to-currency="notifyReadOnly"
           />
         </Tab>
       </Tabs>
     </div>
-
-    <CommonNotFound v-else message="找不到此角色" back-to="/character" back-label="返回角色列表" />
   </div>
 </template>
 
@@ -91,6 +117,13 @@ const activeTab = ref('profile')
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 const characterStore = useCharacterStore()
+
+const { status } = await useAsyncData(
+  () => `character-${id}`,
+  () => characterStore.loadDetail(id),
+  { lazy: false, watch: [() => id] },
+)
+
 const character = computed(() => characterStore.getById(id))
 
 const inventory = useCharacterInventory(id)
@@ -108,23 +141,7 @@ const {
 const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
 
 const toast = useToast()
-function withSaveErrorToast<TArgs extends unknown[]>(
-  action: (...args: TArgs) => boolean,
-): (...args: TArgs) => void {
-  return (...args) => {
-    if (!action(...args)) toast.error('儲存失敗，請稍後再試')
-  }
+const notifyReadOnly = () => {
+  toast.error('編輯功能尚未開放')
 }
-
-const addItem = withSaveErrorToast(inventory.addItem)
-const removeItem = withSaveErrorToast(inventory.removeItem)
-const updateItem = withSaveErrorToast(inventory.updateItem)
-const moveItem = withSaveErrorToast(inventory.moveItem)
-const updateCurrency = withSaveErrorToast(inventory.updateCurrency)
-const setAttunement = withSaveErrorToast(inventory.setAttunement)
-
-const addAdventure = withSaveErrorToast(adventures.addAdventure)
-const updateAdventure = withSaveErrorToast(adventures.updateAdventure)
-const removeAdventure = withSaveErrorToast(adventures.removeAdventure)
-const setSyncMoneyToCurrency = withSaveErrorToast(adventures.setSyncMoneyToCurrency)
 </script>

@@ -18,7 +18,7 @@
       <BusinessCharacterFormInventoryItemList
         :items="backpackItems"
         section="backpack"
-        title="背包"
+        :title="t('inventory.backpack')"
         @add="$emit('add-item', $event)"
         @remove="$emit('remove-item', $event)"
         @update="(id, draft) => $emit('update-item', id, draft)"
@@ -27,7 +27,7 @@
       <BusinessCharacterFormInventoryItemList
         :items="dimensionalBagItems"
         section="dimensionalBag"
-        title="次元袋"
+        :title="t('inventory.dimensionalBag')"
         @add="$emit('add-item', $event)"
         @remove="$emit('remove-item', $event)"
         @update="(id, draft) => $emit('update-item', id, draft)"
@@ -43,7 +43,10 @@
       <span v-if="isOverEncumbered" class="flex items-center gap-0.5">
         <Icon name="alert-triangle" :size="16" />
       </span>
-      <span>負重 {{ formatWeight(backpackLoad) }} / {{ formatWeight(maxCarryWeight) }} 磅</span>
+      <span>
+        {{ t('inventory.load') }} {{ formatWeight(backpackLoad) }} /
+        {{ formatWeight(maxCarryWeight) }} {{ t('inventory.unitWeight') }}
+      </span>
     </div>
   </div>
 </template>
@@ -53,6 +56,8 @@ import { Icon } from '@ui'
 import { formatWeight } from '~/helpers/inventory'
 import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   backpackItems: InventoryItem[]

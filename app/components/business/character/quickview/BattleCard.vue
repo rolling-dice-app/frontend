@@ -1,14 +1,14 @@
 <template>
   <section aria-labelledby="quickview-battle-label" class="flex h-full flex-col">
     <h3 id="quickview-battle-label" class="mb-2 font-display text-sm font-bold text-content">
-      戰鬥相關
+      {{ t('combat.battleSection') }}
     </h3>
     <div class="flex flex-1 flex-col gap-2">
       <div class="grid grid-cols-2 gap-2">
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">護甲值</span>
+          <span class="text-xs text-content-muted">{{ t('combat.acValue') }}</span>
           <div class="mt-1 flex items-center gap-2">
             <button
               type="button"
@@ -44,11 +44,13 @@
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">速度（呎）</span>
+          <span class="text-xs text-content-muted">
+            {{ t('combat.speed') }}（{{ t('combat.unitFeet') }}）
+          </span>
           <div class="mt-1 flex items-center gap-2">
             <button
               type="button"
-              aria-label="移動速度 -5"
+              :aria-label="`${t('combat.speed')} -5`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
               @click="emit('adjustSpeed', -5)"
             >
@@ -68,7 +70,7 @@
             </span>
             <button
               type="button"
-              aria-label="移動速度 +5"
+              :aria-label="`${t('combat.speed')} +5`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
               @click="emit('adjustSpeed', 5)"
             >
@@ -82,14 +84,14 @@
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">被動察覺</span>
+          <span class="text-xs text-content-muted">{{ t('combat.passivePerception') }}</span>
           <span class="mt-1 text-2xl font-bold text-content">{{ passivePerception }}</span>
         </div>
 
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">被動洞察</span>
+          <span class="text-xs text-content-muted">{{ t('combat.passiveInsight') }}</span>
           <span class="mt-1 text-2xl font-bold text-content">{{ passiveInsight }}</span>
         </div>
       </div>
@@ -98,7 +100,7 @@
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">先攻</span>
+          <span class="text-xs text-content-muted">{{ t('combat.initiative') }}</span>
           <span class="mt-1 text-2xl font-bold" :class="initiativeColor">
             {{ formatModifier(initiative) }}
           </span>
@@ -107,7 +109,7 @@
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
-          <span class="text-xs text-content-muted">熟練加值</span>
+          <span class="text-xs text-content-muted">{{ t('combat.proficiencyBonus') }}</span>
           <span class="mt-1 text-2xl font-bold text-content">
             {{ formatModifier(proficiencyBonus) }}
           </span>
@@ -119,6 +121,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   baseArmorClass: number

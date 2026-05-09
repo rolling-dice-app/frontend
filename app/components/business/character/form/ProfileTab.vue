@@ -3,7 +3,9 @@
     <div class="w-full space-y-6 md:w-2/3">
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div>
-          <label for="char-age" class="mb-1 block text-xs text-content"> 年齡 </label>
+          <label for="char-age" class="mb-1 block text-xs text-content">
+            {{ t('character.age') }}
+          </label>
           <CommonAppInput
             id="char-age"
             type="number"
@@ -19,7 +21,9 @@
           />
         </div>
         <div>
-          <label for="char-height" class="mb-1 block text-xs text-content">身高</label>
+          <label for="char-height" class="mb-1 block text-xs text-content">
+            {{ t('character.height') }}
+          </label>
           <CommonAppInput
             id="char-height"
             class="w-full"
@@ -31,7 +35,9 @@
           />
         </div>
         <div>
-          <label for="char-weight" class="mb-1 block text-xs text-content">體重</label>
+          <label for="char-weight" class="mb-1 block text-xs text-content">
+            {{ t('character.weight') }}
+          </label>
           <CommonAppInput
             id="char-weight"
             class="w-full"
@@ -45,14 +51,16 @@
       </div>
 
       <div>
-        <label for="char-appearance" class="mb-1 block text-xs text-content">外貌</label>
+        <label for="char-appearance" class="mb-1 block text-xs text-content">
+          {{ t('character.appearance') }}
+        </label>
         <div class="border border-primary rounded-md bg-canvas-inset">
           <TextArea
             id="char-appearance"
             class="w-full"
             :border="false"
             :model-value="formState.appearance ?? ''"
-            :placeholder="`簡述角色的外貌特，上限 ${APPEARANCE_MAX_LENGTH} 字`"
+            :placeholder="`${t('character.appearancePlaceholder')}${APPEARANCE_MAX_LENGTH} ${t('character.storyPlaceholderUnit')}`"
             :rows="2"
             :maxlength="APPEARANCE_MAX_LENGTH"
             show-count
@@ -62,14 +70,16 @@
       </div>
 
       <div>
-        <label for="char-story" class="mb-1 block text-xs text-content">故事</label>
+        <label for="char-story" class="mb-1 block text-xs text-content">
+          {{ t('character.story') }}
+        </label>
         <div class="border border-primary rounded-md bg-canvas-inset">
           <TextArea
             id="char-story"
             class="w-full"
             :border="false"
             :model-value="formState.story ?? ''"
-            :placeholder="`角色背景故事設定，上限 ${STORY_MAX_LENGTH} 字`"
+            :placeholder="`${t('character.storyPlaceholder')}${STORY_MAX_LENGTH} ${t('character.storyPlaceholderUnit')}`"
             :rows="10"
             :maxlength="STORY_MAX_LENGTH"
             show-count
@@ -83,7 +93,7 @@
       class="w-full flex flex-col items-center justify-center border border-primary rounded-md md:w-1/3 px-1 gap-2"
     >
       <img src="~/assets/images/imbad.png" alt="" loading="lazy" aria-hidden="true" />
-      <span class="text-xs text-content-muted">角色圖片上傳（即將推出）</span>
+      <span class="text-xs text-content-muted">{{ t('character.avatarComingSoon') }}</span>
     </div>
   </div>
 </template>
@@ -91,6 +101,8 @@
 <script setup lang="ts">
 import { TextArea } from '@ui'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const APPEARANCE_MAX_LENGTH = 200
 const STORY_MAX_LENGTH = 2000

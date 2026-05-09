@@ -11,7 +11,7 @@
     <div class="flex items-center gap-0.5">
       <button
         type="button"
-        :aria-label="`${label} 一般擲骰`"
+        :aria-label="`${label} ${t('combat.rollNormal')}`"
         class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-2 focus-visible:outline-ring"
         @click="emit('roll', 'normal')"
       >
@@ -20,7 +20,7 @@
       <div class="flex flex-col sm:flex-row items-center">
         <button
           type="button"
-          :aria-label="`${label} 優勢擲骰`"
+          :aria-label="`${label} ${t('combat.rollAdvantage')}`"
           class="flex size-7 items-center justify-center rounded-md text-success transition-colors hover:text-success-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll', 'advantage')"
         >
@@ -28,7 +28,7 @@
         </button>
         <button
           type="button"
-          :aria-label="`${label} 劣勢擲骰`"
+          :aria-label="`${label} ${t('combat.rollDisadvantage')}`"
           class="flex size-7 items-center justify-center rounded-md text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll', 'disadvantage')"
         >
@@ -42,6 +42,8 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import type { RollMode } from '~/types/business/dice'
+
+const { t } = useI18n()
 
 defineProps<{
   label: string

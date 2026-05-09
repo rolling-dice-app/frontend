@@ -3,31 +3,33 @@
     <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg py-3">
       <div class="flex items-center gap-3">
         <h2 id="adventures-tab-label" class="font-display text-lg font-bold text-content">
-          冒險紀錄
+          {{ t('character.adventureRecord') }}
         </h2>
-        <span class="text-xs text-content-muted">{{ entries.length }} 筆</span>
+        <span class="text-xs text-content-muted">
+          {{ entries.length }} {{ t('character.adventureCount') }}
+        </span>
       </div>
 
       <div class="flex flex-wrap items-center gap-4">
         <div class="text-xs text-content-muted">
-          累計獲得經驗
+          {{ t('character.expEarnedTotal') }}
           <span class="ml-1 font-medium text-content">{{ totalExpEarned }}</span>
         </div>
         <label class="flex items-center gap-2 text-xs text-content">
           <Toggle
             :model-value="syncMoneyToCurrency"
-            aria-label="將冒險獲得金錢同步到背包貨幣"
+            :aria-label="t('character.syncMoneyAria')"
             color="var(--color-primary)"
             @update:model-value="$emit('update:syncMoneyToCurrency', $event)"
           />
-          <span>自動更新背包資產</span>
+          <span>{{ t('character.syncMoneyToggle') }}</span>
         </label>
       </div>
     </div>
 
     <button
       type="button"
-      aria-label="新增冒險紀錄"
+      :aria-label="t('character.addAdventureRecord')"
       class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft bg-canvas-elevated py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
       @click="openCreate"
     >
@@ -38,7 +40,7 @@
       v-if="entries.length === 0"
       class="rounded-lg border border-dashed border-border-soft bg-surface-2 px-3 py-8 text-center text-xs text-content-muted"
     >
-      尚未記錄任何冒險，按上方按鈕新增第一筆。
+      {{ t('character.emptyAdventureMessage') }}
     </p>
 
     <Accordion v-else class="adventures-accordion flex flex-col gap-2">
@@ -62,6 +64,8 @@
 <script setup lang="ts">
 import { Accordion, Toggle } from '@ui'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
+
+const { t } = useI18n()
 
 defineProps<{
   entries: AdventureEntry[]

@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-4 px-2">
-    <h2 class="font-display text-lg font-bold text-content">屬性分配</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ t('character.abilityScores') }}</h2>
     <!-- Method selector -->
     <div>
-      <p class="mb-1 text-xs text-content">分配方式</p>
+      <p class="mb-1 text-xs text-content">{{ t('character.allocationMethod') }}</p>
       <div class="flex gap-2">
         <Button
           v-for="method in methods"
@@ -23,7 +23,7 @@
 
     <!-- Dice pool (diceRoll mode) -->
     <div v-if="isDiceMode && dicePool.length > 0" class="flex items-center gap-2">
-      <ul class="flex flex-1 flex-wrap gap-2" aria-label="骰值池">
+      <ul class="flex flex-1 flex-wrap gap-2" :aria-label="t('character.diceSlot')">
         <li
           v-for="slot in dicePool"
           :key="slot.id"
@@ -47,7 +47,7 @@
         @click="emit('roll:all')"
       >
         <Icon name="dice-20" :size="16" />
-        重擲
+        {{ t('character.rerollDice') }}
       </Button>
     </div>
 
@@ -69,7 +69,7 @@
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="abilities[key].origin <= CUSTOM_ABILITY_MIN"
-            aria-label="減少"
+            :aria-label="t('character.decreaseScore')"
             @click="adjustAbility(key, -1)"
           >
             <Icon name="minus" :size="16" />
@@ -81,7 +81,7 @@
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="abilities[key].origin >= CUSTOM_ABILITY_MAX"
-            aria-label="增加"
+            :aria-label="t('character.increaseScore')"
             @click="adjustAbility(key, 1)"
           >
             <Icon name="plus" :size="16" />
@@ -94,7 +94,7 @@
           :id="`ability-${key}`"
           class="w-full"
           size="sm"
-          placeholder="未指派"
+          :placeholder="t('character.unassigned')"
           :model-value="diceCells[key].selectedId"
           :options="diceCells[key].options"
           @update:model-value="onAssign(key, $event)"
@@ -120,7 +120,7 @@
         class="flex items-center gap-2"
         @click="emit('reset:abilities')"
       >
-        重置屬性
+        {{ t('character.resetAbilities') }}
       </Button>
     </div>
   </div>
@@ -142,6 +142,8 @@ import type {
 } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   abilities: AbilityScores
   abilityMethod: AbilityMethod
@@ -157,17 +159,17 @@ const emit = defineEmits<{
   'reset:abilities': []
 }>()
 
-const methods: { key: AbilityMethod; label: string }[] = [
-  { key: 'custom', label: '自訂' },
-  { key: 'diceRoll', label: '擲骰' },
-]
+const methods = computed<{ key: AbilityMethod; label: string }[]>(() => [
+  { key: 'custom', label: t('character.custom') },
+  { key: 'diceRoll', label: t('character.diceRoll') },
+])
 
 const isDiceMode = computed(() => props.abilityMethod === 'diceRoll')
 
 const usageLabel = computed(() =>
   props.pointBuyUsage === null
-    ? '超出購點計算範圍'
-    : `已使用 ${props.pointBuyUsage} / ${POINT_BUY_BUDGET} 點`,
+    ? t('character.outOfRange')
+    : `${t('character.pointUsage')} ${props.pointBuyUsage} / ${POINT_BUY_BUDGET} ${t('character.pointUnit')}`,
 )
 
 const isUsageOver = computed(
@@ -190,7 +192,7 @@ const diceCells = computed<Record<AbilityKey, DiceCell>>(() => {
       key,
       {
         selectedId: assignedSlotByAbility.get(key)?.id ?? '',
-        options: [{ value: '', label: '未指派' }, ...slotOptions],
+        options: [{ value: '', label: t('character.unassigned') }, ...slotOptions],
       },
     ]
   })

@@ -1,8 +1,12 @@
 <template>
   <div class="space-y-6 bg-canvas-elevated p-4">
     <header class="flex items-center justify-end gap-2">
-      <Button :radius="4" bg-color="var(--color-warning)" @click="onShortRest">短休</Button>
-      <Button :radius="4" bg-color="var(--color-success)" @click="onLongRest">長休</Button>
+      <Button :radius="4" bg-color="var(--color-warning)" @click="onShortRest">
+        {{ t('combat.shortRest') }}
+      </Button>
+      <Button :radius="4" bg-color="var(--color-success)" @click="onLongRest">
+        {{ t('combat.longRest') }}
+      </Button>
     </header>
 
     <div class="grid gap-4 md:grid-cols-2">
@@ -112,6 +116,8 @@ import {
 } from '~/helpers/spell-slots'
 import type { CharacterDTO } from '@rolling-dice-app/core'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   character: CharacterDTO
 }>()
@@ -168,7 +174,7 @@ const onShortRest = (): void => {
   const ids = props.character.features
     .filter((f) => f.usage.hasUses && f.usage.recovery === 'shortRest')
     .map((f) => f.id)
-  if (shortRest(ids)) useToast().success('短休完成')
+  if (shortRest(ids)) useToast().success(t('combat.shortRestDone'))
 }
 
 const onLongRest = (): void => {
@@ -179,6 +185,6 @@ const onLongRest = (): void => {
     )
     .map((f) => f.id)
   longRest(props.character.classes, ids)
-  useToast().success('長休完成')
+  useToast().success(t('combat.longRestDone'))
 }
 </script>

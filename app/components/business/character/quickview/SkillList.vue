@@ -1,7 +1,7 @@
 <template>
   <section aria-labelledby="quickview-skills-label">
     <h3 id="quickview-skills-label" class="mb-2 font-display text-sm font-bold text-content">
-      技能
+      {{ t('combat.skillCheck') }}
     </h3>
     <div class="grid grid-flow-col grid-cols-2 grid-rows-9 gap-x-4 gap-y-2">
       <div
@@ -25,6 +25,8 @@
 import { SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   abilityScores: TotalAbilityScores

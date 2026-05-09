@@ -109,7 +109,7 @@ describe('t() — combat namespace（戰鬥 / 規則用詞）', () => {
     expect(t('combat.hp')).toBe('生命值')
     expect(t('combat.hpCurrent')).toBe('當前生命')
     expect(t('combat.hpTemp')).toBe('臨時生命')
-    expect(t('combat.damage')).toBe('受傷')
+    expect(t('combat.hurt')).toBe('受傷')
     expect(t('combat.heal')).toBe('治療')
   })
 

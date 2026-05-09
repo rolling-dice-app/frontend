@@ -4,7 +4,7 @@
       :to="`/character/${character.id}`"
       class="group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :style="cardShadowStyle"
-      :aria-label="`查看角色 ${character.name}`"
+      :aria-label="`${t('character.viewLabel')} ${character.name}`"
     >
       <!-- Thumbnail -->
       <div class="relative size-14 shrink-0 overflow-hidden rounded-md">
@@ -63,7 +63,7 @@
     <button
       v-if="isDeleteMode"
       type="button"
-      :aria-label="`刪除角色卡 ${character.name}`"
+      :aria-label="`${t('character.deleteLabel')} ${character.name}`"
       class="ml-2 size-8 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
       @click.prevent="$emit('delete', character)"
     >
@@ -77,6 +77,8 @@ import { Badge, Icon } from '@ui'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   character: CharacterListItem

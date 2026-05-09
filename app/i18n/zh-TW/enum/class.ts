@@ -18,7 +18,7 @@ export default {
   levelUp: '等級 ↑',
   levelDown: '等級 ↓',
   remove: '移除此職業',
-  addClass: '+ 新增職業',
+  addClass: '新增職業',
   hitDie: '生命骰',
   skillProficiency: '技能熟練',
   emptyClass: '尚未設定任何職業',

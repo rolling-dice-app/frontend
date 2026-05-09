@@ -241,7 +241,7 @@
           :radius="8"
           @click="addClass"
         >
-          {{ t('class.addClass') }}
+          + {{ t('class.addClass') }}
         </Button>
         <p class="text-sm text-content-muted">
           {{ t('class.totalLevel') }}：

@@ -135,6 +135,7 @@ export function useCharacterBuild() {
   // ─── Submit ───────────────────────────────────────────────────────────
 
   const logger = createLogger('[CharacterBuild]')
+  const { t } = useI18n()
 
   const submit = async (): Promise<void> => {
     if (!canSubmit.value) return
@@ -144,7 +145,7 @@ export function useCharacterBuild() {
       await navigateTo('/character')
     } catch (error) {
       logger.error('submit failed:', error)
-      useToast().error('儲存失敗，請稍後再試')
+      useToast().error(t('ui.message.saveFailed'))
       isSubmitting.value = false
     }
   }

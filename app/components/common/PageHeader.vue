@@ -4,7 +4,7 @@
       <button
         v-if="showBack"
         class="flex shrink-0 items-center rounded p-1 text-content-soft transition-colors hover:text-content cursor-pointer"
-        aria-label="返回上層"
+        :aria-label="t('ui.aria.backToParent')"
         @click="handleBack"
       >
         <Icon name="chevron-left" :size="20" />
@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<PageHeaderProps>(), {
   backTo: undefined,
 })
 
+const { t } = useI18n()
 const route = useRoute()
 
 const handleBack = () => {

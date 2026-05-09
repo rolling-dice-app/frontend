@@ -1,7 +1,7 @@
 import type { NavItem } from '~/types/layout/navigation'
 
 export const navItems: readonly NavItem[] = [
-  { label: '角色卡', to: '/character', icon: 'profile' },
-  { label: 'DM 相關', to: '/dm', icon: 'dice', disabled: true },
-  { label: '其他工具', to: '/tools', icon: 'tool', disabled: true },
+  { labelKey: 'character.card', to: '/character', icon: 'profile' },
+  { labelKey: 'ui.nav.dmRelated', to: '/dm', icon: 'dice', disabled: true },
+  { labelKey: 'ui.nav.otherTools', to: '/tools', icon: 'tool', disabled: true },
 ]

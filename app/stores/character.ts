@@ -13,7 +13,7 @@ import { formStateToCharacterPatch } from '~/helpers/character'
 export type CharacterMutablePatch = Partial<Omit<Character, 'id' | 'createdAt'>>
 
 const NOT_SUPPORTED_MESSAGE =
-  'character mutation 尚未支援（backend 未實作 update / delete endpoint）'
+  'character mutation 尚未支援 (backend update/delete endpoint not implemented)'
 
 const cloneCharacter = (c: Character): Character => JSON.parse(JSON.stringify(c)) as Character
 

@@ -6,10 +6,10 @@
           type="button"
           disabled
           aria-disabled="true"
-          title="編輯功能尚未開放"
+          :title="t('ui.readOnly.editTooltip')"
           class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-faint cursor-not-allowed opacity-60"
         >
-          編輯
+          {{ t('ui.action.edit') }}
         </button>
       </template>
     </CommonPageHeader>
@@ -21,15 +21,15 @@
       role="status"
       aria-live="polite"
     >
-      載入中...
+      {{ t('ui.state.loading') }}
     </div>
 
     <!-- Error / Not found -->
     <CommonNotFound
       v-else-if="status === 'error' || !character"
-      message="找不到此角色"
+      :message="t('character.notFound')"
       back-to="/character"
-      back-label="返回角色列表"
+      :back-label="t('character.backToList')"
     />
 
     <div v-else>
@@ -38,7 +38,7 @@
         class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
         role="status"
       >
-        目前為唯讀模式，背包與冒險編輯尚未開放，待後端編輯端點上線後恢復。
+        {{ t('ui.readOnly.detailBanner') }}
       </div>
 
       <Tabs
@@ -46,29 +46,29 @@
         type="border"
         active-color="var(--color-canvas-elevated)"
         inactive-color="var(--color-canvas)"
-        label="角色資訊"
+        :label="t('character.info')"
       >
         <Tab value="profile">
           <template #label>
-            <span class="text-content">角色詳情</span>
+            <span class="text-content">{{ t('character.detail') }}</span>
           </template>
           <BusinessCharacterDetailTab :character="character" />
         </Tab>
         <Tab value="combat">
           <template #label>
-            <span class="text-content">戰鬥速查</span>
+            <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <BusinessCharacterCombatQuickView :character="character" />
         </Tab>
         <Tab value="spells">
           <template #label>
-            <span class="text-content">法術表</span>
+            <span class="text-content">{{ t('spell.table') }}</span>
           </template>
           <BusinessCharacterSpellsQuickView :character="character" />
         </Tab>
         <Tab value="backpack">
           <template #label>
-            <span class="text-content">背包</span>
+            <span class="text-content">{{ t('character.inventoryTab') }}</span>
           </template>
           <BusinessCharacterFormInventoryTab
             :backpack-items="backpackItems"
@@ -88,7 +88,7 @@
         </Tab>
         <Tab value="adventures">
           <template #label>
-            <span class="text-content">冒險</span>
+            <span class="text-content">{{ t('character.adventure') }}</span>
           </template>
           <BusinessCharacterAdventuresTab
             :entries="adventureEntries"
@@ -110,7 +110,9 @@ import { Tab, Tabs } from '@ui'
 
 definePageMeta({ middleware: 'auth' })
 
-useHead({ title: '角色卡詳情' })
+const { t } = useI18n()
+
+useHead({ title: t('character.detailTitle') })
 
 const activeTab = ref('profile')
 
@@ -142,6 +144,6 @@ const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adven
 
 const toast = useToast()
 const notifyReadOnly = () => {
-  toast.error('編輯功能尚未開放')
+  toast.error(t('ui.message.editingNotAvailable'))
 }
 </script>

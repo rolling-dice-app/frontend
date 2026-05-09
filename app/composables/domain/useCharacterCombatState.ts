@@ -108,6 +108,7 @@ function recoverHitDice(
  * 以獨立 localStorage key 儲存，重整後可還原；與 Character 主資料完全隔離。
  */
 export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<number>) {
+  const { t } = useI18n()
   const storageKey = getCombatStateStorageKey(characterId)
   const stored = getLocalStorage<CombatState>(storageKey)
   const state = reactive<CombatState>(
@@ -373,7 +374,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       hasNotifiedFailure = false
     } else if (!hasNotifiedFailure) {
       hasNotifiedFailure = true
-      useToast().error('更新失敗，重整後資料可能遺失')
+      useToast().error(t('ui.message.persistFailedDataMayLost'))
     }
   }, PERSIST_DEBOUNCE_MS)
 

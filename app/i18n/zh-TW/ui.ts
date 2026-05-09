@@ -41,5 +41,38 @@ export default {
     saveFailed: '儲存失敗，請稍後再試',
     deleteFailed: '刪除失敗，請稍後再試',
     unknownError: '發生未知錯誤，請稍後再試',
+    editingNotAvailable: '編輯功能尚未開放',
+    persistFailedDataMayLost: '更新失敗，重整後資料可能遺失',
+  },
+  /** 三態 UI（loading / error / empty / retry） */
+  state: {
+    loading: '載入中...',
+    retry: '重試',
+    loadFailed: '載入失敗',
+    networkErrorHint: '請稍後再試，或檢查網路連線。',
+  },
+  /** 唯讀模式相關 banner / 提示 */
+  readOnly: {
+    detailBanner: '目前為唯讀模式，背包與冒險編輯尚未開放，待後端編輯端點上線後恢復。',
+    updateBanner: '編輯功能尚未開放，目前僅供預覽，無法儲存修改。待後端編輯端點上線後恢復。',
+    editTooltip: '編輯功能尚未開放',
+  },
+  /** Aria-label / 共用螢幕閱讀器標籤 */
+  aria: {
+    backToParent: '返回上層',
+    pageLoading: '頁面載入中',
+    nav: '導覽',
+  },
+  /** Common navigation / drawer 提示 */
+  nav: {
+    swipeUp: '滑動開啟',
+    workInProgress: '開發中',
+    dmRelated: 'DM 相關',
+    otherTools: '其他工具',
+  },
+  /** 找不到資源（共用版本；character.notFound 為角色專屬訊息） */
+  notFound: {
+    resource: '找不到此資源',
+    backToHome: '返回首頁',
   },
 }

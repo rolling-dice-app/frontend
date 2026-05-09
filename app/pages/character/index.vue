@@ -13,13 +13,13 @@
             color="var(--rd--color-text)"
             dropdown-bg="var(--rd--color-bg-elevated)"
             class="sort-select w-21 xs:w-28"
-            aria-label="排序方式"
+            :aria-label="t('character.sortBy')"
           />
           <!-- 顯示模式 -->
           <button
             type="button"
             :aria-pressed="isListMode"
-            aria-label="切換顯示模式"
+            :aria-label="t('character.toggleViewMode')"
             class="relative flex cursor-pointer items-center rounded-lg border border-border p-1"
             @click="isListMode = !isListMode"
             @keydown.enter.prevent="isListMode = !isListMode"
@@ -56,7 +56,7 @@
       role="status"
       aria-live="polite"
     >
-      載入中...
+      {{ t('ui.state.loading') }}
     </div>
 
     <!-- Error -->
@@ -65,14 +65,14 @@
       class="flex min-h-[60dvh] flex-col items-center justify-center gap-3 text-center text-content-muted"
       role="alert"
     >
-      <p class="font-display text-2xl text-content">無法載入角色卡</p>
-      <p class="text-sm">請稍後再試，或檢查網路連線。</p>
+      <p class="font-display text-2xl text-content">{{ t('character.loadFailed') }}</p>
+      <p class="text-sm">{{ t('ui.state.networkErrorHint') }}</p>
       <button
         type="button"
         class="mt-2 rounded-md border border-border bg-surface px-4 py-2 text-content transition-colors hover:bg-surface-2"
         @click="refresh()"
       >
-        重試
+        {{ t('ui.state.retry') }}
       </button>
     </div>
 
@@ -90,7 +90,7 @@
       <NuxtLink
         to="/character/build"
         class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        aria-label="新增角色卡"
+        :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="48" />
       </NuxtLink>
@@ -107,7 +107,7 @@
       <NuxtLink
         to="/character/build"
         class="flex min-h-19 items-center justify-center rounded-lg border border-border bg-bg-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        aria-label="新增角色卡"
+        :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="28" />
       </NuxtLink>
@@ -118,7 +118,7 @@
       v-else
       to="/character/build"
       class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-      aria-label="建立角色卡"
+      :aria-label="t('character.createCharacter')"
     >
       <!-- Background image -->
       <div class="absolute inset-0 bg-cover bg-center" aria-hidden="true" />
@@ -130,8 +130,10 @@
       <!-- Content -->
       <div class="relative z-10 px-6 py-12 text-content-muted">
         <p class="font-display text-5xl text-content-faint" aria-hidden="true">⚔</p>
-        <h2 class="mt-4 font-display text-2xl font-bold text-content">尚無角色卡</h2>
-        <p class="mt-2 text-sm">一場偉大的冒險，往往從踏出第一步開始</p>
+        <h2 class="mt-4 font-display text-2xl font-bold text-content">
+          {{ t('character.empty') }}
+        </h2>
+        <p class="mt-2 text-sm">{{ t('character.emptyAdventureHint') }}</p>
         <p
           class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
         >
@@ -150,7 +152,9 @@ import type { CharacterListItem } from '~/types/business/character-list'
 
 definePageMeta({ middleware: 'auth' })
 
-useHead({ title: '角色卡' })
+const { t } = useI18n()
+
+useHead({ title: t('character.card') })
 
 const characterStore = useCharacterStore()
 const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
@@ -171,9 +175,9 @@ watch(isListMode, (val) => {
 type SortKey = 'default' | 'level-asc' | 'level-desc'
 
 const SORT_OPTIONS: SelectOption[] = [
-  { value: 'default', label: '預設' },
-  { value: 'level-asc', label: '等級 ↑' },
-  { value: 'level-desc', label: '等級 ↓' },
+  { value: 'default', label: t('character.default') },
+  { value: 'level-asc', label: t('class.levelUp') },
+  { value: 'level-desc', label: t('class.levelDown') },
 ]
 
 const sortKey = ref<SortKey>('default')

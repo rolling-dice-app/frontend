@@ -58,6 +58,9 @@ const { debounce } = await import('~/utils/timing')
 // Step 4: pinia（此時 localStorage mock 已就緒）
 const { defineStore, setActivePinia } = await import('pinia')
 
+// i18n auto-imports — t / useI18n 由 production 走 imports.dirs 注入，測試需手動掛
+const { t, useI18n } = await import('~/i18n')
+
 // Step 5: 掛上所有 Nuxt auto-imports
 Object.assign(globalThis, {
   ref,
@@ -74,6 +77,8 @@ Object.assign(globalThis, {
   setLocalStorage,
   removeLocalStorage,
   debounce,
+  t,
+  useI18n,
   // 預設 useRoute mock，個別 spec 可用 vi.stubGlobal('useRoute', ...) 覆寫
   useRoute: () => reactive({ fullPath: '/' }),
   // 預設 Nuxt composable stubs — 個別 spec 可用 vi.stubGlobal(...) 覆寫

@@ -135,8 +135,10 @@ export function useCharacterUpdate(id: string) {
   const isSubmitting = ref(false)
   const canSubmit = computed(() => false)
 
+  const { t } = useI18n()
+
   const submit = async (): Promise<void> => {
-    useToast().error('編輯功能尚未開放')
+    useToast().error(t('ui.message.editingNotAvailable'))
   }
 
   return {

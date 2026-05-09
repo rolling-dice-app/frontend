@@ -7,6 +7,6 @@ export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore()
   if (auth.isLoggedIn) return
   if (to.path === '/') return
-  useToast().info('請先登入後再訪問此頁')
+  useToast().info(t('ui.auth.loginRequired'))
   return navigateTo('/', { replace: true })
 })

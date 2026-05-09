@@ -3,7 +3,7 @@ import {
   ABILITY_KEYS,
   DEFAULT_CURRENCY,
   createDefaultArmorClass,
-  type Character,
+  type CharacterDTO,
 } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
@@ -11,7 +11,7 @@ export type UpdateTab = 'basic' | 'profile' | 'combat' | 'spells' | 'features' |
 
 // ─── Form State Factories ─────────────────────────────────────────────────────
 
-function characterToFormState(character: Character): CharacterUpdateFormState {
+function characterToFormState(character: CharacterDTO): CharacterUpdateFormState {
   return {
     id: character.id,
     name: character.name,

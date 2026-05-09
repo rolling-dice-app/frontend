@@ -1,11 +1,11 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockCharacter, createMockFormState } from '~/tests/fixtures/character'
-import type { Character, CharacterSummary } from '@rolling-dice-app/core'
+import type { CharacterDTO, CharacterSummaryDTO } from '@rolling-dice-app/core'
 
-const mockListCharacters = vi.fn<() => Promise<CharacterSummary[]>>()
-const mockGetCharacter = vi.fn<(id: string) => Promise<Character>>()
-const mockCreateCharacter = vi.fn<(...args: unknown[]) => Promise<Character>>()
+const mockListCharacters = vi.fn<() => Promise<CharacterSummaryDTO[]>>()
+const mockGetCharacter = vi.fn<(id: string) => Promise<CharacterDTO>>()
+const mockCreateCharacter = vi.fn<(...args: unknown[]) => Promise<CharacterDTO>>()
 
 beforeEach(() => {
   vi.resetModules()
@@ -24,18 +24,19 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const charToSummary = (c: Character): CharacterSummary => ({
+const charToSummary = (c: CharacterDTO): CharacterSummaryDTO => ({
   id: c.id,
   name: c.name,
   classes: c.classes,
   level: c.classes.reduce((sum, entry) => sum + entry.level, 0),
   avatar: c.avatar,
   updatedAt: c.updatedAt,
+  race: c.race,
 })
 
 describe('character store — loadList', () => {
-  it('成功時將 backend summary 寫入 list 並補 race=null', async () => {
-    const c = createMockCharacter({ id: 'list-1', name: '測試' })
+  it('成功時將 backend summary 直接寫入 list（含 race）', async () => {
+    const c = createMockCharacter({ id: 'list-1', name: '測試', race: 'elf' })
     mockListCharacters.mockResolvedValue([charToSummary(c)])
 
     const { useCharacterStore } = await import('~/stores/character')
@@ -46,16 +47,16 @@ describe('character store — loadList', () => {
     expect(store.list[0]).toMatchObject({
       id: 'list-1',
       name: '測試',
-      race: null,
+      race: 'elf',
     })
     expect(store.listLoading).toBe(false)
     expect(store.listError).toBeNull()
   })
 
   it('過程中 listLoading 為 true，完成後為 false', async () => {
-    let resolveFn: (v: CharacterSummary[]) => void = () => {}
+    let resolveFn: (v: CharacterSummaryDTO[]) => void = () => {}
     mockListCharacters.mockReturnValue(
-      new Promise<CharacterSummary[]>((resolve) => {
+      new Promise<CharacterSummaryDTO[]>((resolve) => {
         resolveFn = resolve
       }),
     )
@@ -124,7 +125,7 @@ describe('character store — loadDetail / getById', () => {
 })
 
 describe('character store — createCharacter', () => {
-  it('將 formState 轉成 CharacterCreateInput 送 API；回傳 character 加入 list 與 cache', async () => {
+  it('將 formState 轉成 CharacterCreateDTO 送 API；回傳 character 加入 list 與 cache', async () => {
     const created = createMockCharacter({ id: 'created-1', name: '新建' })
     mockCreateCharacter.mockResolvedValue(created)
 

@@ -204,7 +204,7 @@ export function calculateSavingThrowProficiencies(classes: ClassEntry[]): Abilit
 }
 
 /**
- * 將 form state 的共用欄位轉為 Character 可寫入的 patch。
+ * 將 form state 的共用欄位轉為 CharacterDTO 可寫入的 patch。
  * 不處理 abilities、armorClass、attacks、spells、bonus 欄位與 savingThrowProficiencies。
  */
 export function formStateToCharacterPatch(

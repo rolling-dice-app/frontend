@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
-import type { Character, ClassEntry, AbilityKey } from '@rolling-dice-app/core'
+import type { CharacterDTO, ClassEntry, AbilityKey } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 import {
   calculatePassiveScore,
@@ -110,11 +110,11 @@ export function useCharacterDerivedStats(
 }
 
 /**
- * 從已建立的 Character 派生戰鬥 / 屬性數值，給速查（read-only）情境使用。
+ * 從已建立的 CharacterDTO 派生戰鬥 / 屬性數值，給速查（read-only）情境使用。
  * 與 useCharacterDerivedStats 回傳同一組介面，方便共用子元件。
  */
 export function useCharacterDerivedStatsFromCharacter(
-  character: Ref<Character>,
+  character: Ref<CharacterDTO>,
 ): CharacterDerivedStats {
   const totalAbilityScores = computed(() => calculateTotalAbilityScores(character.value.abilities))
 

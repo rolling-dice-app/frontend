@@ -1,4 +1,4 @@
-import type { Character } from '@rolling-dice-app/core'
+import type { CharacterDTO } from '@rolling-dice-app/core'
 import type {
   AttackDraft,
   CharacterFormState,
@@ -10,7 +10,7 @@ import { useCharacterStore } from '~/stores/character'
  * 將 character 直接灌進 store 的 detailCache + list（取代過去用 localStorage 注入的方式）。
  * 必須先 setActivePinia 後呼叫。
  */
-export function seedCharacterInStore(character: Character): void {
+export function seedCharacterInStore(character: CharacterDTO): void {
   const store = useCharacterStore()
   store.detailCache.set(character.id, character)
   store.list.push({
@@ -24,7 +24,7 @@ export function seedCharacterInStore(character: Character): void {
   })
 }
 
-export function createMockCharacter(overrides: Partial<Character> = {}): Character {
+export function createMockCharacter(overrides: Partial<CharacterDTO> = {}): CharacterDTO {
   return {
     id: 'test-001',
     name: '測試角色',

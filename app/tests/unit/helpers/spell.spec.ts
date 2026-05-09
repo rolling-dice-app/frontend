@@ -7,7 +7,7 @@ import {
   validateSpell,
   withToggledFlag,
 } from '~/helpers/spell'
-import type { SpellEntry, SpellDto, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellEntry, SpellDTO, SpellSchool } from '@rolling-dice-app/core'
 
 const makeEntry = (id: string, isPrepared = false, isFavorite = false): SpellEntry => ({
   id,
@@ -15,7 +15,7 @@ const makeEntry = (id: string, isPrepared = false, isFavorite = false): SpellEnt
   isFavorite,
 })
 
-function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
+function makeDto(overrides: Partial<SpellDTO> = {}): SpellDTO {
   return {
     id: 'test-spell-id-0000-0000-000000000001',
     name: '火焰箭',
@@ -134,12 +134,12 @@ let _spellCounter = 0
 function makeSpell(
   name: string,
   level: number,
-  school: SpellDto['school'] = 'evocation',
-): SpellDto {
+  school: SpellDTO['school'] = 'evocation',
+): SpellDTO {
   return {
     id: `test-spell-id-${String(++_spellCounter).padStart(4, '0')}-000000000000`,
     name,
-    engName: 'Test SpellDto',
+    engName: 'Test SpellDTO',
     level,
     school,
     castingTime: '1 個動作',

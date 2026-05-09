@@ -11,7 +11,7 @@ import {
 } from '~/helpers/spell'
 import { useCharacterStore } from '~/stores/character'
 import { createMockCharacter, seedCharacterInStore } from '~/tests/fixtures/character'
-import type { Character, SpellDto } from '@rolling-dice-app/core'
+import type { CharacterDTO, SpellDTO } from '@rolling-dice-app/core'
 
 const CHAR_ID = 'lsa-001'
 const FIREBALL_ID = 'cccccccc-0000-0000-0000-000000000001'
@@ -19,10 +19,10 @@ const FROST_RAY_ID = 'cccccccc-0000-0000-0000-000000000002'
 const CANTRIP_ID = 'cccccccc-0000-0000-0000-000000000003'
 
 function makeSpell(
-  overrides: Partial<SpellDto> & Pick<SpellDto, 'id' | 'name' | 'level'>,
-): SpellDto {
+  overrides: Partial<SpellDTO> & Pick<SpellDTO, 'id' | 'name' | 'level'>,
+): SpellDTO {
   return {
-    engName: 'Test SpellDto',
+    engName: 'Test SpellDTO',
     school: 'evocation',
     castingTime: '1 個動作',
     range: '90 英尺',
@@ -39,7 +39,7 @@ function makeSpell(
   }
 }
 
-const SPELLS: Record<string, SpellDto> = {
+const SPELLS: Record<string, SpellDTO> = {
   [FIREBALL_ID]: makeSpell({ id: FIREBALL_ID, name: '火焰箭', level: 1 }),
   [FROST_RAY_ID]: makeSpell({ id: FROST_RAY_ID, name: '寒冰射線', level: 1 }),
   [CANTRIP_ID]: makeSpell({ id: CANTRIP_ID, name: '火焰術', level: 0 }),
@@ -62,7 +62,7 @@ afterEach(() => {
   localStorage.clear()
 })
 
-function seedCharacter(overrides: Partial<Character> = {}): Character {
+function seedCharacter(overrides: Partial<CharacterDTO> = {}): CharacterDTO {
   const character = createMockCharacter({
     id: CHAR_ID,
     spells: [],
@@ -78,7 +78,7 @@ const entry = (id: string, isPrepared = false, isFavorite = false) => ({
   isFavorite,
 })
 
-function mountAccordion(character: Character) {
+function mountAccordion(character: CharacterDTO) {
   return mount(LearnedSpellAccordion, {
     props: { character },
     global: {

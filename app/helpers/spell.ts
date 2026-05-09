@@ -1,10 +1,10 @@
 import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import type { SpellEntry, SpellDto } from '@rolling-dice-app/core'
+import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
 
 const VALID_SCHOOLS = new Set(Object.keys(SPELL_SCHOOL_LABELS))
 
 /** 驗證法術資料的學派是否合法；學派未知則回傳 null，呼叫端負責收集。 */
-export function validateSpell(raw: SpellDto): SpellDto | null {
+export function validateSpell(raw: SpellDTO): SpellDTO | null {
   if (!VALID_SCHOOLS.has(raw.school)) return null
   return raw
 }
@@ -16,7 +16,7 @@ export function formatSpellLevel(level: number): string {
 
 /** 以「聲勢材」精簡字串描述法術成分 */
 export function formatSpellComponents(
-  spell: Pick<SpellDto, 'verbal' | 'somatic' | 'material'>,
+  spell: Pick<SpellDTO, 'verbal' | 'somatic' | 'material'>,
 ): string {
   const parts: string[] = []
   if (spell.verbal) parts.push('聲')
@@ -34,11 +34,11 @@ export function withToggledFlag(
   return spells.map((entry) => (entry.id === id ? { ...entry, [flag]: !entry[flag] } : entry))
 }
 
-/** 將 SpellDto 列表依環數分組並組內依中文名稱排序 */
+/** 將 SpellDTO 列表依環數分組並組內依中文名稱排序 */
 export function groupSpellsByLevel(
-  spells: SpellDto[],
-): Array<{ level: number; spells: SpellDto[] }> {
-  const groups = new Map<number, SpellDto[]>()
+  spells: SpellDTO[],
+): Array<{ level: number; spells: SpellDTO[] }> {
+  const groups = new Map<number, SpellDTO[]>()
   for (const spell of spells) {
     const bucket = groups.get(spell.level) ?? []
     bucket.push(spell)

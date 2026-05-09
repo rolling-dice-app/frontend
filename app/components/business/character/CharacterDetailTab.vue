@@ -277,7 +277,7 @@
 <script setup lang="ts">
 import {
   ABILITY_KEYS,
-  type Character,
+  type CharacterDTO,
   type AbilityKey,
   type ProficiencyLevel,
   type SkillKey,
@@ -294,7 +294,7 @@ import {
 import { SUBCLASS_CONFIG } from '~/constants/subclass'
 
 const props = defineProps<{
-  character: Character
+  character: CharacterDTO
 }>()
 
 const raceDisplay = computed(() => {

@@ -206,7 +206,7 @@ import {
   SPELL_SOURCE_OPTIONS,
 } from '~/constants/spell-options'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { ClassKey, SpellDto, SourceKey, SpellSchool } from '@rolling-dice-app/core'
+import type { ClassKey, SpellDTO, SourceKey, SpellSchool } from '@rolling-dice-app/core'
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)
@@ -274,7 +274,7 @@ const resetFilter = () => {
   commitKeyword.cancel()
 }
 
-const filteredSpells = computed<SpellDto[]>(() => {
+const filteredSpells = computed<SpellDTO[]>(() => {
   const keyword = filter.keyword.trim().toLowerCase()
   const levels = filter.level.length > 0 ? new Set(filter.level) : null
   const schools = filter.schools.length > 0 ? new Set(filter.schools) : null

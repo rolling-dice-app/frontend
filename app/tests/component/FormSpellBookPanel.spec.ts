@@ -7,10 +7,10 @@ import SpellBookPanel from '~/components/business/character/form/spells/SpellBoo
 import { useCharacterSpellsForm } from '~/composables/domain/useCharacterSpellsForm'
 import { formatSpellComponents, formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { debounce } from '~/utils/timing'
-import type { SpellDto, SpellEntry } from '@rolling-dice-app/core'
+import type { SpellDTO, SpellEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
-const allSpells = ref<SpellDto[]>([])
+const allSpells = ref<SpellDTO[]>([])
 
 beforeEach(() => {
   allSpells.value = []
@@ -84,7 +84,7 @@ const ToggleStub = {
   inheritAttrs: false,
 }
 
-const makeSpell = (overrides: Partial<SpellDto> = {}): SpellDto =>
+const makeSpell = (overrides: Partial<SpellDTO> = {}): SpellDTO =>
   ({
     id: overrides.id ?? `s-${Math.random()}`,
     name: '魔法飛彈',
@@ -102,7 +102,7 @@ const makeSpell = (overrides: Partial<SpellDto> = {}): SpellDto =>
     classes: ['wizard'],
     source: 'PHB',
     ...overrides,
-  }) as SpellDto
+  }) as SpellDTO
 
 const baseFormState = (spells: SpellEntry[] = []): CharacterUpdateFormState =>
   ({ spells }) as unknown as CharacterUpdateFormState
@@ -110,7 +110,7 @@ const baseFormState = (spells: SpellEntry[] = []): CharacterUpdateFormState =>
 const mountPanel = (
   params: {
     formState?: CharacterUpdateFormState
-    spells?: SpellDto[]
+    spells?: SpellDTO[]
   } = {},
 ) => {
   if (params.spells) allSpells.value = params.spells

@@ -5,7 +5,7 @@
         <li>
           <button
             type="button"
-            aria-label="新增特性"
+            :aria-label="t('combat.addFeature')"
             class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft py-4 text-content-muted transition-colors duration-150 hover:border-border hover:bg-surface hover:text-content"
             @click="openCreate"
           >
@@ -46,7 +46,8 @@
                 {{ FEATURE_SOURCE_LABELS[feature.source] }}
               </Badge>
               <Badge v-if="feature.usage.hasUses" size="sm" bg-color="var(--color-surface-3)">
-                {{ FEATURE_RECOVERY_LABELS[feature.usage.recovery] }} / {{ feature.usage.max }} 次
+                {{ FEATURE_RECOVERY_LABELS[feature.usage.recovery] }} / {{ feature.usage.max }}
+                {{ t('combat.uses') }}
               </Badge>
             </div>
             <p
@@ -59,7 +60,7 @@
           <div class="flex shrink-0 gap-1">
             <button
               type="button"
-              :aria-label="`編輯 ${feature.name || '此特性'}`"
+              :aria-label="`${t('ui.action.edit')} ${feature.name || t('combat.thisFeature')}`"
               class="flex size-8 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
               @click="openEdit(feature)"
             >
@@ -67,7 +68,7 @@
             </button>
             <button
               type="button"
-              :aria-label="`刪除 ${feature.name || '此特性'}`"
+              :aria-label="`${t('ui.action.delete')} ${feature.name || t('combat.thisFeature')}`"
               class="flex size-8 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
               @click="removeFeature(feature.id)"
             >
@@ -80,7 +81,7 @@
 
     <Modal
       v-model="modalOpen"
-      :title="`${editingId ? '編輯' : '新增'}特性`"
+      :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('combat.feature')}`"
       size="md"
       bg-color="var(--color-canvas-elevated)"
       text-color="var(--color-content)"
@@ -89,7 +90,9 @@
       <div class="space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-end gap-3">
           <div class="flex-1">
-            <label for="feature-modal-name" class="mb-1 block text-xs text-content">名稱</label>
+            <label for="feature-modal-name" class="mb-1 block text-xs text-content">
+              {{ t('inventory.itemName') }}
+            </label>
             <CommonAppInput
               id="feature-modal-name"
               :radius="0"
@@ -101,7 +104,9 @@
             />
           </div>
           <div>
-            <label for="feature-modal-source" class="mb-1 block text-xs text-content">來源</label>
+            <label for="feature-modal-source" class="mb-1 block text-xs text-content">
+              {{ t('combat.featureSourceLabel') }}
+            </label>
             <CommonAppSelect
               id="feature-modal-source"
               :model-value="draft.source"
@@ -115,7 +120,7 @@
 
         <div>
           <label for="feature-modal-description" class="mb-1 block text-xs text-content">
-            描述
+            {{ t('combat.description') }}
           </label>
           <div class="rounded-md border border-primary bg-canvas-inset">
             <TextArea
@@ -126,7 +131,7 @@
               :rows="3"
               :maxlength="DESCRIPTION_MAX_LENGTH"
               show-count
-              placeholder="特性效果說明（選填）"
+              :placeholder="t('combat.featureDescriptionPlaceholder')"
               @update:model-value="draft.description = $event ? $event : null"
             />
           </div>
@@ -138,16 +143,16 @@
               :model-value="draft.usage.hasUses"
               size="sm"
               color="var(--color-primary)"
-              aria-label="此特性具有使用次數"
+              :aria-label="t('combat.hasUsesAria')"
               @update:model-value="onToggleHasUses"
             />
-            <span class="text-sm text-content">具有使用次數</span>
+            <span class="text-sm text-content">{{ t('combat.hasUses') }}</span>
           </label>
 
           <div v-if="draft.usage.hasUses" class="mt-3 flex flex-wrap items-end gap-4">
             <div>
               <label for="feature-modal-max" class="mb-1 block text-xs text-content">
-                最大次數
+                {{ t('combat.featureMaxUses') }}
               </label>
               <CommonAppInput
                 id="feature-modal-max"
@@ -163,10 +168,12 @@
               />
             </div>
             <div>
-              <span class="mb-1 block text-xs text-content">恢復時機</span>
+              <span class="mb-1 block text-xs text-content">{{
+                t('combat.featureRecoveryLabel')
+              }}</span>
               <div
                 role="radiogroup"
-                aria-label="恢復時機"
+                :aria-label="t('combat.featureRecoveryLabel')"
                 class="inline-flex rounded-md border border-border-soft bg-canvas-inset p-0.5"
               >
                 <button
@@ -198,7 +205,7 @@
           bg-color="var(--color-primary)"
           @click="save"
         >
-          確認
+          {{ t('ui.action.confirm') }}
         </Button>
       </template>
     </Modal>
@@ -212,6 +219,8 @@ import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/feat
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const DESCRIPTION_MAX_LENGTH = 500
 

@@ -6,89 +6,107 @@
     >
       <div class="flex-1 flex flex-col gap-4">
         <!-- 角色資訊 -->
-        <h2 id="section-basic" class="font-display text-lg font-bold text-content">角色資訊</h2>
+        <h2 id="section-basic" class="font-display text-lg font-bold text-content">
+          {{ t('character.info') }}
+        </h2>
         <dl class="grid grid-cols-5 gap-x-4 gap-y-3">
           <div>
-            <dt class="text-xs text-content-muted">姓名</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.name') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ character.name }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">等級</dt>
+            <dt class="text-xs text-content-muted">{{ t('class.level') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ totalLevel }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">性別</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.genderLabel') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">
-              {{ character.gender ? GENDER_NAMES[character.gender] : '—' }}
+              {{ character.gender ? GENDER_NAMES[character.gender] : t('character.emptyDash') }}
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">種族</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.race') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ raceDisplay }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">背景</dt>
-            <dd class="mt-0.5 text-sm text-content-soft">{{ character.background ?? '—' }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-content-muted">陣營</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.background') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">
-              {{ character.alignment ? ALIGNMENT_NAMES[character.alignment] : '—' }}
+              {{ character.background ?? t('character.emptyDash') }}
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">信仰</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.alignmentLabel') }}</dt>
+            <dd class="mt-0.5 text-sm text-content-soft">
+              {{
+                character.alignment
+                  ? ALIGNMENT_NAMES[character.alignment]
+                  : t('character.emptyDash')
+              }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-content-muted">{{ t('character.faith') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ character.faith }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">年齡</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.age') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ character.age }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">身高</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.height') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ character.height }}</dd>
           </div>
           <div>
-            <dt class="text-xs text-content-muted">體重</dt>
+            <dt class="text-xs text-content-muted">{{ t('character.weight') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">{{ character.weight }}</dd>
           </div>
         </dl>
         <!-- 熟練 -->
         <div class="flex flex-col gap-4">
           <h2 id="section-proficiencies" class="font-display text-lg font-bold text-content">
-            熟練
+            {{ t('character.proficiencies') }}
           </h2>
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-border-soft text-left text-xs text-content-muted">
-                <th class="pb-2 font-normal">語言</th>
-                <th class="pb-2 font-normal">工具</th>
-                <th class="pb-2 font-normal">武器</th>
-                <th class="pb-2 font-normal">護甲</th>
+                <th class="pb-2 font-normal">{{ t('character.language') }}</th>
+                <th class="pb-2 font-normal">{{ t('character.tool') }}</th>
+                <th class="pb-2 font-normal">{{ t('character.weaponProficiency') }}</th>
+                <th class="pb-2 font-normal">{{ t('character.armorProficiency') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr class="border-b border-border-soft">
-                <td class="py-2 text-content-soft">{{ character.languages || '—' }}</td>
-                <td class="py-2 text-content-soft">{{ character.tools || '—' }}</td>
-                <td class="py-2 text-content-soft">{{ character.weaponProficiencies || '—' }}</td>
-                <td class="py-2 text-content-soft">{{ character.armorProficiencies || '—' }}</td>
+                <td class="py-2 text-content-soft">
+                  {{ character.languages || t('character.emptyDash') }}
+                </td>
+                <td class="py-2 text-content-soft">
+                  {{ character.tools || t('character.emptyDash') }}
+                </td>
+                <td class="py-2 text-content-soft">
+                  {{ character.weaponProficiencies || t('character.emptyDash') }}
+                </td>
+                <td class="py-2 text-content-soft">
+                  {{ character.armorProficiencies || t('character.emptyDash') }}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <!-- 職業資訊 -->
         <div class="flex flex-col gap-4 flex-1">
-          <h2 id="section-classes" class="font-display text-lg font-bold text-content">職業</h2>
+          <h2 id="section-classes" class="font-display text-lg font-bold text-content">
+            {{ t('class.className') }}
+          </h2>
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-border-soft text-left text-xs text-content-muted">
-                <th class="pb-2 pr-2 font-normal">職業</th>
-                <th class="pb-2 pr-2 font-normal text-right">等級</th>
-                <th class="pb-2 pr-2 font-normal text-right">生命骰</th>
-                <th class="pb-2 pr-2 font-normal text-right">生命值</th>
-                <th class="pb-2 font-normal text-right">體質</th>
-                <th class="pb-2 font-normal text-right">健壯</th>
+                <th class="pb-2 pr-2 font-normal">{{ t('class.className') }}</th>
+                <th class="pb-2 pr-2 font-normal text-right">{{ t('class.level') }}</th>
+                <th class="pb-2 pr-2 font-normal text-right">{{ t('class.hitDie') }}</th>
+                <th class="pb-2 pr-2 font-normal text-right">{{ t('combat.hp') }}</th>
+                <th class="pb-2 font-normal text-right">{{ t('ability.constitution') }}</th>
+                <th class="pb-2 font-normal text-right">{{ t('combat.tough') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,9 +145,9 @@
             </tbody>
             <tfoot>
               <tr class="font-bold text-content">
-                <td class="pt-2 pr-2">合計</td>
+                <td class="pt-2 pr-2">{{ t('character.total') }}</td>
                 <td class="pt-2 pr-2 text-right">{{ totalLevel }}</td>
-                <td class="pt-2 pr-3 text-right">—</td>
+                <td class="pt-2 pr-3 text-right">{{ t('character.emptyDash') }}</td>
                 <td class="pt-2 text-right" colspan="3">{{ totalHp }}</td>
               </tr>
             </tfoot>
@@ -146,7 +164,7 @@
         <section aria-labelledby="section-abilities-saves">
           <div class="flex flex-col gap-4">
             <h2 id="section-abilities-saves" class="font-display text-lg font-bold text-content">
-              屬性與豁免
+              {{ t('character.abilitiesAndSaves') }}
             </h2>
             <div class="grid grid-cols-3 gap-3">
               <div
@@ -176,7 +194,7 @@
                   </span>
                 </div>
                 <span class="text-xs text-content-soft mt-1">
-                  豁免
+                  {{ t('combat.savingThrow') }}
                   <span :class="modifierTextColor(savingThrowBonuses[key])">
                     {{ formatModifier(savingThrowBonuses[key]) }}
                   </span>
@@ -187,19 +205,19 @@
         </section>
         <section aria-labelledby="section-other-abilities">
           <h2 id="section-other-abilities" class="font-display text-lg font-bold text-content">
-            其他屬性
+            {{ t('character.otherAbilities') }}
           </h2>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">護甲值</span>
+              <span class="text-xs text-content-muted">{{ t('combat.acValue') }}</span>
               <span class="mt-1 text-2xl font-bold text-content">{{ baseAC }}</span>
             </div>
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">先攻</span>
+              <span class="text-xs text-content-muted">{{ t('combat.initiative') }}</span>
               <span class="mt-1 text-2xl font-bold" :class="modifierTextColor(totalInitiative)">
                 {{ formatModifier(totalInitiative) }}
               </span>
@@ -207,28 +225,30 @@
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">移動速度</span>
+              <span class="text-xs text-content-muted">{{ t('combat.speed') }}</span>
               <span class="mt-1 text-2xl font-bold text-content"
                 >30
-                <span class="text-xs font-normal text-content-muted">呎</span>
+                <span class="text-xs font-normal text-content-muted">
+                  {{ t('combat.unitFeet') }}
+                </span>
               </span>
             </div>
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">被動察覺</span>
+              <span class="text-xs text-content-muted">{{ t('combat.passivePerception') }}</span>
               <span class="mt-1 text-2xl font-bold text-content">{{ passivePerception }}</span>
             </div>
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">被動洞察</span>
+              <span class="text-xs text-content-muted">{{ t('combat.passiveInsight') }}</span>
               <span class="mt-1 text-2xl font-bold text-content">{{ passiveInsight }}</span>
             </div>
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
-              <span class="text-xs text-content-muted">熟練加值</span>
+              <span class="text-xs text-content-muted">{{ t('combat.proficiencyBonus') }}</span>
               <span class="mt-1 text-2xl font-bold" :class="modifierTextColor(proficiencyBonus)">
                 {{ formatModifier(proficiencyBonus) }}
               </span>
@@ -240,7 +260,7 @@
       <!-- 技能熟練 -->
       <section class="flex-1 sm:w-1/2" aria-labelledby="section-skills">
         <h2 id="section-skills" class="mb-4 font-display text-lg font-bold text-content">
-          技能熟練度
+          {{ t('character.skillProficienciesTitle') }}
         </h2>
         <div class="grid grid-cols-2 grid-rows-9 grid-flow-col gap-x-6 gap-y-2">
           <div
@@ -265,10 +285,10 @@
     <!-- ─── 背景故事 ─────────────────────────────────────────────────────── -->
     <section aria-labelledby="section-background">
       <h2 id="section-background" class="mb-4 font-display text-lg font-bold text-content">
-        背景故事
+        {{ t('character.backgroundStory') }}
       </h2>
       <div class="space-y-3">
-        {{ character.story || '（無）' }}
+        {{ character.story || t('character.emptyParenthesized') }}
       </div>
     </section>
   </div>
@@ -293,13 +313,15 @@ import {
 } from '~/constants/dnd'
 import { SUBCLASS_CONFIG } from '~/constants/subclass'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   character: CharacterDTO
 }>()
 
 const raceDisplay = computed(() => {
   const { race, subrace } = props.character
-  if (!race) return '—'
+  if (!race) return t('character.emptyDash')
   return subrace ? `${race}（${subrace}）` : race
 })
 

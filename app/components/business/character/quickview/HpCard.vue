@@ -1,12 +1,14 @@
 <template>
   <section aria-labelledby="quickview-hp-label">
-    <h3 id="quickview-hp-label" class="mb-2 font-display text-sm font-bold text-content">生命值</h3>
+    <h3 id="quickview-hp-label" class="mb-2 font-display text-sm font-bold text-content">
+      {{ t('combat.hp') }}
+    </h3>
 
     <div class="grid grid-cols-3 gap-2">
       <div
         class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3 gap-1"
       >
-        <span class="text-xs text-content-muted">最大生命</span>
+        <span class="text-xs text-content-muted">{{ t('combat.hpMax') }}</span>
         <span class="mt-1 flex items-baseline gap-1">
           <span class="text-2xl font-bold text-content">{{ maxHp }}</span>
           <span v-if="maxAdjustment !== 0" class="text-xs" :class="adjustmentColor(maxAdjustment)">
@@ -16,7 +18,7 @@
         <div class="mt-2 flex gap-1">
           <button
             type="button"
-            aria-label="最大生命 -1"
+            :aria-label="`${t('combat.hpMax')} -1`"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjustMax', -1)"
           >
@@ -24,7 +26,7 @@
           </button>
           <button
             type="button"
-            aria-label="最大生命 +1"
+            :aria-label="`${t('combat.hpMax')} +1`"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjustMax', 1)"
           >
@@ -36,12 +38,12 @@
       <div
         class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3 gap-1"
       >
-        <span class="text-xs text-content-muted">臨時生命</span>
+        <span class="text-xs text-content-muted">{{ t('combat.hpTemp') }}</span>
         <span class="mt-1 text-2xl font-bold text-content">{{ tempHp }}</span>
         <div class="mt-2 flex gap-1">
           <button
             type="button"
-            aria-label="臨時生命 -1"
+            :aria-label="`${t('combat.hpTemp')} -1`"
             :disabled="tempHp <= 0"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="emit('adjustTemp', -1)"
@@ -50,7 +52,7 @@
           </button>
           <button
             type="button"
-            aria-label="臨時生命 +1"
+            :aria-label="`${t('combat.hpTemp')} +1`"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjustTemp', 1)"
           >
@@ -62,12 +64,12 @@
       <div
         class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3 gap-1"
       >
-        <span class="text-xs text-content-muted">當前生命</span>
+        <span class="text-xs text-content-muted">{{ t('combat.hpCurrent') }}</span>
         <span class="mt-1 text-2xl font-bold" :class="currentHpColor">{{ currentHp }}</span>
         <div class="mt-2 flex items-center gap-0.5 sm:gap-1">
           <button
             type="button"
-            aria-label="受傷"
+            :aria-label="t('combat.hurt')"
             :disabled="amount <= 0"
             class="flex size-7 items-center justify-center rounded-md text-danger hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             @click="onDamage"
@@ -81,13 +83,13 @@
             size="sm"
             outline
             placeholder="0"
-            aria-label="調整數值"
+            :aria-label="t('combat.adjust')"
             class="w-9 sm:w-12"
             @update:model-value="amount = parseIntegerInput($event, 0)"
           />
           <button
             type="button"
-            aria-label="治療"
+            :aria-label="t('combat.heal')"
             :disabled="amount <= 0"
             class="flex size-7 items-center justify-center rounded-md text-success hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             @click="onHeal"
@@ -102,6 +104,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   currentHp: number

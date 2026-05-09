@@ -2,9 +2,11 @@
   <li class="rounded-lg border border-border-soft bg-surface px-3 py-2">
     <div class="flex items-center justify-between gap-2">
       <div class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-        <p class="text-sm font-semibold text-content">{{ attack.name || '（未命名）' }}</p>
+        <p class="text-sm font-semibold text-content">
+          {{ attack.name || t('combat.unnamed') }}
+        </p>
         <p class="text-xs text-content">
-          命中
+          {{ t('combat.hitBonus') }}
           <span class="font-bold" :class="modifierColor(hitBonus)">
             {{ formatModifier(hitBonus) }}
           </span>
@@ -13,7 +15,7 @@
       <div class="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          :aria-label="`${attack.name || '攻擊'} 一般命中`"
+          :aria-label="`${attack.name || t('combat.attack')} ${t('combat.hitNormal')}`"
           class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll-hit', 'normal')"
         >
@@ -21,7 +23,7 @@
         </button>
         <button
           type="button"
-          :aria-label="`${attack.name || '攻擊'} 優勢命中`"
+          :aria-label="`${attack.name || t('combat.attack')} ${t('combat.hitAdvantage')}`"
           class="flex size-7 items-center justify-center rounded-md text-success transition-colors hover:text-success-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll-hit', 'advantage')"
         >
@@ -29,7 +31,7 @@
         </button>
         <button
           type="button"
-          :aria-label="`${attack.name || '攻擊'} 劣勢命中`"
+          :aria-label="`${attack.name || t('combat.attack')} ${t('combat.hitDisadvantage')}`"
           class="flex size-7 items-center justify-center rounded-md text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll-hit', 'disadvantage')"
         >
@@ -45,7 +47,7 @@
       <div class="ml-auto flex gap-0.5">
         <button
           type="button"
-          :aria-label="`${attack.name || '攻擊'} 一般傷害`"
+          :aria-label="`${attack.name || t('combat.attack')} ${t('combat.damageNormal')}`"
           class="flex size-7 items-center justify-center rounded-md text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll-damage', false)"
         >
@@ -53,7 +55,7 @@
         </button>
         <button
           type="button"
-          :aria-label="`${attack.name || '攻擊'} 重擊傷害`"
+          :aria-label="`${attack.name || t('combat.attack')} ${t('combat.damageCritical')}`"
           class="flex size-7 items-center justify-center rounded-md text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-ring"
           @click="emit('roll-damage', true)"
         >
@@ -74,6 +76,8 @@ import { formatDamageSummary, getAttackHit } from '~/helpers/combat'
 import type { AttackEntry } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { RollMode } from '~/types/business/dice'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   attack: AttackEntry

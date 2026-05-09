@@ -1,22 +1,28 @@
 <template>
   <section aria-labelledby="section-ac">
-    <h2 id="section-ac" class="mb-4 font-display text-lg font-bold text-content">護甲等級</h2>
+    <h2 id="section-ac" class="mb-4 font-display text-lg font-bold text-content">
+      {{ t('combat.ac') }}
+    </h2>
     <div class="flex flex-wrap gap-2">
       <div>
-        <label for="armor-type" class="mb-1 block text-xs text-content">著甲類型</label>
+        <label for="armor-type" class="mb-1 block text-xs text-content">{{
+          t('combat.armor')
+        }}</label>
         <CommonAppSelect
           id="armor-type"
           :model-value="formState.armorClass.type"
           :options="armorTypeOptions"
           size="sm"
-          placeholder="選擇護甲"
+          :placeholder="t('combat.selectArmor')"
           class="w-18"
           @update:model-value="formState.armorClass.type = ($event || null) as ArmorType | null"
         />
       </div>
 
       <div>
-        <label for="armor-value" class="mb-1 block text-xs text-content">基礎值</label>
+        <label for="armor-value" class="mb-1 block text-xs text-content">
+          {{ t('combat.armorBase') }}
+        </label>
         <CommonAppInput
           id="armor-value"
           class="w-12"
@@ -33,7 +39,9 @@
       </div>
 
       <div>
-        <span id="dex-mod-label" class="mb-1 block text-xs text-content">調整值</span>
+        <span id="dex-mod-label" class="mb-1 block text-xs text-content">
+          {{ t('combat.abilityAdjustment') }}
+        </span>
         <output
           aria-labelledby="dex-mod-label"
           class="flex h-8 w-14 items-center justify-center rounded-lg bg-canvas px-2 text-sm font-bold"
@@ -44,13 +52,15 @@
       </div>
 
       <div>
-        <label for="armor-ability" class="mb-1 block text-xs text-content">無甲防禦</label>
+        <label for="armor-ability" class="mb-1 block text-xs text-content">
+          {{ t('combat.unarmored') }}
+        </label>
         <CommonAppSelect
           id="armor-ability"
           :model-value="formState.armorClass.abilityKey ?? ''"
           :options="abilityOptions"
           size="sm"
-          placeholder="無"
+          :placeholder="t('combat.none')"
           class="min-w-18"
           @update:model-value="
             formState.armorClass.abilityKey = ($event || null) as AbilityKey | null
@@ -59,7 +69,9 @@
       </div>
 
       <div>
-        <label for="shield-value" class="mb-1 block text-xs text-content">盾牌</label>
+        <label for="shield-value" class="mb-1 block text-xs text-content">
+          {{ t('combat.shield') }}
+        </label>
         <CommonAppInput
           id="shield-value"
           class="w-12"
@@ -75,7 +87,7 @@
     </div>
 
     <div class="mt-4 flex items-center justify-end gap-3">
-      <span id="ac-total-label" class="text-xs text-content-muted">AC 總計</span>
+      <span id="ac-total-label" class="text-xs text-content-muted">{{ t('combat.acTotal') }}</span>
       <output
         aria-labelledby="ac-total-label"
         class="flex size-12 items-center justify-center rounded-lg border border-border-soft bg-surface text-2xl font-bold text-content"
@@ -92,6 +104,8 @@ import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/busin
 import { UNARMORED_AC_BASE, type AbilityKey, type ArmorType } from '@rolling-dice-app/core'
 import { ABILITY_NAMES, ARMOR_TYPE_NAMES } from '~/constants/dnd'
 
+const { t } = useI18n()
+
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 
 const props = defineProps<{
@@ -103,10 +117,10 @@ const armorTypeOptions: SelectOption[] = Object.entries(ARMOR_TYPE_NAMES).map(([
   label,
 }))
 
-const abilityOptions: SelectOption[] = [
-  { value: '', label: '無' },
+const abilityOptions = computed<SelectOption[]>(() => [
+  { value: '', label: t('combat.none') },
   ...Object.entries(ABILITY_NAMES).map(([value, label]) => ({ value, label })),
-]
+])
 
 const totalAC = computed(() => getTotalArmorClass(formState.value.armorClass, props.abilityScores))
 

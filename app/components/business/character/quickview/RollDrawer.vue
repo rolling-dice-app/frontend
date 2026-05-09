@@ -2,21 +2,21 @@
   <!-- 右側邊緣 hint 條 -->
   <button
     type="button"
-    aria-label="開啟擲骰面板"
+    :aria-label="t('combat.openRollPanel')"
     aria-haspopup="dialog"
     :aria-expanded="isOpen"
     class="fixed right-0 top-1/2 z-30 flex flex-col -translate-y-1/2 cursor-pointer items-center gap-2 rounded-l-md border border-r-0 border-border-soft bg-panel-2 px-3 pt-2 pb-1 text-content-muted shadow-md transition-colors hover:bg-panel hover:text-content focus-visible:outline-2 focus-visible:outline-ring"
     @click="isOpen = true"
   >
     <Icon name="dice" :size="32" />
-    <span class="text-xs font-medium">擲骰</span>
+    <span class="text-xs font-medium">{{ t('combat.roll') }}</span>
   </button>
 
   <Drawer
     v-model="isOpen"
     placement="right"
     size="lg"
-    title="擲骰"
+    :title="t('combat.roll')"
     bg-color="var(--rd--color-panel)"
     text-color="var(--rd--color-text)"
     border-color="var(--rd--color-border)"
@@ -26,7 +26,7 @@
       <div class="min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
         <section aria-labelledby="roll-section-ability">
           <h3 id="roll-section-ability" class="mb-1.5 font-display text-sm font-bold text-content">
-            屬性檢定
+            {{ t('combat.abilityCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
             <BusinessCharacterQuickviewRollTriggerRow
@@ -41,7 +41,7 @@
 
         <section aria-labelledby="roll-section-save">
           <h3 id="roll-section-save" class="mb-1.5 font-display text-sm font-bold text-content">
-            豁免檢定
+            {{ t('combat.savingThrowCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
             <BusinessCharacterQuickviewRollTriggerRow
@@ -58,7 +58,7 @@
 
         <section aria-labelledby="roll-section-skill">
           <h3 id="roll-section-skill" class="mb-1.5 font-display text-sm font-bold text-content">
-            技能
+            {{ t('combat.skillCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
             <BusinessCharacterQuickviewRollTriggerRow
@@ -73,7 +73,7 @@
 
         <section v-if="character.attacks.length > 0" aria-labelledby="roll-section-attack">
           <h3 id="roll-section-attack" class="mb-1.5 font-display text-sm font-bold text-content">
-            攻擊
+            {{ t('combat.attack') }}
           </h3>
           <ul class="space-y-1.5">
             <BusinessCharacterQuickviewRollAttackRow
@@ -110,6 +110,8 @@ import {
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { D20RollEntry, DamageRollEntry, DamageRollLine, RollMode } from '~/types/business/dice'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   character: CharacterDTO
@@ -188,7 +190,12 @@ const handleD20Roll = (
 
 const handleAttackHit = (attack: AttackEntry, mode: RollMode): void => {
   const modifier = getAttackHit(attack, props.abilityScores, props.proficiencyBonus)
-  handleD20Roll('attack-hit', `${attack.name || '攻擊'} 命中`, modifier, mode)
+  handleD20Roll(
+    'attack-hit',
+    `${attack.name || t('combat.attack')} ${t('combat.hitBonus')}`,
+    modifier,
+    mode,
+  )
 }
 
 const handleAttackDamage = (attack: AttackEntry, isCritical: boolean): void => {
@@ -229,7 +236,7 @@ const handleAttackDamage = (attack: AttackEntry, isCritical: boolean): void => {
   const total = renderable.reduce((s, l) => s + l.subtotal, 0)
   push({
     kind: 'attack-damage',
-    label: `${attack.name || '攻擊'} 傷害`,
+    label: `${attack.name || t('combat.attack')} ${t('combat.damage')}`,
     lines: renderable,
     total,
     isCritical,

@@ -1,9 +1,13 @@
 <template>
   <section :aria-labelledby="headingId">
     <header class="mb-4 flex items-center justify-between">
-      <h2 :id="headingId" class="font-display text-lg font-bold text-content">已知法術</h2>
+      <h2 :id="headingId" class="font-display text-lg font-bold text-content">
+        {{ t('spell.learnedSection') }}
+      </h2>
       <span class="text-xs text-content-muted">
-        共 <span class="font-bold text-content">{{ spells.length }}</span> 個
+        {{ t('spell.totalPrefix') }}
+        <span class="font-bold text-content">{{ spells.length }}</span>
+        {{ t('spell.itemCount') }}
       </span>
     </header>
 
@@ -11,11 +15,11 @@
       v-if="missingNames.length > 0"
       class="mb-3 rounded-md border border-warning bg-warning-soft px-3 py-2 text-xs text-warning"
     >
-      資料庫中找不到下列法術：{{ missingNames.join('、') }}
+      {{ t('spell.missingHint') }}：{{ missingNames.join('、') }}
     </p>
 
     <p v-if="groupedSpells.length === 0" class="py-6 text-center text-sm text-content-muted">
-      尚未掌握任何法術
+      {{ t('spell.emptyLearned') }}
     </p>
     <div v-else class="space-y-4 max-h-[50vh] overflow-y-auto md:pr-1 scrollbar-hidden">
       <div v-for="group in groupedSpells" :key="group.level">
@@ -23,7 +27,9 @@
           <h3 class="font-display text-sm font-bold text-content">
             {{ formatSpellLevel(group.level) }}
           </h3>
-          <span class="text-xs text-content-muted">{{ group.spells.length }} 個</span>
+          <span class="text-xs text-content-muted">
+            {{ group.spells.length }} {{ t('spell.itemCount') }}
+          </span>
         </div>
         <ul class="flex flex-col gap-1">
           <li v-for="spell in group.spells" :key="spell.id">
@@ -43,6 +49,8 @@
 
 <script setup lang="ts">
 import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   spells: SpellEntry[]

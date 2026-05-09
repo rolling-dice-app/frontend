@@ -1,11 +1,11 @@
 <template>
   <section aria-labelledby="quickview-features-label">
     <h3 id="quickview-features-label" class="mb-2 font-display text-sm font-bold text-content">
-      特性
+      {{ t('combat.feature') }}
     </h3>
 
     <p v-if="features.length === 0" class="py-6 text-center text-sm text-content-muted">
-      尚未設定任何特性
+      {{ t('combat.emptyFeature') }}
     </p>
 
     <Accordion v-else multiple class="feature-accordion grid items-start gap-2 sm:grid-cols-2">
@@ -69,7 +69,7 @@
         <p v-if="feature.description" class="text-xs whitespace-pre-line text-content-muted">
           {{ feature.description }}
         </p>
-        <p v-else class="text-xs text-content-muted">（無說明）</p>
+        <p v-else class="text-xs text-content-muted">{{ t('combat.emptyFeatureDescription') }}</p>
       </AccordionItem>
     </Accordion>
   </section>
@@ -80,6 +80,8 @@ import { Accordion, AccordionItem, Badge, Icon } from '@ui'
 import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   features: CharacterFeature[]

@@ -1,7 +1,7 @@
 <template>
   <section aria-labelledby="quickview-saves-label" class="flex h-full flex-col">
     <h3 id="quickview-saves-label" class="mb-2 font-display text-sm font-bold text-content">
-      屬性 / 豁免
+      {{ t('combat.savingThrowSection') }}
     </h3>
     <ul class="grid flex-1 auto-rows-fr grid-flow-col grid-rows-6 sm:grid-rows-3 gap-2">
       <li
@@ -12,7 +12,7 @@
         <div
           class="flex flex-wrap items-center gap-1 text-sm"
           :class="row.proficient ? 'text-primary' : 'text-content'"
-          :aria-label="row.proficient ? `${row.name}（熟練）` : row.name"
+          :aria-label="row.proficient ? `${row.name}（${t('combat.proficient')}）` : row.name"
         >
           <span>{{ row.name }}</span>
           <div class="flex items-center gap-1">
@@ -25,7 +25,7 @@
         <div class="flex items-center">
           <button
             type="button"
-            :aria-label="`${row.name} 豁免 -1`"
+            :aria-label="`${row.name} ${t('combat.savingThrow')} -1`"
             class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjust', row.key, -1)"
           >
@@ -34,13 +34,13 @@
           <span
             class="min-w-8 text-center text-sm font-bold"
             :class="modifierColor(row.adjustment)"
-            :aria-label="`目前調整 ${formatModifier(row.adjustment)}`"
+            :aria-label="`${t('combat.currentAdjustment')} ${formatModifier(row.adjustment)}`"
           >
             {{ formatModifier(row.adjustment) }}
           </span>
           <button
             type="button"
-            :aria-label="`${row.name} 豁免 +1`"
+            :aria-label="`${row.name} ${t('combat.savingThrow')} +1`"
             class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjust', row.key, 1)"
           >
@@ -54,7 +54,7 @@
       v-if="spellSaveRows.length > 0"
       class="mt-2 flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-3 py-2"
     >
-      <span class="text-sm font-semibold text-content-muted">法術豁免 DC</span>
+      <span class="text-sm font-semibold text-content-muted">{{ t('combat.spellSaveDc') }}</span>
       <ul class="flex flex-wrap items-center gap-x-4 gap-y-1">
         <li v-for="row in spellSaveRows" :key="row.key" class="flex items-center gap-1.5 text-sm">
           <span class="text-content-muted">{{ row.name }}</span>
@@ -71,6 +71,8 @@ import { ABILITY_NAMES } from '~/constants/dnd'
 import { getSpellSaveDc } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   abilityScores: TotalAbilityScores

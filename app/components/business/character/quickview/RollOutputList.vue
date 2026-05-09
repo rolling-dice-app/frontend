@@ -6,21 +6,23 @@
     <header
       class="flex shrink-0 items-center justify-between border-b border-border-soft px-3 py-2"
     >
-      <h3 id="roll-output-label" class="font-display text-sm font-bold text-content">擲骰結果</h3>
+      <h3 id="roll-output-label" class="font-display text-sm font-bold text-content">
+        {{ t('combat.rollResults') }}
+      </h3>
       <button
         type="button"
-        aria-label="清空擲骰歷史"
+        :aria-label="t('combat.rollClearAria')"
         class="rounded-md px-2 py-0.5 text-xs text-content-muted transition-colors hover:bg-surface-raised hover:text-content focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="entries.length === 0"
         @click="emit('clear')"
       >
-        清空
+        {{ t('combat.rollClear') }}
       </button>
     </header>
 
     <div class="flex-1 min-h-0 overflow-y-auto">
       <p v-if="entries.length === 0" class="px-3 py-6 text-center text-xs text-content-muted">
-        無擲骰紀錄
+        {{ t('combat.rollEmpty') }}
       </p>
       <ul v-else class="divide-y divide-border-soft">
         <li v-for="entry in entries" :key="entry.id" class="px-3 py-2 text-xs">
@@ -35,13 +37,17 @@
                   : 'bg-danger/15 text-danger'
               "
             >
-              {{ entry.mode === 'advantage' ? '優勢' : '劣勢' }}
+              {{
+                entry.mode === 'advantage'
+                  ? t('combat.modeAdvantage')
+                  : t('combat.modeDisadvantage')
+              }}
             </span>
             <span
               v-if="entry.kind === 'attack-damage' && entry.isCritical"
               class="rounded bg-primary-soft px-1.5 py-0.5 text-[10px] tracking-wide text-primary"
             >
-              重擊
+              {{ t('combat.critical') }}
             </span>
           </div>
 
@@ -65,13 +71,13 @@
                 v-if="entry.isCritical"
                 class="ml-1 rounded bg-success/15 px-1.5 py-0.5 text-[10px] text-success"
               >
-                大成功
+                {{ t('combat.natural20') }}
               </span>
               <span
                 v-if="entry.isFumble"
                 class="ml-1 rounded bg-danger/15 px-1.5 py-0.5 text-[10px] text-danger"
               >
-                大失敗
+                {{ t('combat.natural1') }}
               </span>
             </div>
           </template>
@@ -98,6 +104,8 @@
 <script setup lang="ts">
 import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
 import type { D20RollEntry, DamageRollLine, RollEntry, RollMode } from '~/types/business/dice'
+
+const { t } = useI18n()
 
 defineProps<{
   entries: RollEntry[]

@@ -13,13 +13,18 @@ export default {
   editItem: '編輯物品',
   itemName: '名稱',
   itemDescription: '物品說明',
+  itemDescriptionOptional: '描述（選填）',
   itemQuantity: '數量',
   typeLabel: '類型',
+  weightLabel: '重量（磅/件）',
+  totalWeight: '總重',
+  moveTo: '移至另一袋',
 
   // 重量 / 件數
   unitWeight: '磅',
   unitCount: '件',
   coinWeight: '硬幣重量',
+  load: '負重',
 
   // 存放位置
   backpack: '背包',
@@ -37,4 +42,15 @@ export default {
   sp: '銀幣 (sp)',
   gp: '金幣 (gp)',
   pp: '鉑金幣 (pp)',
+  cpName: '銅幣',
+  spName: '銀幣',
+  gpName: '金幣',
+  ppName: '鉑金',
+  cpShort: '銅',
+  spShort: '銀',
+  gpShort: '金',
+  ppShort: '鉑',
+  noMoneyEarned: '無金錢獲得',
+  expGained: '經驗',
+  emptyContent: '（無內容）',
 }

@@ -6,7 +6,7 @@
   >
     <div class="mb-2 flex items-center justify-between gap-2">
       <h3 id="quickview-death-saves-label" class="font-display text-sm font-bold text-content">
-        死亡豁免
+        {{ t('combat.deathSave') }}
       </h3>
       <Badge size="sm" :bg-color="statusBadgeColor">{{ statusLabel }}</Badge>
     </div>
@@ -16,13 +16,13 @@
     >
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-xs text-content-muted">成功</span>
+          <span class="text-xs text-content-muted">{{ t('combat.deathSaveSuccess') }}</span>
           <div class="flex items-center gap-1.5">
             <button
               v-for="n in 3"
               :key="`s-${n}`"
               type="button"
-              :aria-label="`成功 ${n}`"
+              :aria-label="`${t('combat.deathSaveSuccess')} ${n}`"
               :aria-pressed="successes >= n"
               :disabled="!active"
               class="size-5 rounded-full border-2 border-success transition-colors disabled:cursor-not-allowed"
@@ -33,13 +33,13 @@
         </div>
 
         <div class="flex items-center justify-between gap-2">
-          <span class="text-xs text-content-muted">失敗</span>
+          <span class="text-xs text-content-muted">{{ t('combat.deathSaveFailure') }}</span>
           <div class="flex items-center gap-1.5">
             <button
               v-for="n in 3"
               :key="`f-${n}`"
               type="button"
-              :aria-label="`失敗 ${n}`"
+              :aria-label="`${t('combat.deathSaveFailure')} ${n}`"
               :aria-pressed="failures >= n"
               :disabled="!active"
               class="size-5 rounded-full border-2 border-danger transition-colors disabled:cursor-not-allowed"
@@ -53,7 +53,7 @@
       <div class="mt-1 flex justify-end">
         <button
           type="button"
-          aria-label="擲死亡豁免"
+          :aria-label="t('combat.deathSaveRoll')"
           :disabled="!canRoll"
           class="flex items-center gap-1.5 rounded-md border border-border-soft bg-surface-raised px-3 py-1.5 text-xs font-medium text-content hover:bg-panel-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface-raised"
           @click="onRoll"
@@ -69,6 +69,8 @@
 <script setup lang="ts">
 import { Badge, Icon } from '@ui'
 import { rollD20 } from '~/helpers/dice'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   active: boolean
@@ -87,10 +89,10 @@ const isDead = computed(() => props.failures >= 3)
 const canRoll = computed(() => props.active && !isStable.value && !isDead.value)
 
 const statusLabel = computed(() => {
-  if (!props.active) return '未生效'
-  if (isDead.value) return '已死亡'
-  if (isStable.value) return '已穩定'
-  return '進行中'
+  if (!props.active) return t('combat.deathStatusInactive')
+  if (isDead.value) return t('combat.deathStatusDead')
+  if (isStable.value) return t('combat.deathStatusStable')
+  return t('combat.deathStatusInProgress')
 })
 
 const statusBadgeColor = computed(() => {
@@ -118,7 +120,7 @@ const onRoll = (): void => {
 
   useDiceRollLog().push({
     kind: 'saving-throw',
-    label: '死亡豁免',
+    label: t('combat.deathSave'),
     mode: 'normal',
     rolls,
     chosen,

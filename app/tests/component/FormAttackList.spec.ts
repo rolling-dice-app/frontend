@@ -269,7 +269,7 @@ describe('AttackList (form)', () => {
         wrapper.findAll('button').filter((b) => b.attributes('aria-label')?.startsWith('移除第'))
           .length
       const before = damageRowCount()
-      await wrapper.find('button[aria-label="新增傷害行"]').trigger('click')
+      await wrapper.find('button[aria-label="新增傷害骰"]').trigger('click')
       expect(damageRowCount()).toBe(before + 1)
     })
 

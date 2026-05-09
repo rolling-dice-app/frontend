@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-2">
-    <h2 class="font-display text-lg font-bold text-content">資產</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ t('inventory.asset') }}</h2>
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div v-for="coin in COIN_FIELDS" :key="coin.key">
         <label :for="`currency-${coin.key}`" class="mb-1 block text-xs text-content-muted">
@@ -19,7 +19,9 @@
         />
       </div>
     </div>
-    <p class="text-xs text-content-muted">硬幣重量：{{ coinWeight }} 磅</p>
+    <p class="text-xs text-content-muted">
+      {{ t('inventory.coinWeight') }}：{{ coinWeight }} {{ t('inventory.unitWeight') }}
+    </p>
   </div>
 </template>
 
@@ -29,12 +31,14 @@ import { calculateCurrencyWeight } from '~/helpers/inventory'
 
 type CoinKey = keyof CharacterCurrency
 
-const COIN_FIELDS: { key: CoinKey; label: string }[] = [
-  { key: 'pp', label: '鉑金幣 (pp)' },
-  { key: 'gp', label: '金幣 (gp)' },
-  { key: 'sp', label: '銀幣 (sp)' },
-  { key: 'cp', label: '銅幣 (cp)' },
-]
+const { t } = useI18n()
+
+const COIN_FIELDS = computed<{ key: CoinKey; label: string }[]>(() => [
+  { key: 'pp', label: t('inventory.pp') },
+  { key: 'gp', label: t('inventory.gp') },
+  { key: 'sp', label: t('inventory.sp') },
+  { key: 'cp', label: t('inventory.cp') },
+])
 
 const props = defineProps<{
   currency: CharacterCurrency

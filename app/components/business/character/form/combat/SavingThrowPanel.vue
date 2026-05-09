@@ -1,7 +1,7 @@
 <template>
   <section aria-labelledby="section-saving-throws">
     <h2 id="section-saving-throws" class="mb-4 font-display text-lg font-bold text-content">
-      豁免熟練
+      {{ t('combat.savingThrowProficiency') }}
     </h2>
     <ul class="grid grid-cols-2 gap-2">
       <li
@@ -18,7 +18,9 @@
             :disabled="row.locked"
             size="sm"
             color="var(--color-primary)"
-            :aria-label="`${row.name} 豁免熟練${row.locked ? '（主職業，不可變更）' : ''}`"
+            :aria-label="`${row.name} ${t('combat.savingThrowProficiency')}${
+              row.locked ? t('combat.primaryClassLockedHint') : ''
+            }`"
             @update:model-value="(checked) => onToggle(row.key, checked)"
           />
           <span class="text-sm font-semibold text-content">{{ row.name }}</span>
@@ -37,6 +39,8 @@ import { ABILITY_NAMES } from '~/constants/dnd'
 import { calculateSavingThrowProficiencies } from '~/helpers/character'
 import { ABILITY_KEYS, type ClassEntry, type AbilityKey } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

@@ -7,10 +7,18 @@
       <!-- Header -->
       <div class="flex items-center justify-between gap-1 border-b border-border pb-1 mb-1">
         <span class="w-20"></span>
-        <span class="w-10 text-center text-[10px] text-content-muted">原始</span>
-        <span class="w-10 text-center text-[10px] text-content-muted">種族</span>
-        <span class="w-17 text-[10px] text-content-muted text-center">加值</span>
-        <span class="w-12 text-[10px] text-content-muted text-center">總值</span>
+        <span class="w-10 text-center text-[10px] text-content-muted">
+          {{ t('character.origin') }}
+        </span>
+        <span class="w-10 text-center text-[10px] text-content-muted">
+          {{ t('character.raceShort') }}
+        </span>
+        <span class="w-17 text-[10px] text-content-muted text-center">
+          {{ t('character.bonus') }}
+        </span>
+        <span class="w-12 text-[10px] text-content-muted text-center">
+          {{ t('character.totalValue') }}
+        </span>
       </div>
 
       <!-- Rows -->
@@ -41,7 +49,7 @@
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="formState.abilities[key].bonusScore <= 0"
-            aria-label="減少額外加值"
+            :aria-label="t('character.decreaseBonus')"
             @click="adjustBonus(key, -1)"
           >
             <Icon name="minus" :size="16" />
@@ -53,7 +61,7 @@
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="getTotalScore(formState.abilities[key]) >= ABILITY_HARD_MAX"
-            aria-label="增加額外加值"
+            :aria-label="t('character.increaseBonus')"
             @click="adjustBonus(key, 1)"
           >
             <Icon name="plus" :size="16" />
@@ -80,6 +88,8 @@ import { Icon } from '@ui'
 import { ABILITY_HARD_MAX, ABILITY_NAMES } from '~/constants/dnd'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 

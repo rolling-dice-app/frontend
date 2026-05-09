@@ -2,9 +2,9 @@
   <section :aria-labelledby="headingId" class="rounded-lg border border-border-soft bg-canvas p-3">
     <header class="mb-2 flex items-center justify-between">
       <label :id="headingId" :for="selectId" class="font-display text-sm font-bold text-content">
-        施法主屬性
+        {{ t('spell.castingAbility') }}
       </label>
-      <span class="text-xs text-content-muted">兼職施法者可選多項</span>
+      <span class="text-xs text-content-muted">{{ t('spell.multicasterHint') }}</span>
     </header>
 
     <CommonAppSelect
@@ -12,7 +12,7 @@
       v-model="abilities"
       :options="options"
       multiple
-      placeholder="尚未設定"
+      :placeholder="t('spell.notSet')"
       size="sm"
       class="w-full"
     />
@@ -22,6 +22,8 @@
 <script setup lang="ts">
 import { ABILITY_NAMES } from '~/constants/dnd'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const abilities = defineModel<AbilityKey[]>('abilities', { required: true })
 

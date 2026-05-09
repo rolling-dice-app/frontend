@@ -1,10 +1,12 @@
 <template>
   <section :aria-labelledby="headingId">
     <header class="mb-2 flex items-center justify-between gap-2">
-      <h3 :id="headingId" class="font-display text-sm font-bold text-content">法術位</h3>
+      <h3 :id="headingId" class="font-display text-sm font-bold text-content">
+        {{ t('spell.slots') }}
+      </h3>
       <div
         role="tablist"
-        aria-label="施法模組"
+        :aria-label="t('spell.castingModule')"
         class="inline-flex overflow-hidden rounded-md border border-border-soft text-xs"
       >
         <button
@@ -46,12 +48,12 @@
         class="flex flex-col items-center gap-1 rounded-lg border border-border-soft bg-surface px-2 py-2"
         :class="{ 'opacity-40': getMax(level) === 0 }"
       >
-        <span class="text-xs text-content-muted">{{ level }} 環</span>
+        <span class="text-xs text-content-muted">{{ level }} {{ t('spell.level') }}</span>
         <div class="flex items-center gap-1">
           <span
             role="button"
             :tabindex="canDecrement(level) ? 0 : -1"
-            :aria-label="`${activeTabLabel} ${level} 環 -1`"
+            :aria-label="`${activeTabLabel} ${level} ${t('spell.level')} -1`"
             :aria-disabled="!canDecrement(level)"
             class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onDecrement(level)"
@@ -67,7 +69,7 @@
           <span
             role="button"
             :tabindex="canIncrement(level) ? 0 : -1"
-            :aria-label="`${activeTabLabel} ${level} 環 +1`"
+            :aria-label="`${activeTabLabel} ${level} ${t('spell.level')} +1`"
             :aria-disabled="!canIncrement(level)"
             class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onIncrement(level)"
@@ -85,6 +87,8 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import type { SpellLevel, SpellSlots } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 type SlotTab = 'regular' | 'pact'
 
@@ -105,14 +109,16 @@ const emit = defineEmits<{
 const headingId = useId()
 const panelId = useId()
 const TABS: readonly { value: SlotTab; label: string; id: string }[] = [
-  { value: 'regular', label: '一般', id: useId() },
-  { value: 'pact', label: '契術', id: useId() },
+  { value: 'regular', label: t('spell.general'), id: useId() },
+  { value: 'pact', label: t('spell.pact'), id: useId() },
 ]
 
 const activeTab = ref<SlotTab>('regular')
 const tabButtons = ref<HTMLButtonElement[]>([])
 const activeTabId = computed(() => TABS.find((t) => t.value === activeTab.value)!.id)
-const activeTabLabel = computed(() => (activeTab.value === 'pact' ? '契術環位' : '環位'))
+const activeTabLabel = computed(() =>
+  activeTab.value === 'pact' ? t('spell.pactSlot') : t('spell.slot'),
+)
 
 const onTabArrow = async (delta: -1 | 1): Promise<void> => {
   const idx = TABS.findIndex((t) => t.value === activeTab.value)

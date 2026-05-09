@@ -1,11 +1,11 @@
 <template>
   <div class="space-y-4 px-2">
-    <h2 class="font-display text-lg font-bold text-content">角色資訊</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ t('character.info') }}</h2>
     <div class="flex items-end gap-2">
       <!-- 角色名稱 -->
       <div class="min-w-20 flex-1">
         <label for="char-name" class="mb-1 block text-xs text-content">
-          角色名稱 <span class="text-danger">*</span>
+          {{ t('character.characterName') }} <span class="text-danger">*</span>
         </label>
         <CommonAppInput
           id="char-name"
@@ -19,7 +19,9 @@
       </div>
       <!-- 性別 -->
       <div>
-        <label for="char-gender" class="mb-1 block text-xs text-content"> 性別 </label>
+        <label for="char-gender" class="mb-1 block text-xs text-content">
+          {{ t('character.genderLabel') }}
+        </label>
         <CommonAppSelect
           id="char-gender"
           class="min-w-20"
@@ -34,7 +36,9 @@
     <div class="flex items-end gap-2">
       <!-- 種族 -->
       <div class="min-w-20 flex-1">
-        <label for="char-race" class="mb-1 block text-xs text-content"> 種族 </label>
+        <label for="char-race" class="mb-1 block text-xs text-content">
+          {{ t('character.race') }}
+        </label>
         <CommonAppInput
           id="char-race"
           class="w-full"
@@ -47,7 +51,9 @@
       </div>
       <!-- 亞種 -->
       <div class="min-w-20 flex-1">
-        <label for="char-subrace" class="mb-1 block text-xs text-content"> 亞種 </label>
+        <label for="char-subrace" class="mb-1 block text-xs text-content">
+          {{ t('character.subrace') }}
+        </label>
         <CommonAppInput
           id="char-subrace"
           class="w-full"
@@ -62,7 +68,9 @@
     <div class="flex items-end gap-2">
       <!-- 背景 -->
       <div class="min-w-12">
-        <label for="char-background" class="mb-1 block text-xs text-content"> 背景 </label>
+        <label for="char-background" class="mb-1 block text-xs text-content">
+          {{ t('character.background') }}
+        </label>
         <CommonAppInput
           id="char-background"
           class="w-full"
@@ -75,7 +83,9 @@
       </div>
       <!-- 陣營 -->
       <div>
-        <label for="char-alignment" class="mb-1 block text-xs text-content"> 陣營 </label>
+        <label for="char-alignment" class="mb-1 block text-xs text-content">
+          {{ t('character.alignmentLabel') }}
+        </label>
         <CommonAppSelect
           id="char-alignment"
           class="min-w-24"
@@ -88,7 +98,9 @@
       </div>
       <!-- 信仰 -->
       <div class="min-w-12">
-        <label for="char-faith" class="mb-1 block text-xs text-content"> 信仰 </label>
+        <label for="char-faith" class="mb-1 block text-xs text-content">
+          {{ t('character.faith') }}
+        </label>
         <CommonAppInput
           id="char-faith"
           class="w-full"
@@ -102,7 +114,9 @@
 
     <div class="flex items-end gap-2">
       <div class="min-w-0 flex-1">
-        <label for="char-languages" class="mb-1 block text-xs text-content"> 語言 </label>
+        <label for="char-languages" class="mb-1 block text-xs text-content">
+          {{ t('character.language') }}
+        </label>
         <CommonAppInput
           id="char-languages"
           class="w-full"
@@ -114,7 +128,9 @@
         />
       </div>
       <div class="min-w-0 flex-1">
-        <label for="char-tools" class="mb-1 block text-xs text-content"> 熟練工具 </label>
+        <label for="char-tools" class="mb-1 block text-xs text-content">
+          {{ t('character.toolFull') }}
+        </label>
         <CommonAppInput
           id="char-tools"
           class="w-full"
@@ -128,7 +144,9 @@
     </div>
     <div class="flex items-end gap-2">
       <div class="min-w-0 flex-1">
-        <label for="char-weapons" class="mb-1 block text-xs text-content"> 武器 </label>
+        <label for="char-weapons" class="mb-1 block text-xs text-content">
+          {{ t('character.weaponProficiency') }}
+        </label>
         <CommonAppInput
           id="char-weapons"
           class="w-full"
@@ -140,7 +158,9 @@
         />
       </div>
       <div class="min-w-0 flex-1">
-        <label for="char-armor" class="mb-1 block text-xs text-content"> 護甲 </label>
+        <label for="char-armor" class="mb-1 block text-xs text-content">
+          {{ t('character.armorProficiency') }}
+        </label>
         <CommonAppInput
           id="char-armor"
           class="w-full"
@@ -157,7 +177,7 @@
       <div v-for="(entry, index) in formState.classes" :key="index" class="flex items-end gap-2">
         <div class="w-26">
           <label :for="`prof-${index}`" class="mb-1 block text-xs text-content">
-            {{ index === 0 ? '主職業' : `兼職 ${index}` }}
+            {{ index === 0 ? t('class.primary') : `${t('class.multiclassWithIndex')}${index}` }}
             <span class="text-danger">*</span>
           </label>
           <CommonAppSelect
@@ -166,13 +186,15 @@
             :options="getClassOptions(index)"
             class="w-full"
             size="sm"
-            :placeholder="index === 0 ? '主職業' : '兼職'"
+            :placeholder="index === 0 ? t('class.primary') : t('class.multiclass')"
             :disabled="lockPrimaryClass && index === 0"
             @update:model-value="updateClassKey(index, $event as string)"
           />
         </div>
         <div class="flex-1">
-          <label :for="`prof-sub-${index}`" class="mb-1 block text-xs text-content"> 子職業 </label>
+          <label :for="`prof-sub-${index}`" class="mb-1 block text-xs text-content">
+            {{ t('class.subclassLabel') }}
+          </label>
           <CommonAppSelect
             :id="`prof-sub-${index}`"
             class="w-full"
@@ -185,7 +207,9 @@
           />
         </div>
         <div class="max-w-12">
-          <label :for="`prof-level-${index}`" class="mb-1 block text-xs text-content"> 等級 </label>
+          <label :for="`prof-level-${index}`" class="mb-1 block text-xs text-content">
+            {{ t('class.level') }}
+          </label>
           <CommonAppInput
             :id="`prof-level-${index}`"
             type="number"
@@ -199,7 +223,7 @@
           v-if="index > 0"
           type="button"
           class="flex items-center justify-center border-content bg-danger shrink-0 size-8 rounded text-content transition-colors hover:bg-danger-hover"
-          aria-label="移除此職業"
+          :aria-label="t('class.remove')"
           @click="removeClass(index)"
         >
           <Icon name="close" :size="20" />
@@ -217,10 +241,10 @@
           :radius="8"
           @click="addClass"
         >
-          + 新增職業
+          {{ t('class.addClass') }}
         </Button>
         <p class="text-sm text-content-muted">
-          總等級：
+          {{ t('class.totalLevel') }}：
           <span :class="totalLevel > 20 ? 'text-danger font-bold' : ''">{{ totalLevel }}</span>
           / 20
         </p>
@@ -242,6 +266,8 @@ import {
   type ClassKey,
   type SubclassKey,
 } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

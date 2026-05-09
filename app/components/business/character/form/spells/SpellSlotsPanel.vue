@@ -1,10 +1,12 @@
 <template>
   <section :aria-labelledby="headingId" class="rounded-lg border border-border-soft bg-canvas p-3">
     <header class="mb-3 flex items-center justify-between gap-2">
-      <h3 :id="headingId" class="font-display text-sm font-bold text-content">環位設定</h3>
+      <h3 :id="headingId" class="font-display text-sm font-bold text-content">
+        {{ t('spell.slotConfig') }}
+      </h3>
       <div
         role="tablist"
-        aria-label="施法模組"
+        :aria-label="t('spell.castingModule')"
         class="inline-flex overflow-hidden rounded-md border border-border-soft text-xs"
       >
         <button
@@ -45,13 +47,15 @@
         :key="level"
         class="flex flex-col items-center gap-1 rounded-md border border-border-soft bg-surface px-2 py-2"
       >
-        <span class="text-xs text-content-muted">{{ level }} 環</span>
+        <span class="text-xs text-content-muted">{{ level }} {{ t('spell.level') }}</span>
         <div class="flex items-center gap-1">
           <button
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="getDisplayed(level) <= 0"
-            :aria-label="`減少 ${level} 環${activeTab === 'pact' ? '契術環位' : '環位'}`"
+            :aria-label="`${t('character.decreaseScore')} ${level} ${
+              activeTab === 'pact' ? t('spell.pactSlot') : t('spell.slot')
+            }`"
             @click="adjust(level, -1)"
           >
             <Icon name="minus" :size="16" />
@@ -63,7 +67,9 @@
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"
             :disabled="getDisplayed(level) >= SLOT_MAX"
-            :aria-label="`增加 ${level} 環${activeTab === 'pact' ? '契術環位' : '環位'}`"
+            :aria-label="`${t('character.increaseScore')} ${level} ${
+              activeTab === 'pact' ? t('spell.pactSlot') : t('spell.slot')
+            }`"
             @click="adjust(level, 1)"
           >
             <Icon name="plus" :size="16" />
@@ -80,6 +86,8 @@ import { getSuggestedPactSlots, getSuggestedRegularSpellSlots } from '~/helpers/
 import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '@rolling-dice-app/core'
 import type { FormClassEntry } from '~/types/business/character-form'
 
+const { t } = useI18n()
+
 type SlotTab = 'regular' | 'pact'
 
 const SPELL_LEVELS: readonly SpellLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -95,8 +103,8 @@ const pactSlotsDelta = defineModel<SpellSlotsDelta>('pactSlotsDelta', { required
 const headingId = useId()
 const panelId = useId()
 const TABS: readonly { value: SlotTab; label: string; id: string }[] = [
-  { value: 'regular', label: '一般', id: useId() },
-  { value: 'pact', label: '契術', id: useId() },
+  { value: 'regular', label: t('spell.general'), id: useId() },
+  { value: 'pact', label: t('spell.pact'), id: useId() },
 ]
 
 const activeTab = ref<SlotTab>('regular')

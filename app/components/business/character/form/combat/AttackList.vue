@@ -1,12 +1,14 @@
 <template>
   <section aria-labelledby="section-attacks">
-    <h2 id="section-attacks" class="mb-4 font-display text-lg font-bold text-content">攻擊模組</h2>
+    <h2 id="section-attacks" class="mb-4 font-display text-lg font-bold text-content">
+      {{ t('combat.attackModule') }}
+    </h2>
 
     <ul class="space-y-2">
       <li>
         <button
           type="button"
-          aria-label="新增攻擊"
+          :aria-label="t('combat.addAttack')"
           class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft py-7 text-content-muted transition-colors duration-150 hover:border-border hover:bg-surface hover:text-content"
           @click="openCreate"
         >
@@ -23,7 +25,7 @@
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <p class="text-sm font-semibold text-content">{{ attack.name }}</p>
             <p class="text-xs text-content">
-              命中
+              {{ t('combat.hitBonus') }}
               <span class="font-bold" :class="hitBonusColor(attack)">
                 {{ formatModifier(computedHit(attack)) }}
               </span>
@@ -42,7 +44,7 @@
         <div class="flex shrink-0 gap-1">
           <button
             type="button"
-            :aria-label="`編輯 ${attack.name || '此攻擊'}`"
+            :aria-label="`${t('ui.action.edit')} ${attack.name || t('combat.thisAttack')}`"
             class="flex size-8 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
             @click="openEdit(attack)"
           >
@@ -50,7 +52,7 @@
           </button>
           <button
             type="button"
-            :aria-label="`刪除 ${attack.name || '此攻擊'}`"
+            :aria-label="`${t('ui.action.delete')} ${attack.name || t('combat.thisAttack')}`"
             class="flex size-8 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
             @click="removeAttack(attack.id)"
           >
@@ -64,7 +66,7 @@
   <!-- 新增 / 編輯 攻擊 Modal -->
   <Modal
     v-model="modalOpen"
-    :title="`${editingId ? '編輯' : '新增'}攻擊模組`"
+    :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('combat.attackModule')}`"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
@@ -74,7 +76,9 @@
       <!-- 第一列：名稱 / 屬性 / 額外命中加值 -->
       <div class="flex items-end gap-3">
         <div class="flex-1">
-          <label for="attack-modal-name" class="mb-1 block text-xs text-content">名稱</label>
+          <label for="attack-modal-name" class="mb-1 block text-xs text-content">
+            {{ t('character.adventureField.name') }}
+          </label>
           <CommonAppInput
             id="attack-modal-name"
             :radius="0"
@@ -86,20 +90,22 @@
           />
         </div>
         <div>
-          <label for="attack-modal-ability" class="mb-1 block text-xs text-content">屬性</label>
+          <label for="attack-modal-ability" class="mb-1 block text-xs text-content">
+            {{ t('combat.attribute') }}
+          </label>
           <CommonAppSelect
             id="attack-modal-ability"
             :model-value="draft.abilityKey ?? ''"
             :options="abilityOptions"
             size="sm"
-            placeholder="選擇屬性"
+            :placeholder="t('combat.selectAttribute')"
             class="w-28"
             @update:model-value="draft.abilityKey = ($event || null) as AbilityKey | null"
           />
         </div>
         <div>
           <label for="attack-modal-extra-hit" class="mb-1 block text-xs text-content">
-            額外命中
+            {{ t('combat.extraHit') }}
           </label>
           <CommonAppInput
             id="attack-modal-extra-hit"
@@ -118,14 +124,14 @@
       <!-- 第二列：傷害骰多行 entries -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-content">傷害骰</span>
+          <span class="text-xs text-content">{{ t('combat.damageRoll') }}</span>
           <label class="flex cursor-pointer items-center gap-2 text-xs text-content-muted">
-            套用屬性調整
+            {{ t('combat.applyAbility') }}
             <Toggle
               :model-value="draft.applyAbilityToDamage"
               size="sm"
               color="var(--color-primary)"
-              aria-label="套用屬性調整到傷害"
+              :aria-label="t('combat.applyAbilityToDamage')"
               @update:model-value="draft.applyAbilityToDamage = $event"
             />
           </label>
@@ -136,7 +142,7 @@
           class="flex items-center gap-2"
         >
           <CommonAppInput
-            :aria-label="`第 ${index + 1} 行骰數`"
+            :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDieCount')}`"
             :radius="0"
             :model-value="entry.count > 0 ? String(entry.count) : ''"
             type="number"
@@ -147,16 +153,16 @@
             @update:model-value="entry.count = parseIntegerInput($event, 0)"
           />
           <CommonAppSelect
-            :aria-label="`第 ${index + 1} 行骰面`"
+            :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDieType')}`"
             :model-value="entry.dieType ?? ''"
             :options="dieTypeOptions"
             size="sm"
-            placeholder="—"
+            :placeholder="t('character.emptyDash')"
             class="w-20"
             @update:model-value="entry.dieType = ($event || null) as DamageDieType | null"
           />
           <CommonAppInput
-            :aria-label="`第 ${index + 1} 行加值`"
+            :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowBonus')}`"
             :radius="0"
             :model-value="entry.bonus != null ? String(entry.bonus) : ''"
             type="number"
@@ -167,17 +173,17 @@
             @update:model-value="entry.bonus = parseIntegerInput($event)"
           />
           <CommonAppSelect
-            :aria-label="`第 ${index + 1} 行傷害類型`"
+            :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDamageType')}`"
             :model-value="entry.damageType ?? ''"
             :options="damageTypeOptions"
             size="sm"
-            placeholder="—"
+            :placeholder="t('character.emptyDash')"
             class="flex-1"
             @update:model-value="entry.damageType = ($event || null) as DamageTypeKey | null"
           />
           <button
             type="button"
-            :aria-label="`移除第 ${index + 1} 行`"
+            :aria-label="`${t('combat.removeRow')}${t('combat.rowOrdinal')} ${index + 1} 行`"
             class="flex size-8 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
             @click="removeDamageEntry(index)"
           >
@@ -186,24 +192,24 @@
         </div>
         <button
           type="button"
-          aria-label="新增傷害行"
+          :aria-label="t('combat.addDamageRow')"
           class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft py-2 text-content-muted transition-colors duration-150 hover:border-border hover:bg-surface hover:text-content"
           @click="addDamageEntry"
         >
-          <span class="text-base leading-none">+ 新增傷害骰</span>
+          <span class="text-base leading-none">+ {{ t('combat.addDamageRow') }}</span>
         </button>
       </div>
 
       <!-- 第三列：計算結果預覽 -->
       <div class="flex gap-6 rounded-lg border border-border-soft bg-canvas px-4 py-3">
         <div class="flex items-center gap-2">
-          <span class="text-xs text-content-muted">命中</span>
+          <span class="text-xs text-content-muted">{{ t('combat.hitBonus') }}</span>
           <span class="text-sm font-bold" :class="draftHitColor">
             {{ formatModifier(draftHit) }}
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-xs text-content-muted">傷害</span>
+          <span class="text-xs text-content-muted">{{ t('combat.damage') }}</span>
           <span class="text-sm font-bold text-content">
             {{ formatDamageSummary(draft, abilityScores) }}
           </span>
@@ -212,7 +218,9 @@
 
       <!-- 第四列：補充說明 -->
       <div>
-        <label for="attack-modal-comment" class="mb-1 block text-xs text-content">補充說明</label>
+        <label for="attack-modal-comment" class="mb-1 block text-xs text-content">
+          {{ t('combat.attackComment') }}
+        </label>
         <div class="rounded-md border border-primary bg-canvas-inset">
           <TextArea
             id="attack-modal-comment"
@@ -222,7 +230,7 @@
             :rows="3"
             :maxlength="COMMENT_MAX_LENGTH"
             show-count
-            placeholder="觸發條件、附加效果、備註等（選填）"
+            :placeholder="t('combat.attackCommentPlaceholder')"
             @update:model-value="draft.comment = $event ? $event : null"
           />
         </div>
@@ -236,7 +244,7 @@
         bg-color="var(--color-primary)"
         @click="saveAttack"
       >
-        確認
+        {{ t('ui.action.confirm') }}
       </Button>
     </template>
   </Modal>
@@ -264,6 +272,8 @@ import {
   DAMAGE_TYPE_LABELS,
 } from '~/constants/dnd'
 
+const { t } = useI18n()
+
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 
 const props = defineProps<{
@@ -273,20 +283,20 @@ const props = defineProps<{
 
 const { addAttack, removeAttack, updateAttack } = useCharacterAttacksForm(formState.value)
 
-const abilityOptions: SelectOption[] = [
-  { value: '', label: '—' },
+const abilityOptions = computed<SelectOption[]>(() => [
+  { value: '', label: t('character.emptyDash') },
   ...Object.entries(ABILITY_NAMES).map(([value, label]) => ({ value, label })),
-]
+])
 
-const dieTypeOptions: SelectOption[] = [
-  { value: '', label: '—' },
+const dieTypeOptions = computed<SelectOption[]>(() => [
+  { value: '', label: t('character.emptyDash') },
   ...DAMAGE_DIE_TYPES.map((die) => ({ value: die, label: `d${die}` })),
-]
+])
 
-const damageTypeOptions: SelectOption[] = [
-  { value: '', label: '—' },
+const damageTypeOptions = computed<SelectOption[]>(() => [
+  { value: '', label: t('character.emptyDash') },
   ...DAMAGE_TYPE_KEYS.map((key) => ({ value: key, label: DAMAGE_TYPE_LABELS[key] })),
-]
+])
 
 const COMMENT_MAX_LENGTH = 100
 

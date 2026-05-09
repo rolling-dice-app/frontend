@@ -1,7 +1,7 @@
 <template>
   <Modal
     :model-value="modelValue"
-    title="確認建立角色"
+    :title="t('character.buildConfirmTitle')"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
@@ -10,12 +10,12 @@
   >
     <div class="space-y-5">
       <p class="rounded-md border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-        主職業與屬性建立後將無法變更，確認送出嗎？
+        {{ t('character.buildConfirmWarning') }}
       </p>
 
       <section aria-labelledby="confirm-primary-class">
         <h3 id="confirm-primary-class" class="mb-2 font-display text-sm font-bold text-content">
-          主職業
+          {{ t('class.primary') }}
         </h3>
         <p class="rounded-lg border border-border-soft bg-surface px-3 py-2 text-sm text-content">
           {{ primaryClassLabel }}
@@ -24,7 +24,7 @@
 
       <section aria-labelledby="confirm-abilities">
         <h3 id="confirm-abilities" class="mb-2 font-display text-sm font-bold text-content">
-          屬性
+          {{ t('character.abilitiesLabel') }}
         </h3>
         <ul class="grid grid-cols-3 gap-2">
           <li
@@ -47,10 +47,10 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <Button :radius="4" bg-color="var(--color-surface-2)" @click="emit('cancel')">
-          取消
+          {{ t('ui.action.cancel') }}
         </Button>
         <Button :radius="4" bg-color="var(--color-primary)" @click="emit('confirm')">
-          確認新增
+          {{ t('character.buildConfirmAction') }}
         </Button>
       </div>
     </template>
@@ -62,6 +62,8 @@ import { Button, Modal } from '@ui'
 import { ABILITY_KEYS } from '@rolling-dice-app/core'
 import { ABILITY_NAMES, CLASS_CONFIG } from '~/constants/dnd'
 import type { FormClassEntry, TotalAbilityScores } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -77,7 +79,7 @@ const emit = defineEmits<{
 
 const primaryClassLabel = computed(() => {
   const primary = props.classes[0]?.classKey
-  return primary ? CLASS_CONFIG[primary].label : '—'
+  return primary ? CLASS_CONFIG[primary].label : t('character.emptyDash')
 })
 
 const abilityRows = computed(() =>

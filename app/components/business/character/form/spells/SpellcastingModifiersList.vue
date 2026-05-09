@@ -1,12 +1,16 @@
 <template>
   <section :aria-labelledby="headingId" class="rounded-lg border border-border-soft bg-canvas p-3">
     <header class="mb-1.5 flex items-center justify-between">
-      <h3 :id="headingId" class="font-display text-sm font-bold text-content">施法調整值</h3>
-      <span class="text-xs text-content-muted">熟練 +{{ proficiencyBonus }}</span>
+      <h3 :id="headingId" class="font-display text-sm font-bold text-content">
+        {{ t('spell.castingBonus') }}
+      </h3>
+      <span class="text-xs text-content-muted">
+        {{ t('spell.proficient') }} +{{ proficiencyBonus }}
+      </span>
     </header>
 
     <p v-if="rows.length === 0" class="py-3 text-center text-xs text-content-muted">
-      尚未選擇施法主屬性
+      {{ t('spell.noPrimaryAbilitySelected') }}
     </p>
     <ul v-else class="space-y-2">
       <li
@@ -21,7 +25,9 @@
         >
           {{ formatModifier(row.bonus) }}
         </span>
-        <label :for="row.inputId" class="ml-auto text-xs text-content-muted">自定義</label>
+        <label :for="row.inputId" class="ml-auto text-xs text-content-muted">
+          {{ t('spell.custom') }}
+        </label>
         <CommonAppInput
           :id="row.inputId"
           :radius="0"
@@ -42,6 +48,8 @@
 import { ABILITY_NAMES } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { AbilityKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   selectedAbilities: AbilityKey[]

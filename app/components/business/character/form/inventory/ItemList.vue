@@ -12,10 +12,14 @@
       <div class="flex items-center justify-between border-b border-border-soft px-4 py-3">
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-semibold text-content">{{ title }}</h3>
-          <span class="text-xs text-content-muted">{{ items.length }} 件</span>
+          <span class="text-xs text-content-muted">
+            {{ items.length }} {{ t('inventory.unitCount') }}
+          </span>
         </div>
         <span class="text-xs text-content-muted">
-          總重：<span class="font-medium text-content">{{ formatWeight(totalWeight) }}</span> 磅
+          {{ t('inventory.totalWeight') }}：<span class="font-medium text-content">
+            {{ formatWeight(totalWeight) }} </span
+          >{{ t('inventory.unitWeight') }}
         </span>
       </div>
 
@@ -25,7 +29,7 @@
         <li>
           <button
             type="button"
-            aria-label="新增物品"
+            :aria-label="t('inventory.addItem')"
             class="flex w-full items-center justify-center py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
             @click="openCreate"
           >
@@ -62,7 +66,7 @@
                 name="star"
                 class="text-primary"
                 :size="10"
-                aria-label="已同調"
+                :aria-label="t('inventory.attuned')"
               />
             </div>
             <p v-if="item.description" class="truncate text-xs text-content-muted">
@@ -73,9 +77,11 @@
           <!-- Stats -->
           <div class="flex shrink-0 items-center gap-3 text-xs text-content-muted">
             <span>×{{ item.quantity }}</span>
-            <span class="hidden xxs:inline">{{ formatWeight(item.weight) }} 磅</span>
+            <span class="hidden xxs:inline">
+              {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
+            </span>
             <span class="font-medium text-content hidden xxs:inline">
-              {{ formatWeight(item.weight * item.quantity) }} 磅
+              {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
             </span>
           </div>
 
@@ -84,7 +90,7 @@
             <!-- Move button (always visible for mobile convenience) -->
             <button
               type="button"
-              :aria-label="`將 ${item.name} 移至另一袋`"
+              :aria-label="`${t('inventory.moveTo')}：${item.name}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
               @click="$emit('move-item', item.id)"
             >
@@ -92,7 +98,7 @@
             </button>
             <button
               type="button"
-              :aria-label="`編輯 ${item.name}`"
+              :aria-label="`${t('ui.action.edit')} ${item.name}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
               @click="openEdit(item)"
             >
@@ -100,7 +106,7 @@
             </button>
             <button
               type="button"
-              :aria-label="`刪除 ${item.name}`"
+              :aria-label="`${t('ui.action.delete')} ${item.name}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
               @click="$emit('remove', item.id)"
             >
@@ -115,7 +121,7 @@
   <!-- Add / Edit Modal -->
   <Modal
     v-model="modalOpen"
-    :title="editingId ? '編輯物品' : '新增物品'"
+    :title="editingId ? t('inventory.editItem') : t('inventory.addItem')"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
@@ -125,7 +131,9 @@
       <!-- Name + Type -->
       <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div class="flex-1">
-          <label for="item-modal-name" class="mb-1 block text-xs text-content">名稱</label>
+          <label for="item-modal-name" class="mb-1 block text-xs text-content">
+            {{ t('inventory.itemName') }}
+          </label>
           <CommonAppInput
             id="item-modal-name"
             :radius="0"
@@ -137,7 +145,9 @@
           />
         </div>
         <div>
-          <label for="item-modal-type" class="mb-1 block text-xs text-content">類型</label>
+          <label for="item-modal-type" class="mb-1 block text-xs text-content">
+            {{ t('inventory.typeLabel') }}
+          </label>
           <CommonAppSelect
             id="item-modal-type"
             :model-value="draft.type"
@@ -152,7 +162,9 @@
       <!-- Quantity + Weight -->
       <div class="flex gap-3">
         <div class="w-24">
-          <label for="item-modal-quantity" class="mb-1 block text-xs text-content">數量</label>
+          <label for="item-modal-quantity" class="mb-1 block text-xs text-content">
+            {{ t('inventory.itemQuantity') }}
+          </label>
           <CommonAppInput
             id="item-modal-quantity"
             type="number"
@@ -167,7 +179,7 @@
         </div>
         <div class="w-32">
           <label for="item-modal-weight" class="mb-1 block text-xs text-content">
-            重量（磅/件）
+            {{ t('inventory.weightLabel') }}
           </label>
           <CommonAppInput
             id="item-modal-weight"
@@ -186,7 +198,7 @@
       <!-- Description -->
       <div>
         <label for="item-modal-description" class="mb-1 block text-xs text-content">
-          描述（選填）
+          {{ t('inventory.itemDescriptionOptional') }}
         </label>
         <div class="rounded-md border border-primary bg-canvas-inset">
           <TextArea
@@ -197,7 +209,7 @@
             :rows="2"
             :maxlength="300"
             show-count
-            placeholder="物品說明"
+            :placeholder="t('inventory.itemDescription')"
             @update:model-value="draft.description = $event || null"
           />
         </div>
@@ -211,7 +223,7 @@
         bg-color="var(--color-primary)"
         @click="save"
       >
-        確認
+        {{ t('ui.action.confirm') }}
       </Button>
     </template>
   </Modal>
@@ -224,6 +236,8 @@ import { ITEM_TYPE_LABELS } from '~/constants/inventory'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import type { InventoryItem, InventoryLocation, ItemType } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   items: InventoryItem[]

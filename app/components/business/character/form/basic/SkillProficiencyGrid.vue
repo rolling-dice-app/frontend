@@ -1,14 +1,16 @@
 <template>
   <div class="flex-1 self-start space-y-4 px-2">
     <div class="flex items-center justify-between">
-      <h2 class="font-display text-lg font-bold text-content">技能熟練</h2>
+      <h2 class="font-display text-lg font-bold text-content">
+        {{ t('class.skillProficiency') }}
+      </h2>
       <label class="flex items-center gap-1.5">
-        <span class="text-xs text-content-soft">全能高手</span>
+        <span class="text-xs text-content-soft">{{ t('combat.jackOfAllTrades') }}</span>
         <Toggle
           :model-value="formState.isJackOfAllTrades"
           size="sm"
           color="var(--color-success)"
-          aria-label="全能高手"
+          :aria-label="t('combat.jackOfAllTrades')"
           @update:model-value="formState.isJackOfAllTrades = $event"
         />
       </label>
@@ -46,6 +48,8 @@ import { Toggle } from '@ui'
 import { PROFICIENCY_OPTIONS, SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

@@ -1,14 +1,14 @@
 <template>
   <section aria-labelledby="quickview-hit-dice-label">
     <h3 id="quickview-hit-dice-label" class="mb-2 font-display text-sm font-bold text-content">
-      生命骰
+      {{ t('class.hitDie') }}
     </h3>
 
     <p
       v-if="classes.length === 0"
       class="rounded-lg border border-dashed border-border-soft bg-surface px-3 py-6 text-center text-xs text-content-muted"
     >
-      尚未設定任何職業
+      {{ t('class.emptyClass') }}
     </p>
 
     <ul v-else class="flex flex-col gap-2">
@@ -30,7 +30,7 @@
           <span
             role="button"
             :tabindex="canDecrement(entry) ? 0 : -1"
-            :aria-label="`${CLASS_CONFIG[entry.classKey].label} 生命骰 -1`"
+            :aria-label="`${CLASS_CONFIG[entry.classKey].label} ${t('class.hitDie')} -1`"
             :aria-disabled="!canDecrement(entry)"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onDecrement(entry)"
@@ -46,7 +46,7 @@
           <span
             role="button"
             :tabindex="canIncrement(entry) ? 0 : -1"
-            :aria-label="`${CLASS_CONFIG[entry.classKey].label} 生命骰 +1`"
+            :aria-label="`${CLASS_CONFIG[entry.classKey].label} ${t('class.hitDie')} +1`"
             :aria-disabled="!canIncrement(entry)"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onIncrement(entry)"
@@ -65,6 +65,8 @@
 import { Badge, Icon } from '@ui'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import type { ClassEntry, ClassKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   classes: ClassEntry[]

@@ -1,7 +1,7 @@
 <template>
   <Modal
     :model-value="modelValue"
-    :title="editing ? '編輯冒險紀錄' : '新增冒險紀錄'"
+    :title="editing ? t('character.editAdventureRecord') : t('character.addAdventureRecord')"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
@@ -11,7 +11,9 @@
     <div class="space-y-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div class="flex-1">
-          <label for="adventure-name" class="mb-1 block text-xs text-content">名稱</label>
+          <label for="adventure-name" class="mb-1 block text-xs text-content">
+            {{ t('character.adventureField.name') }}
+          </label>
           <CommonAppInput
             id="adventure-name"
             :radius="0"
@@ -23,7 +25,9 @@
           />
         </div>
         <div>
-          <label for="adventure-date" class="mb-1 block text-xs text-content">日期</label>
+          <label for="adventure-date" class="mb-1 block text-xs text-content">
+            {{ t('character.adventureField.date') }}
+          </label>
           <input
             id="adventure-date"
             v-model="draft.date"
@@ -35,7 +39,9 @@
       </div>
 
       <div>
-        <label for="adventure-content" class="mb-1 block text-xs text-content">內容（選填）</label>
+        <label for="adventure-content" class="mb-1 block text-xs text-content">
+          {{ t('character.adventureField.contentOptional') }}
+        </label>
         <div class="rounded-md border border-primary bg-canvas-inset">
           <TextArea
             id="adventure-content"
@@ -45,18 +51,18 @@
             :rows="4"
             :maxlength="2000"
             show-count
-            placeholder="記錄這場團務的事件、戰利品、重要決策…"
+            :placeholder="t('character.adventureField.contentPlaceholder')"
             @update:model-value="draft.content = $event"
           />
         </div>
       </div>
 
       <div>
-        <p class="mb-1 text-xs text-content">獲得金錢</p>
+        <p class="mb-1 text-xs text-content">{{ t('character.adventureField.moneyEarning') }}</p>
         <div class="grid grid-cols-4 gap-2">
           <div v-for="key in CURRENCY_KEYS" :key="key">
             <label :for="`adventure-money-${key}`" class="mb-1 block text-xs text-content-muted">
-              {{ CURRENCY_LABELS[key] }}
+              {{ currencyLabels[key] }}
             </label>
             <CommonAppInput
               :id="`adventure-money-${key}`"
@@ -74,7 +80,9 @@
       </div>
 
       <div class="w-32">
-        <label for="adventure-exp" class="mb-1 block text-xs text-content">獲得經驗值</label>
+        <label for="adventure-exp" class="mb-1 block text-xs text-content">
+          {{ t('character.adventureField.expEarning') }}
+        </label>
         <CommonAppInput
           id="adventure-exp"
           type="number"
@@ -96,7 +104,7 @@
         bg-color="var(--color-primary)"
         @click="onSave"
       >
-        確認
+        {{ t('ui.action.confirm') }}
       </Button>
     </template>
   </Modal>
@@ -106,6 +114,8 @@
 import { Button, Modal, TextArea } from '@ui'
 import { DEFAULT_CURRENCY, type CharacterCurrency } from '@rolling-dice-app/core'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -123,12 +133,13 @@ const CURRENCY_KEYS = [
   'gp',
   'pp',
 ] as const satisfies readonly (keyof CharacterCurrency)[]
-const CURRENCY_LABELS: Record<keyof CharacterCurrency, string> = {
-  cp: '銅幣',
-  sp: '銀幣',
-  gp: '金幣',
-  pp: '鉑金',
-}
+
+const currencyLabels = computed<Record<keyof CharacterCurrency, string>>(() => ({
+  cp: t('inventory.cpName'),
+  sp: t('inventory.spName'),
+  gp: t('inventory.gpName'),
+  pp: t('inventory.ppName'),
+}))
 
 const todayISO = (): string => {
   const now = new Date()

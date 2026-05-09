@@ -1,10 +1,10 @@
 <template>
   <section aria-labelledby="quickview-attacks-label">
     <h3 id="quickview-attacks-label" class="mb-2 font-display text-sm font-bold text-content">
-      攻擊模組
+      {{ t('combat.attackModule') }}
     </h3>
     <p v-if="attacks.length === 0" class="py-6 text-center text-sm text-content-muted">
-      尚未設定任何攻擊
+      {{ t('combat.emptyAttack') }}
     </p>
     <ul v-else class="space-y-2">
       <li
@@ -13,9 +13,11 @@
         class="rounded-lg border border-border-soft bg-surface px-3 py-2"
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-          <p class="text-sm font-semibold text-content">{{ attack.name || '（未命名）' }}</p>
+          <p class="text-sm font-semibold text-content">
+            {{ attack.name || t('combat.unnamed') }}
+          </p>
           <p class="text-xs text-content">
-            命中
+            {{ t('combat.hitBonus') }}
             <span
               class="font-bold"
               :class="getHitBonusColorClass(getAttackHit(attack, abilityScores, proficiencyBonus))"
@@ -41,6 +43,8 @@
 <script setup lang="ts">
 import type { AttackEntry } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
+
+const { t } = useI18n()
 
 defineProps<{
   attacks: AttackEntry[]

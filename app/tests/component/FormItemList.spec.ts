@@ -156,7 +156,7 @@ describe('ItemList (form)', () => {
       })
       const moveBtn = wrapper
         .findAll('button')
-        .find((b) => b.attributes('aria-label') === '將 長劍 移至另一袋')!
+        .find((b) => b.attributes('aria-label') === '移至另一袋：長劍')!
       await moveBtn.trigger('click')
       expect(wrapper.emitted('move-item')).toEqual([['a']])
     })

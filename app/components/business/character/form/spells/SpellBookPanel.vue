@@ -1,7 +1,9 @@
 <template>
   <section :aria-labelledby="headingId">
     <header class="mb-4 flex items-center justify-between">
-      <h2 :id="headingId" class="font-display text-lg font-bold text-content">法術資料庫</h2>
+      <h2 :id="headingId" class="font-display text-lg font-bold text-content">
+        {{ t('spell.database') }}
+      </h2>
     </header>
 
     <!-- Filter bar -->
@@ -12,14 +14,16 @@
         type="search"
         size="sm"
         outline
-        placeholder="搜尋法術名稱"
+        :placeholder="t('spell.searchPlaceholder')"
         class="w-full"
         @update:model-value="onKeywordInput"
       />
 
       <div class="flex flex-wrap items-end gap-1 sm:gap-2">
         <div>
-          <label :for="levelSelectId" class="mb-1 block text-xs text-content">環數</label>
+          <label :for="levelSelectId" class="mb-1 block text-xs text-content">
+            {{ t('spell.filterLevel') }}
+          </label>
           <CommonAppSelect
             :id="levelSelectId"
             v-model="filter.level"
@@ -32,7 +36,9 @@
           />
         </div>
         <div>
-          <label :for="schoolSelectId" class="mb-1 block text-xs text-content">學派</label>
+          <label :for="schoolSelectId" class="mb-1 block text-xs text-content">
+            {{ t('spell.filterSchool') }}
+          </label>
           <CommonAppSelect
             :id="schoolSelectId"
             v-model="filter.schools"
@@ -45,7 +51,9 @@
           />
         </div>
         <div>
-          <label :for="classesSelectId" class="mb-1 block text-xs text-content">職業</label>
+          <label :for="classesSelectId" class="mb-1 block text-xs text-content">
+            {{ t('spell.filterClass') }}
+          </label>
           <CommonAppSelect
             :id="classesSelectId"
             v-model="filter.classes"
@@ -58,7 +66,9 @@
           />
         </div>
         <div>
-          <label :for="sourcesSelectId" class="mb-1 block text-xs text-content">資源</label>
+          <label :for="sourcesSelectId" class="mb-1 block text-xs text-content">
+            {{ t('spell.filterSource') }}
+          </label>
           <CommonAppSelect
             :id="sourcesSelectId"
             v-model="filter.sources"
@@ -80,7 +90,7 @@
           class="clear-filter-btn"
           @click="resetFilter"
         >
-          清除篩選
+          {{ t('spell.filterClear') }}
         </Button>
       </div>
 
@@ -89,28 +99,28 @@
           <Toggle
             :model-value="filter.ritual"
             size="sm"
-            aria-label="只顯示儀式法術"
+            :aria-label="t('spell.filterRitual')"
             color="var(--color-info)"
             @update:model-value="filter.ritual = $event"
           />
-          儀式
+          {{ t('spell.ritual') }}
         </label>
         <label class="inline-flex items-center gap-2">
           <Toggle
             :model-value="filter.concentration"
             size="sm"
-            aria-label="只顯示需要專注的法術"
+            :aria-label="t('spell.filterConcentration')"
             color="var(--color-warning)"
             @update:model-value="filter.concentration = $event"
           />
-          專注
+          {{ t('spell.concentration') }}
         </label>
       </div>
     </div>
 
     <!-- Body -->
     <p v-if="groupedSpells.length === 0" class="py-8 text-center text-content-muted">
-      沒有符合條件的法術
+      {{ t('spell.emptyFiltered') }}
     </p>
     <div v-else class="space-y-5 max-h-[60vh] overflow-y-auto md:max-h-[90vh] scrollbar-hidden">
       <div v-for="group in groupedSpells" :key="group.level">
@@ -118,7 +128,9 @@
           <h3 class="font-display text-sm font-bold text-content">
             {{ formatSpellLevel(group.level) }}
           </h3>
-          <span class="text-xs text-content-muted">{{ group.spells.length }} 個</span>
+          <span class="text-xs text-content-muted">
+            {{ group.spells.length }} {{ t('spell.itemCount') }}
+          </span>
         </div>
         <Accordion v-model="expandedSpellIds" multiple class="spell-accordion">
           <AccordionItem
@@ -134,7 +146,7 @@
                   :model-value="isLearned(spell.id)"
                   size="sm"
                   color="var(--color-primary)"
-                  :aria-label="`掌握 ${spell.name}`"
+                  :aria-label="`${t('spell.learn')} ${spell.name}`"
                   @click.stop
                   @update:model-value="toggleLearnedSpell(spell.id)"
                 />
@@ -148,7 +160,7 @@
                         bg-color="var(--color-info)"
                         text-color="var(--color-info-soft)"
                       >
-                        儀式
+                        {{ t('spell.ritual') }}
                       </Badge>
                       <Badge
                         v-if="spell.concentration"
@@ -156,7 +168,7 @@
                         bg-color="var(--color-warning)"
                         text-color="var(--color-warning-soft)"
                       >
-                        專注
+                        {{ t('spell.concentration') }}
                       </Badge>
                     </div>
                   </div>
@@ -173,19 +185,27 @@
 
             <dl class="space-y-1 text-sm text-content">
               <div class="flex gap-2">
-                <dt class="w-16 shrink-0 text-content-muted">成分</dt>
+                <dt class="w-16 shrink-0 text-content-muted">
+                  {{ t('spell.attribute.components') }}
+                </dt>
                 <dd>{{ formatSpellComponents(spell) }}</dd>
               </div>
               <div class="flex gap-2">
-                <dt class="w-16 shrink-0 text-content-muted">持續時間</dt>
+                <dt class="w-16 shrink-0 text-content-muted">
+                  {{ t('spell.attribute.duration') }}
+                </dt>
                 <dd>{{ spell.duration }}</dd>
               </div>
               <div v-if="spell.material" class="flex gap-2">
-                <dt class="w-16 shrink-0 text-content-muted">材料</dt>
+                <dt class="w-16 shrink-0 text-content-muted">
+                  {{ t('spell.attribute.materials') }}
+                </dt>
                 <dd>{{ spell.material }}</dd>
               </div>
               <div class="flex gap-2">
-                <dt class="w-16 shrink-0 text-content-muted">描述</dt>
+                <dt class="w-16 shrink-0 text-content-muted">
+                  {{ t('spell.attribute.description') }}
+                </dt>
                 <dd class="whitespace-pre-wrap">{{ spell.desc }}</dd>
               </div>
             </dl>
@@ -207,6 +227,8 @@ import {
 } from '~/constants/spell-options'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import type { ClassKey, SpellDto, SourceKey, SpellSchool } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)

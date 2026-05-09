@@ -1,46 +1,74 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <CommonPageHeader title="Character Detail" :show-back="true">
-      <template #actions>
-        <NuxtLink
-          v-if="character"
-          :to="`/character/${character.id}/update`"
-          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-soft transition-colors hover:bg-surface-2 hover:text-content"
+      <template v-if="character" #actions>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          :title="t('ui.readOnly.editTooltip')"
+          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-faint cursor-not-allowed opacity-60"
         >
-          編輯
-        </NuxtLink>
+          {{ t('ui.action.edit') }}
+        </button>
       </template>
     </CommonPageHeader>
 
-    <div v-if="character">
+    <!-- Loading -->
+    <div
+      v-if="status === 'pending'"
+      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      {{ t('ui.state.loading') }}
+    </div>
+
+    <!-- Error / Not found -->
+    <CommonNotFound
+      v-else-if="status === 'error' || !character"
+      :message="t('character.notFound')"
+      back-to="/character"
+      :back-label="t('character.backToList')"
+    />
+
+    <div v-else>
+      <!-- Read-only banner -->
+      <div
+        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
+        role="status"
+      >
+        {{ t('ui.readOnly.detailBanner') }}
+      </div>
+
       <Tabs
         v-model="activeTab"
         type="border"
         active-color="var(--color-canvas-elevated)"
         inactive-color="var(--color-canvas)"
-        label="角色資訊"
+        :label="t('character.info')"
       >
         <Tab value="profile">
           <template #label>
-            <span class="text-content">角色詳情</span>
+            <span class="text-content">{{ t('character.detail') }}</span>
           </template>
           <BusinessCharacterDetailTab :character="character" />
         </Tab>
         <Tab value="combat">
           <template #label>
-            <span class="text-content">戰鬥速查</span>
+            <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <BusinessCharacterCombatQuickView :character="character" />
         </Tab>
         <Tab value="spells">
           <template #label>
-            <span class="text-content">法術表</span>
+            <span class="text-content">{{ t('spell.table') }}</span>
           </template>
           <BusinessCharacterSpellsQuickView :character="character" />
         </Tab>
         <Tab value="backpack">
           <template #label>
-            <span class="text-content">背包</span>
+            <span class="text-content">{{ t('character.inventoryTab') }}</span>
           </template>
           <BusinessCharacterFormInventoryTab
             :backpack-items="backpackItems"
@@ -50,32 +78,30 @@
             :backpack-load="backpackLoad"
             :max-carry-weight="maxCarryWeight"
             :is-over-encumbered="isOverEncumbered"
-            @add-item="addItem"
-            @remove-item="removeItem"
-            @update-item="updateItem"
-            @move-item="moveItem"
-            @update-currency="updateCurrency"
-            @update-attunement="setAttunement"
+            @add-item="notifyReadOnly"
+            @remove-item="notifyReadOnly"
+            @update-item="notifyReadOnly"
+            @move-item="notifyReadOnly"
+            @update-currency="notifyReadOnly"
+            @update-attunement="notifyReadOnly"
           />
         </Tab>
         <Tab value="adventures">
           <template #label>
-            <span class="text-content">冒險</span>
+            <span class="text-content">{{ t('character.adventure') }}</span>
           </template>
           <BusinessCharacterAdventuresTab
             :entries="adventureEntries"
             :total-exp-earned="totalExpEarned"
             :sync-money-to-currency="syncMoneyToCurrency"
-            @add="addAdventure"
-            @update="updateAdventure"
-            @remove="removeAdventure"
-            @update:sync-money-to-currency="setSyncMoneyToCurrency"
+            @add="notifyReadOnly"
+            @update="notifyReadOnly"
+            @remove="notifyReadOnly"
+            @update:sync-money-to-currency="notifyReadOnly"
           />
         </Tab>
       </Tabs>
     </div>
-
-    <CommonNotFound v-else message="找不到此角色" back-to="/character" back-label="返回角色列表" />
   </div>
 </template>
 
@@ -84,13 +110,22 @@ import { Tab, Tabs } from '@ui'
 
 definePageMeta({ middleware: 'auth' })
 
-useHead({ title: '角色卡詳情' })
+const { t } = useI18n()
+
+useHead({ title: t('character.detailTitle') })
 
 const activeTab = ref('profile')
 
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 const characterStore = useCharacterStore()
+
+const { status } = await useAsyncData(
+  () => `character-${id}`,
+  () => characterStore.loadDetail(id),
+  { lazy: false, watch: [() => id] },
+)
+
 const character = computed(() => characterStore.getById(id))
 
 const inventory = useCharacterInventory(id)
@@ -108,23 +143,7 @@ const {
 const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
 
 const toast = useToast()
-function withSaveErrorToast<TArgs extends unknown[]>(
-  action: (...args: TArgs) => boolean,
-): (...args: TArgs) => void {
-  return (...args) => {
-    if (!action(...args)) toast.error('儲存失敗，請稍後再試')
-  }
+const notifyReadOnly = () => {
+  toast.error(t('ui.message.editingNotAvailable'))
 }
-
-const addItem = withSaveErrorToast(inventory.addItem)
-const removeItem = withSaveErrorToast(inventory.removeItem)
-const updateItem = withSaveErrorToast(inventory.updateItem)
-const moveItem = withSaveErrorToast(inventory.moveItem)
-const updateCurrency = withSaveErrorToast(inventory.updateCurrency)
-const setAttunement = withSaveErrorToast(inventory.setAttunement)
-
-const addAdventure = withSaveErrorToast(adventures.addAdventure)
-const updateAdventure = withSaveErrorToast(adventures.updateAdventure)
-const removeAdventure = withSaveErrorToast(adventures.removeAdventure)
-const setSyncMoneyToCurrency = withSaveErrorToast(adventures.setSyncMoneyToCurrency)
 </script>

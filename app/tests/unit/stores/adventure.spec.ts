@@ -1,12 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import {
-  ADVENTURES_STORAGE_PREFIX,
-  CHARACTERS_STORAGE_KEY,
-  getAdventuresStorageKey,
-} from '~/constants/storage'
+import { ADVENTURES_STORAGE_PREFIX, getAdventuresStorageKey } from '~/constants/storage'
 import { useAdventureStore } from '~/stores/adventure'
 import type { AdventureLog } from '~/types/business/adventure'
+
+const UNRELATED_KEY = 'rd:unrelated:fixture'
 
 function makePayload(overrides: Partial<AdventureLog> = {}): AdventureLog {
   return {
@@ -119,7 +117,7 @@ describe('useAdventureStore — removeAll', () => {
   })
 
   it('removeAll 不會刪除其他前綴的 key', () => {
-    localStorage.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify([{ id: 'unrelated' }]))
+    localStorage.setItem(UNRELATED_KEY, JSON.stringify([{ id: 'unrelated' }]))
     localStorage.setItem('roll-dice:combat-state:char-1', JSON.stringify({ hp: 10 }))
     localStorage.setItem('rd:character-view-mode', 'grid')
 
@@ -127,7 +125,7 @@ describe('useAdventureStore — removeAll', () => {
     store.save('char-1', makePayload())
     store.removeAll()
 
-    expect(localStorage.getItem(CHARACTERS_STORAGE_KEY)).not.toBeNull()
+    expect(localStorage.getItem(UNRELATED_KEY)).not.toBeNull()
     expect(localStorage.getItem('roll-dice:combat-state:char-1')).not.toBeNull()
     expect(localStorage.getItem('rd:character-view-mode')).toBe('grid')
     expect(localStorage.getItem(getAdventuresStorageKey('char-1'))).toBeNull()

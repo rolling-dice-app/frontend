@@ -13,7 +13,7 @@
     @keydown.space.prevent="toggleNav"
   >
     <Icon name="swipe-up" class="w-12 absolute animate-bounce -top-4" />
-    <span class="text-xs font-medium tracking-wide sm:text-sm"> 滑動開啟 </span>
+    <span class="text-xs font-medium tracking-wide sm:text-sm">{{ t('ui.nav.swipeUp') }}</span>
   </div>
 
   <!-- Scoped teleport target：讓 drawer 繼承此元素的 CSS custom property -->
@@ -35,7 +35,7 @@
         Embark On Your Adventure
       </div>
     </template>
-    <nav aria-label="導覽" class="grid grid-cols-3 py-2">
+    <nav :aria-label="t('ui.aria.nav')" class="grid grid-cols-3 py-2">
       <template v-for="item in navItems" :key="item.to">
         <div class="flex justify-center">
           <div
@@ -44,11 +44,11 @@
             class="inline-flex w-24 flex-col items-center gap-1 rounded-lg px-2 py-2 text-content-faint cursor-not-allowed"
           >
             <Icon v-if="item.icon" :name="item.icon" :size="48" />
-            <span class="text-sm font-medium tracking-wide">{{ item.label }}</span>
+            <span class="text-sm font-medium tracking-wide">{{ t(item.labelKey) }}</span>
             <span
               class="rounded px-1.5 py-0.5 text-[10px] tracking-wide text-content-muted bg-canvas-inset"
             >
-              開發中
+              {{ t('ui.nav.workInProgress') }}
             </span>
           </div>
           <NuxtLink
@@ -59,7 +59,7 @@
             @click="closeNav"
           >
             <Icon v-if="item.icon" :name="item.icon" :size="48" />
-            <span class="text-sm font-medium tracking-wide">{{ item.label }}</span>
+            <span class="text-sm font-medium tracking-wide">{{ t(item.labelKey) }}</span>
           </NuxtLink>
         </div>
       </template>
@@ -77,6 +77,7 @@ const DRAWER_DISABLED_ROUTE_NAMES = [
   'character-id',
 ] as const
 
+const { t } = useI18n()
 const navStore = useNavigationStore()
 const { isNavOpen } = storeToRefs(navStore)
 const { toggleNav, closeNav } = navStore

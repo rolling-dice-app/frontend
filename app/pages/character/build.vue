@@ -7,11 +7,11 @@
       type="border"
       active-color="var(--color-canvas-elevated)"
       inactive-color="var(--color-canvas)"
-      label="建立角色卡"
+      :label="t('character.createCharacter')"
     >
       <Tab value="basic">
         <template #label>
-          <span class="text-content">基本資訊</span>
+          <span class="text-content">{{ t('character.basicInfo') }}</span>
         </template>
         <BusinessCharacterFormBasicTab
           v-model:form-state="formState"
@@ -39,7 +39,7 @@
 
       <Tab value="profile">
         <template #label>
-          <span class="text-content">詳細設定</span>
+          <span class="text-content">{{ t('character.detailedSetting') }}</span>
         </template>
         <BusinessCharacterFormProfileTab v-model:form-state="formState" />
       </Tab>
@@ -53,7 +53,7 @@
         bg-color="var(--color-primary)"
         @click="openConfirm"
       >
-        儲存角色卡
+        {{ t('character.saveCharacter') }}
       </Button>
     </div>
 
@@ -74,7 +74,9 @@ import type { TotalAbilityScores } from '~/types/business/character-form'
 
 definePageMeta({ middleware: 'auth' })
 
-useHead({ title: '建立角色卡' })
+const { t } = useI18n()
+
+useHead({ title: t('character.createCharacter') })
 
 const { activeTab, formState, totalLevel, isSubmitting, canSubmit, abilities, submit } =
   useCharacterBuild()

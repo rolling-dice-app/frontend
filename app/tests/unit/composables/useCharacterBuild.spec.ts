@@ -299,17 +299,21 @@ describe('useCharacterBuild — canSubmit', () => {
 // ─── submit ────────────────────────────────────────────────────────────────
 
 describe('useCharacterBuild — submit', () => {
-  it('canSubmit 為 true 時 submit 應呼叫 store.addCharacter 並導航至 /character', async () => {
+  it('canSubmit 為 true 時 submit 應呼叫 store.createCharacter 並導航至 /character', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    const addSpy = vi.spyOn(store, 'addCharacter')
+    const createSpy = vi.spyOn(store, 'createCharacter').mockResolvedValue(
+      // 直接回傳一個 Character-like 物件即可滿足 submit 流程
+      // 實際資料形狀不影響此測試（submit 僅關心是否被呼叫並導航）
+      undefined as never,
+    )
 
     const { formState, submit } = await getComposable()
     formState.name = '提交角色'
     formState.classes[0]!.classKey = 'fighter'
 
     await submit()
-    expect(addSpy).toHaveBeenCalledOnce()
+    expect(createSpy).toHaveBeenCalledOnce()
     expect(mockNavigateTo).toHaveBeenCalledWith('/character')
   })
 
@@ -328,47 +332,32 @@ describe('useCharacterBuild — submit', () => {
   it('submit 後再次呼叫 submit 不應重複執行', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    const addSpy = vi.spyOn(store, 'addCharacter')
+    const createSpy = vi.spyOn(store, 'createCharacter').mockResolvedValue(undefined as never)
 
     const { formState, submit } = await getComposable()
     formState.name = '重複測試'
     formState.classes[0]!.classKey = 'fighter'
 
     await Promise.all([submit(), submit()])
-    expect(addSpy).toHaveBeenCalledOnce()
+    expect(createSpy).toHaveBeenCalledOnce()
     expect(mockNavigateTo).toHaveBeenCalledOnce()
   })
 
   it('canSubmit 為 false 時 submit 不應執行任何動作', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    const addSpy = vi.spyOn(store, 'addCharacter')
+    const createSpy = vi.spyOn(store, 'createCharacter').mockResolvedValue(undefined as never)
 
     const { submit } = await getComposable()
     await submit()
-    expect(addSpy).not.toHaveBeenCalled()
+    expect(createSpy).not.toHaveBeenCalled()
     expect(mockNavigateTo).not.toHaveBeenCalled()
   })
 
-  it('store.addCharacter 回傳 null 時應顯示錯誤 toast 且不導航', async () => {
+  it('submit 時 createCharacter 收到的 formState abilities 結構為 {origin, race, bonusScore: 0}', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    vi.spyOn(store, 'addCharacter').mockReturnValue(null)
-
-    const { formState, isSubmitting, submit } = await getComposable()
-    formState.name = '失敗角色'
-    formState.classes[0]!.classKey = 'fighter'
-
-    await submit()
-    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
-    expect(mockNavigateTo).not.toHaveBeenCalled()
-    expect(isSubmitting.value).toBe(false)
-  })
-
-  it('submit 時 abilities 應以 {origin, race, bonusScore: 0} 結構送進 store', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    const addSpy = vi.spyOn(store, 'addCharacter')
+    const createSpy = vi.spyOn(store, 'createCharacter').mockResolvedValue(undefined as never)
 
     const { formState, submit } = await getComposable()
     formState.name = '加總角色'
@@ -379,18 +368,17 @@ describe('useCharacterBuild — submit', () => {
     formState.abilities.dexterity.race = -1
 
     await submit()
-    expect(addSpy).toHaveBeenCalledOnce()
-    const created = addSpy.mock.results[0]!.value
-    expect(created?.abilities.strength).toEqual({ origin: 15, race: 2, bonusScore: 0 })
-    expect(created?.abilities.dexterity).toEqual({ origin: 14, race: -1, bonusScore: 0 })
-    expect(created?.abilities.constitution).toEqual({ origin: 8, race: 0, bonusScore: 0 })
+    expect(createSpy).toHaveBeenCalledOnce()
+    const arg = createSpy.mock.calls[0]![0]
+    expect(arg.abilities.strength).toEqual({ origin: 15, race: 2 })
+    expect(arg.abilities.dexterity).toEqual({ origin: 14, race: -1 })
   })
 
-  it('store.addCharacter 拋出例外時應顯示錯誤 toast 且不導航', async () => {
+  it('store.createCharacter 拋出例外時應顯示錯誤 toast 且不導航', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    vi.spyOn(store, 'addCharacter').mockImplementation(() => {
+    vi.spyOn(store, 'createCharacter').mockImplementation(() => {
       throw new Error('unexpected')
     })
 

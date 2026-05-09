@@ -11,8 +11,12 @@ export default {
   card: '角色卡',
   info: '角色資訊',
   detail: '角色詳情',
+  detailTitle: '角色卡詳情',
   empty: '尚無角色卡',
   notFound: '找不到此角色',
+  loadFailed: '無法載入角色卡',
+  backToList: '返回角色列表',
+  saveCharacter: '儲存角色卡',
 
   // 基本資料欄位
   name: '姓名',

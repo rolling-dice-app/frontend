@@ -4,6 +4,25 @@ import type {
   CharacterFormState,
   CharacterUpdateFormState,
 } from '~/types/business/character-form'
+import { useCharacterStore } from '~/stores/character'
+
+/**
+ * 將 character 直接灌進 store 的 detailCache + list（取代過去用 localStorage 注入的方式）。
+ * 必須先 setActivePinia 後呼叫。
+ */
+export function seedCharacterInStore(character: Character): void {
+  const store = useCharacterStore()
+  store.detailCache.set(character.id, character)
+  store.list.push({
+    id: character.id,
+    name: character.name,
+    classes: character.classes,
+    level: character.classes.reduce((sum, entry) => sum + entry.level, 0),
+    avatar: character.avatar,
+    updatedAt: character.updatedAt,
+    race: character.race,
+  })
+}
 
 export function createMockCharacter(overrides: Partial<Character> = {}): Character {
   return {

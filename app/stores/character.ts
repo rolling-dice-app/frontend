@@ -1,177 +1,132 @@
 import {
   ABILITY_KEYS,
-  createDefaultArmorClass,
-  createDefaultInventory,
   type Character,
-  type AbilityKey,
+  type CharacterAbilityScores,
+  type CharacterCreateInput,
+  type CharacterSummary,
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
-import { CHARACTERS_STORAGE_KEY } from '~/constants/storage'
-import { calculateSavingThrowProficiencies, formStateToCharacterPatch } from '~/helpers/character'
-import { MOCK_CHARACTERS } from '~/mocks/characters'
+import type { CharacterListItem } from '~/types/business/character-list'
+import { formStateToCharacterPatch } from '~/helpers/character'
 
 /** 可由外部 patch 的欄位（排除身分識別與建立時間） */
 export type CharacterMutablePatch = Partial<Omit<Character, 'id' | 'createdAt'>>
 
-/** 對 Character 做深拷貝，斷開與 store 內部 reactive proxy 的關聯。 */
-function cloneCharacter(c: Character): Character {
-  return JSON.parse(JSON.stringify(c)) as Character
+const NOT_SUPPORTED_MESSAGE =
+  'character mutation 尚未支援 (backend update/delete endpoint not implemented)'
+
+const cloneCharacter = (c: Character): Character => JSON.parse(JSON.stringify(c)) as Character
+
+const buildCreateInput = (formState: CharacterFormState): CharacterCreateInput => {
+  const patch = formStateToCharacterPatch(formState)
+  const abilities = Object.fromEntries(
+    ABILITY_KEYS.map((key) => [
+      key,
+      {
+        origin: formState.abilities[key].origin,
+        race: formState.abilities[key].race,
+        bonusScore: 0,
+      },
+    ]),
+  ) as CharacterAbilityScores
+  return { ...patch, abilities }
 }
 
-function loadFromStorage(): Character[] {
-  return (
-    getLocalStorage<Character[]>(CHARACTERS_STORAGE_KEY) ??
-    (import.meta.dev ? MOCK_CHARACTERS.map(cloneCharacter) : [])
-  )
-}
+const summaryToListItem = (summary: CharacterSummary): CharacterListItem => ({
+  ...summary,
+  race: null,
+})
 
-function saveToStorage(characters: Character[]): boolean {
-  return setLocalStorage(CHARACTERS_STORAGE_KEY, characters)
-}
+const characterToListItem = (character: Character): CharacterListItem => ({
+  id: character.id,
+  name: character.name,
+  classes: character.classes,
+  level: character.classes.reduce((sum, entry) => sum + entry.level, 0),
+  avatar: character.avatar,
+  updatedAt: character.updatedAt,
+  race: character.race,
+})
 
 export const useCharacterStore = defineStore('character', () => {
-  const characters = ref<Character[]>(loadFromStorage())
+  const list = ref<CharacterListItem[]>([])
+  const detailCache = ref(new Map<string, Character>())
 
-  function getById(id: string): Character | undefined {
-    const found = characters.value.find((c) => c.id === id)
-    return found ? cloneCharacter(found) : undefined
+  const listLoading = ref(false)
+  const listError = ref<unknown>(null)
+
+  const detailLoading = ref(false)
+  const detailError = ref<unknown>(null)
+
+  const characters = computed<CharacterListItem[]>(() => list.value)
+
+  const loadList = async (): Promise<void> => {
+    listLoading.value = true
+    listError.value = null
+    try {
+      const summaries = await useCharacterApi().listCharacters()
+      list.value = summaries.map(summaryToListItem)
+    } catch (error) {
+      listError.value = error
+      throw error
+    } finally {
+      listLoading.value = false
+    }
   }
 
-  function addCharacter(formState: CharacterFormState): Character | null {
-    const patch = formStateToCharacterPatch(formState)
-
-    const abilities = Object.fromEntries(
-      ABILITY_KEYS.map((key) => [
-        key,
-        {
-          origin: formState.abilities[key].origin,
-          race: formState.abilities[key].race,
-          bonusScore: 0,
-        },
-      ]),
-    ) as Record<AbilityKey, { origin: number; race: number; bonusScore: number }>
-
-    const now = new Date().toISOString()
-    const character: Character = {
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now,
-      ...patch,
-      abilities,
-      savingThrowExtras: [],
-      avatar: null,
-      customHpBonus: 0,
-      speedBonus: 0,
-      initiativeBonus: 0,
-      initiativeAbilityKey: null,
-      passivePerceptionBonus: 0,
-      passiveInsightBonus: 0,
-      armorClass: createDefaultArmorClass(),
-      attacks: [],
-      spellcastingAbilities: [],
-      customSpellcastingBonuses: {},
-      spells: [],
-      spellSlotsDelta: {},
-      pactSlotsDelta: {},
-      features: [],
-      ...createDefaultInventory(),
+  const loadDetail = async (id: string): Promise<Character> => {
+    detailLoading.value = true
+    detailError.value = null
+    try {
+      const character = await useCharacterApi().getCharacter(id)
+      detailCache.value.set(id, character)
+      return cloneCharacter(character)
+    } catch (error) {
+      detailError.value = error
+      throw error
+    } finally {
+      detailLoading.value = false
     }
-    characters.value.push(character)
-    if (!saveToStorage(characters.value)) {
-      characters.value.pop()
-      return null
-    }
-    return cloneCharacter(character)
   }
 
-  function removeCharacter(id: string): boolean {
-    const index = characters.value.findIndex((c) => c.id === id)
-    if (index === -1) return false
-    const previous = characters.value[index]!
-    characters.value.splice(index, 1)
-    if (!saveToStorage(characters.value)) {
-      characters.value.splice(index, 0, previous)
-      return false
-    }
-    return true
+  const createCharacter = async (formState: CharacterFormState): Promise<Character> => {
+    const input = buildCreateInput(formState)
+    const created = await useCharacterApi().createCharacter(input)
+    detailCache.value.set(created.id, created)
+    list.value.push(characterToListItem(created))
+    return cloneCharacter(created)
   }
 
-  function updateCharacter(id: string, formState: CharacterUpdateFormState): Character | null {
-    const index = characters.value.findIndex((c) => c.id === id)
-    if (index === -1) return null
-
-    const previous = characters.value[index]!
-    const patch = formStateToCharacterPatch(formState)
-    const baselineSavingThrows = calculateSavingThrowProficiencies(patch.classes)
-    const baselineSet = new Set(baselineSavingThrows)
-    const savingThrowExtras = formState.savingThrowExtras.filter((key) => !baselineSet.has(key))
-
-    const updated: Character = {
-      ...previous,
-      ...patch,
-      updatedAt: new Date().toISOString(),
-      abilities: JSON.parse(JSON.stringify(formState.abilities)),
-      savingThrowExtras,
-      customHpBonus: formState.customHpBonus,
-      speedBonus: formState.speedBonus,
-      initiativeBonus: formState.initiativeBonus,
-      initiativeAbilityKey: formState.initiativeAbilityKey,
-      passivePerceptionBonus: formState.passivePerceptionBonus,
-      passiveInsightBonus: formState.passiveInsightBonus,
-      armorClass: JSON.parse(JSON.stringify(formState.armorClass)),
-      attacks: JSON.parse(JSON.stringify(formState.attacks)),
-      spellcastingAbilities: [...formState.spellcastingAbilities],
-      customSpellcastingBonuses: { ...formState.customSpellcastingBonuses },
-      spells: formState.spells.map((entry) => ({ ...entry })),
-      spellSlotsDelta: { ...formState.spellSlotsDelta },
-      pactSlotsDelta: { ...formState.pactSlotsDelta },
-      features: JSON.parse(JSON.stringify(formState.features)),
-      items: JSON.parse(JSON.stringify(formState.items)),
-      currency: { ...formState.currency },
-    }
-
-    characters.value[index] = updated
-    if (!saveToStorage(characters.value)) {
-      characters.value[index] = previous
-      return null
-    }
-    return cloneCharacter(updated)
+  const getById = (id: string): Character | undefined => {
+    const cached = detailCache.value.get(id)
+    return cached ? cloneCharacter(cached) : undefined
   }
 
-  /**
-   * 對指定角色合併寫入欄位並持久化。
-   */
-  function patchCharacter(id: string, patch: CharacterMutablePatch): boolean {
-    const index = characters.value.findIndex((c) => c.id === id)
-    if (index === -1) return false
-    const previous = characters.value[index]!
-    characters.value[index] = {
-      ...previous,
-      ...(JSON.parse(JSON.stringify(patch)) as CharacterMutablePatch),
-      updatedAt: new Date().toISOString(),
-    }
-    if (!saveToStorage(characters.value)) {
-      characters.value[index] = previous
-      return false
-    }
-    return true
+  const notSupported = (action: string): never => {
+    throw new Error(`${action}: ${NOT_SUPPORTED_MESSAGE}`)
   }
 
-  /** 重設角色為預設 MOCK_CHARACTERS 並寫回 localStorage（僅供開發階段使用）。 */
-  function resetCharacters(): void {
-    if (!import.meta.dev) return
-    characters.value = MOCK_CHARACTERS.map(cloneCharacter)
-    saveToStorage(characters.value)
-    useAdventureStore().removeAll()
-  }
+  const updateCharacter = (_id: string, _formState: CharacterUpdateFormState): never =>
+    notSupported('updateCharacter')
+
+  const removeCharacter = (_id: string): never => notSupported('removeCharacter')
+
+  const patchCharacter = (_id: string, _patch: CharacterMutablePatch): never =>
+    notSupported('patchCharacter')
 
   return {
     characters,
+    list,
+    detailCache,
+    listLoading,
+    listError,
+    detailLoading,
+    detailError,
+    loadList,
+    loadDetail,
+    createCharacter,
     getById,
-    addCharacter,
     updateCharacter,
-    patchCharacter,
     removeCharacter,
-    resetCharacters,
+    patchCharacter,
   }
 })

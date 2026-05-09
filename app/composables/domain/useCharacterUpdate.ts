@@ -130,36 +130,15 @@ export function useCharacterUpdate(id: string) {
   const derived = useCharacterDerivedStats(formState)
 
   // ─── Submit guard ─────────────────────────────────────────────────────
+  // backend 尚未提供 character update endpoint；submit 永久 disable 並提示。
 
   const isSubmitting = ref(false)
+  const canSubmit = computed(() => false)
 
-  const canSubmit = computed(
-    () =>
-      !isSubmitting.value &&
-      formState.name.trim() !== '' &&
-      formState.classes.some((entry) => entry.classKey !== null),
-  )
+  const { t } = useI18n()
 
-  // ─── Submit ───────────────────────────────────────────────────────────
-
-  const logger = createLogger('[CharacterUpdate]')
-
-  async function submit(): Promise<void> {
-    if (!canSubmit.value) return
-    isSubmitting.value = true
-    try {
-      const updated = store.updateCharacter(id, formState)
-      if (!updated) {
-        useToast().error('儲存失敗，請稍後再試')
-        isSubmitting.value = false
-        return
-      }
-      await navigateTo(`/character/${id}`)
-    } catch (error) {
-      logger.error('submit failed:', error)
-      useToast().error('儲存失敗，請稍後再試')
-      isSubmitting.value = false
-    }
+  const submit = async (): Promise<void> => {
+    useToast().error(t('ui.message.editingNotAvailable'))
   }
 
   return {

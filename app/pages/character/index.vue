@@ -2,16 +2,8 @@
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <!-- Page header -->
     <CommonPageHeader title="Characters" show-back>
-      <template v-if="characterStore.characters.length > 0" #actions>
+      <template v-if="status === 'success' && characters.length > 0" #actions>
         <div class="flex flex-col items-end gap-2 xs:flex-row xs:items-center">
-          <!-- 測試用按鈕 -->
-          <Button
-            v-if="isDev"
-            bg-color="var(--color-danger)"
-            @click="characterStore.resetCharacters"
-          >
-            重設 mock 資料
-          </Button>
           <!-- 排序模式 -->
           <Select
             v-model="sortKey"
@@ -21,13 +13,13 @@
             color="var(--rd--color-text)"
             dropdown-bg="var(--rd--color-bg-elevated)"
             class="sort-select w-21 xs:w-28"
-            aria-label="排序方式"
+            :aria-label="t('character.sortBy')"
           />
           <!-- 顯示模式 -->
           <button
             type="button"
             :aria-pressed="isListMode"
-            aria-label="切換顯示模式"
+            :aria-label="t('character.toggleViewMode')"
             class="relative flex cursor-pointer items-center rounded-lg border border-border p-1"
             @click="isListMode = !isListMode"
             @keydown.enter.prevent="isListMode = !isListMode"
@@ -53,54 +45,69 @@
               <Icon name="list" :size="24" />
             </span>
           </button>
-
-          <button
-            type="button"
-            :aria-label="deleteMode ? '離開刪除模式' : '進入刪除模式'"
-            :aria-pressed="deleteMode"
-            class="size-10 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
-            @click="toggleDeleteMode"
-          >
-            <Icon name="trash" :size="24" />
-          </button>
         </div>
       </template>
     </CommonPageHeader>
 
+    <!-- Loading -->
+    <div
+      v-if="status === 'pending'"
+      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      {{ t('ui.state.loading') }}
+    </div>
+
+    <!-- Error -->
+    <div
+      v-else-if="status === 'error'"
+      class="flex min-h-[60dvh] flex-col items-center justify-center gap-3 text-center text-content-muted"
+      role="alert"
+    >
+      <p class="font-display text-2xl text-content">{{ t('character.loadFailed') }}</p>
+      <p class="text-sm">{{ t('ui.state.networkErrorHint') }}</p>
+      <button
+        type="button"
+        class="mt-2 rounded-md border border-border bg-surface px-4 py-2 text-content transition-colors hover:bg-surface-2"
+        @click="refresh()"
+      >
+        {{ t('ui.state.retry') }}
+      </button>
+    </div>
+
     <!-- Character grid -->
     <div
-      v-if="characterStore.characters.length > 0 && !isListMode"
+      v-else-if="characters.length > 0 && !isListMode"
       class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
     >
       <BusinessCharacterCard
         v-for="character in sortedCharacters"
         :key="character.id"
         :character="character"
-        :is-delete-mode="deleteMode"
-        @delete="handleDeleteRequest"
+        :is-delete-mode="false"
       />
       <NuxtLink
         to="/character/build"
         class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        aria-label="新增角色卡"
+        :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="48" />
       </NuxtLink>
     </div>
 
     <!-- Character list -->
-    <div v-else-if="characterStore.characters.length > 0 && isListMode" class="flex flex-col gap-2">
+    <div v-else-if="characters.length > 0 && isListMode" class="flex flex-col gap-2">
       <BusinessCharacterListItem
         v-for="character in sortedCharacters"
         :key="character.id"
         :character="character"
-        :is-delete-mode="deleteMode"
-        @delete="handleDeleteRequest"
+        :is-delete-mode="false"
       />
       <NuxtLink
         to="/character/build"
         class="flex min-h-19 items-center justify-center rounded-lg border border-border bg-bg-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        aria-label="新增角色卡"
+        :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="28" />
       </NuxtLink>
@@ -111,7 +118,7 @@
       v-else
       to="/character/build"
       class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-      aria-label="建立角色卡"
+      :aria-label="t('character.createCharacter')"
     >
       <!-- Background image -->
       <div class="absolute inset-0 bg-cover bg-center" aria-hidden="true" />
@@ -123,8 +130,10 @@
       <!-- Content -->
       <div class="relative z-10 px-6 py-12 text-content-muted">
         <p class="font-display text-5xl text-content-faint" aria-hidden="true">⚔</p>
-        <h2 class="mt-4 font-display text-2xl font-bold text-content">尚無角色卡</h2>
-        <p class="mt-2 text-sm">一場偉大的冒險，往往從踏出第一步開始</p>
+        <h2 class="mt-4 font-display text-2xl font-bold text-content">
+          {{ t('character.empty') }}
+        </h2>
+        <p class="mt-2 text-sm">{{ t('character.emptyAdventureHint') }}</p>
         <p
           class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
         >
@@ -132,107 +141,55 @@
         </p>
       </div>
     </NuxtLink>
-
-    <!-- Delete confirm modal -->
-    <Modal
-      v-model="showDeleteModal"
-      :title="`刪除角色卡 ${deleteTarget?.name}？`"
-      :show-close-button="false"
-      :close-on-escape="false"
-      :close-on-click-outside="false"
-      size="sm"
-      bg-color="var(--color-canvas-elevated)"
-      text-color="var(--color-content)"
-      border-color="var(--color-border)"
-    >
-      <p class="text-md text-content-muted">刪除後無法復原，確定要刪除這張角色卡嗎？</p>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <Button
-            outline
-            size="sm"
-            border-color="var(--color-border)"
-            text-color="var(--color-content)"
-            :radius="8"
-            @click="showDeleteModal = false"
-          >
-            取消
-          </Button>
-          <Button bg-color="var(--color-danger)" size="sm" :radius="8" @click="handleDeleteConfirm">
-            確認刪除
-          </Button>
-        </div>
-      </template>
-    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon, Select, Button, Modal } from '@ui'
+import { Icon, Select } from '@ui'
 import type { SelectOption } from '@ui'
 import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
-import type { Character } from '@rolling-dice-app/core'
+import type { CharacterListItem } from '~/types/business/character-list'
 
 definePageMeta({ middleware: 'auth' })
 
-useHead({ title: '角色卡' })
+const { t } = useI18n()
 
-const isDev = import.meta.dev
+useHead({ title: t('character.card') })
+
 const characterStore = useCharacterStore()
+const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
+  lazy: false,
+})
+
+const characters = computed<CharacterListItem[]>(() => characterStore.characters)
 
 const storedMode = getLocalStorage<string>(CHARACTER_VIEW_MODE_KEY)
 const isListMode = ref(storedMode === 'list')
-const deleteMode = ref(false)
-const showDeleteModal = ref(false)
-const deleteTarget = ref<{ id: string; name: string } | null>(null)
 
 watch(isListMode, (val) => {
   setLocalStorage(CHARACTER_VIEW_MODE_KEY, val ? 'list' : 'grid')
-  deleteMode.value = false
 })
-
-const toggleDeleteMode = () => {
-  deleteMode.value = !deleteMode.value
-}
-
-const handleDeleteRequest = (character: Character) => {
-  deleteTarget.value = { id: character.id, name: character.name }
-  showDeleteModal.value = true
-}
-
-const handleDeleteConfirm = () => {
-  if (deleteTarget.value) {
-    const name = deleteTarget.value.name
-    if (characterStore.removeCharacter(deleteTarget.value.id)) {
-      useToast().success(`已刪除「${name}」`)
-    } else {
-      useToast().error('刪除失敗，請稍後再試')
-    }
-  }
-  showDeleteModal.value = false
-  deleteTarget.value = null
-}
 
 // ── Sort ──────────────────────────────────────────────────────────────────────
 
 type SortKey = 'default' | 'level-asc' | 'level-desc'
 
 const SORT_OPTIONS: SelectOption[] = [
-  { value: 'default', label: '預設' },
-  { value: 'level-asc', label: '等級 ↑' },
-  { value: 'level-desc', label: '等級 ↓' },
+  { value: 'default', label: t('character.default') },
+  { value: 'level-asc', label: t('class.levelUp') },
+  { value: 'level-desc', label: t('class.levelDown') },
 ]
 
 const sortKey = ref<SortKey>('default')
 
 const sortedCharacters = computed(() => {
-  const list = [...characterStore.characters]
-  const getLevel = (c: Character) => calculateTotalLevel(c.classes)
-  const byCreated = (a: Character, b: Character) => a.createdAt.localeCompare(b.createdAt)
+  const list = [...characters.value]
+  const byUpdated = (a: CharacterListItem, b: CharacterListItem) =>
+    b.updatedAt.localeCompare(a.updatedAt)
   if (sortKey.value === 'level-asc')
-    return list.sort((a, b) => getLevel(a) - getLevel(b) || byCreated(a, b))
+    return list.sort((a, b) => a.level - b.level || byUpdated(a, b))
   if (sortKey.value === 'level-desc')
-    return list.sort((a, b) => getLevel(b) - getLevel(a) || byCreated(a, b))
-  return list.sort(byCreated)
+    return list.sort((a, b) => b.level - a.level || byUpdated(a, b))
+  return list.sort(byUpdated)
 })
 </script>

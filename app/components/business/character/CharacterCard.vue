@@ -89,15 +89,15 @@
 import { Badge, Card, Icon } from '@ui'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import type { CharacterTier } from '~/helpers/character'
-import type { Character } from '@rolling-dice-app/core'
+import type { CharacterListItem } from '~/types/business/character-list'
 
 const props = defineProps<{
-  character: Character
+  character: CharacterListItem
   isDeleteMode: boolean
 }>()
 
 defineEmits<{
-  delete: [Character]
+  delete: [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

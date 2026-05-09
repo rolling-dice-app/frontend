@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col items-center gap-4 py-16">
-    <p class="text-content-muted">{{ message }}</p>
+    <p class="text-content-muted">{{ message ?? t('ui.notFound.resource') }}</p>
     <NuxtLink
       :to="backTo"
       class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-content-inverse transition-colors hover:bg-primary-hover"
     >
-      {{ backLabel }}
+      {{ backLabel ?? t('ui.notFound.backToHome') }}
     </NuxtLink>
   </div>
 </template>
@@ -18,9 +18,11 @@ withDefaults(
     backLabel?: string
   }>(),
   {
-    message: '找不到此資源',
+    message: undefined,
     backTo: '/',
-    backLabel: '返回首頁',
+    backLabel: undefined,
   },
 )
+
+const { t } = useI18n()
 </script>

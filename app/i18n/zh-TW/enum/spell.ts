@@ -32,6 +32,7 @@ export default {
 
   // section / panel 名稱
   book: '法術書',
+  table: '法術表',
   learnedSection: '已知法術',
   favoriteSection: '常用法術',
   database: '法術資料庫',

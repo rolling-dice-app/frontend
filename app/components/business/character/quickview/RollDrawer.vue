@@ -104,7 +104,7 @@ import { rollD20, rollDice } from '~/helpers/dice'
 import {
   ABILITY_KEYS,
   type AttackEntry,
-  type Character,
+  type CharacterDTO,
   type AbilityKey,
   type ProficiencyLevel,
 } from '@rolling-dice-app/core'
@@ -112,7 +112,7 @@ import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { D20RollEntry, DamageRollEntry, DamageRollLine, RollMode } from '~/types/business/dice'
 
 const props = defineProps<{
-  character: Character
+  character: CharacterDTO
   abilityScores: TotalAbilityScores
   proficiencyBonus: number
   savingThrowProficiencies: AbilityKey[]

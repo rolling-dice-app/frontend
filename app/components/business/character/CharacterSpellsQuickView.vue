@@ -24,10 +24,10 @@
 
 <script setup lang="ts">
 import { Button } from '@ui'
-import type { Character } from '@rolling-dice-app/core'
+import type { CharacterDTO } from '@rolling-dice-app/core'
 
 defineProps<{
-  character: Character
+  character: CharacterDTO
 }>()
 
 const { pending, error, refresh } = useSpells()

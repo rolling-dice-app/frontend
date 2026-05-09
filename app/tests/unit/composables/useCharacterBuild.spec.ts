@@ -303,7 +303,7 @@ describe('useCharacterBuild — submit', () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
     const createSpy = vi.spyOn(store, 'createCharacter').mockResolvedValue(
-      // 直接回傳一個 Character-like 物件即可滿足 submit 流程
+      // 直接回傳一個 CharacterDTO-like 物件即可滿足 submit 流程
       // 實際資料形狀不影響此測試（submit 僅關心是否被呼叫並導航）
       undefined as never,
     )

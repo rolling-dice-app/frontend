@@ -5,7 +5,7 @@ import type {
   AlignmentKey,
   ArmorClassConfig,
   AttackEntry,
-  Character,
+  CharacterDTO,
   CharacterAbilityScores,
   CharacterCurrency,
   CharacterFeature,
@@ -147,11 +147,11 @@ export interface CharacterUpdateFormState extends CharacterFormStateBase {
 // ─── Store Mapper Internal ───────────────────────────────────────────────────
 
 /**
- * Character 中可由 form state 直接產生的欄位子集。
+ * CharacterDTO 中可由 form state 直接產生的欄位子集。
  * 僅供 store 邊界使用（mapper 的輸出 + action 消費），composable/page 不應 import。
  */
 export type CharacterWritablePatch = Pick<
-  Character,
+  CharacterDTO,
   | 'name'
   | 'gender'
   | 'race'

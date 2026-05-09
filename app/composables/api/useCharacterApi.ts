@@ -1,15 +1,16 @@
-import type { Character, CharacterCreateInput, CharacterSummary } from '@rolling-dice-app/core'
+import type { CharacterDTO, CharacterCreateDTO, CharacterSummaryDTO } from '@rolling-dice-app/core'
 
 export const useCharacterApi = () => {
   const apiFetch = useApiFetch()
 
-  const listCharacters = (): Promise<CharacterSummary[]> =>
-    apiFetch<CharacterSummary[]>('/characters')
+  const listCharacters = (): Promise<CharacterSummaryDTO[]> =>
+    apiFetch<CharacterSummaryDTO[]>('/characters')
 
-  const getCharacter = (id: string): Promise<Character> => apiFetch<Character>(`/characters/${id}`)
+  const getCharacter = (id: string): Promise<CharacterDTO> =>
+    apiFetch<CharacterDTO>(`/characters/${id}`)
 
-  const createCharacter = (input: CharacterCreateInput): Promise<Character> =>
-    apiFetch<Character>('/characters', { method: 'POST', body: input })
+  const createCharacter = (input: CharacterCreateDTO): Promise<CharacterDTO> =>
+    apiFetch<CharacterDTO>('/characters', { method: 'POST', body: input })
 
   return { listCharacters, getCharacter, createCharacter }
 }

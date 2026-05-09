@@ -1,11 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { SpellDto, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellDTO, SpellSchool } from '@rolling-dice-app/core'
 import { useSpells } from '~/composables/domain/useSpells'
 
 const SPELL_ID_1 = 'aaaaaaaa-0000-0000-0000-000000000001'
 const SPELL_ID_2 = 'aaaaaaaa-0000-0000-0000-000000000002'
 
-function makeDto(overrides: Partial<SpellDto> = {}): SpellDto {
+function makeDto(overrides: Partial<SpellDTO> = {}): SpellDTO {
   return {
     id: SPELL_ID_1,
     name: '火焰箭',
@@ -63,8 +63,8 @@ describe('useSpells — 正常載入', () => {
   })
 
   it('pending 在 refresh 執行中為 true，結束後為 false', async () => {
-    let resolve!: (v: SpellDto[]) => void
-    vi.stubGlobal('$fetch', vi.fn().mockReturnValue(new Promise<SpellDto[]>((r) => (resolve = r))))
+    let resolve!: (v: SpellDTO[]) => void
+    vi.stubGlobal('$fetch', vi.fn().mockReturnValue(new Promise<SpellDTO[]>((r) => (resolve = r))))
     const { pending, refresh } = useSpells()
     const refreshPromise = refresh()
     expect(pending.value).toBe(true)

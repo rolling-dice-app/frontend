@@ -4,17 +4,17 @@ import { useId } from 'vue'
 import FavoriteSpellList from '~/components/business/character/quickview/FavoriteSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import type { Character, SpellDto } from '@rolling-dice-app/core'
+import type { CharacterDTO, SpellDTO } from '@rolling-dice-app/core'
 
 const FIREBALL_ID = 'fav-spell-001'
 const FROST_RAY_ID = 'fav-spell-002'
 const CANTRIP_ID = 'fav-spell-003'
 
 function makeSpell(
-  overrides: Partial<SpellDto> & Pick<SpellDto, 'id' | 'name' | 'level'>,
-): SpellDto {
+  overrides: Partial<SpellDTO> & Pick<SpellDTO, 'id' | 'name' | 'level'>,
+): SpellDTO {
   return {
-    engName: 'Test SpellDto',
+    engName: 'Test SpellDTO',
     school: 'evocation',
     castingTime: '1 個動作',
     range: '90 英尺',
@@ -31,7 +31,7 @@ function makeSpell(
   }
 }
 
-const SPELLS: Record<string, SpellDto> = {
+const SPELLS: Record<string, SpellDTO> = {
   [FIREBALL_ID]: makeSpell({ id: FIREBALL_ID, name: '火球術', level: 3 }),
   [FROST_RAY_ID]: makeSpell({ id: FROST_RAY_ID, name: '寒冰射線', level: 1, ritual: true }),
   [CANTRIP_ID]: makeSpell({ id: CANTRIP_ID, name: '火花', level: 0 }),
@@ -48,7 +48,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function mountList(character: Character) {
+function mountList(character: CharacterDTO) {
   return mount(FavoriteSpellList, {
     props: { character },
     global: {

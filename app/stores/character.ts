@@ -1,23 +1,23 @@
 import {
   ABILITY_KEYS,
-  type Character,
+  type CharacterDTO,
   type CharacterAbilityScores,
-  type CharacterCreateInput,
-  type CharacterSummary,
+  type CharacterCreateDTO,
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import type { CharacterListItem } from '~/types/business/character-list'
 import { formStateToCharacterPatch } from '~/helpers/character'
 
 /** 可由外部 patch 的欄位（排除身分識別與建立時間） */
-export type CharacterMutablePatch = Partial<Omit<Character, 'id' | 'createdAt'>>
+export type CharacterMutablePatch = Partial<Omit<CharacterDTO, 'id' | 'createdAt'>>
 
 const NOT_SUPPORTED_MESSAGE =
   'character mutation 尚未支援 (backend update/delete endpoint not implemented)'
 
-const cloneCharacter = (c: Character): Character => JSON.parse(JSON.stringify(c)) as Character
+const cloneCharacter = (c: CharacterDTO): CharacterDTO =>
+  JSON.parse(JSON.stringify(c)) as CharacterDTO
 
-const buildCreateInput = (formState: CharacterFormState): CharacterCreateInput => {
+const buildCreateInput = (formState: CharacterFormState): CharacterCreateDTO => {
   const patch = formStateToCharacterPatch(formState)
   const abilities = Object.fromEntries(
     ABILITY_KEYS.map((key) => [
@@ -32,12 +32,7 @@ const buildCreateInput = (formState: CharacterFormState): CharacterCreateInput =
   return { ...patch, abilities }
 }
 
-const summaryToListItem = (summary: CharacterSummary): CharacterListItem => ({
-  ...summary,
-  race: null,
-})
-
-const characterToListItem = (character: Character): CharacterListItem => ({
+const characterToListItem = (character: CharacterDTO): CharacterListItem => ({
   id: character.id,
   name: character.name,
   classes: character.classes,
@@ -49,7 +44,7 @@ const characterToListItem = (character: Character): CharacterListItem => ({
 
 export const useCharacterStore = defineStore('character', () => {
   const list = ref<CharacterListItem[]>([])
-  const detailCache = ref(new Map<string, Character>())
+  const detailCache = ref(new Map<string, CharacterDTO>())
 
   const listLoading = ref(false)
   const listError = ref<unknown>(null)
@@ -63,8 +58,7 @@ export const useCharacterStore = defineStore('character', () => {
     listLoading.value = true
     listError.value = null
     try {
-      const summaries = await useCharacterApi().listCharacters()
-      list.value = summaries.map(summaryToListItem)
+      list.value = await useCharacterApi().listCharacters()
     } catch (error) {
       listError.value = error
       throw error
@@ -73,7 +67,7 @@ export const useCharacterStore = defineStore('character', () => {
     }
   }
 
-  const loadDetail = async (id: string): Promise<Character> => {
+  const loadDetail = async (id: string): Promise<CharacterDTO> => {
     detailLoading.value = true
     detailError.value = null
     try {
@@ -88,7 +82,7 @@ export const useCharacterStore = defineStore('character', () => {
     }
   }
 
-  const createCharacter = async (formState: CharacterFormState): Promise<Character> => {
+  const createCharacter = async (formState: CharacterFormState): Promise<CharacterDTO> => {
     const input = buildCreateInput(formState)
     const created = await useCharacterApi().createCharacter(input)
     detailCache.value.set(created.id, created)
@@ -96,7 +90,7 @@ export const useCharacterStore = defineStore('character', () => {
     return cloneCharacter(created)
   }
 
-  const getById = (id: string): Character | undefined => {
+  const getById = (id: string): CharacterDTO | undefined => {
     const cached = detailCache.value.get(id)
     return cached ? cloneCharacter(cached) : undefined
   }

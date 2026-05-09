@@ -39,10 +39,10 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { Character, SpellDto } from '@rolling-dice-app/core'
+import type { CharacterDTO, SpellDTO } from '@rolling-dice-app/core'
 
 const props = defineProps<{
-  character: Character
+  character: CharacterDTO
 }>()
 
 defineEmits<{
@@ -54,7 +54,7 @@ const { getSpell } = useSpells()
 const headingId = useId()
 
 const groupedSpells = computed(() => {
-  const spells: SpellDto[] = []
+  const spells: SpellDTO[] = []
   for (const entry of props.character.spells) {
     if (!entry.isFavorite) continue
     const spell = getSpell(entry.id)

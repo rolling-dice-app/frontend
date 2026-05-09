@@ -3,7 +3,7 @@ import { CLASS_CONFIG } from '~/constants/dnd'
 import { getCombatStateStorageKey } from '~/constants/storage'
 import { calculateTotalLevel } from '~/helpers/character'
 import type {
-  CombatState,
+  CombatStateDTO,
   ClassEntry,
   SpellLevel,
   AbilityKey,
@@ -12,7 +12,7 @@ import type {
 
 const PERSIST_DEBOUNCE_MS = 300
 
-function createDefaultState(characterId: string): CombatState {
+function createDefaultState(characterId: string): CombatStateDTO {
   return {
     characterId,
     hp: { current: null, tempHp: 0, maxAdjustment: 0 },
@@ -32,7 +32,7 @@ function clampDeathSaveCount(value: number | undefined): number {
   return Math.min(3, Math.max(0, Math.floor(value ?? 0)))
 }
 
-function normalizeState(stored: Partial<CombatState>, characterId: string): CombatState {
+function normalizeState(stored: Partial<CombatStateDTO>, characterId: string): CombatStateDTO {
   const fallback = createDefaultState(characterId)
   return {
     characterId,
@@ -105,13 +105,13 @@ function recoverHitDice(
 
 /**
  * 角色速查使用的戰況追蹤狀態：HP / 臨時生命 / AC・速度・豁免的臨時調整。
- * 以獨立 localStorage key 儲存，重整後可還原；與 Character 主資料完全隔離。
+ * 以獨立 localStorage key 儲存，重整後可還原；與 CharacterDTO 主資料完全隔離。
  */
 export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<number>) {
   const { t } = useI18n()
   const storageKey = getCombatStateStorageKey(characterId)
-  const stored = getLocalStorage<CombatState>(storageKey)
-  const state = reactive<CombatState>(
+  const stored = getLocalStorage<CombatStateDTO>(storageKey)
+  const state = reactive<CombatStateDTO>(
     stored ? normalizeState(stored, characterId) : createDefaultState(characterId),
   )
 
@@ -369,7 +369,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   // ─── Persist ──────────────────────────────────────────────────────────
 
   let hasNotifiedFailure = false
-  const persist = debounce((snapshot: CombatState) => {
+  const persist = debounce((snapshot: CombatStateDTO) => {
     if (setLocalStorage(storageKey, snapshot)) {
       hasNotifiedFailure = false
     } else if (!hasNotifiedFailure) {
@@ -380,7 +380,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   watch(
     () => state,
-    (current) => persist(JSON.parse(JSON.stringify(current)) as CombatState),
+    (current) => persist(JSON.parse(JSON.stringify(current)) as CombatStateDTO),
     { deep: true },
   )
 

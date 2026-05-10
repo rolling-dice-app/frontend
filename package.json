@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.11.3",
-    "@rolling-dice-app/core": "^4.0.0",
+    "@rolling-dice-app/core": "^6.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
@@ -38,6 +38,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
     "@nuxt/fonts": "^0.14.0",
+    "@nuxt/image": "^2.0.0",
     "@nuxt/test-utils": "3.23.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^25.5.2",

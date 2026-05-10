@@ -1,15 +1,23 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { UserDTO } from '@rolling-dice-app/core'
+import type { MeResponseDTO, PlanLimits, User } from '@rolling-dice-app/core'
 import { useAuthStore } from '~/stores/auth'
 
-const sampleUser: UserDTO = {
+const sampleUser: User = {
   id: 'u-1',
   email: 'alice@example.com',
   displayName: 'Alice',
   avatarUrl: null,
   createdAt: '2026-01-01T00:00:00Z',
 }
+
+const sampleLimits: PlanLimits = {
+  maxCharacters: 20,
+  maxActiveCharacters: 10,
+  maxCampaignRecordsPerCharacter: 100,
+}
+
+const sampleMe: MeResponseDTO = { user: sampleUser, limits: sampleLimits }
 
 // FetchError-like：避免在 test 直接 import ofetch（transitive dep，vitest 解不到）
 const fetchErrorWith = (status: number) =>
@@ -55,8 +63,8 @@ describe('useAuthStore — 初始狀態', () => {
 })
 
 describe('useAuthStore — refresh()', () => {
-  it('200 → UserDTO 寫入 user，isLoggedIn 變 true', async () => {
-    const apiFetch = vi.fn().mockResolvedValue(sampleUser)
+  it('200 → MeResponseDTO 解出 user / limits 寫入，isLoggedIn 變 true', async () => {
+    const apiFetch = vi.fn().mockResolvedValue(sampleMe)
     vi.stubGlobal('useApiFetch', () => apiFetch)
 
     const store = useAuthStore()
@@ -64,6 +72,7 @@ describe('useAuthStore — refresh()', () => {
 
     expect(apiFetch).toHaveBeenCalledWith('/auth/me')
     expect(store.user).toEqual(sampleUser)
+    expect(store.limits).toEqual(sampleLimits)
     expect(store.isLoggedIn).toBe(true)
   })
 
@@ -110,15 +119,17 @@ describe('useAuthStore — login()', () => {
 })
 
 describe('useAuthStore — logout()', () => {
-  it('POST /auth/logout 並把 user 清為 null', async () => {
+  it('POST /auth/logout 並把 user / limits 清為 null', async () => {
     const apiFetch = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('useApiFetch', () => apiFetch)
 
     const store = useAuthStore()
     store.user = sampleUser
+    store.limits = sampleLimits
     await store.logout()
 
     expect(apiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' })
     expect(store.user).toBe(null)
+    expect(store.limits).toBe(null)
   })
 })

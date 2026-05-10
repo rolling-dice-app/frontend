@@ -99,10 +99,11 @@
 
 <script setup lang="ts">
 import { Drawer, Icon } from '@ui'
-import { ABILITY_NAMES, SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
+import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import { rollD20, rollDice } from '~/helpers/dice'
 import {
   ABILITY_KEYS,
+  SKILL_KEYS,
   type AttackEntry,
   type CharacterDTO,
   type AbilityKey,
@@ -136,7 +137,7 @@ const proficiencySet = computed(() => new Set(props.savingThrowProficiencies))
 const abilityRows = computed(() =>
   ABILITY_KEYS.map((key) => ({
     key,
-    label: ABILITY_NAMES[key],
+    label: t(`ability.${key}`),
     modifier: getAbilityModifier(props.abilityScores[key]),
   })),
 )
@@ -148,7 +149,7 @@ const savingThrowRows = computed(() =>
     const adjustment = props.savingThrowAdjustments[key] ?? 0
     return {
       key,
-      label: ABILITY_NAMES[key],
+      label: t(`ability.${key}`),
       modifier: base + adjustment,
     }
   }),
@@ -156,16 +157,14 @@ const savingThrowRows = computed(() =>
 
 const skillRows = computed(() => {
   const jackBonus = props.character.isJackOfAllTrades ? Math.floor(props.proficiencyBonus / 2) : 0
-  return (Object.entries(SKILL_NAMES) as [keyof typeof SKILL_NAMES, string][]).map(
-    ([key, name]) => {
-      const abilityKey = SKILL_TO_ABILITY_MAP[key]
-      const mod = getAbilityModifier(props.abilityScores[abilityKey])
-      const proficiency: ProficiencyLevel = props.character.skills[key] ?? 'none'
-      const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
-      const modifier = proficiency === 'none' ? base + jackBonus : base
-      return { key, label: name, modifier }
-    },
-  )
+  return SKILL_KEYS.map((key) => {
+    const abilityKey = SKILL_TO_ABILITY_MAP[key]
+    const mod = getAbilityModifier(props.abilityScores[abilityKey])
+    const proficiency: ProficiencyLevel = props.character.skills[key] ?? 'none'
+    const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
+    const modifier = proficiency === 'none' ? base + jackBonus : base
+    return { key, label: t(`skill.${key}`), modifier }
+  })
 })
 
 const handleD20Roll = (

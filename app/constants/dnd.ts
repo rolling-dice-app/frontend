@@ -2,12 +2,10 @@ import {
   CLASS_HIT_DICE,
   CLASS_SAVING_THROW_PROFICIENCIES,
   type AbilityKey,
-  type AlignmentKey,
   type ArmorType,
   type DamageDieType,
   type DamageTypeKey,
   type DieType,
-  type GenderKey,
   type ClassKey,
   type ProficiencyLevel,
   type SizeKey,
@@ -17,81 +15,24 @@ import {
 
 // ─── Class ────────────────────────────────────────────────────────────────────
 
-/** 職業靜態設定：label 由 frontend 擁有，hitDie / savingThrowProficiencies 由 core 提供 */
+/** 職業靜態規則：hitDie / savingThrowProficiencies 由 core 提供，label 由 i18n 持有 */
 export interface ClassData {
-  label: string
   hitDie: DieType
   savingThrowProficiencies: readonly AbilityKey[]
 }
 
-export const CLASS_LABELS: Readonly<Record<ClassKey, string>> = {
-  artificer: '奇械師',
-  barbarian: '野蠻人',
-  bard: '吟遊詩人',
-  cleric: '牧師',
-  druid: '德魯伊',
-  fighter: '戰士',
-  monk: '武僧',
-  paladin: '聖武士',
-  ranger: '遊俠',
-  rogue: '遊蕩者',
-  sorcerer: '術士',
-  warlock: '契術師',
-  wizard: '法師',
-}
-
-/** 各職業靜態設定（D&D 5e PHB 標準） */
+/** 各職業靜態規則設定（D&D 5e PHB 標準） */
 export const CLASS_CONFIG: Readonly<Record<ClassKey, ClassData>> = Object.freeze(
   Object.fromEntries(
-    (Object.keys(CLASS_LABELS) as ClassKey[]).map((key) => [
+    (Object.keys(CLASS_HIT_DICE) as ClassKey[]).map((key) => [
       key,
       {
-        label: CLASS_LABELS[key],
         hitDie: CLASS_HIT_DICE[key],
         savingThrowProficiencies: CLASS_SAVING_THROW_PROFICIENCIES[key],
       },
     ]),
   ) as Record<ClassKey, ClassData>,
 )
-
-// ─── Ability ──────────────────────────────────────────────────────────────────
-
-export const ABILITY_NAMES: Readonly<Record<AbilityKey, string>> = {
-  strength: '力量',
-  dexterity: '敏捷',
-  constitution: '體質',
-  intelligence: '智力',
-  wisdom: '感知',
-  charisma: '魅力',
-}
-
-// ─── Skill ────────────────────────────────────────────────────────────────────
-
-export const SKILL_NAMES: Readonly<Record<SkillKey, string>> = {
-  // 力量
-  athletics: '運動',
-  // 敏捷
-  acrobatics: '特技',
-  sleightOfHand: '巧手',
-  stealth: '隱匿',
-  // 智力
-  arcana: '奧秘',
-  history: '歷史',
-  investigation: '調查',
-  nature: '自然',
-  religion: '宗教',
-  // 感知
-  animalHandling: '馴獸',
-  insight: '洞察',
-  medicine: '醫藥',
-  perception: '察覺',
-  survival: '求生',
-  // 魅力
-  deception: '欺瞞',
-  intimidation: '威嚇',
-  performance: '表演',
-  persuasion: '說服',
-}
 
 // ─── Skill-Ability Mapping ────────────────────────────────────────────────────
 
@@ -117,54 +58,6 @@ export const SKILL_TO_ABILITY_MAP: Readonly<Record<SkillKey, AbilityKey>> = {
   persuasion: 'charisma',
 }
 
-// ─── Alignment ────────────────────────────────────────────────────────────────
-
-export const ALIGNMENT_NAMES: Readonly<Record<AlignmentKey, string>> = {
-  lawfulGood: '守序善良',
-  neutralGood: '中立善良',
-  chaoticGood: '混亂善良',
-  lawfulNeutral: '守序中立',
-  trueNeutral: '絕對中立',
-  chaoticNeutral: '混亂中立',
-  lawfulEvil: '守序邪惡',
-  neutralEvil: '中立邪惡',
-  chaoticEvil: '混亂邪惡',
-}
-
-// ─── Size ─────────────────────────────────────────────────────────────────────
-
-/** 體型中文名稱對照表 */
-export const SIZE_NAMES: Readonly<Record<SizeKey, string>> = {
-  tiny: '微型',
-  small: '小型',
-  medium: '中型',
-  large: '大型',
-  huge: '超大型',
-  gargantuan: '巨型',
-}
-
-// ─── Gender ───────────────────────────────────────────────────────────────────
-
-/** 性別中文名稱對照表 */
-export const GENDER_NAMES: Readonly<Record<GenderKey, string>> = {
-  male: '男性',
-  female: '女性',
-  nonBinary: '非二元',
-}
-// ─── Spell School ─────────────────────────────────────────────────────────────
-
-/** 法術學派中文顯示名稱 */
-export const SPELL_SCHOOL_LABELS: Readonly<Record<SpellSchool, string>> = {
-  abjuration: '防護',
-  conjuration: '咒法',
-  divination: '預言',
-  enchantment: '惑控',
-  evocation: '塑能',
-  illusion: '幻術',
-  necromancy: '死靈',
-  transmutation: '變化',
-}
-
 // ─── Damage Dice ──────────────────────────────────────────────────────────────
 
 /** 傷害骰面數，用於攻擊模組的傷害計算 */
@@ -187,33 +80,6 @@ export const DAMAGE_TYPE_KEYS = [
   'radiant',
   'psychic',
 ] as const satisfies readonly DamageTypeKey[]
-
-/** 傷害類型顯示文字 */
-export const DAMAGE_TYPE_LABELS: Readonly<Record<DamageTypeKey, string>> = {
-  bludgeoning: '鈍擊',
-  piercing: '穿刺',
-  slashing: '劈砍',
-  acid: '酸蝕',
-  cold: '寒冰',
-  fire: '火焰',
-  lightning: '閃電',
-  thunder: '雷鳴',
-  poison: '毒素',
-  force: '力場',
-  necrotic: '暗蝕',
-  radiant: '光耀',
-  psychic: '心靈',
-}
-
-// ─── Armor Type ─────────────────────────────────────────────────────────────────
-
-/** 護甲類型中文名稱對照表 */
-export const ARMOR_TYPE_NAMES: Readonly<Record<ArmorType, string>> = {
-  none: '無甲',
-  light: '輕甲',
-  medium: '中甲',
-  heavy: '重甲',
-}
 
 // ─── Point Buy ────────────────────────────────────────────────────────────────
 
@@ -274,12 +140,31 @@ export const UNASSIGNED_ABILITY_SCORE = 8
 // CLASS_KEYS / ALIGNMENT_KEYS）由 `@rolling-dice-app/core` 提供，請直接從 core import。
 
 /** 所有 ArmorType，用於迭代 */
-export const ARMOR_TYPES: readonly ArmorType[] = Object.keys(ARMOR_TYPE_NAMES) as ArmorType[]
+export const ARMOR_TYPES = [
+  'none',
+  'light',
+  'medium',
+  'heavy',
+] as const satisfies readonly ArmorType[]
 
 /** 所有 SizeKey，用於迭代 */
-export const SIZE_KEYS: readonly SizeKey[] = Object.keys(SIZE_NAMES) as SizeKey[]
+export const SIZE_KEYS = [
+  'tiny',
+  'small',
+  'medium',
+  'large',
+  'huge',
+  'gargantuan',
+] as const satisfies readonly SizeKey[]
 
 /** 所有 SpellSchool，用於迭代 */
-export const SPELL_SCHOOLS: readonly SpellSchool[] = Object.keys(
-  SPELL_SCHOOL_LABELS,
-) as SpellSchool[]
+export const SPELL_SCHOOLS = [
+  'abjuration',
+  'conjuration',
+  'divination',
+  'enchantment',
+  'evocation',
+  'illusion',
+  'necromancy',
+  'transmutation',
+] as const satisfies readonly SpellSchool[]

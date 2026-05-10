@@ -265,12 +265,8 @@ import type {
   CharacterUpdateFormState,
   TotalAbilityScores,
 } from '~/types/business/character-form'
-import {
-  ABILITY_NAMES,
-  DAMAGE_DIE_TYPES,
-  DAMAGE_TYPE_KEYS,
-  DAMAGE_TYPE_LABELS,
-} from '~/constants/dnd'
+import { DAMAGE_DIE_TYPES, DAMAGE_TYPE_KEYS } from '~/constants/dnd'
+import { ABILITY_KEYS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -285,7 +281,7 @@ const { addAttack, removeAttack, updateAttack } = useCharacterAttacksForm(formSt
 
 const abilityOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },
-  ...Object.entries(ABILITY_NAMES).map(([value, label]) => ({ value, label })),
+  ...ABILITY_KEYS.map((key) => ({ value: key, label: t(`ability.${key}`) })),
 ])
 
 const dieTypeOptions = computed<SelectOption[]>(() => [
@@ -295,7 +291,7 @@ const dieTypeOptions = computed<SelectOption[]>(() => [
 
 const damageTypeOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },
-  ...DAMAGE_TYPE_KEYS.map((key) => ({ value: key, label: DAMAGE_TYPE_LABELS[key] })),
+  ...DAMAGE_TYPE_KEYS.map((key) => ({ value: key, label: t(`combat.damageType.${key}`) })),
 ])
 
 const COMMENT_MAX_LENGTH = 100

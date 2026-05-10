@@ -67,7 +67,6 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { ABILITY_NAMES } from '~/constants/dnd'
 import { getSpellSaveDc } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
@@ -98,7 +97,7 @@ const rows = computed(() =>
     const adjustment = props.adjustments[key] ?? 0
     return {
       key,
-      name: ABILITY_NAMES[key],
+      name: t(`ability.${key}`),
       score,
       proficient,
       bonus: base + adjustment,
@@ -110,7 +109,7 @@ const rows = computed(() =>
 const spellSaveRows = computed(() =>
   props.spellcastingAbilities.map((key) => ({
     key,
-    name: ABILITY_NAMES[key],
+    name: t(`ability.${key}`),
     dc: getSpellSaveDc({
       abilityModifier: getAbilityModifier(props.abilityScores[key]),
       proficiencyBonus: props.proficiencyBonus,

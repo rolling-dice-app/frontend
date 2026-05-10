@@ -173,7 +173,7 @@
                     </div>
                   </div>
                   <p class="mt-0.5 truncate text-xs text-content-muted">
-                    {{ SPELL_SCHOOL_LABELS[spell.school] }}
+                    {{ t(`spell.school.${spell.school}`) }}
                     <span class="mx-1">·</span>
                     {{ spell.castingTime }}
                     <span class="mx-1">·</span>
@@ -218,7 +218,6 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
-import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
 import {
   SPELL_LEVEL_OPTIONS,
   SPELL_CLASS_OPTIONS,

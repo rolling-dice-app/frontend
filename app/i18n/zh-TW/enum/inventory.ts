@@ -1,10 +1,17 @@
-import { ARMOR_TYPE_NAMES } from '~/constants/dnd'
+import type { ArmorType } from '@rolling-dice-app/core'
 import { ITEM_TYPE_LABELS } from '~/constants/inventory'
+
+const armorType: Readonly<Record<ArmorType, string>> = {
+  none: '無甲',
+  light: '輕甲',
+  medium: '中甲',
+  heavy: '重甲',
+}
 
 /** 庫存相關 enum + 物品 / 同調 / 金幣 / 重量 用詞 */
 export default {
   // T1 enum
-  armorType: ARMOR_TYPE_NAMES,
+  armorType,
   itemType: ITEM_TYPE_LABELS,
 
   // 物品

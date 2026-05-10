@@ -35,7 +35,6 @@
 
 <script setup lang="ts">
 import { Checkbox } from '@ui'
-import { ABILITY_NAMES } from '~/constants/dnd'
 import { calculateSavingThrowProficiencies } from '~/helpers/character'
 import { ABILITY_KEYS, type ClassEntry, type AbilityKey } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
@@ -59,7 +58,7 @@ const rows = computed(() =>
     const proficient = locked || extrasSet.value.has(key)
     const modifier = getAbilityModifier(props.abilityScores[key])
     const bonus = getSavingThrowBonus(modifier, proficient, props.proficiencyBonus)
-    return { key, name: ABILITY_NAMES[key], locked, proficient, bonus }
+    return { key, name: t(`ability.${key}`), locked, proficient, bonus }
   }),
 )
 

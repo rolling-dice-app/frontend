@@ -19,7 +19,7 @@
       >
         <div class="flex min-w-0 flex-wrap items-center gap-1.5">
           <span class="text-sm font-semibold text-content">
-            {{ CLASS_CONFIG[entry.classKey].label }}
+            {{ t(`class.label.${entry.classKey}`) }}
           </span>
           <Badge size="sm" bg-color="var(--color-surface-2)">
             d{{ CLASS_CONFIG[entry.classKey].hitDie }}
@@ -30,7 +30,7 @@
           <span
             role="button"
             :tabindex="canDecrement(entry) ? 0 : -1"
-            :aria-label="`${CLASS_CONFIG[entry.classKey].label} ${t('class.hitDie')} -1`"
+            :aria-label="`${t(`class.label.${entry.classKey}`)} ${t('class.hitDie')} -1`"
             :aria-disabled="!canDecrement(entry)"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onDecrement(entry)"
@@ -46,7 +46,7 @@
           <span
             role="button"
             :tabindex="canIncrement(entry) ? 0 : -1"
-            :aria-label="`${CLASS_CONFIG[entry.classKey].label} ${t('class.hitDie')} +1`"
+            :aria-label="`${t(`class.label.${entry.classKey}`)} ${t('class.hitDie')} +1`"
             :aria-disabled="!canIncrement(entry)"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
             @click="onIncrement(entry)"

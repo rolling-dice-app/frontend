@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
+import { SPELL_SCHOOLS } from '~/constants/dnd'
+import { useI18n } from '~/i18n'
 import {
   formatSpellComponents,
   formatSpellLevel,
@@ -47,7 +48,7 @@ describe('validateSpell', () => {
   })
 
   it('所有合法學派 key 皆通過驗證', () => {
-    for (const key of Object.keys(SPELL_SCHOOL_LABELS)) {
+    for (const key of SPELL_SCHOOLS) {
       const result = validateSpell(makeDto({ school: key as SpellSchool }))
       expect(result).not.toBeNull()
       expect(result!.school).toBe(key)
@@ -76,9 +77,10 @@ describe('validateSpell', () => {
 
 // ─── CN_TO_SCHOOL reverse map ─────────────────────────────────────────────────
 
-describe('SPELL_SCHOOL_LABELS reverse map', () => {
+describe('spell.school i18n labels reverse map', () => {
   it('所有 label 互不相同（reverse map 大小等於原 map）', () => {
-    const labels = Object.values(SPELL_SCHOOL_LABELS)
+    const { messages } = useI18n()
+    const labels = Object.values(messages.value.spell.school)
     const unique = new Set(labels)
     expect(unique.size).toBe(labels.length)
   })

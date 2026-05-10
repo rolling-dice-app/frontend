@@ -1,6 +1,7 @@
 import type { SelectOption } from '@ui'
 import { CLASS_KEYS, type SourceKey } from '@rolling-dice-app/core'
-import { CLASS_CONFIG, SPELL_SCHOOLS, SPELL_SCHOOL_LABELS } from './dnd'
+import { t } from '~/i18n'
+import { SPELL_SCHOOLS } from './dnd'
 
 /** 環數下拉選項：戲法(0) ~ 9 環 */
 export const SPELL_LEVEL_OPTIONS: readonly SelectOption[] = [
@@ -11,13 +12,13 @@ export const SPELL_LEVEL_OPTIONS: readonly SelectOption[] = [
 /** 學派下拉選項：八大學派 */
 export const SPELL_SCHOOL_OPTIONS: readonly SelectOption[] = SPELL_SCHOOLS.map((key) => ({
   value: key,
-  label: SPELL_SCHOOL_LABELS[key],
+  label: t(`spell.school.${key}`),
 }))
 
-/** 職業下拉選項：以 CLASS_CONFIG 中文 label 顯示 */
+/** 職業下拉選項：以中文 label 顯示 */
 export const SPELL_CLASS_OPTIONS: readonly SelectOption[] = CLASS_KEYS.map((key) => ({
   value: key,
-  label: CLASS_CONFIG[key].label,
+  label: t(`class.label.${key}`),
 }))
 
 /** 法術資源（sourcebook）順序 */

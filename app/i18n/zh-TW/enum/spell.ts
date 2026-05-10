@@ -1,9 +1,20 @@
-import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
+import type { SpellSchool } from '@rolling-dice-app/core'
+
+const school: Readonly<Record<SpellSchool, string>> = {
+  abjuration: '防護',
+  conjuration: '咒法',
+  divination: '預言',
+  enchantment: '惑控',
+  evocation: '塑能',
+  illusion: '幻術',
+  necromancy: '死靈',
+  transmutation: '變化',
+}
 
 /** 法術相關用詞：學派 enum + 環位 / metadata / flag / panel / 互動 / filter */
 export default {
   /** T1：學派 enum key → 中文 label */
-  school: SPELL_SCHOOL_LABELS,
+  school,
 
   // 環位 / 級別（拼接用，例：`${level} ${t('spell.level')}` → "1 環"）
   level: '環',

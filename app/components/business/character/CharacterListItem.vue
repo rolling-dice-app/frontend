@@ -46,7 +46,7 @@
         <!-- Right: classKey + level badge -->
         <div class="ml-auto flex shrink-0 items-center gap-2">
           <span class="text-xs text-content-muted md:text-sm">
-            {{ character.classes.map((p) => CLASS_CONFIG[p.classKey].label).join(' / ') }}
+            {{ character.classes.map((p) => t(`class.label.${p.classKey}`)).join(' / ') }}
           </span>
           <div
             class="rounded-full px-2.5 py-0.5 text-xs font-bold md:px-3 md:text-sm"
@@ -74,7 +74,6 @@
 
 <script setup lang="ts">
 import { Badge, Icon } from '@ui'
-import { CLASS_CONFIG } from '~/constants/dnd'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 

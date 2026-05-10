@@ -28,7 +28,7 @@
         class="flex items-center justify-between gap-1 py-1"
       >
         <label :for="`ability-${key}`" class="w-20 text-xs text-content truncate">
-          {{ ABILITY_NAMES[key] }}（{{
+          {{ t(`ability.${key}`) }}（{{
             formatModifier(getAbilityModifier(getTotalScore(formState.abilities[key])))
           }}）
         </label>
@@ -85,7 +85,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { ABILITY_HARD_MAX, ABILITY_NAMES } from '~/constants/dnd'
+import { ABILITY_HARD_MAX } from '~/constants/dnd'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 

@@ -16,7 +16,10 @@ export default defineNuxtConfig({
     '/**': {
       isr: false,
       swr: false,
-      headers: { 'cache-control': 'private, no-store' },
+      headers: {
+        'cache-control': 'private, no-store',
+        'cdn-cache-control': 'no-store',
+      },
     },
   },
 

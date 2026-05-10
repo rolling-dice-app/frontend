@@ -113,6 +113,7 @@ export function createMockFormState(
     tools: null,
     weaponProficiencies: null,
     armorProficiencies: null,
+    avatar: null,
     ...overrides,
   }
 }
@@ -151,6 +152,7 @@ export function createMockUpdateFormState(
     tools: null,
     weaponProficiencies: null,
     armorProficiencies: null,
+    avatar: null,
     customHpBonus: 0,
     speedBonus: 0,
     initiativeBonus: 0,

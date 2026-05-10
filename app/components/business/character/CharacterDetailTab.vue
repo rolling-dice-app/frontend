@@ -154,8 +154,26 @@
           </table>
         </div>
       </div>
-      <!-- TODO: 頭像 / 角色圖像區塊，待實作 -->
-      <div class="sm:w-1/4 md:w-1/3 border border-primary h-100 w-full"></div>
+      <div class="sm:w-1/4 md:w-1/3 w-full">
+        <div
+          class="aspect-[3/4] w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
+        >
+          <img
+            v-if="character.avatar"
+            :src="character.avatar"
+            :alt="`${t('character.portrait.label')} ${character.name}`"
+            class="h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div
+            v-else
+            class="h-full w-full flex flex-col items-center justify-center gap-1 px-3 text-center text-xs text-content-muted"
+            :aria-label="t('character.portrait.placeholderEmpty')"
+          >
+            <span>{{ t('character.portrait.placeholderEmpty') }}</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="flex flex-col sm:flex-row gap-4">

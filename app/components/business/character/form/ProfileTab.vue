@@ -88,12 +88,8 @@
         </div>
       </div>
     </div>
-    <!-- TODO: F2-M2 角色頭像上傳尚未實作 -->
-    <div
-      class="w-full flex flex-col items-center justify-center border border-primary rounded-md md:w-1/3 px-1 gap-2"
-    >
-      <img src="~/assets/images/imbad.png" alt="" loading="lazy" aria-hidden="true" />
-      <span class="text-xs text-content-muted">{{ t('character.avatarComingSoon') }}</span>
+    <div class="w-full md:w-1/3">
+      <BusinessCharacterFormPortraitUploader v-model="formState.avatar" />
     </div>
   </div>
 </template>

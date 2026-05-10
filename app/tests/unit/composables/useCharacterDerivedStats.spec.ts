@@ -37,6 +37,7 @@ function createFormState(
     tools: null,
     weaponProficiencies: null,
     armorProficiencies: null,
+    avatar: null,
     armorClass: { type: 'none', value: 10, abilityKey: null, shieldValue: 0 },
     speedBonus: 0,
     initiativeBonus: 0,

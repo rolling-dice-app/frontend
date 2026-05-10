@@ -50,7 +50,7 @@ export default defineNuxtConfig({
     ],
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', 'vue-advanced-cropper/dist/style.css'],
 
   alias: {
     '@ui': fileURLToPath(new URL('./packages/ui/dist/index.d.ts', import.meta.url)),

@@ -14,7 +14,7 @@
     >
       <!-- Cover: classKey image -->
       <template #cover>
-        <div class="relative h-52 overflow-hidden">
+        <div class="relative h-64 overflow-hidden">
           <img
             :src="coverSrc"
             alt=""

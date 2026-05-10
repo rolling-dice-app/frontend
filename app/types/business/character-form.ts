@@ -94,6 +94,7 @@ export interface CharacterFormStateBase {
   tools: string | null
   weaponProficiencies: string | null
   armorProficiencies: string | null
+  avatar: string | null
 }
 
 /** 建立角色表單的 draft 狀態 */
@@ -172,4 +173,5 @@ export type CharacterWritablePatch = Pick<
   | 'tools'
   | 'weaponProficiencies'
   | 'armorProficiencies'
+  | 'avatar'
 >

@@ -148,6 +148,21 @@ describe('character store — createCharacter', () => {
     expect(store.list).toHaveLength(1)
     expect(store.list[0]).toMatchObject({ id: 'created-1', name: '新建' })
   })
+
+  it('avatar URL 透過 createInput 帶到 API；列表項保留 avatar', async () => {
+    const url = 'https://avatars.example.com/u1/p.webp'
+    const created = createMockCharacter({ id: 'created-2', name: '帶圖', avatar: url })
+    mockCreateCharacter.mockResolvedValue(created)
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const formState = createMockFormState({ name: '帶圖', avatar: url })
+    await store.createCharacter(formState)
+
+    const input = mockCreateCharacter.mock.calls[0]![0] as Record<string, unknown>
+    expect(input.avatar).toBe(url)
+    expect(store.list[0]?.avatar).toBe(url)
+  })
 })
 
 describe('character store — 未支援的 mutation', () => {

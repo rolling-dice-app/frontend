@@ -28,7 +28,7 @@
         <CommonAppSelect
           class="min-w-18 flex-1"
           :model-value="formState.skills[item.key] ?? 'none'"
-          :options="PROFICIENCY_OPTIONS"
+          :options="proficiencyOptions"
           size="sm"
           @update:model-value="
             formState.skills = applySkillProficiency(
@@ -45,11 +45,12 @@
 
 <script setup lang="ts">
 import { Toggle } from '@ui'
-import { PROFICIENCY_OPTIONS, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
+import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 import { SKILL_KEYS, type ProficiencyLevel } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
+const { options: proficiencyOptions } = useProficiencyOptions()
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 

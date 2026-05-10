@@ -1,12 +1,3 @@
-import type { ItemType } from '@rolling-dice-app/core'
-
-export const ITEM_TYPE_LABELS: Readonly<Record<ItemType, string>> = {
-  weapon: '武器',
-  armor: '護甲',
-  consumable: '消耗品',
-  other: '其他',
-}
-
 /** 最大負重（磅）= STR score × CARRY_WEIGHT_PER_STR */
 export const CARRY_WEIGHT_PER_STR = 15
 

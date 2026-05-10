@@ -7,7 +7,6 @@ import {
   type DamageTypeKey,
   type DieType,
   type ClassKey,
-  type ProficiencyLevel,
   type SizeKey,
   type SkillKey,
   type SpellSchool,
@@ -114,18 +113,6 @@ export const CUSTOM_ABILITY_MAX = 20
 
 /** 屬性總值理論硬上限（D&D 5e：含魔法物品/稀有來源後的絕對上限） */
 export const ABILITY_HARD_MAX = 30
-
-// ─── Proficiency ──────────────────────────────────────────────────────────────
-
-/** 技能熟練度下拉選單選項 */
-export const PROFICIENCY_OPTIONS: ReadonlyArray<{
-  value: ProficiencyLevel
-  label: string
-}> = [
-  { value: 'none', label: '無' },
-  { value: 'proficient', label: '熟練' },
-  { value: 'expertise', label: '專精' },
-]
 
 // ─── Ability Defaults ─────────────────────────────────────────────────────────
 

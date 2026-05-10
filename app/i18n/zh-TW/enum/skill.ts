@@ -1,4 +1,4 @@
-import type { SkillKey } from '@rolling-dice-app/core'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 const labels: Readonly<Record<SkillKey, string>> = {
   // 力量
@@ -26,4 +26,13 @@ const labels: Readonly<Record<SkillKey, string>> = {
   persuasion: '說服',
 }
 
-export default labels
+const proficiency: Readonly<Record<ProficiencyLevel, string>> = {
+  none: '無',
+  proficient: '熟練',
+  expertise: '專精',
+}
+
+export default {
+  ...labels,
+  proficiency,
+}

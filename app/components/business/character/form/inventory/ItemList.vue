@@ -54,7 +54,7 @@
             bg-color="var(--color-surface-3)"
             class="shrink-0 hidden! xs:inline-flex!"
           >
-            <span class="text-content-muted">{{ ITEM_TYPE_LABELS[item.type] }}</span>
+            <span class="text-content-muted">{{ t(`inventory.itemType.${item.type}`) }}</span>
           </Badge>
 
           <!-- Name -->
@@ -232,12 +232,11 @@
 <script setup lang="ts">
 import { Badge, Button, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import { ITEM_TYPE_LABELS } from '~/constants/inventory'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import type { InventoryItem, InventoryLocation, ItemType } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 
 const props = defineProps<{
   items: InventoryItem[]
@@ -299,8 +298,10 @@ const onDrop = (event: DragEvent): void => {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-const typeOptions: SelectOption[] = (Object.entries(ITEM_TYPE_LABELS) as [ItemType, string][]).map(
-  ([value, label]) => ({ value, label }),
+const typeOptions = computed<SelectOption[]>(() =>
+  (Object.entries(messages.value.inventory.itemType) as [ItemType, string][]).map(
+    ([value, label]) => ({ value, label }),
+  ),
 )
 
 const modalOpen = ref(false)

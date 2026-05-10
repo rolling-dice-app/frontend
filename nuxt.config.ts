@@ -14,8 +14,6 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/**': {
-      isr: false,
-      swr: false,
       headers: {
         'cache-control': 'private, no-store',
         'cdn-cache-control': 'no-store',

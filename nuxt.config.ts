@@ -12,6 +12,12 @@ export default defineNuxtConfig({
     preset: 'vercel',
   },
 
+  routeRules: {
+    '/**': {
+      headers: { 'cache-control': 'private, no-store' },
+    },
+  },
+
   // baseURL set via NUXT_APP_BASE_URL env var (Vercel = '/', local = '/')
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',

@@ -8,7 +8,7 @@ paths: app/**/*.vue,app/**/*.ts,app/server/**/*.ts,app/composables/**/*.ts,app/p
 
 Apply these rules whenever the work touches input / output, authentication, configuration, or external resources.
 
-> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR security rules are the active standard; server-route rules are forward-looking.
+> The app runs in SSR mode (`ssr: true`, Nitro preset `vercel`). All security rules below — including server-route rules — are active.
 
 ## Core Principles
 
@@ -44,23 +44,21 @@ Apply these rules whenever the work touches input / output, authentication, conf
 3. Don't store access tokens in Pinia stores or Vue reactive state; use server-side cookies.
 4. `console.log` must not contain tokens, user PII, or full API responses (especially in production).
 
-## SPA / CSR Security (Active)
+## Client-Side Security
 
-1. SPA calls external services; auth tokens are passed via the Authorization header.
-2. Token storage prefers HttpOnly cookies; if not possible, use memory-only storage and avoid `localStorage`.
-3. With no server route, all sensitive logic lives behind the backend API; the client cannot trust its own permission checks.
-4. CORS is configured on the backend; the frontend manages the API base URL safely via `runtimeConfig.public`.
+1. Auth tokens travel via the Authorization header or HttpOnly cookies set by the backend; the client never persists them in `localStorage`.
+2. Sensitive logic lives behind the backend API or Nuxt server routes; the client cannot trust its own permission checks.
+3. CORS is configured on the backend; the frontend manages the API base URL safely via `runtimeConfig.public`.
+4. SSR rendering must not embed secrets in the served HTML — only `runtimeConfig.public` values reach the client; private config stays server-only.
 
 ## Authentication & Authorization
 
 1. Client-side auth state is for UI presentation only; it is not a security boundary.
 2. Nuxt middleware auth checks are UX-oriented (fast redirects); they do not replace backend authorization.
-3. (Future, once SSR is enabled):
-   - Final auth verification happens server-side.
-   - Every authorized server route independently verifies the requester's identity; do not trust a client-supplied user ID.
+3. Final auth verification happens server-side. Every authorized server route independently verifies the requester's identity; do not trust a client-supplied user ID.
 4. With JWT, verification logic runs on the backend; do not decode and self-evaluate permissions on the client.
 
-## Server Route Security (Future, Once SSR is Enabled)
+## Server Route Security
 
 1. Every server route validates all input (body, query, params); do not trust client-supplied data.
 2. Use schema validation (e.g., `zod`) on request bodies:

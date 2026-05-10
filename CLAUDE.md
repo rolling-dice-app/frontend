@@ -2,7 +2,7 @@
 
 This file gives Claude Code (claude.ai/code) the highest-priority instructions for working inside the `rolling-dice-app/frontend` repository.
 
-This is the **frontend** repo of a multi-repo product. It is a Nuxt 4 + Vue 3 + TypeScript SPA. When this file conflicts with a sub-skill, this file wins.
+This is the **frontend** repo of a multi-repo product. It is a Nuxt 4 + Vue 3 + TypeScript app running in SSR mode on Vercel. When this file conflicts with a sub-skill, this file wins.
 
 ## Required Reading: Org-Level Guidelines
 
@@ -55,8 +55,8 @@ The `@ui` alias is defined in both `nuxt.config.ts` (pointing to `packages/ui/di
 
 ### Runtime Environment
 
-- **SPA mode** (`ssr: false`) for the current MVP. SSR / server-route rules in skills are forward-looking; under CSR only the CSR rules are enforced.
-- Static deployment (GitHub Pages for the frozen demo; Vercel for the live product). Base URL controlled by `NUXT_APP_BASE_URL`; see `nuxt.config.ts`.
+- **SSR mode** (`ssr: true`, Nitro preset `vercel`). All SSR / CSR boundary rules in skills are active.
+- Deployed to Vercel (live product). The frozen GitHub Pages demo remains a static export of an earlier build and is no longer the primary target. Base URL controlled by `NUXT_APP_BASE_URL`; see `nuxt.config.ts`.
 
 ### Auto-import Configuration
 
@@ -102,10 +102,10 @@ These three directories are **available without explicit import**. `utils/` foll
 
 ## Runtime Environment Rules
 
-1. The current MVP runs in SPA mode (`ssr: false`).
-2. **CSR rules are the active standard.**
-3. SSR / server-route rules in skills are reserved for future activation; they do not apply under SPA.
-4. When SSR is enabled in the future, those rules become live.
+1. The app runs in SSR mode (`ssr: true`, Nitro preset `vercel`).
+2. **SSR / CSR boundary rules are the active standard** — every implementation identifies its execution context, avoids using browser APIs in server context, and prevents hydration mismatch.
+3. User-specific runtime state (locally persisted UI mode, combat tracker, etc.) is client-only — defer reads to `onMounted` or wrap UI in `<ClientOnly>`.
+4. Server routes (`server/api`, `server/utils`, `server/services`) are available; private logic and sensitive runtime config belong there, not in client code.
 
 ## Core Principles
 
@@ -114,7 +114,7 @@ These three directories are **available without explicit import**. `utils/` foll
 3. Prefer Vue / Nuxt idiomatic patterns over generic patterns that fit the framework poorly.
 4. Clearly separate UI, state, data fetching, data transformation, and side effects.
 5. Type safety is baseline. Do not use `any` unless explicitly permitted.
-6. Respect runtime boundaries: under SPA, CSR rules govern; once SSR ships, SSR / CSR boundary rules apply.
+6. Respect runtime boundaries: SSR / CSR boundary rules govern. Browser APIs require client guards or client-only flow; server-only logic stays in `server/`.
 7. Do not add third-party packages without explicit authorization.
 8. Code must be easy for a human engineer to read, review, and inherit.
 9. Practical first; idiomatic Vue / Nuxt second.

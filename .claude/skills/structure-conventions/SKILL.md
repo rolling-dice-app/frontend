@@ -112,7 +112,7 @@ app/
 ├─ mocks/                   # development / fixture data (will be retired once backend is wired)
 ├─ pages/
 ├─ plugins/                 # add when global plugins are needed
-├─ server/                  # add once SSR is enabled
+├─ server/                  # Nuxt server routes (active under SSR)
 │  ├─ api/
 │  ├─ utils/
 │  └─ services/
@@ -164,8 +164,7 @@ app/
 
 ### `server/api`
 
-- Nuxt server routes.
-- ⚠️ Currently SPA mode; create this once SSR is enabled.
+- Nuxt server routes (active under SSR).
 
 ### `server/utils`
 
@@ -278,8 +277,6 @@ app/
 4. Local-only types may live next to their module; truly shared frontend-only types centralize under `types/`.
 
 ### `server/`
-
-> ⚠️ Currently SPA mode; create this once SSR is enabled.
 
 1. Holds Nuxt server routes, server utilities, server-only logic.
 2. Anything involving private runtime config, aggregation, or sensitive handling lives in `server/`.

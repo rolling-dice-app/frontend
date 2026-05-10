@@ -8,7 +8,7 @@ paths: app/**/*.vue,app/**/*.ts,app/pages/**/*.vue,app/composables/**/*.ts,app/s
 
 Apply these rules when implementing, reviewing, or refactoring error-handling scenarios.
 
-> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR error rules are the active standard; server-route error rules are forward-looking.
+> The app runs in SSR mode (`ssr: true`, Nitro preset `vercel`). All error rules below — including server-route ones — are active.
 
 ## Core Principles
 
@@ -81,14 +81,13 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
    ```
 4. If the composable needs side effects (e.g., toast), expose a callback or event for the caller.
 
-## CSR Error Handling (Active)
+## Runtime Error Handling
 
-1. SPA error handling happens entirely on the client; network failure is the most common case.
-2. Every API call considers network interruption, timeout, and unexpected response.
-3. Initial page-load API failure has a complete degradation path — never a blank page.
-4. Consider Vue's global `errorHandler` or Nuxt's `vue:error` hook as a final safety net for uncaught errors.
+1. Every API call considers network interruption, timeout, and unexpected response.
+2. Initial page-load API failure has a complete degradation path — never a blank page. Under SSR, `useAsyncData` errors should be surfaced through the page's three-state UI; never let an SSR fetch error reach `error.vue` for an otherwise-recoverable case.
+3. Consider Vue's global `errorHandler` or Nuxt's `vue:error` hook as a final safety net for uncaught errors.
 
-## Server Route Error Handling (Future, Once SSR is Enabled)
+## Server Route Error Handling
 
 1. Server routes use `createError` for semantic HTTP errors:
    ```ts

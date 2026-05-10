@@ -55,7 +55,7 @@
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
       <div v-for="key in ABILITY_KEYS" :key="key" class="space-y-1">
         <label :for="`ability-${key}`" class="block text-xs text-content">
-          {{ ABILITY_NAMES[key]
+          {{ t(`ability.${key}`)
           }}<template v-if="!isDiceMode || diceCells[key].selectedId">
             （{{
               formatModifier(getAbilityModifier(abilities[key].origin + abilities[key].race))
@@ -128,12 +128,7 @@
 
 <script setup lang="ts">
 import { Button, Icon, type SelectOption } from '@ui'
-import {
-  ABILITY_NAMES,
-  CUSTOM_ABILITY_MAX,
-  CUSTOM_ABILITY_MIN,
-  POINT_BUY_BUDGET,
-} from '~/constants/dnd'
+import { CUSTOM_ABILITY_MAX, CUSTOM_ABILITY_MIN, POINT_BUY_BUDGET } from '~/constants/dnd'
 import type {
   AbilityMethod,
   AbilityScores,

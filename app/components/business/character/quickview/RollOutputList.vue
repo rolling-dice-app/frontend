@@ -102,7 +102,6 @@
 </template>
 
 <script setup lang="ts">
-import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
 import type { D20RollEntry, DamageRollLine, RollEntry, RollMode } from '~/types/business/dice'
 
 const { t } = useI18n()
@@ -134,7 +133,7 @@ const rollClass = (
 }
 
 const formatDamageLine = (line: DamageRollLine): string => {
-  const typeLabel = line.damageType ? ` ${DAMAGE_TYPE_LABELS[line.damageType]}` : ''
+  const typeLabel = line.damageType ? ` ${t(`combat.damageType.${line.damageType}`)}` : ''
   if (line.sides == null) {
     // 純加值行
     return `${line.bonus}${typeLabel}`

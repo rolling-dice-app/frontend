@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { SKILL_NAMES, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
+import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
+import { SKILL_KEYS, type ProficiencyLevel, type SkillKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -37,13 +37,13 @@ const props = defineProps<{
 
 const skillList = computed(() => {
   const jackBonus = props.isJackOfAllTrades ? Math.floor(props.proficiencyBonus / 2) : 0
-  return (Object.entries(SKILL_NAMES) as [SkillKey, string][]).map(([key, name]) => {
+  return SKILL_KEYS.map((key) => {
     const abilityKey = SKILL_TO_ABILITY_MAP[key]
     const mod = getAbilityModifier(props.abilityScores[abilityKey])
     const proficiency: ProficiencyLevel = props.skills[key] ?? 'none'
     const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
     const bonus = proficiency === 'none' ? base + jackBonus : base
-    return { key, name, proficiency, bonus }
+    return { key, name: t(`skill.${key}`), proficiency, bonus }
   })
 })
 

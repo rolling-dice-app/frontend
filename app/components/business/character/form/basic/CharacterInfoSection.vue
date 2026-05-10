@@ -256,18 +256,19 @@
 <script setup lang="ts">
 import { Button, Icon } from '@ui'
 import type { SelectOption } from '@ui'
-import { ALIGNMENT_NAMES, GENDER_NAMES, CLASS_CONFIG } from '~/constants/dnd'
-import { SUBCLASSES_BY_CLASS, SUBCLASS_CONFIG } from '~/constants/subclass'
+import { SUBCLASSES_BY_CLASS } from '~/constants/subclass'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
 import {
+  ALIGNMENT_KEYS,
   CLASS_KEYS,
+  GENDER_KEYS,
   type AlignmentKey,
   type GenderKey,
   type ClassKey,
   type SubclassKey,
 } from '@rolling-dice-app/core'
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 
@@ -279,23 +280,20 @@ withDefaults(
   { lockPrimaryClass: false },
 )
 
-const genderOptions: SelectOption[] = Object.entries(GENDER_NAMES).map(([value, label]) => ({
-  value,
-  label,
-}))
+const genderOptions = computed<SelectOption[]>(() =>
+  GENDER_KEYS.map((key) => ({ value: key, label: t(`character.gender.${key}`) })),
+)
 
-const alignmentOptions: SelectOption[] = Object.entries(ALIGNMENT_NAMES).map(([value, label]) => ({
-  value,
-  label,
-}))
+const alignmentOptions = computed<SelectOption[]>(() =>
+  ALIGNMENT_KEYS.map((key) => ({ value: key, label: t(`character.alignment.${key}`) })),
+)
 
-const classOptions: SelectOption[] = Object.entries(CLASS_CONFIG).map(([value, { label }]) => ({
-  value,
-  label,
-}))
+const classOptions = computed<SelectOption[]>(() =>
+  CLASS_KEYS.map((key) => ({ value: key, label: t(`class.label.${key}`) })),
+)
 
 const getClassOptions = (index: number): SelectOption[] => {
-  return classOptions.filter((option) => {
+  return classOptions.value.filter((option) => {
     return formState.value.classes.every(
       (entry, i) => i === index || entry.classKey !== option.value,
     )
@@ -334,7 +332,7 @@ const updateClassSubclass = (index: number, value: SubclassKey | null): void => 
 
 const getSubclassOptions = (classKey: ClassKey | null): SelectOption[] => {
   if (classKey === null) return []
-  const labels = SUBCLASS_CONFIG[classKey]
+  const labels = messages.value.class.subclass[classKey]
   return SUBCLASSES_BY_CLASS[classKey].map((key) => ({
     value: key,
     label: labels[key] ?? key,

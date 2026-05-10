@@ -4,6 +4,7 @@ import AppSelect from '~/components/common/AppSelect.vue'
 import SkillProficiencyGrid from '~/components/business/character/form/basic/SkillProficiencyGrid.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
+import { useProficiencyOptions } from '~/composables/ui/useProficiencyOptions'
 import { applySkillProficiency } from '~/helpers/skill'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
@@ -13,6 +14,7 @@ beforeEach(() => {
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSkillBonus', getSkillBonus)
   vi.stubGlobal('applySkillProficiency', applySkillProficiency)
+  vi.stubGlobal('useProficiencyOptions', useProficiencyOptions)
 })
 
 afterEach(() => {

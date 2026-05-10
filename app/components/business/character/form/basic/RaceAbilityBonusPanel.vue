@@ -4,7 +4,7 @@
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <div v-for="key in ABILITY_KEYS" :key="key">
         <label :for="`race-bonus-${key}`" class="mb-1 block text-xs text-content-muted">
-          {{ ABILITY_NAMES[key] }}
+          {{ t(`ability.${key}`) }}
         </label>
         <CommonAppInput
           :id="`race-bonus-${key}`"
@@ -22,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_NAMES } from '~/constants/dnd'
 import type { CharacterFormState } from '~/types/business/character-form'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 

@@ -10,7 +10,7 @@ export type Messages = (typeof LOCALES)[Locale]
 
 /**
  * 遞迴展開 messages 樹的所有 leaf path（leaf = string value）。
- * 用 NonNullable 包住 T[K] 以支援 Partial<Record<...>> 等可能為 undefined 的 shape（如 SUBCLASS_CONFIG）。
+ * 用 NonNullable 包住 T[K] 以支援 Partial<Record<...>> 等可能為 undefined 的 shape（如 class.subclass）。
  */
 type LeafPath<T> = T extends string
   ? never

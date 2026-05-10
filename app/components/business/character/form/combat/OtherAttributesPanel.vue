@@ -178,8 +178,7 @@ import { Toggle } from '@ui'
 import type { SelectOption } from '@ui'
 
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/core'
-import { ABILITY_NAMES } from '~/constants/dnd'
+import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -195,9 +194,10 @@ const props = defineProps<{
 
 const abilityOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('combat.none') },
-  ...Object.entries(ABILITY_NAMES)
-    .filter(([key]) => key !== 'dexterity')
-    .map(([value, label]) => ({ value, label })),
+  ...ABILITY_KEYS.filter((key) => key !== 'dexterity').map((key) => ({
+    value: key,
+    label: t(`ability.${key}`),
+  })),
 ])
 
 const initiativeTextColor = computed(() => {

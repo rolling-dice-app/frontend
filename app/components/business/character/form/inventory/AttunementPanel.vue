@@ -26,10 +26,10 @@
 
 <script setup lang="ts">
 import type { SelectItem, SelectOptionGroup } from '@ui'
-import { ATTUNEMENT_SLOT_COUNT, ITEM_TYPE_LABELS } from '~/constants/inventory'
+import { ATTUNEMENT_SLOT_COUNT } from '~/constants/inventory'
 import type { InventoryItem, ItemType } from '@rolling-dice-app/core'
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 
 const props = defineProps<{
   allItems: InventoryItem[]
@@ -50,7 +50,10 @@ const optionsForSlot = (slotIndex: number): SelectItem[] => {
   )
 
   const result: SelectItem[] = [{ value: 'none', label: t('inventory.detachAttunement') }]
-  for (const [type, label] of Object.entries(ITEM_TYPE_LABELS) as [ItemType, string][]) {
+  for (const [type, label] of Object.entries(messages.value.inventory.itemType) as [
+    ItemType,
+    string,
+  ][]) {
     const options = props.allItems
       .filter((item) => item.type === type)
       .map((item) => ({

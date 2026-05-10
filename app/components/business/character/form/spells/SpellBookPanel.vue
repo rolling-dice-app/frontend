@@ -27,7 +27,7 @@
           <CommonAppSelect
             :id="levelSelectId"
             v-model="filter.level"
-            :options="SPELL_LEVEL_OPTIONS"
+            :options="levelOptions"
             multiple
             multiple-display="count"
             placeholder="-"
@@ -42,7 +42,7 @@
           <CommonAppSelect
             :id="schoolSelectId"
             v-model="filter.schools"
-            :options="SPELL_SCHOOL_OPTIONS"
+            :options="schoolOptions"
             multiple
             multiple-display="count"
             placeholder="-"
@@ -57,7 +57,7 @@
           <CommonAppSelect
             :id="classesSelectId"
             v-model="filter.classes"
-            :options="SPELL_CLASS_OPTIONS"
+            :options="classOptions"
             multiple
             multiple-display="count"
             placeholder="-"
@@ -72,7 +72,7 @@
           <CommonAppSelect
             :id="sourcesSelectId"
             v-model="filter.sources"
-            :options="SPELL_SOURCE_OPTIONS"
+            :options="sourceOptions"
             multiple
             multiple-display="count"
             placeholder="-"
@@ -173,7 +173,7 @@
                     </div>
                   </div>
                   <p class="mt-0.5 truncate text-xs text-content-muted">
-                    {{ SPELL_SCHOOL_LABELS[spell.school] }}
+                    {{ t(`spell.school.${spell.school}`) }}
                     <span class="mx-1">·</span>
                     {{ spell.castingTime }}
                     <span class="mx-1">·</span>
@@ -218,17 +218,11 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
-import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
-import {
-  SPELL_LEVEL_OPTIONS,
-  SPELL_CLASS_OPTIONS,
-  SPELL_SCHOOL_OPTIONS,
-  SPELL_SOURCE_OPTIONS,
-} from '~/constants/spell-options'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import type { ClassKey, SpellDTO, SourceKey, SpellSchool } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
+const { levelOptions, schoolOptions, classOptions, sourceOptions } = useSpellSelectOptions()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)

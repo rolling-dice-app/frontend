@@ -1,12 +1,41 @@
-import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
-import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
+import type { DamageTypeKey, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
+
+const damageType: Readonly<Record<DamageTypeKey, string>> = {
+  bludgeoning: '鈍擊',
+  piercing: '穿刺',
+  slashing: '劈砍',
+  acid: '酸蝕',
+  cold: '寒冰',
+  fire: '火焰',
+  lightning: '閃電',
+  thunder: '雷鳴',
+  poison: '毒素',
+  force: '力場',
+  necrotic: '暗蝕',
+  radiant: '光耀',
+  psychic: '心靈',
+}
+
+const featureSource: Readonly<Record<FeatureSource, string>> = {
+  feat: '專長',
+  class: '職業',
+  race: '種族',
+  background: '背景',
+  other: '其他',
+}
+
+const featureRecovery: Readonly<Record<FeatureUsageRecovery, string>> = {
+  shortRest: '短休',
+  longRest: '長休',
+  manual: '手動',
+}
 
 /** 戰鬥相關 enum + 規則 / 衍生值 / AC / 攻擊 / 特性 / 擲骰 用詞 */
 export default {
   // T1 enum
-  damageType: DAMAGE_TYPE_LABELS,
-  featureRecovery: FEATURE_RECOVERY_LABELS,
-  featureSource: FEATURE_SOURCE_LABELS,
+  damageType,
+  featureRecovery,
+  featureSource,
 
   // HP
   hp: '生命值',

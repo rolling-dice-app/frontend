@@ -1,4 +1,4 @@
-import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
+import { t } from '~/i18n'
 import type { DamageDieEntry } from '@rolling-dice-app/core'
 import type { AttackDraft, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -25,7 +25,7 @@ function hasDicePart(entry: DamageDieEntry): boolean {
 
 function formatDamageEntry(entry: DamageDieEntry): string {
   const bonus = entry.bonus ?? 0
-  const typeLabel = entry.damageType ? ` ${DAMAGE_TYPE_LABELS[entry.damageType]}` : ''
+  const typeLabel = entry.damageType ? ` ${t(`combat.damageType.${entry.damageType}`)}` : ''
   if (hasDicePart(entry)) {
     const dice = `${entry.count}d${entry.dieType}`
     const bonusStr = bonus > 0 ? `+${bonus}` : bonus < 0 ? String(bonus) : ''

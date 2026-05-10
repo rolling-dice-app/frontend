@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import SpellcastingAbilitySelect from '~/components/business/character/form/spells/SpellcastingAbilitySelect.vue'
-import { ABILITY_NAMES } from '~/constants/dnd'
+import { t } from '~/i18n'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
 vi.stubGlobal('useId', useId)
@@ -23,7 +23,7 @@ describe('SpellcastingAbilitySelect', () => {
     const options = select.props('options') as { value: string; label: string }[]
     expect(options).toHaveLength(6)
     expect(options.map((o) => o.value)).toEqual([...ABILITY_KEYS])
-    expect(options.map((o) => o.label)).toEqual(ABILITY_KEYS.map((k) => ABILITY_NAMES[k]))
+    expect(options.map((o) => o.label)).toEqual(ABILITY_KEYS.map((k) => t(`ability.${k}`)))
   })
 
   it('CommonAppSelect 應啟用 multiple', () => {

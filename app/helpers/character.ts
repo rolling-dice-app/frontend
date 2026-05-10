@@ -240,6 +240,9 @@ export function formStateToCharacterPatch(
   const weaponProficiencies = formState.weaponProficiencies || null
   const armorProficiencies = formState.armorProficiencies || null
 
+  // portrait
+  const avatar = formState.avatar
+
   return {
     name,
     gender,
@@ -261,5 +264,6 @@ export function formStateToCharacterPatch(
     tools,
     weaponProficiencies,
     armorProficiencies,
+    avatar,
   }
 }

@@ -1,11 +1,38 @@
-import { ALIGNMENT_NAMES, GENDER_NAMES, SIZE_NAMES } from '~/constants/dnd'
+import type { AlignmentKey, GenderKey, SizeKey } from '@rolling-dice-app/core'
+
+const alignment: Readonly<Record<AlignmentKey, string>> = {
+  lawfulGood: '守序善良',
+  neutralGood: '中立善良',
+  chaoticGood: '混亂善良',
+  lawfulNeutral: '守序中立',
+  trueNeutral: '絕對中立',
+  chaoticNeutral: '混亂中立',
+  lawfulEvil: '守序邪惡',
+  neutralEvil: '中立邪惡',
+  chaoticEvil: '混亂邪惡',
+}
+
+const gender: Readonly<Record<GenderKey, string>> = {
+  male: '男性',
+  female: '女性',
+  nonBinary: '非二元',
+}
+
+const size: Readonly<Record<SizeKey, string>> = {
+  tiny: '微型',
+  small: '小型',
+  medium: '中型',
+  large: '大型',
+  huge: '超大型',
+  gargantuan: '巨型',
+}
 
 /** 角色設定類 enum + 基本資料欄位 / 屬性分配 / tab / 列表互動 用詞 */
 export default {
   // T1 enum
-  alignment: ALIGNMENT_NAMES,
-  gender: GENDER_NAMES,
-  size: SIZE_NAMES,
+  alignment,
+  gender,
+  size,
 
   // 欄位 label（與 enum map 區分；template `t('character.genderLabel')` 等）
   genderLabel: '性別',
@@ -37,8 +64,22 @@ export default {
   story: '故事',
   storyPlaceholder: '角色背景故事設定，上限 ',
   storyPlaceholderUnit: '字',
-  avatarComingSoon: '角色圖片上傳（即將推出）',
   backgroundStory: '背景故事',
+  // 肖像上傳
+  portrait: {
+    label: '角色肖像',
+    selectFile: '選擇圖片',
+    replace: '換圖',
+    remove: '移除',
+    cropTitle: '裁剪角色肖像',
+    confirm: '確認',
+    cancel: '取消',
+    uploading: '上傳中…',
+    placeholderEmpty: '尚未上傳肖像',
+    fileTooLarge: '原檔超過 5 MB，請挑小一點的圖',
+    invalidType: '不支援的檔案格式，請選圖片',
+    uploadFailed: '上傳失敗，請稍後再試',
+  },
   language: '語言',
   tool: '工具',
   toolFull: '熟練工具',

@@ -20,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_NAMES } from '~/constants/dnd'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
@@ -30,5 +29,7 @@ const abilities = defineModel<AbilityKey[]>('abilities', { required: true })
 const headingId = useId()
 const selectId = useId()
 
-const options = ABILITY_KEYS.map((key) => ({ value: key, label: ABILITY_NAMES[key] }))
+const options = computed(() =>
+  ABILITY_KEYS.map((key) => ({ value: key, label: t(`ability.${key}`) })),
+)
 </script>

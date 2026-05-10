@@ -1,7 +1,7 @@
-import { SPELL_SCHOOL_LABELS } from '~/constants/dnd'
+import { SPELL_SCHOOLS } from '~/constants/dnd'
 import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
 
-const VALID_SCHOOLS = new Set(Object.keys(SPELL_SCHOOL_LABELS))
+const VALID_SCHOOLS = new Set<string>(SPELL_SCHOOLS)
 
 /** 驗證法術資料的學派是否合法；學派未知則回傳 null，呼叫端負責收集。 */
 export function validateSpell(raw: SpellDTO): SpellDTO | null {

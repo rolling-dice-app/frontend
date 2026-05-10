@@ -48,6 +48,7 @@ function createDefaultFormState(): CharacterFormState {
     tools: null,
     weaponProficiencies: null,
     armorProficiencies: null,
+    avatar: null,
   }
 }
 

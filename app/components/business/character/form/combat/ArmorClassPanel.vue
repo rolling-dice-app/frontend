@@ -101,8 +101,13 @@
 <script setup lang="ts">
 import type { SelectOption } from '@ui'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
-import { UNARMORED_AC_BASE, type AbilityKey, type ArmorType } from '@rolling-dice-app/core'
-import { ABILITY_NAMES, ARMOR_TYPE_NAMES } from '~/constants/dnd'
+import {
+  ABILITY_KEYS,
+  UNARMORED_AC_BASE,
+  type AbilityKey,
+  type ArmorType,
+} from '@rolling-dice-app/core'
+import { ARMOR_TYPES } from '~/constants/dnd'
 
 const { t } = useI18n()
 
@@ -112,14 +117,13 @@ const props = defineProps<{
   abilityScores: TotalAbilityScores
 }>()
 
-const armorTypeOptions: SelectOption[] = Object.entries(ARMOR_TYPE_NAMES).map(([value, label]) => ({
-  value,
-  label,
-}))
+const armorTypeOptions = computed<SelectOption[]>(() =>
+  ARMOR_TYPES.map((key) => ({ value: key, label: t(`inventory.armorType.${key}`) })),
+)
 
 const abilityOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('combat.none') },
-  ...Object.entries(ABILITY_NAMES).map(([value, label]) => ({ value, label })),
+  ...ABILITY_KEYS.map((key) => ({ value: key, label: t(`ability.${key}`) })),
 ])
 
 const totalAC = computed(() => getTotalArmorClass(formState.value.armorClass, props.abilityScores))

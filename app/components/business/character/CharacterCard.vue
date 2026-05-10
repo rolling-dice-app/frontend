@@ -14,7 +14,7 @@
     >
       <!-- Cover: classKey image -->
       <template #cover>
-        <div class="relative h-52 overflow-hidden">
+        <div class="relative h-64 overflow-hidden">
           <img
             :src="coverSrc"
             alt=""
@@ -67,7 +67,7 @@
               {{ character.race ?? '-' }}
             </Badge>
             <span class="text-xs text-content-muted">
-              {{ character.classes.map((p) => CLASS_CONFIG[p.classKey].label).join(' / ') }}
+              {{ character.classes.map((p) => t(`class.label.${p.classKey}`)).join(' / ') }}
             </span>
           </div>
         </div>
@@ -87,7 +87,6 @@
 
 <script setup lang="ts">
 import { Badge, Card, Icon } from '@ui'
-import { CLASS_CONFIG } from '~/constants/dnd'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 

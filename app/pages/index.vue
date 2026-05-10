@@ -28,7 +28,7 @@
           class="orbit-outer"
           :style="{ '--i': i }"
         >
-          <img :src="CLASS_IMAGES[prof]" :alt="CLASS_CONFIG[prof].label" class="ring-img" />
+          <img :src="CLASS_IMAGES[prof]" :alt="t(`class.label.${prof}`)" class="ring-img" />
         </div>
 
         <!-- Inner ring -->
@@ -38,7 +38,7 @@
           class="orbit-inner"
           :style="{ '--i': i }"
         >
-          <img :src="CLASS_IMAGES[prof]" :alt="CLASS_CONFIG[prof].label" class="ring-img" />
+          <img :src="CLASS_IMAGES[prof]" :alt="t(`class.label.${prof}`)" class="ring-img" />
         </div>
 
         <!-- Center content -->
@@ -54,8 +54,9 @@
 </template>
 
 <script setup lang="ts">
-import { CLASS_CONFIG } from '~/constants/dnd'
 import type { ClassKey } from '@rolling-dice-app/core'
+
+const { t } = useI18n()
 
 useHead({ titleTemplate: '%s' })
 

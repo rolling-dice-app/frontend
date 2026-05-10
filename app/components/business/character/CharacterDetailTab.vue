@@ -21,7 +21,11 @@
           <div>
             <dt class="text-xs text-content-muted">{{ t('character.genderLabel') }}</dt>
             <dd class="mt-0.5 text-sm text-content-soft">
-              {{ character.gender ? GENDER_NAMES[character.gender] : t('character.emptyDash') }}
+              {{
+                character.gender
+                  ? t(`character.gender.${character.gender}`)
+                  : t('character.emptyDash')
+              }}
             </dd>
           </div>
           <div>
@@ -39,7 +43,7 @@
             <dd class="mt-0.5 text-sm text-content-soft">
               {{
                 character.alignment
-                  ? ALIGNMENT_NAMES[character.alignment]
+                  ? t(`character.alignment.${character.alignment}`)
                   : t('character.emptyDash')
               }}
             </dd>
@@ -154,8 +158,26 @@
           </table>
         </div>
       </div>
-      <!-- TODO: 頭像 / 角色圖像區塊，待實作 -->
-      <div class="sm:w-1/4 md:w-1/3 border border-primary h-100 w-full"></div>
+      <div class="sm:w-1/4 md:w-1/3 w-full">
+        <div
+          class="aspect-[3/4] w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
+        >
+          <img
+            v-if="character.avatar"
+            :src="character.avatar"
+            :alt="`${t('character.portrait.label')} ${character.name}`"
+            class="h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div
+            v-else
+            class="h-full w-full flex flex-col items-center justify-center gap-1 px-3 text-center text-xs text-content-muted"
+            :aria-label="t('character.portrait.placeholderEmpty')"
+          >
+            <span>{{ t('character.portrait.placeholderEmpty') }}</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="flex flex-col sm:flex-row gap-4">
@@ -176,7 +198,7 @@
                   class="text-xs text-content-muted"
                   :class="{ 'text-primary': savingThrowProficiencies.includes(key) }"
                 >
-                  {{ ABILITY_NAMES[key] }}
+                  {{ t(`ability.${key}`) }}
                 </span>
                 <div class="flex items-center gap-2">
                   <span class="mt-1 text-2xl font-bold text-content">
@@ -297,23 +319,15 @@
 <script setup lang="ts">
 import {
   ABILITY_KEYS,
+  SKILL_KEYS,
   type CharacterDTO,
   type AbilityKey,
   type ProficiencyLevel,
-  type SkillKey,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import {
-  ABILITY_NAMES,
-  ALIGNMENT_NAMES,
-  GENDER_NAMES,
-  CLASS_CONFIG,
-  SKILL_NAMES,
-  SKILL_TO_ABILITY_MAP,
-} from '~/constants/dnd'
-import { SUBCLASS_CONFIG } from '~/constants/subclass'
+import { CLASS_CONFIG, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 
 const props = defineProps<{
   character: CharacterDTO
@@ -377,11 +391,11 @@ const classHpRows = computed(() =>
     const config = CLASS_CONFIG[entry.classKey]
     const hp = getClassHitPoints(config.hitDie, entry.level, index === 0)
     const conBonus = conModifier.value * entry.level
+    const subclassLabels = messages.value.class.subclass[entry.classKey]
     return {
       classKey: entry.classKey,
-      label: config.label,
-      subclassLabel:
-        entry.subclass === null ? null : (SUBCLASS_CONFIG[entry.classKey][entry.subclass] ?? null),
+      label: t(`class.label.${entry.classKey}`),
+      subclassLabel: entry.subclass === null ? null : (subclassLabels[entry.subclass] ?? null),
       level: entry.level,
       hitDie: config.hitDie,
       hp,
@@ -419,14 +433,19 @@ const savingThrowBonuses = computed(() => {
 
 const skillList = computed(() => {
   const jackBonus = props.character.isJackOfAllTrades ? Math.floor(proficiencyBonus.value / 2) : 0
-  return (Object.entries(SKILL_NAMES) as [SkillKey, string][]).map(([key, name]) => {
+  return SKILL_KEYS.map((key) => {
     const abilityKey = SKILL_TO_ABILITY_MAP[key]
     const mod = getAbilityModifier(getTotalScore(props.character.abilities[abilityKey]))
     const proficiency: ProficiencyLevel = props.character.skills[key] ?? 'none'
     const base = getSkillBonus(mod, proficiency, proficiencyBonus.value)
     const bonus = proficiency === 'none' ? base + jackBonus : base
-    const abilityName = ABILITY_NAMES[abilityKey]
-    return { key, name, proficiency, bonus, abilityName }
+    return {
+      key,
+      name: t(`skill.${key}`),
+      proficiency,
+      bonus,
+      abilityName: t(`ability.${abilityKey}`),
+    }
   })
 })
 

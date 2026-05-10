@@ -60,7 +60,6 @@
 <script setup lang="ts">
 import { Button, Modal } from '@ui'
 import { ABILITY_KEYS } from '@rolling-dice-app/core'
-import { ABILITY_NAMES, CLASS_CONFIG } from '~/constants/dnd'
 import type { FormClassEntry, TotalAbilityScores } from '~/types/business/character-form'
 
 const { t } = useI18n()
@@ -79,7 +78,7 @@ const emit = defineEmits<{
 
 const primaryClassLabel = computed(() => {
   const primary = props.classes[0]?.classKey
-  return primary ? CLASS_CONFIG[primary].label : t('character.emptyDash')
+  return primary ? t(`class.label.${primary}`) : t('character.emptyDash')
 })
 
 const abilityRows = computed(() =>
@@ -87,7 +86,7 @@ const abilityRows = computed(() =>
     const score = props.abilities[key]
     return {
       key,
-      name: ABILITY_NAMES[key],
+      name: t(`ability.${key}`),
       score,
       modifier: getAbilityModifier(score),
     }

@@ -45,7 +45,6 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_NAMES } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { AbilityKey } from '@rolling-dice-app/core'
 
@@ -71,7 +70,7 @@ const rows = computed(() =>
     const custom = customBonuses.value[key] ?? 0
     return {
       key,
-      name: ABILITY_NAMES[key],
+      name: t(`ability.${key}`),
       bonus,
       customStr: custom === 0 ? '' : String(custom),
       inputId: `${inputIdPrefix}-${key}`,

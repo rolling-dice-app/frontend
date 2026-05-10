@@ -43,10 +43,11 @@
                 :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
                 :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
               >
-                {{ FEATURE_SOURCE_LABELS[feature.source] }}
+                {{ t(`combat.featureSource.${feature.source}`) }}
               </Badge>
               <Badge v-if="feature.usage.hasUses" size="sm" bg-color="var(--color-surface-3)">
-                {{ FEATURE_RECOVERY_LABELS[feature.usage.recovery] }} / {{ feature.usage.max }}
+                {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }} /
+                {{ feature.usage.max }}
                 {{ t('combat.uses') }}
               </Badge>
             </div>
@@ -215,22 +216,25 @@
 <script setup lang="ts">
 import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 
 const DESCRIPTION_MAX_LENGTH = 500
 
-const sourceOptions: SelectOption[] = (
-  Object.entries(FEATURE_SOURCE_LABELS) as [FeatureSource, string][]
-).map(([value, label]) => ({ value, label }))
+const sourceOptions = computed<SelectOption[]>(() =>
+  (Object.entries(messages.value.combat.featureSource) as [FeatureSource, string][]).map(
+    ([value, label]) => ({ value, label }),
+  ),
+)
 
-const recoveryOptions: Array<{ value: FeatureUsageRecovery; label: string }> = (
-  Object.entries(FEATURE_RECOVERY_LABELS) as [FeatureUsageRecovery, string][]
-).map(([value, label]) => ({ value, label }))
+const recoveryOptions = computed<{ value: FeatureUsageRecovery; label: string }[]>(() =>
+  (Object.entries(messages.value.combat.featureRecovery) as [FeatureUsageRecovery, string][]).map(
+    ([value, label]) => ({ value, label }),
+  ),
+)
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 const { addFeature, removeFeature, updateFeature, moveFeature } = useCharacterFeaturesForm(

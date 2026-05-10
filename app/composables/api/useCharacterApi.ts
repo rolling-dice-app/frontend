@@ -12,5 +12,9 @@ export const useCharacterApi = () => {
   const createCharacter = (input: CharacterCreateDTO): Promise<CharacterDTO> =>
     apiFetch<CharacterDTO>('/characters', { method: 'POST', body: input })
 
-  return { listCharacters, getCharacter, createCharacter }
+  const deleteCharacter = async (id: string): Promise<void> => {
+    await apiFetch(`/characters/${id}`, { method: 'DELETE' })
+  }
+
+  return { listCharacters, getCharacter, createCharacter, deleteCharacter }
 }

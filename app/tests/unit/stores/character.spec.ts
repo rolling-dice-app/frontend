@@ -6,6 +6,7 @@ import type { CharacterDTO, CharacterSummaryDTO } from '@rolling-dice-app/core'
 const mockListCharacters = vi.fn<() => Promise<CharacterSummaryDTO[]>>()
 const mockGetCharacter = vi.fn<(id: string) => Promise<CharacterDTO>>()
 const mockCreateCharacter = vi.fn<(...args: unknown[]) => Promise<CharacterDTO>>()
+const mockDeleteCharacter = vi.fn<(id: string) => Promise<void>>()
 
 beforeEach(() => {
   vi.resetModules()
@@ -13,10 +14,12 @@ beforeEach(() => {
   mockListCharacters.mockReset()
   mockGetCharacter.mockReset()
   mockCreateCharacter.mockReset()
+  mockDeleteCharacter.mockReset()
   vi.stubGlobal('useCharacterApi', () => ({
     listCharacters: mockListCharacters,
     getCharacter: mockGetCharacter,
     createCharacter: mockCreateCharacter,
+    deleteCharacter: mockDeleteCharacter,
   }))
 })
 
@@ -165,17 +168,48 @@ describe('character store — createCharacter', () => {
   })
 })
 
+describe('character store — removeCharacter', () => {
+  it('成功時呼叫 API、清掉 list 與 detailCache 對應 entry', async () => {
+    const a = createMockCharacter({ id: 'rm-a', name: 'A' })
+    const b = createMockCharacter({ id: 'rm-b', name: 'B' })
+    mockListCharacters.mockResolvedValue([charToSummary(a), charToSummary(b)])
+    mockGetCharacter.mockResolvedValue(a)
+    mockDeleteCharacter.mockResolvedValue(undefined)
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.loadDetail('rm-a')
+
+    await store.removeCharacter('rm-a')
+
+    expect(mockDeleteCharacter).toHaveBeenCalledWith('rm-a')
+    expect(store.list.map((c) => c.id)).toEqual(['rm-b'])
+    expect(store.detailCache.has('rm-a')).toBe(false)
+  })
+
+  it('失敗時 rethrow，且不動 list 與 cache', async () => {
+    const a = createMockCharacter({ id: 'rm-x', name: 'X' })
+    mockListCharacters.mockResolvedValue([charToSummary(a)])
+    mockGetCharacter.mockResolvedValue(a)
+    mockDeleteCharacter.mockRejectedValue(new Error('boom'))
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.loadDetail('rm-x')
+
+    await expect(store.removeCharacter('rm-x')).rejects.toThrow('boom')
+    expect(store.list).toHaveLength(1)
+    expect(store.detailCache.has('rm-x')).toBe(true)
+  })
+})
+
 describe('character store — 未支援的 mutation', () => {
   it('updateCharacter throw', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
     expect(() => store.updateCharacter('x', {} as never)).toThrow(/尚未支援/)
-  })
-
-  it('removeCharacter throw', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    expect(() => store.removeCharacter('x')).toThrow(/尚未支援/)
   })
 
   it('patchCharacter throw', async () => {

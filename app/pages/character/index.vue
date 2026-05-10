@@ -45,6 +45,21 @@
               <Icon name="list" :size="24" />
             </span>
           </button>
+          <!-- 刪除模式 -->
+          <button
+            type="button"
+            :aria-pressed="isDeleteMode"
+            :aria-label="
+              isDeleteMode ? t('ui.action.leaveDeleteMode') : t('ui.action.enterDeleteMode')
+            "
+            class="flex size-10 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
+            :class="
+              isDeleteMode ? 'bg-danger text-text-inverse' : 'text-content-muted hover:bg-surface'
+            "
+            @click="isDeleteMode = !isDeleteMode"
+          >
+            <Icon name="trash" :size="20" />
+          </button>
         </div>
       </template>
     </CommonPageHeader>
@@ -85,7 +100,8 @@
         v-for="character in sortedCharacters"
         :key="character.id"
         :character="character"
-        :is-delete-mode="false"
+        :is-delete-mode="isDeleteMode"
+        @delete="onDeleteRequest"
       />
       <NuxtLink
         to="/character/build"
@@ -102,7 +118,8 @@
         v-for="character in sortedCharacters"
         :key="character.id"
         :character="character"
-        :is-delete-mode="false"
+        :is-delete-mode="isDeleteMode"
+        @delete="onDeleteRequest"
       />
       <NuxtLink
         to="/character/build"
@@ -141,11 +158,47 @@
         </p>
       </div>
     </NuxtLink>
+
+    <!-- Delete confirmation -->
+    <Modal
+      v-model="confirmOpen"
+      :title="t('character.deleteLabel')"
+      bg-color="var(--color-canvas-elevated)"
+      text-color="var(--color-content)"
+      border-color="var(--color-border)"
+    >
+      <p class="text-content">{{ t('character.deleteConfirm') }}</p>
+      <p v-if="pendingDelete" class="mt-2 font-bold text-content">
+        {{ pendingDelete.name }}
+      </p>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button
+            type="button"
+            :radius="4"
+            bg-color="var(--color-surface-2)"
+            :disabled="deleting"
+            @click="onDeleteCancel"
+          >
+            {{ t('ui.action.cancel') }}
+          </Button>
+          <Button
+            type="button"
+            :radius="4"
+            bg-color="var(--color-danger)"
+            :disabled="deleting"
+            @click="onDeleteConfirm"
+          >
+            {{ t('ui.action.delete') }}
+          </Button>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon, Select } from '@ui'
+import { Button, Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
 import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
 import type { CharacterListItem } from '~/types/business/character-list'
@@ -153,6 +206,7 @@ import type { CharacterListItem } from '~/types/business/character-list'
 definePageMeta({ middleware: 'auth' })
 
 const { t } = useI18n()
+const toast = useToast()
 
 useHead({ title: t('character.card') })
 
@@ -173,6 +227,37 @@ onMounted(() => {
 watch(isListMode, (val) => {
   setLocalStorage(CHARACTER_VIEW_MODE_KEY, val ? 'list' : 'grid')
 })
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+const isDeleteMode = ref(false)
+const pendingDelete = ref<CharacterListItem | null>(null)
+const confirmOpen = ref(false)
+const deleting = ref(false)
+
+const onDeleteRequest = (character: CharacterListItem) => {
+  pendingDelete.value = character
+  confirmOpen.value = true
+}
+
+const onDeleteCancel = () => {
+  confirmOpen.value = false
+  pendingDelete.value = null
+}
+
+const onDeleteConfirm = async () => {
+  if (!pendingDelete.value || deleting.value) return
+  deleting.value = true
+  try {
+    await characterStore.removeCharacter(pendingDelete.value.id)
+    confirmOpen.value = false
+    pendingDelete.value = null
+  } catch {
+    toast.error(t('ui.message.deleteFailed'))
+  } finally {
+    deleting.value = false
+  }
+}
 
 // ── Sort ──────────────────────────────────────────────────────────────────────
 

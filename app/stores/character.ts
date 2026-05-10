@@ -102,7 +102,11 @@ export const useCharacterStore = defineStore('character', () => {
   const updateCharacter = (_id: string, _formState: CharacterUpdateFormState): never =>
     notSupported('updateCharacter')
 
-  const removeCharacter = (_id: string): never => notSupported('removeCharacter')
+  const removeCharacter = async (id: string): Promise<void> => {
+    await useCharacterApi().deleteCharacter(id)
+    detailCache.value.delete(id)
+    list.value = list.value.filter((c) => c.id !== id)
+  }
 
   const patchCharacter = (_id: string, _patch: CharacterMutablePatch): never =>
     notSupported('patchCharacter')

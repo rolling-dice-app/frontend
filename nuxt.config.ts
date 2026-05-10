@@ -19,6 +19,7 @@ export default defineNuxtConfig({
       headers: {
         'cache-control': 'private, no-store',
         'cdn-cache-control': 'no-store',
+        'vercel-cdn-cache-control': 'no-store',
       },
     },
   },

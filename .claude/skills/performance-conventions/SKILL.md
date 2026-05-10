@@ -90,12 +90,12 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
 
 ## Web Vitals
 
-| Metric                            | Description                         | Priority Strategy                                                                         |
-| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| Metric                            | Description                         | Priority Strategy                                                                                 |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **LCP** Largest Contentful Paint  | First-screen main content load time | Image optimization (NuxtImg), reduce render-blocking, lower bundle size, SSR-streamed first paint |
-| **INP** Interaction to Next Paint | Interaction response delay          | Avoid long tasks, reduce JS execution                                                     |
-| **CLS** Cumulative Layout Shift   | Unexpected shift during page load   | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space     |
-| **TTFB** Time to First Byte       | Server response latency             | Server-route cache, Vercel edge / CDN, lean SSR data fetching                              |
+| **INP** Interaction to Next Paint | Interaction response delay          | Avoid long tasks, reduce JS execution                                                             |
+| **CLS** Cumulative Layout Shift   | Unexpected shift during page load   | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space             |
+| **TTFB** Time to First Byte       | Server response latency             | Server-route cache, Vercel edge / CDN, lean SSR data fetching                                     |
 
 ## Nuxt Specifics
 

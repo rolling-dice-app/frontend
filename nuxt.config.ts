@@ -12,16 +12,6 @@ export default defineNuxtConfig({
     preset: 'vercel',
   },
 
-  routeRules: {
-    '/**': {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-        Pragma: 'no-cache',
-        Expires: '0',
-      },
-    },
-  },
-
   // baseURL set via NUXT_APP_BASE_URL env var (Vercel = '/', local = '/')
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',

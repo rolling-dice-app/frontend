@@ -8,21 +8,15 @@ paths: app/pages/**,app/layouts/**,app/middleware/**,app/plugins/**,app/composab
 
 Apply these rules when working in Nuxt-managed directories.
 
-> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR rules are the active standard; SSR / server-route rules are forward-looking and not enforced under SPA.
+> The app runs in SSR mode (`ssr: true`, Nitro preset `vercel`). All SSR / CSR boundary rules below are active.
 
-## CSR Runtime (Active)
+## SSR / CSR Boundary
 
-1. SPA mode has no hydration mismatch concern.
-2. Browser APIs (`window`, `document`, `localStorage`) may be used directly without a client guard.
-3. `onMounted` is the earliest lifecycle for DOM access.
-4. All data fetching happens on the client; pay attention to initial loading UX.
-
-## SSR / CSR Boundary (Future, Once SSR is Enabled)
-
-1. Every implementation must first identify its execution context.
-2. Do not use `window`, `document`, `localStorage` in server context.
-3. Browser APIs require a client guard or a client-only flow.
-4. Avoid hydration mismatch.
+1. Every implementation must first identify its execution context (server / client).
+2. Do not use `window`, `document`, `localStorage`, `navigator` in server context. Guard with `import.meta.client` or move to `onMounted` / event handlers.
+3. `onMounted` is the earliest client-only lifecycle hook; it does not fire on the server.
+4. Avoid hydration mismatch: server and client first render must produce identical markup. Don't read browser-only state at setup top-level — defer to `onMounted` or wrap UI in `<ClientOnly>`.
+5. Treat user-specific runtime state (e.g. local persisted UI mode, combat tracker) as client-only; render placeholder server-side.
 
 ## Page Responsibility
 
@@ -32,7 +26,7 @@ Apply these rules when working in Nuxt-managed directories.
 
 ## Data Fetching
 
-1. `useAsyncData` provides automatic caching and key management; under SPA it behaves like a client-side fetch.
+1. `useAsyncData` provides automatic caching and key management; under SSR it runs server-side on first render and rehydrates on the client.
 2. Use `useFetch` only when its semantics fit the call site.
 3. Interaction-triggered requests prefer `$fetch`.
 4. Avoid serial waterfalls; parallelize independent requests.
@@ -45,7 +39,7 @@ Apply these rules when working in Nuxt-managed directories.
 1. Request and response shapes come from `@rolling-dice-app/core`. Do not assume DB schema.
 2. The backend is authoritative; frontend treats its responses as the contract truth.
 
-## Server Routes (Future, Once SSR is Enabled)
+## Server Routes
 
 1. Anything that involves private logic, server-only config, or aggregation belongs in a server route.
 2. Don't expose unsafe backend information to the frontend.
@@ -81,4 +75,4 @@ Apply these rules when working in Nuxt-managed directories.
 
 1. Pages directly coupled to multiple raw API response shapes.
 2. Middleware or plugins carrying unrelated responsibilities.
-3. (Future, once SSR is enabled): ignoring server / client execution differences; using client-only data that breaks first-screen consistency.
+3. Ignoring server / client execution differences; using client-only data that breaks first-screen consistency.

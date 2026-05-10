@@ -58,7 +58,9 @@
           <template #label>
             <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
-          <BusinessCharacterCombatQuickView :character="character" />
+          <ClientOnly>
+            <BusinessCharacterCombatQuickView :character="character" />
+          </ClientOnly>
         </Tab>
         <Tab value="spells">
           <template #label>

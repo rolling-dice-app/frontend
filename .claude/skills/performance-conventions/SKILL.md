@@ -8,7 +8,7 @@ paths: app/**/*.vue,app/**/*.ts,app/pages/**/*.vue,app/components/**/*.vue,app/c
 
 Apply these rules when implementing, reviewing, or refactoring performance-sensitive scenarios.
 
-> ⚠️ The current MVP runs in SPA mode (`ssr: false`). CSR performance rules are the active standard; SSR-related performance suggestions are forward-looking.
+> The app runs in SSR mode (`ssr: true`, Nitro preset `vercel`). All performance rules below — including SSR-specific ones (TTFB, hydration cost) — are active.
 
 ## Core Principles
 
@@ -28,7 +28,7 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
    <LazyHeavyComponent v-if="visible" />
    ```
 3. Don't statically import heavy components into a layout or a high-frequency render path.
-4. Client-only third-party widgets can be wrapped in `<ClientOnly>` (required once SSR is enabled).
+4. Client-only third-party widgets must be wrapped in `<ClientOnly>` to avoid hydration mismatch under SSR.
 
 ## Route & Page Loading
 
@@ -45,17 +45,16 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
      getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key],
    })
    ```
-3. Under SPA, kick off first-screen data requests as early as possible — don't wait for component mount.
-4. Once SSR is enabled, push `useAsyncData` to complete first-screen fetches on the server, reducing client waterfall.
-5. Server routes can attach HTTP cache headers for CDN caching of static or low-update-rate data (SSR only).
+3. Push `useAsyncData` to complete first-screen fetches on the server (SSR), reducing client waterfall and improving LCP.
+4. Server routes can attach HTTP cache headers for CDN caching of static or low-update-rate data.
 
-## SPA / CSR Performance Highlights
+## SSR Performance Highlights
 
-1. SPA has no server-rendered first-screen HTML; first paint depends entirely on bundle download and client render.
-2. Bundle size management has higher priority — it directly impacts FCP / LCP.
-3. Route-level code splitting (handled by Nuxt) plus lazy loading of off-screen components is the baseline strategy.
-4. Loading skeletons are the key user-perceived performance lever for SPA; first-screen data requires explicit visual feedback during load.
-5. Trigger first-screen data requests in page setup, not after component mount.
+1. First-screen HTML ships server-rendered; LCP target is fast TTFB plus minimal render-blocking on the client.
+2. Bundle size still matters for hydration cost (TBT / INP); route-level code splitting plus `LazyXxx` for off-screen components is the baseline.
+3. First-screen data goes through `useAsyncData` so it completes server-side and ships in the SSR payload — avoid post-mount client fetches for above-the-fold content.
+4. Loading skeletons remain the primary user-perceived lever for any client-only / lazy-loaded section.
+5. Watch the SSR payload size: `useAsyncData` results serialize into the HTML; trim with `transform` to expose only what the page needs.
 
 ## Bundle Size Management
 
@@ -91,21 +90,19 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
 
 ## Web Vitals
 
-| Metric                            | Description                         | Priority Strategy                                                                         |
-| --------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| **LCP** Largest Contentful Paint  | First-screen main content load time | Image optimization, reduce render-blocking, lower bundle size under SPA                   |
-| **INP** Interaction to Next Paint | Interaction response delay          | Avoid long tasks, reduce JS execution                                                     |
-| **CLS** Cumulative Layout Shift   | Unexpected shift during page load   | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space     |
-| **TTFB** Time to First Byte       | Server response latency             | Under SPA, depends on static-asset hosting; once SSR is on, server-route cache, CDN, edge |
+| Metric                            | Description                         | Priority Strategy                                                                                 |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **LCP** Largest Contentful Paint  | First-screen main content load time | Image optimization (NuxtImg), reduce render-blocking, lower bundle size, SSR-streamed first paint |
+| **INP** Interaction to Next Paint | Interaction response delay          | Avoid long tasks, reduce JS execution                                                             |
+| **CLS** Cumulative Layout Shift   | Unexpected shift during page load   | Image dimensions, avoid dynamic insertion that affects layout, reserve skeleton space             |
+| **TTFB** Time to First Byte       | Server response latency             | Server-route cache, Vercel edge / CDN, lean SSR data fetching                                     |
 
 ## Nuxt Specifics
 
-> Some items below apply only once SSR is enabled; SPA mode applies the items marked accordingly.
-
-1. Static-content pages can use `nuxt generate` to pre-render and avoid recompute on every SSR request (SSR only).
+1. Static-content pages can use `nuxt generate` or `routeRules` `prerender` to pre-render and avoid recompute on every SSR request.
 2. With Nuxt Middleware, ensure no high-latency operations (e.g., unnecessary API calls).
-3. Use `useRequestEvent` or `cachedFunction` (Nitro) to add a cache layer to server functions (SSR only).
-4. Watch payload size; don't over-serialize data from server to client (SSR only).
+3. Use `useRequestEvent` or `cachedFunction` (Nitro) to add a cache layer to server functions.
+4. Watch payload size; don't over-serialize data from server to client. Trim `useAsyncData` `transform` to expose only what the page needs.
 
 ## Measurement Tools
 

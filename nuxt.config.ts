@@ -6,8 +6,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  // SPA mode — no server required; migrate to SSR/hybrid when backend is ready
-  ssr: false,
+  ssr: true,
+
+  nitro: {
+    preset: 'vercel',
+  },
 
   // baseURL set via NUXT_APP_BASE_URL env var (Vercel = '/', local = '/')
   app: {
@@ -40,7 +43,7 @@ export default defineNuxtConfig({
     dirs: ['helpers', 'composables/domain', 'composables/ui', 'composables/api', 'i18n'],
   },
 
-  modules: ['@pinia/nuxt', '@nuxt/eslint', '@nuxt/fonts'],
+  modules: ['@pinia/nuxt', '@nuxt/eslint', '@nuxt/fonts', '@nuxt/image'],
 
   fonts: {
     families: [

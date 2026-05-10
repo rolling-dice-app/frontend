@@ -163,8 +163,12 @@ const { status, refresh } = await useAsyncData('characters', () => characterStor
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)
 
-const storedMode = getLocalStorage<string>(CHARACTER_VIEW_MODE_KEY)
-const isListMode = ref(storedMode === 'list')
+const isListMode = ref(false)
+
+onMounted(() => {
+  const storedMode = getLocalStorage<string>(CHARACTER_VIEW_MODE_KEY)
+  if (storedMode === 'list') isListMode.value = true
+})
 
 watch(isListMode, (val) => {
   setLocalStorage(CHARACTER_VIEW_MODE_KEY, val ? 'list' : 'grid')

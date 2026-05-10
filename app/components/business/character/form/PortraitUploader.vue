@@ -71,11 +71,7 @@
 <script setup lang="ts">
 import { Button, Modal, Icon } from '@ui'
 import { Cropper } from 'vue-advanced-cropper'
-import {
-  AVATAR_ERROR_FALLBACK_MESSAGE,
-  AVATAR_ERROR_MESSAGES,
-  type AvatarErrorCode,
-} from '~/constants/avatar-error-messages'
+import type { AvatarErrorCode } from '~/types/business/avatar'
 
 const PREFLIGHT_MAX_BYTES = 5 * 1024 * 1024
 const OUTPUT_WIDTH = 768
@@ -84,7 +80,7 @@ const WEBP_QUALITY = 0.85
 
 const avatar = defineModel<string | null>({ required: true })
 
-const { t } = useI18n()
+const { t, messages } = useI18n()
 const toast = useToast()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -174,11 +170,11 @@ const canvasToWebp = (canvas: HTMLCanvasElement): Promise<Blob> =>
 const messageForError = (err: unknown): string => {
   if (isFetchError(err)) {
     const code = (err.data as { code?: string } | undefined)?.code
-    if (code && code in AVATAR_ERROR_MESSAGES) {
-      return AVATAR_ERROR_MESSAGES[code as AvatarErrorCode]
+    if (code && code in messages.value.error.avatar) {
+      return t(`error.avatar.${code as AvatarErrorCode}`)
     }
   }
-  return AVATAR_ERROR_FALLBACK_MESSAGE
+  return t('character.portrait.uploadFailed')
 }
 
 const cropConfirm = async () => {
@@ -187,7 +183,7 @@ const cropConfirm = async () => {
   if (!cropper) return
   const result = cropper.getResult()
   if (!result.canvas) {
-    toast.error(AVATAR_ERROR_FALLBACK_MESSAGE)
+    toast.error(t('character.portrait.uploadFailed'))
     return
   }
 

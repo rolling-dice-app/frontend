@@ -25,10 +25,10 @@
                   :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
                   :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
                 >
-                  {{ FEATURE_SOURCE_LABELS[feature.source] }}
+                  {{ t(`combat.featureSource.${feature.source}`) }}
                 </Badge>
                 <Badge v-if="feature.usage.hasUses" size="sm" bg-color="var(--color-surface-2)">
-                  {{ FEATURE_RECOVERY_LABELS[feature.usage.recovery] }}
+                  {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }}
                 </Badge>
               </div>
             </div>
@@ -77,7 +77,6 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Icon } from '@ui'
-import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import type { CharacterFeature } from '@rolling-dice-app/core'
 

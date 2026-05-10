@@ -1,12 +1,26 @@
+import type { FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
 import { DAMAGE_TYPE_LABELS } from '~/constants/dnd'
-import { FEATURE_RECOVERY_LABELS, FEATURE_SOURCE_LABELS } from '~/constants/features'
+
+const featureSource: Readonly<Record<FeatureSource, string>> = {
+  feat: '專長',
+  class: '職業',
+  race: '種族',
+  background: '背景',
+  other: '其他',
+}
+
+const featureRecovery: Readonly<Record<FeatureUsageRecovery, string>> = {
+  shortRest: '短休',
+  longRest: '長休',
+  manual: '手動',
+}
 
 /** 戰鬥相關 enum + 規則 / 衍生值 / AC / 攻擊 / 特性 / 擲骰 用詞 */
 export default {
   // T1 enum
   damageType: DAMAGE_TYPE_LABELS,
-  featureRecovery: FEATURE_RECOVERY_LABELS,
-  featureSource: FEATURE_SOURCE_LABELS,
+  featureRecovery,
+  featureSource,
 
   // HP
   hp: '生命值',

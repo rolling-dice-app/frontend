@@ -14,7 +14,6 @@
 
 <script setup lang="ts">
 import { isOAuthErrorCode } from '@rolling-dice-app/core'
-import { OAUTH_ERROR_FALLBACK_MESSAGE } from '~/constants/auth-error-messages'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -24,7 +23,7 @@ const errorMessage = computed(() => {
   if (typeof code !== 'string') return null
   if (isOAuthErrorCode(code)) return t(`error.oauth.${code}`)
   console.warn('[login] unknown OAuth error code:', code)
-  return OAUTH_ERROR_FALLBACK_MESSAGE
+  return t('ui.message.unknownError')
 })
 
 // 沒帶 ?error= 進來代表沒事在這頁，導回首頁

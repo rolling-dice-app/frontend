@@ -15,9 +15,9 @@ export default defineNuxtConfig({
   routeRules: {
     '/**': {
       headers: {
-        'cache-control': 'private, no-store',
-        'cdn-cache-control': 'no-store',
-        'vercel-cdn-cache-control': 'no-store',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
     },
   },

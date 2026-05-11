@@ -235,6 +235,7 @@ import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {
   CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
   type InventoryItem,
   type InventoryLocation,
   type ItemType,
@@ -242,9 +243,11 @@ import {
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()
+const toast = useToast()
 
 const props = defineProps<{
   items: InventoryItem[]
+  totalItemCount: number
   section: InventoryLocation
   title: string
 }>()
@@ -333,6 +336,10 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = (): void => {
+  if (props.totalItemCount >= VALIDATION_LIMITS.maxItemsPerCharacter) {
+    toast.info(t('inventory.itemLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true

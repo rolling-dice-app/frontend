@@ -92,6 +92,7 @@ export default {
   attack: '攻擊',
   attackModule: '攻擊模組',
   addAttack: '新增攻擊',
+  attackLimitReached: '攻擊數量已達上限，請先刪除舊項目',
   emptyAttack: '尚未設定任何攻擊',
   unnamed: '（未命名）',
   hitBonus: '命中',
@@ -125,6 +126,7 @@ export default {
   // 特性 / Feature
   feature: '特性',
   addFeature: '新增特性',
+  featureLimitReached: '特性數量已達上限，請先刪除舊項目',
   emptyFeature: '尚未設定任何特性',
   emptyFeatureDescription: '（無說明）',
   hasUses: '具有使用次數',

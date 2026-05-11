@@ -219,6 +219,7 @@ import type { SelectOption } from '@ui'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import {
   CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
   type CharacterFeature,
   type FeatureSource,
   type FeatureUsageRecovery,
@@ -226,6 +227,7 @@ import {
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()
+const toast = useToast()
 
 const sourceOptions = computed<SelectOption[]>(() =>
   (Object.entries(messages.value.combat.featureSource) as [FeatureSource, string][]).map(
@@ -304,6 +306,10 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = (): void => {
+  if (formState.value.features.length >= VALIDATION_LIMITS.maxFeaturesPerCharacter) {
+    toast.info(t('combat.featureLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true

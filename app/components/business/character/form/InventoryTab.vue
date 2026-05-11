@@ -17,6 +17,7 @@
     <div class="grid gap-4 md:grid-cols-2">
       <BusinessCharacterFormInventoryItemList
         :items="backpackItems"
+        :total-item-count="allItems.length"
         section="backpack"
         :title="t('inventory.backpack')"
         @add="$emit('add-item', $event)"
@@ -26,6 +27,7 @@
       />
       <BusinessCharacterFormInventoryItemList
         :items="dimensionalBagItems"
+        :total-item-count="allItems.length"
         section="dimensionalBag"
         :title="t('inventory.dimensionalBag')"
         @add="$emit('add-item', $event)"

@@ -71,6 +71,7 @@ const makeItem = (overrides: Partial<InventoryItem> = {}): InventoryItem =>
 const mountList = (
   params: {
     items?: InventoryItem[]
+    totalItemCount?: number
     section?: 'backpack' | 'dimensionalBag'
     title?: string
   } = {},
@@ -78,6 +79,7 @@ const mountList = (
   mount(ItemList, {
     props: {
       items: params.items ?? [],
+      totalItemCount: params.totalItemCount ?? params.items?.length ?? 0,
       section: params.section ?? 'backpack',
       title: params.title ?? '背包',
     },

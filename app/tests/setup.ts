@@ -61,6 +61,8 @@ const { defineStore, setActivePinia } = await import('pinia')
 // i18n auto-imports — t / useI18n 由 production 走 imports.dirs 注入，測試需手動掛
 const { t, useI18n } = await import('~/i18n')
 
+const { useToast } = await import('~/composables/ui/useToast')
+
 // Step 5: 掛上所有 Nuxt auto-imports
 Object.assign(globalThis, {
   ref,
@@ -79,6 +81,7 @@ Object.assign(globalThis, {
   debounce,
   t,
   useI18n,
+  useToast,
   // 預設 useRoute mock，個別 spec 可用 vi.stubGlobal('useRoute', ...) 覆寫
   useRoute: () => reactive({ fullPath: '/' }),
   // 預設 Nuxt composable stubs — 個別 spec 可用 vi.stubGlobal(...) 覆寫

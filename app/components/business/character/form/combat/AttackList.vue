@@ -256,6 +256,7 @@ import type { SelectOption } from '@ui'
 import {
   ABILITY_KEYS,
   CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
   type AttackEntry,
   type DamageDieEntry,
   type AbilityKey,
@@ -270,6 +271,7 @@ import type {
 import { DAMAGE_DIE_TYPES, DAMAGE_TYPE_KEYS } from '~/constants/dnd'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 
@@ -333,6 +335,10 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = () => {
+  if (formState.value.attacks.length >= VALIDATION_LIMITS.maxAttacksPerCharacter) {
+    toast.info(t('combat.attackLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true

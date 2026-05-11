@@ -174,7 +174,7 @@ const onShortRest = (): void => {
   const ids = props.character.features
     .filter((f) => f.usage.hasUses && f.usage.recovery === 'shortRest')
     .map((f) => f.id)
-  if (shortRest(ids)) useToast().success(t('combat.shortRestDone'))
+  if (shortRest(ids)) useToast().success(t('combat.shortRestDone'), { kind: 'hint' })
 }
 
 const onLongRest = (): void => {
@@ -185,6 +185,6 @@ const onLongRest = (): void => {
     )
     .map((f) => f.id)
   longRest(props.character.classes, ids)
-  useToast().success(t('combat.longRestDone'))
+  useToast().success(t('combat.longRestDone'), { kind: 'hint' })
 }
 </script>

@@ -87,6 +87,12 @@
   --color-info: var(--rd--color-info);
   --color-info-hover: var(--rd--color-info-hover);
   --color-info-soft: var(--rd--color-info-soft);
+
+  /* toast — system channel */
+  --color-toast-system-bg: var(--rd--color-toast-system-bg);
+  --color-toast-system-accent-error: var(--rd--color-toast-system-accent-error);
+  --color-toast-system-accent-success: var(--rd--color-toast-system-accent-success);
+  --color-toast-system-accent-info: var(--rd--color-toast-system-accent-info);
 }
 
 /* ─── Utilities ─────────────────────────────────────────────────────────────── */

@@ -115,6 +115,15 @@
   --rd--color-info-hover: #5d96d8;
   --rd--color-info-soft: #15202c;
 
+  /* ─── Toast — System Channel ───────────────────────────────────────────────
+     系統反饋（操作結果、API / 權限 / 驗證錯誤）的專屬樣式。
+     使用冷色 panel 底 + variant 強調色左邊界，與 hint（飽和品牌色）拉開差距。
+  ─────────────────────────────────────────────────────────────────────────── */
+  --rd--color-toast-system-bg: #26456b;
+  --rd--color-toast-system-accent-error: var(--rd--color-danger-hover);
+  --rd--color-toast-system-accent-success: var(--rd--color-success-hover);
+  --rd--color-toast-system-accent-info: var(--rd--color-info-hover);
+
   /* ─── Tier ──────────────────────────────────────────────────────────────────
      各分階的主色與漸層背景，由 level 範圍自動推導。
      T1 common  (Lv.1–4)  : 沿用現有 muted 色

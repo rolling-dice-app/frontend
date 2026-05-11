@@ -2,35 +2,26 @@ import type { Ref } from 'vue'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import { getCombatStateStorageKey } from '~/constants/storage'
 import { calculateTotalLevel } from '~/helpers/character'
-import type {
-  CombatStateDTO,
-  ClassEntry,
-  SpellLevel,
-  AbilityKey,
-  ClassKey,
+import {
+  buildCombatStateBodyDefaults,
+  DEATH_SAVE_THRESHOLD,
+  type CombatStateDTO,
+  type ClassEntry,
+  type SpellLevel,
+  type AbilityKey,
+  type ClassKey,
 } from '@rolling-dice-app/core'
 
 const PERSIST_DEBOUNCE_MS = 300
 
-function createDefaultState(characterId: string): CombatStateDTO {
-  return {
-    characterId,
-    hp: { current: null, tempHp: 0, maxAdjustment: 0 },
-    acAdjustment: 0,
-    speedAdjustment: 0,
-    savingThrowAdjustments: {},
-    featureUsesSpent: {},
-    hitDiceUsed: {},
-    spellSlotsUsed: {},
-    pactSlotsUsed: {},
-    deathSaves: { successes: 0, failures: 0 },
-    updatedAt: new Date().toISOString(),
-  }
-}
+const createDefaultState = (characterId: string): CombatStateDTO => ({
+  characterId,
+  ...buildCombatStateBodyDefaults(),
+  updatedAt: new Date().toISOString(),
+})
 
-function clampDeathSaveCount(value: number | undefined): number {
-  return Math.min(3, Math.max(0, Math.floor(value ?? 0)))
-}
+const clampDeathSaveCount = (value: number | undefined): number =>
+  Math.min(DEATH_SAVE_THRESHOLD, Math.max(0, Math.floor(value ?? 0)))
 
 function normalizeState(stored: Partial<CombatStateDTO>, characterId: string): CombatStateDTO {
   const fallback = createDefaultState(characterId)

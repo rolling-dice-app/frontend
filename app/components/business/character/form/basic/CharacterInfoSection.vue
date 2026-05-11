@@ -262,6 +262,7 @@ import {
   ALIGNMENT_KEYS,
   CLASS_KEYS,
   GENDER_KEYS,
+  MAX_CHARACTER_LEVEL,
   type AlignmentKey,
   type GenderKey,
   type ClassKey,
@@ -323,7 +324,7 @@ const updateClassKey = (index: number, value: string): void => {
 
 const updateClassLevel = (index: number, value: string): void => {
   const level = parseIntegerInput(value, 1)
-  formState.value.classes[index]!.level = Math.max(1, Math.min(20, level))
+  formState.value.classes[index]!.level = Math.max(1, Math.min(MAX_CHARACTER_LEVEL, level))
 }
 
 const updateClassSubclass = (index: number, value: SubclassKey | null): void => {

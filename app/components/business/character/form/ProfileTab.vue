@@ -60,9 +60,9 @@
             class="w-full"
             :border="false"
             :model-value="formState.appearance ?? ''"
-            :placeholder="`${t('character.appearancePlaceholder')}${APPEARANCE_MAX_LENGTH} ${t('character.storyPlaceholderUnit')}`"
+            :placeholder="`${t('character.appearancePlaceholder')}${CHARACTER_TEXT_LIMITS.MEDIUM} ${t('character.storyPlaceholderUnit')}`"
             :rows="2"
-            :maxlength="APPEARANCE_MAX_LENGTH"
+            :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
             show-count
             @update:model-value="formState.appearance = $event || null"
           />
@@ -79,9 +79,9 @@
             class="w-full"
             :border="false"
             :model-value="formState.story ?? ''"
-            :placeholder="`${t('character.storyPlaceholder')}${STORY_MAX_LENGTH} ${t('character.storyPlaceholderUnit')}`"
+            :placeholder="`${t('character.storyPlaceholder')}${CHARACTER_TEXT_LIMITS.LONG} ${t('character.storyPlaceholderUnit')}`"
             :rows="10"
-            :maxlength="STORY_MAX_LENGTH"
+            :maxlength="CHARACTER_TEXT_LIMITS.LONG"
             show-count
             @update:model-value="formState.story = $event || null"
           />
@@ -96,12 +96,10 @@
 
 <script setup lang="ts">
 import { TextArea } from '@ui'
+import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
 
 const { t } = useI18n()
-
-const APPEARANCE_MAX_LENGTH = 200
-const STORY_MAX_LENGTH = 2000
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 </script>

@@ -228,7 +228,7 @@
             :border="false"
             :model-value="draft.comment ?? ''"
             :rows="3"
-            :maxlength="COMMENT_MAX_LENGTH"
+            :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
             show-count
             :placeholder="t('combat.attackCommentPlaceholder')"
             @update:model-value="draft.comment = $event ? $event : null"
@@ -253,12 +253,14 @@
 <script setup lang="ts">
 import { Modal, Button, Icon, Toggle, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import type {
-  AttackEntry,
-  DamageDieEntry,
-  AbilityKey,
-  DamageDieType,
-  DamageTypeKey,
+import {
+  ABILITY_KEYS,
+  CHARACTER_TEXT_LIMITS,
+  type AttackEntry,
+  type DamageDieEntry,
+  type AbilityKey,
+  type DamageDieType,
+  type DamageTypeKey,
 } from '@rolling-dice-app/core'
 import type {
   AttackDraft,
@@ -266,7 +268,6 @@ import type {
   TotalAbilityScores,
 } from '~/types/business/character-form'
 import { DAMAGE_DIE_TYPES, DAMAGE_TYPE_KEYS } from '~/constants/dnd'
-import { ABILITY_KEYS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -293,8 +294,6 @@ const damageTypeOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },
   ...DAMAGE_TYPE_KEYS.map((key) => ({ value: key, label: t(`combat.damageType.${key}`) })),
 ])
-
-const COMMENT_MAX_LENGTH = 100
 
 // ─── Modal 狀態 ───────────────────────────────────────────────────────────────
 

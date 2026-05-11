@@ -1,3 +1,4 @@
+import { t } from '~/i18n'
 import { SPELL_SCHOOLS } from '~/constants/dnd'
 import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
 
@@ -9,9 +10,9 @@ export function validateSpell(raw: SpellDTO): SpellDTO | null {
   return raw
 }
 
-/** 將法術環數轉為中文顯示（0 為戲法） */
+/** 將法術環數轉為當前 locale 的顯示字串（0 為戲法） */
 export function formatSpellLevel(level: number): string {
-  return level === 0 ? '戲法' : `${level} 環`
+  return level === 0 ? t('spell.cantrip') : `${level} ${t('spell.level')}`
 }
 
 /** 以「聲勢材」精簡字串描述法術成分 */

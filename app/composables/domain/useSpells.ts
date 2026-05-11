@@ -6,14 +6,13 @@ export interface SkippedSpell {
   school: string
 }
 
-/** 載入 public/json/spells.json，回傳正規化後的 SpellDTO 與略過的未知學派條目。 */
+/** 從 backend `/spells` 載入並正規化 SpellDTO，回傳略過的未知學派條目。 */
 export function useSpells() {
-  const config = useRuntimeConfig()
   const logger = createLogger('[useSpells]')
+  const { listSpells } = useSpellApi()
 
   const { data, pending, error, refresh } = useAsyncData('spells', async () => {
-    const baseURL = config.app.baseURL.endsWith('/') ? config.app.baseURL : `${config.app.baseURL}/`
-    const raw = await $fetch<SpellDTO[]>(`${baseURL}json/spells.json`)
+    const raw = await listSpells()
     const accepted: SpellDTO[] = []
     const skipped: SkippedSpell[] = []
     for (const r of raw) {

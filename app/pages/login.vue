@@ -17,12 +17,13 @@ import { isOAuthErrorCode } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 const route = useRoute()
+const logger = createLogger('[login]')
 
 const errorMessage = computed(() => {
   const code = route.query.error
   if (typeof code !== 'string') return null
   if (isOAuthErrorCode(code)) return t(`error.oauth.${code}`)
-  console.warn('[login] unknown OAuth error code:', code)
+  logger.warn('unknown OAuth error code:', code)
   return t('ui.message.unknownError')
 })
 

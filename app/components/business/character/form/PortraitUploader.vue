@@ -204,8 +204,6 @@ const cropConfirm = async () => {
 }
 
 const handleRemove = () => {
-  console.log(avatar.value)
-
   avatar.value = null
 }
 

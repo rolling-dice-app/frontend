@@ -8,6 +8,8 @@
  * 失敗只記 warn，不 block 應用啟動 — user state 維持 null，
  * route middleware 會把訪問 protected 頁的請求導向 /login。
  */
+const logger = createLogger('[auth-init]')
+
 export default defineNuxtPlugin({
   name: 'auth-init',
   dependsOn: ['api-fetch'],
@@ -15,7 +17,7 @@ export default defineNuxtPlugin({
     try {
       await useAuthStore().refresh()
     } catch (err) {
-      console.warn('[auth-init] failed to hydrate user state', err)
+      logger.warn('failed to hydrate user state', err)
     }
   },
 })

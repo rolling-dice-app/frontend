@@ -54,11 +54,13 @@ export const useCharacterStore = defineStore('character', () => {
 
   const characters = computed<CharacterListItem[]>(() => list.value)
 
-  const loadList = async (): Promise<void> => {
+  const loadList = async (): Promise<CharacterListItem[]> => {
     listLoading.value = true
     listError.value = null
     try {
-      list.value = await useCharacterApi().listCharacters()
+      const items = await useCharacterApi().listCharacters()
+      list.value = items
+      return items
     } catch (error) {
       listError.value = error
       throw error

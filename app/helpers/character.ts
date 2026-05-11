@@ -3,6 +3,13 @@ import {
   UNARMORED_AC_BASE,
   type ArmorClassConfig,
   type CharacterAbilityScores,
+  type CharacterCapabilities,
+  type CharacterClasses,
+  type CharacterDTO,
+  type CharacterInventory,
+  type CharacterProfile,
+  type CharacterStats,
+  type CharacterUpdateDTO,
   type ClassEntry,
   type AbilityKey,
   type ArmorType,
@@ -10,6 +17,7 @@ import {
 } from '@rolling-dice-app/core'
 import type {
   CharacterFormStateBase,
+  CharacterUpdateFormState,
   CharacterWritablePatch,
   TotalAbilityScores,
 } from '~/types/business/character-form'
@@ -266,4 +274,155 @@ export function formStateToCharacterPatch(
     armorProficiencies,
     avatar,
   }
+}
+
+const toProfileSection = (form: CharacterUpdateFormState): CharacterProfile => ({
+  name: form.name,
+  gender: form.gender,
+  race: form.race,
+  subrace: form.subrace,
+  alignment: form.alignment,
+  background: form.background || null,
+  faith: form.faith || null,
+  age: form.age ?? null,
+  height: form.height || null,
+  weight: form.weight || null,
+  appearance: form.appearance || null,
+  story: form.story || null,
+  languages: form.languages || null,
+  tools: form.tools || null,
+  weaponProficiencies: form.weaponProficiencies || null,
+  armorProficiencies: form.armorProficiencies || null,
+  avatar: form.avatar,
+})
+
+const toClassesSection = (form: CharacterUpdateFormState): CharacterClasses => ({
+  classes: form.classes.filter((entry): entry is ClassEntry => entry.classKey !== null),
+})
+
+const toStatsSection = (form: CharacterUpdateFormState): CharacterStats => ({
+  abilities: form.abilities,
+  skills: form.skills,
+  savingThrowExtras: form.savingThrowExtras,
+  isJackOfAllTrades: form.isJackOfAllTrades,
+  isTough: form.isTough,
+  armorClass: form.armorClass,
+  customHpBonus: form.customHpBonus,
+  speedBonus: form.speedBonus,
+  initiativeBonus: form.initiativeBonus,
+  initiativeAbilityKey: form.initiativeAbilityKey,
+  passivePerceptionBonus: form.passivePerceptionBonus,
+  passiveInsightBonus: form.passiveInsightBonus,
+})
+
+const toCapabilitiesSection = (form: CharacterUpdateFormState): CharacterCapabilities => ({
+  attacks: form.attacks,
+  spellcastingAbilities: form.spellcastingAbilities,
+  customSpellcastingBonuses: form.customSpellcastingBonuses,
+  spells: form.spells,
+  spellSlotsDelta: form.spellSlotsDelta,
+  pactSlotsDelta: form.pactSlotsDelta,
+  features: form.features,
+})
+
+const toInventorySection = (form: CharacterUpdateFormState): CharacterInventory => ({
+  items: form.items,
+  currency: form.currency,
+})
+
+const originalProfile = (c: CharacterDTO): CharacterProfile => ({
+  name: c.name,
+  gender: c.gender,
+  race: c.race,
+  subrace: c.subrace,
+  alignment: c.alignment,
+  background: c.background,
+  faith: c.faith,
+  age: c.age,
+  height: c.height,
+  weight: c.weight,
+  appearance: c.appearance,
+  story: c.story,
+  languages: c.languages,
+  tools: c.tools,
+  weaponProficiencies: c.weaponProficiencies,
+  armorProficiencies: c.armorProficiencies,
+  avatar: c.avatar,
+})
+
+const originalClasses = (c: CharacterDTO): CharacterClasses => ({ classes: c.classes })
+
+const originalStats = (c: CharacterDTO): CharacterStats => ({
+  abilities: c.abilities,
+  skills: c.skills,
+  savingThrowExtras: c.savingThrowExtras,
+  isJackOfAllTrades: c.isJackOfAllTrades,
+  isTough: c.isTough,
+  armorClass: c.armorClass,
+  customHpBonus: c.customHpBonus,
+  speedBonus: c.speedBonus,
+  initiativeBonus: c.initiativeBonus,
+  initiativeAbilityKey: c.initiativeAbilityKey,
+  passivePerceptionBonus: c.passivePerceptionBonus,
+  passiveInsightBonus: c.passiveInsightBonus,
+})
+
+const originalCapabilities = (c: CharacterDTO): CharacterCapabilities => ({
+  attacks: c.attacks,
+  spellcastingAbilities: c.spellcastingAbilities,
+  customSpellcastingBonuses: c.customSpellcastingBonuses,
+  spells: c.spells,
+  spellSlotsDelta: c.spellSlotsDelta,
+  pactSlotsDelta: c.pactSlotsDelta,
+  features: c.features,
+})
+
+const originalInventory = (c: CharacterDTO): CharacterInventory => ({
+  items: c.items,
+  currency: c.currency,
+})
+
+const deepEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true
+  if (a === null || b === null) return a === b
+  if (typeof a !== 'object' || typeof b !== 'object') return false
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((v, i) => deepEqual(v, b[i]))
+  }
+  if (Array.isArray(b)) return false
+  const ao = a as Record<string, unknown>
+  const bo = b as Record<string, unknown>
+  const ak = Object.keys(ao)
+  const bk = Object.keys(bo)
+  if (ak.length !== bk.length) return false
+  return ak.every((k) => k in bo && deepEqual(ao[k], bo[k]))
+}
+
+const sectionChanged = <T>(a: T, b: T): boolean => !deepEqual(a, b)
+
+/** 以 section 為粒度比對 form state 與原始角色，產出 PATCH payload；updatedAt 作 optimistic lock token。 */
+export function buildCharacterUpdatePatch(
+  original: CharacterDTO,
+  form: CharacterUpdateFormState,
+): CharacterUpdateDTO {
+  const patch: CharacterUpdateDTO = { updatedAt: original.updatedAt }
+
+  const profile = toProfileSection(form)
+  if (sectionChanged(profile, originalProfile(original))) patch.profile = profile
+
+  const classes = toClassesSection(form)
+  if (sectionChanged(classes, originalClasses(original))) patch.classes = classes
+
+  const stats = toStatsSection(form)
+  if (sectionChanged(stats, originalStats(original))) patch.stats = stats
+
+  const capabilities = toCapabilitiesSection(form)
+  if (sectionChanged(capabilities, originalCapabilities(original)))
+    patch.capabilities = capabilities
+
+  const inventory = toInventorySection(form)
+  if (sectionChanged(inventory, originalInventory(original))) patch.inventory = inventory
+
+  return patch
 }

@@ -2,15 +2,12 @@
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <CommonPageHeader title="Character Detail" :show-back="true">
       <template v-if="character" #actions>
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          :title="t('ui.readOnly.editTooltip')"
-          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-faint cursor-not-allowed opacity-60"
+        <NuxtLink
+          :to="`/character/${id}/update`"
+          class="rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {{ t('ui.action.edit') }}
-        </button>
+        </NuxtLink>
       </template>
     </CommonPageHeader>
 

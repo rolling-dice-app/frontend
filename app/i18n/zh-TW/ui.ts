@@ -38,7 +38,9 @@ export default {
   },
   /** Toast / alert 通用訊息 */
   message: {
+    saveSuccess: '已儲存',
     saveFailed: '儲存失敗，請稍後再試',
+    staleCharacter: '此角色已被其他裝置更新，將返回詳情頁',
     deleteFailed: '刪除失敗，請稍後再試',
     unknownError: '發生未知錯誤，請稍後再試',
     editingNotAvailable: '編輯功能尚未開放',
@@ -54,8 +56,6 @@ export default {
   /** 唯讀模式相關 banner / 提示 */
   readOnly: {
     detailBanner: '目前為唯讀模式，背包與冒險編輯尚未開放，待後端編輯端點上線後恢復。',
-    updateBanner: '編輯功能尚未開放，目前僅供預覽，無法儲存修改。待後端編輯端點上線後恢復。',
-    editTooltip: '編輯功能尚未開放',
   },
   /** Aria-label / 共用螢幕閱讀器標籤 */
   aria: {

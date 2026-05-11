@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCharacterUpdatePatch,
   calculatePassiveScore,
   calculateSavingThrowProficiencies,
   calculateTotalAbilityScores,
@@ -16,8 +17,14 @@ import {
   createDefaultArmorClass,
   type ArmorClassConfig,
   type CharacterAbilityScores,
+  type CharacterDTO,
 } from '@rolling-dice-app/core'
-import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
+import type {
+  CharacterFormStateBase,
+  CharacterUpdateFormState,
+  TotalAbilityScores,
+} from '~/types/business/character-form'
+import { createMockCharacter } from '~/tests/fixtures/character'
 
 describe('getCharacterTier', () => {
   describe('common 等級 (1–4)', () => {
@@ -335,6 +342,169 @@ describe('formStateToCharacterPatch', () => {
     const patch = formStateToCharacterPatch(form)
     expect(patch.skills).toEqual(skills)
     expect(patch.skills).not.toBe(skills)
+  })
+})
+
+describe('buildCharacterUpdatePatch', () => {
+  const characterToForm = (c: CharacterDTO): CharacterUpdateFormState => ({
+    id: c.id,
+    name: c.name,
+    gender: c.gender,
+    race: c.race,
+    subrace: c.subrace,
+    alignment: c.alignment,
+    classes: c.classes.map((e) => ({ ...e })),
+    abilities: structuredClone(c.abilities),
+    savingThrowExtras: [...c.savingThrowExtras],
+    skills: { ...c.skills },
+    background: c.background,
+    isJackOfAllTrades: c.isJackOfAllTrades,
+    isTough: c.isTough,
+    faith: c.faith,
+    age: c.age,
+    height: c.height,
+    weight: c.weight,
+    appearance: c.appearance,
+    story: c.story,
+    languages: c.languages,
+    tools: c.tools,
+    weaponProficiencies: c.weaponProficiencies,
+    armorProficiencies: c.armorProficiencies,
+    avatar: c.avatar,
+    armorClass: { ...c.armorClass },
+    speedBonus: c.speedBonus,
+    initiativeBonus: c.initiativeBonus,
+    initiativeAbilityKey: c.initiativeAbilityKey,
+    passivePerceptionBonus: c.passivePerceptionBonus,
+    passiveInsightBonus: c.passiveInsightBonus,
+    customHpBonus: c.customHpBonus,
+    attacks: c.attacks.map((a) => ({ ...a, damageDice: a.damageDice.map((d) => ({ ...d })) })),
+    spellcastingAbilities: [...c.spellcastingAbilities],
+    customSpellcastingBonuses: { ...c.customSpellcastingBonuses },
+    spells: c.spells.map((s) => ({ ...s })),
+    spellSlotsDelta: { ...c.spellSlotsDelta },
+    pactSlotsDelta: { ...c.pactSlotsDelta },
+    features: c.features.map((f) => ({ ...f, usage: { ...f.usage } })),
+    items: c.items.map((i) => ({ ...i })),
+    currency: { ...c.currency },
+  })
+
+  it('無變動時只回傳 updatedAt', () => {
+    const character = createMockCharacter({ updatedAt: '2026-03-01T00:00:00.000Z' })
+    const form = characterToForm(character)
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(Object.keys(patch)).toEqual(['updatedAt'])
+    expect(patch.updatedAt).toBe('2026-03-01T00:00:00.000Z')
+  })
+
+  it('只改 name 時只回 profile section', () => {
+    const character = createMockCharacter()
+    const form = characterToForm(character)
+    form.name = '新名字'
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.profile?.name).toBe('新名字')
+    expect(patch.classes).toBeUndefined()
+    expect(patch.stats).toBeUndefined()
+    expect(patch.capabilities).toBeUndefined()
+    expect(patch.inventory).toBeUndefined()
+  })
+
+  it('只改 classes 時只回 classes section', () => {
+    const character = createMockCharacter()
+    const form = characterToForm(character)
+    form.classes = [{ classKey: 'wizard', level: 3, subclass: null }]
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.classes?.classes).toEqual([{ classKey: 'wizard', level: 3, subclass: null }])
+    expect(patch.profile).toBeUndefined()
+  })
+
+  it('classes 含 null 條目時過濾掉', () => {
+    const character = createMockCharacter()
+    const form = characterToForm(character)
+    form.classes = [
+      { classKey: 'fighter', level: 5, subclass: null },
+      { classKey: null, level: 1, subclass: null },
+    ]
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.classes).toBeUndefined()
+  })
+
+  it('改動 attacks 時只回 capabilities section', () => {
+    const character = createMockCharacter()
+    const form = characterToForm(character)
+    form.attacks = [
+      {
+        id: 'a1',
+        name: '長劍',
+        abilityKey: 'strength',
+        damageDice: [{ id: 'd1', dieType: 8, count: 1, bonus: 0, damageType: 'slashing' }],
+        extraHitBonus: null,
+        applyAbilityToDamage: true,
+        comment: null,
+      },
+    ]
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.capabilities?.attacks).toHaveLength(1)
+    expect(patch.profile).toBeUndefined()
+    expect(patch.stats).toBeUndefined()
+  })
+
+  it('多 section 同時變動全部回傳', () => {
+    const character = createMockCharacter()
+    const form = characterToForm(character)
+    form.name = '新名字'
+    form.customHpBonus = 10
+    form.currency = { cp: 0, sp: 0, gp: 50, pp: 0 }
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.profile).toBeDefined()
+    expect(patch.stats).toBeDefined()
+    expect(patch.inventory).toBeDefined()
+    expect(patch.classes).toBeUndefined()
+    expect(patch.capabilities).toBeUndefined()
+  })
+
+  it('陣列僅調換順序視為變動（drag reorder 應送出 patch）', () => {
+    const character = createMockCharacter({
+      features: [
+        {
+          id: 'f1',
+          name: '特性 A',
+          source: 'feat',
+          description: null,
+          usage: { hasUses: false },
+        },
+        {
+          id: 'f2',
+          name: '特性 B',
+          source: 'feat',
+          description: null,
+          usage: { hasUses: false },
+        },
+      ],
+    })
+    const form = characterToForm(character)
+    form.features = [form.features[1]!, form.features[0]!]
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.capabilities?.features?.map((f) => f.id)).toEqual(['f2', 'f1'])
+  })
+
+  it('nested 物件 key 順序不同時不視為變動', () => {
+    const character = createMockCharacter({
+      armorClass: { type: 'none', value: 10, abilityKey: null, shieldValue: 0 },
+    })
+    const form = characterToForm(character)
+    // 模擬不同 serializer 產出的不同 key 順序
+    form.armorClass = { shieldValue: 0, abilityKey: null, value: 10, type: 'none' }
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.stats).toBeUndefined()
+  })
+
+  it('updatedAt 採用 original 值（即使 form 不帶）', () => {
+    const character = createMockCharacter({ updatedAt: '2026-04-15T12:00:00.000Z' })
+    const form = characterToForm(character)
+    form.name = '新名字'
+    const patch = buildCharacterUpdatePatch(character, form)
+    expect(patch.updatedAt).toBe('2026-04-15T12:00:00.000Z')
   })
 })
 

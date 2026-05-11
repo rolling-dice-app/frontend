@@ -6,7 +6,7 @@
           :disabled="!canSubmit"
           :loading="isSubmitting"
           :radius="4"
-          class="w-20"
+          class="w-22"
           bg-color="var(--color-primary)"
           @click="submit"
         >
@@ -33,14 +33,6 @@
     />
 
     <template v-else>
-      <!-- Read-only banner -->
-      <div
-        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
-        role="status"
-      >
-        {{ t('ui.readOnly.updateBanner') }}
-      </div>
-
       <Tabs
         v-model="activeTab"
         type="border"

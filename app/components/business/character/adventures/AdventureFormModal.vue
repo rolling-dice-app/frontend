@@ -1,113 +1,115 @@
 <template>
-  <Modal
-    :model-value="modelValue"
-    :title="editing ? t('character.editAdventureRecord') : t('character.addAdventureRecord')"
-    size="md"
-    bg-color="var(--color-canvas-elevated)"
-    text-color="var(--color-content)"
-    border-color="var(--color-border)"
-    @update:model-value="$emit('update:modelValue', $event)"
-  >
-    <div class="space-y-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div class="flex-1">
-          <label for="adventure-name" class="mb-1 block text-xs text-content">
-            {{ t('character.adventureField.name') }}
-          </label>
-          <CommonAppInput
-            id="adventure-name"
-            :radius="0"
-            :model-value="draft.name"
-            size="sm"
-            outline
-            class="w-full"
-            @update:model-value="draft.name = $event"
-          />
-        </div>
-        <div>
-          <label for="adventure-date" class="mb-1 block text-xs text-content">
-            {{ t('character.adventureField.date') }}
-          </label>
-          <input
-            id="adventure-date"
-            v-model="draft.date"
-            type="date"
-            style="color-scheme: dark"
-            class="h-8 rounded-md border border-primary bg-canvas-inset px-2 text-sm text-content transition-colors focus:outline-none focus-within:ring-1 focus-within:ring-primary"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label for="adventure-content" class="mb-1 block text-xs text-content">
-          {{ t('character.adventureField.contentOptional') }}
-        </label>
-        <div class="rounded-md border border-primary bg-canvas-inset">
-          <TextArea
-            id="adventure-content"
-            class="w-full"
-            :border="false"
-            :model-value="draft.content"
-            :rows="4"
-            :maxlength="CHARACTER_TEXT_LIMITS.LONG"
-            show-count
-            :placeholder="t('character.adventureField.contentPlaceholder')"
-            @update:model-value="draft.content = $event"
-          />
-        </div>
-      </div>
-
-      <div>
-        <p class="mb-1 text-xs text-content">{{ t('character.adventureField.moneyEarning') }}</p>
-        <div class="grid grid-cols-4 gap-2">
-          <div v-for="key in CURRENCY_KEYS" :key="key">
-            <label :for="`adventure-money-${key}`" class="mb-1 block text-xs text-content-muted">
-              {{ currencyLabels[key] }}
+  <div style="display: contents">
+    <Modal
+      :model-value="modelValue"
+      :title="editing ? t('character.editAdventureRecord') : t('character.addAdventureRecord')"
+      size="md"
+      bg-color="var(--color-canvas-elevated)"
+      text-color="var(--color-content)"
+      border-color="var(--color-border)"
+      @update:model-value="$emit('update:modelValue', $event)"
+    >
+      <div class="space-y-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div class="flex-1">
+            <label for="adventure-name" class="mb-1 block text-xs text-content">
+              {{ t('character.adventureField.name') }}
             </label>
             <CommonAppInput
-              :id="`adventure-money-${key}`"
-              type="number"
-              min="0"
-              step="1"
+              id="adventure-name"
+              :radius="0"
+              :model-value="draft.name"
               size="sm"
               outline
-              :model-value="String(draft.moneyEarning[key])"
               class="w-full"
-              @update:model-value="draft.moneyEarning[key] = sanitizeNumber($event)"
+              @update:model-value="draft.name = $event"
+            />
+          </div>
+          <div>
+            <label for="adventure-date" class="mb-1 block text-xs text-content">
+              {{ t('character.adventureField.date') }}
+            </label>
+            <input
+              id="adventure-date"
+              v-model="draft.date"
+              type="date"
+              style="color-scheme: dark"
+              class="h-8 rounded-md border border-primary bg-canvas-inset px-2 text-sm text-content transition-colors focus:outline-none focus-within:ring-1 focus-within:ring-primary"
             />
           </div>
         </div>
+
+        <div>
+          <label for="adventure-content" class="mb-1 block text-xs text-content">
+            {{ t('character.adventureField.contentOptional') }}
+          </label>
+          <div class="rounded-md border border-primary bg-canvas-inset">
+            <TextArea
+              id="adventure-content"
+              class="w-full"
+              :border="false"
+              :model-value="draft.content"
+              :rows="4"
+              :maxlength="CHARACTER_TEXT_LIMITS.LONG"
+              show-count
+              :placeholder="t('character.adventureField.contentPlaceholder')"
+              @update:model-value="draft.content = $event"
+            />
+          </div>
+        </div>
+
+        <div>
+          <p class="mb-1 text-xs text-content">{{ t('character.adventureField.moneyEarning') }}</p>
+          <div class="grid grid-cols-4 gap-2">
+            <div v-for="key in CURRENCY_KEYS" :key="key">
+              <label :for="`adventure-money-${key}`" class="mb-1 block text-xs text-content-muted">
+                {{ currencyLabels[key] }}
+              </label>
+              <CommonAppInput
+                :id="`adventure-money-${key}`"
+                type="number"
+                min="0"
+                step="1"
+                size="sm"
+                outline
+                :model-value="String(draft.moneyEarning[key])"
+                class="w-full"
+                @update:model-value="draft.moneyEarning[key] = sanitizeNumber($event)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="w-32">
+          <label for="adventure-exp" class="mb-1 block text-xs text-content">
+            {{ t('character.adventureField.expEarning') }}
+          </label>
+          <CommonAppInput
+            id="adventure-exp"
+            type="number"
+            min="0"
+            step="1"
+            size="sm"
+            outline
+            :model-value="String(draft.expEarning)"
+            class="w-full"
+            @update:model-value="draft.expEarning = sanitizeNumber($event)"
+          />
+        </div>
       </div>
 
-      <div class="w-32">
-        <label for="adventure-exp" class="mb-1 block text-xs text-content">
-          {{ t('character.adventureField.expEarning') }}
-        </label>
-        <CommonAppInput
-          id="adventure-exp"
-          type="number"
-          min="0"
-          step="1"
-          size="sm"
-          outline
-          :model-value="String(draft.expEarning)"
-          class="w-full"
-          @update:model-value="draft.expEarning = sanitizeNumber($event)"
-        />
-      </div>
-    </div>
-
-    <template #footer>
-      <Button
-        :radius="4"
-        :disabled="!draft.name.trim()"
-        bg-color="var(--color-primary)"
-        @click="onSave"
-      >
-        {{ t('ui.action.confirm') }}
-      </Button>
-    </template>
-  </Modal>
+      <template #footer>
+        <Button
+          :radius="4"
+          :disabled="!draft.name.trim()"
+          bg-color="var(--color-primary)"
+          @click="onSave"
+        >
+          {{ t('ui.action.confirm') }}
+        </Button>
+      </template>
+    </Modal>
+  </div>
 </template>
 
 <script setup lang="ts">

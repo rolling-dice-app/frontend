@@ -6,13 +6,13 @@ import {
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import type { CharacterListItem } from '~/types/business/character-list'
-import { formStateToCharacterPatch } from '~/helpers/character'
+import { buildCharacterUpdatePatch, formStateToCharacterPatch } from '~/helpers/character'
 
 /** 可由外部 patch 的欄位（排除身分識別與建立時間） */
 export type CharacterMutablePatch = Partial<Omit<CharacterDTO, 'id' | 'createdAt'>>
 
-const NOT_SUPPORTED_MESSAGE =
-  'character mutation 尚未支援 (backend update/delete endpoint not implemented)'
+const PATCH_NOT_SUPPORTED_MESSAGE =
+  'patchCharacter 尚未支援 (backend partial patch endpoint not implemented)'
 
 const cloneCharacter = (c: CharacterDTO): CharacterDTO =>
   JSON.parse(JSON.stringify(c)) as CharacterDTO
@@ -97,12 +97,25 @@ export const useCharacterStore = defineStore('character', () => {
     return cached ? cloneCharacter(cached) : undefined
   }
 
-  const notSupported = (action: string): never => {
-    throw new Error(`${action}: ${NOT_SUPPORTED_MESSAGE}`)
-  }
+  const updateCharacter = async (
+    id: string,
+    formState: CharacterUpdateFormState,
+  ): Promise<CharacterDTO> => {
+    const original = detailCache.value.get(id)
+    if (!original) throw new Error('updateCharacter: character not loaded')
 
-  const updateCharacter = (_id: string, _formState: CharacterUpdateFormState): never =>
-    notSupported('updateCharacter')
+    const patch = buildCharacterUpdatePatch(original, formState)
+    if (Object.keys(patch).length <= 1) return cloneCharacter(original)
+
+    const api = useCharacterApi()
+    await api.updateCharacter(id, patch)
+    const next = await api.getCharacter(id)
+    detailCache.value.set(id, next)
+    const nextItem = characterToListItem(next)
+    const idx = list.value.findIndex((c) => c.id === id)
+    if (idx >= 0) list.value[idx] = nextItem
+    return cloneCharacter(next)
+  }
 
   const removeCharacter = async (id: string): Promise<void> => {
     await useCharacterApi().deleteCharacter(id)
@@ -110,8 +123,9 @@ export const useCharacterStore = defineStore('character', () => {
     list.value = list.value.filter((c) => c.id !== id)
   }
 
-  const patchCharacter = (_id: string, _patch: CharacterMutablePatch): never =>
-    notSupported('patchCharacter')
+  const patchCharacter = (_id: string, _patch: CharacterMutablePatch): never => {
+    throw new Error(`patchCharacter: ${PATCH_NOT_SUPPORTED_MESSAGE}`)
+  }
 
   return {
     characters,

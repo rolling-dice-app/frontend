@@ -28,6 +28,7 @@ const MOCK_CHARACTER = createMockCharacter({
 })
 
 const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
 
 async function getComposable(characterId: string) {
   const { useCharacterStore } = await import('~/stores/character')
@@ -36,7 +37,7 @@ async function getComposable(characterId: string) {
   const { useCharacterDerivedStats } = await import('~/composables/domain/useCharacterDerivedStats')
   vi.stubGlobal('useCharacterDerivedStats', useCharacterDerivedStats)
 
-  vi.stubGlobal('useToast', () => ({ error: mockToastError }))
+  vi.stubGlobal('useToast', () => ({ error: mockToastError, success: mockToastSuccess }))
 
   const { useCharacterUpdate } = await import('~/composables/domain/useCharacterUpdate')
   return useCharacterUpdate(characterId)
@@ -161,20 +162,87 @@ describe('useCharacterUpdate — 職業管理', () => {
   })
 })
 
-// ─── 編輯功能尚未開放（backend 未實作 update endpoint） ───────────────────────
+// ─── canSubmit / submit ──────────────────────────────────────────────────────
 
-describe('useCharacterUpdate — 編輯尚未開放', () => {
-  it('canSubmit 永遠為 false（不論 formState 內容）', async () => {
-    const { canSubmit, formState } = await getComposable('update-001')
-    expect(canSubmit.value).toBe(false)
-    formState.name = '其他名字'
+describe('useCharacterUpdate — canSubmit', () => {
+  it('未變更時為 false', async () => {
+    const { canSubmit } = await getComposable('update-001')
     expect(canSubmit.value).toBe(false)
   })
 
-  it('submit 呼叫顯示「編輯功能尚未開放」toast，不導航', async () => {
+  it('變更 name 後為 true', async () => {
+    const { canSubmit, formState } = await getComposable('update-001')
+    formState.name = '其他名字'
+    expect(canSubmit.value).toBe(true)
+  })
+
+  it('name 清空時為 false', async () => {
+    const { canSubmit, formState } = await getComposable('update-001')
+    formState.name = '   '
+    expect(canSubmit.value).toBe(false)
+  })
+
+  it('任一 class 未選時為 false', async () => {
+    const { canSubmit, formState } = await getComposable('update-001')
+    formState.classes.push({ classKey: null, level: 1, subclass: null })
+    expect(canSubmit.value).toBe(false)
+  })
+})
+
+describe('useCharacterUpdate — submit', () => {
+  it('成功時呼叫 store.updateCharacter、顯示 success toast、刷新 formState', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const next = { ...MOCK_CHARACTER, name: '已改名', updatedAt: '2026-02-01T00:00:00.000Z' }
+    const spy = vi.spyOn(store, 'updateCharacter').mockImplementation(async () => {
+      store.detailCache.set(next.id, next)
+      return next
+    })
+
+    const { submit, formState } = await getComposable('update-001')
+    formState.name = '已改名'
+    await submit()
+
+    expect(spy).toHaveBeenCalledWith('update-001', formState)
+    expect(mockToastSuccess).toHaveBeenCalledWith('已儲存')
+    expect(formState.name).toBe('已改名')
+  })
+
+  it('409 stale 時顯示提示並導回 detail 頁', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue({ response: { status: 409 } })
+
+    const { submit, formState } = await getComposable('update-001')
+    formState.name = '已改名'
+    await submit()
+
+    expect(mockToastError).toHaveBeenCalledWith('此角色已被其他裝置更新，將返回詳情頁')
+    expect(mockNavigateTo).toHaveBeenCalledWith('/character/update-001')
+  })
+
+  it('其他錯誤顯示 saveFailed toast', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue(new Error('boom'))
+
+    const { submit, formState } = await getComposable('update-001')
+    formState.name = '已改名'
+    await submit()
+
+    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+  })
+
+  it('未滿足 canSubmit 時不呼叫 store', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const spy = vi.spyOn(store, 'updateCharacter')
+
     const { submit } = await getComposable('update-001')
     await submit()
-    expect(mockToastError).toHaveBeenCalledWith('編輯功能尚未開放')
-    expect(mockNavigateTo).not.toHaveBeenCalled()
+
+    expect(spy).not.toHaveBeenCalled()
+    expect(mockToastSuccess).not.toHaveBeenCalled()
   })
 })

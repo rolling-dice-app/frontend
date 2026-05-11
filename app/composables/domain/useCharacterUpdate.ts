@@ -6,6 +6,8 @@ import {
   type CharacterDTO,
 } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import { buildCharacterUpdatePatch } from '~/helpers/character'
+import { createLogger } from '~/utils/log'
 
 export type UpdateTab = 'basic' | 'profile' | 'combat' | 'spells' | 'features' | 'backpack'
 
@@ -119,6 +121,12 @@ function createEmptyUpdateFormState(): CharacterUpdateFormState {
   }
 }
 
+const extractStatus = (err: unknown): number | undefined => {
+  if (typeof err !== 'object' || err === null) return undefined
+  const e = err as { response?: { status?: number }; statusCode?: number }
+  return e.response?.status ?? e.statusCode
+}
+
 export function useCharacterUpdate(id: string) {
   const store = useCharacterStore()
   const activeTab = ref<UpdateTab>('basic')
@@ -131,16 +139,44 @@ export function useCharacterUpdate(id: string) {
 
   const derived = useCharacterDerivedStats(formState)
 
-  // ─── Submit guard ─────────────────────────────────────────────────────
-  // backend 尚未提供 character update endpoint；submit 永久 disable 並提示。
-
   const isSubmitting = ref(false)
-  const canSubmit = computed(() => false)
 
+  const patch = computed(() =>
+    character.value ? buildCharacterUpdatePatch(character.value, formState) : null,
+  )
+
+  const hasChanges = computed(() => !!patch.value && Object.keys(patch.value).length > 1)
+
+  const canSubmit = computed(
+    () =>
+      !isSubmitting.value &&
+      formState.name.trim().length > 0 &&
+      formState.classes.every((entry) => entry.classKey !== null) &&
+      hasChanges.value,
+  )
+
+  const logger = createLogger('[CharacterUpdate]')
   const { t } = useI18n()
 
   const submit = async (): Promise<void> => {
-    useToast().error(t('ui.message.editingNotAvailable'))
+    if (!canSubmit.value) return
+    isSubmitting.value = true
+    try {
+      await store.updateCharacter(id, formState)
+      useToast().success(t('ui.message.saveSuccess'))
+      const next = store.getById(id)
+      if (next) Object.assign(formState, characterToFormState(next))
+    } catch (err) {
+      if (extractStatus(err) === 409) {
+        useToast().error(t('ui.message.staleCharacter'))
+        await navigateTo(`/character/${id}`)
+        return
+      }
+      logger.error('update submit failed:', err)
+      useToast().error(t('ui.message.saveFailed'))
+    } finally {
+      isSubmitting.value = false
+    }
   }
 
   return {
@@ -149,6 +185,7 @@ export function useCharacterUpdate(id: string) {
     formState,
     isSubmitting,
     canSubmit,
+    hasChanges,
     derived,
     submit,
   }

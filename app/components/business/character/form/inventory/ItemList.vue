@@ -207,7 +207,7 @@
             :border="false"
             :model-value="draft.description ?? ''"
             :rows="2"
-            :maxlength="300"
+            :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
             show-count
             :placeholder="t('inventory.itemDescription')"
             @update:model-value="draft.description = $event || null"
@@ -233,7 +233,12 @@
 import { Badge, Button, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
-import type { InventoryItem, InventoryLocation, ItemType } from '@rolling-dice-app/core'
+import {
+  CHARACTER_TEXT_LIMITS,
+  type InventoryItem,
+  type InventoryLocation,
+  type ItemType,
+} from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()

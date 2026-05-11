@@ -130,7 +130,7 @@
               :border="false"
               :model-value="draft.description ?? ''"
               :rows="3"
-              :maxlength="DESCRIPTION_MAX_LENGTH"
+              :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
               show-count
               :placeholder="t('combat.featureDescriptionPlaceholder')"
               @update:model-value="draft.description = $event ? $event : null"
@@ -217,12 +217,15 @@
 import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
-import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
+import {
+  CHARACTER_TEXT_LIMITS,
+  type CharacterFeature,
+  type FeatureSource,
+  type FeatureUsageRecovery,
+} from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()
-
-const DESCRIPTION_MAX_LENGTH = 500
 
 const sourceOptions = computed<SelectOption[]>(() =>
   (Object.entries(messages.value.combat.featureSource) as [FeatureSource, string][]).map(

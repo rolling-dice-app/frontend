@@ -49,7 +49,7 @@
             :border="false"
             :model-value="draft.content"
             :rows="4"
-            :maxlength="2000"
+            :maxlength="CHARACTER_TEXT_LIMITS.LONG"
             show-count
             :placeholder="t('character.adventureField.contentPlaceholder')"
             @update:model-value="draft.content = $event"
@@ -112,7 +112,11 @@
 
 <script setup lang="ts">
 import { Button, Modal, TextArea } from '@ui'
-import { DEFAULT_CURRENCY, type CharacterCurrency } from '@rolling-dice-app/core'
+import {
+  CHARACTER_TEXT_LIMITS,
+  DEFAULT_CURRENCY,
+  type CharacterCurrency,
+} from '@rolling-dice-app/core'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
 
 const { t } = useI18n()

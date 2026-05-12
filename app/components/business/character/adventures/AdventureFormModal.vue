@@ -116,8 +116,9 @@
 import { Button, Modal, TextArea } from '@ui'
 import {
   CHARACTER_TEXT_LIMITS,
+  CURRENCY_KEYS,
   DEFAULT_CURRENCY,
-  type CharacterCurrency,
+  type CurrencyKey,
 } from '@rolling-dice-app/core'
 import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
 
@@ -133,14 +134,7 @@ const emit = defineEmits<{
   save: [draft: AdventureEntryDraft, editingId: string | null]
 }>()
 
-const CURRENCY_KEYS = [
-  'cp',
-  'sp',
-  'gp',
-  'pp',
-] as const satisfies readonly (keyof CharacterCurrency)[]
-
-const currencyLabels = computed<Record<keyof CharacterCurrency, string>>(() => ({
+const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
   cp: t('inventory.cpName'),
   sp: t('inventory.spName'),
   gp: t('inventory.gpName'),

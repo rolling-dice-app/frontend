@@ -27,13 +27,13 @@
 <script setup lang="ts">
 import type { SelectItem, SelectOptionGroup } from '@ui'
 import { ATTUNEMENT_SLOT_COUNT } from '~/constants/inventory'
-import type { InventoryItem, ItemType } from '@rolling-dice-app/core'
+import type { InventoryItemDTO, ItemType } from '@rolling-dice-app/core'
 
 const { t, messages } = useI18n()
 
 const props = defineProps<{
-  allItems: InventoryItem[]
-  attunedItems: InventoryItem[]
+  allItems: InventoryItemDTO[]
+  attunedItems: InventoryItemDTO[]
 }>()
 
 const emit = defineEmits<{

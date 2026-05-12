@@ -1,19 +1,22 @@
-import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO, InventoryItemDTO } from '@rolling-dice-app/core'
 import { CARRY_WEIGHT_PER_STR, COINS_PER_LB } from '~/constants/inventory'
 
 /** 計算物品列表的總重量（每件 weight × quantity 加總） */
-export function calculateItemsWeight(items: InventoryItem[]): number {
+export function calculateItemsWeight(items: InventoryItemDTO[]): number {
   return items.reduce((sum, item) => sum + item.weight * item.quantity, 0)
 }
 
 /** 計算金幣總重量（所有幣種枚數合計 / COINS_PER_LB） */
-export function calculateCurrencyWeight(currency: CharacterCurrency): number {
+export function calculateCurrencyWeight(currency: CharacterCurrencyDTO): number {
   const total = currency.cp + currency.sp + currency.gp + currency.pp
   return total / COINS_PER_LB
 }
 
 /** 計算背包總負重（物品重量 + 金幣重量） */
-export function calculateBackpackLoad(items: InventoryItem[], currency: CharacterCurrency): number {
+export function calculateBackpackLoad(
+  items: InventoryItemDTO[],
+  currency: CharacterCurrencyDTO,
+): number {
   return calculateItemsWeight(items) + calculateCurrencyWeight(currency)
 }
 

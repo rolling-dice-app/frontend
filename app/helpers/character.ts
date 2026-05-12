@@ -6,7 +6,6 @@ import {
   type CharacterCapabilities,
   type CharacterClasses,
   type CharacterDTO,
-  type CharacterInventory,
   type CharacterProfile,
   type CharacterStats,
   type CharacterUpdateDTO,
@@ -319,15 +318,9 @@ const toCapabilitiesSection = (form: CharacterUpdateFormState): CharacterCapabil
   attacks: form.attacks,
   spellcastingAbilities: form.spellcastingAbilities,
   customSpellcastingBonuses: form.customSpellcastingBonuses,
-  spells: form.spells,
   spellSlotsDelta: form.spellSlotsDelta,
   pactSlotsDelta: form.pactSlotsDelta,
   features: form.features,
-})
-
-const toInventorySection = (form: CharacterUpdateFormState): CharacterInventory => ({
-  items: form.items,
-  currency: form.currency,
 })
 
 const originalProfile = (c: CharacterDTO): CharacterProfile => ({
@@ -371,15 +364,9 @@ const originalCapabilities = (c: CharacterDTO): CharacterCapabilities => ({
   attacks: c.attacks,
   spellcastingAbilities: c.spellcastingAbilities,
   customSpellcastingBonuses: c.customSpellcastingBonuses,
-  spells: c.spells,
   spellSlotsDelta: c.spellSlotsDelta,
   pactSlotsDelta: c.pactSlotsDelta,
   features: c.features,
-})
-
-const originalInventory = (c: CharacterDTO): CharacterInventory => ({
-  items: c.items,
-  currency: c.currency,
 })
 
 const deepEqual = (a: unknown, b: unknown): boolean => {
@@ -420,9 +407,6 @@ export function buildCharacterUpdatePatch(
   const capabilities = toCapabilitiesSection(form)
   if (sectionChanged(capabilities, originalCapabilities(original)))
     patch.capabilities = capabilities
-
-  const inventory = toInventorySection(form)
-  if (sectionChanged(inventory, originalInventory(original))) patch.inventory = inventory
 
   return patch
 }

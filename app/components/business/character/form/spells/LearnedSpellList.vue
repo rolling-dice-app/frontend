@@ -48,12 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
+import type { SpellFormEntry } from '~/types/business/character-form'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  spells: SpellEntry[]
+  spells: SpellFormEntry[]
 }>()
 
 const emit = defineEmits<{
@@ -68,9 +69,9 @@ const learnedSpellDetails = computed(() => {
   const found: SpellDTO[] = []
   const missing: string[] = []
   for (const entry of props.spells) {
-    const spell = getSpell(entry.id)
+    const spell = getSpell(entry.spellId)
     if (spell) found.push(spell)
-    else missing.push(entry.id)
+    else missing.push(entry.spellId)
   }
   return { found, missing }
 })

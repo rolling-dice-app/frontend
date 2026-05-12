@@ -56,16 +56,16 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { formatWeight } from '~/helpers/inventory'
-import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO, InventoryItemDTO } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  backpackItems: InventoryItem[]
-  dimensionalBagItems: InventoryItem[]
-  attunedItems: InventoryItem[]
-  currency: CharacterCurrency
+  backpackItems: InventoryItemDTO[]
+  dimensionalBagItems: InventoryItemDTO[]
+  attunedItems: InventoryItemDTO[]
+  currency: CharacterCurrencyDTO
   backpackLoad: number
   maxCarryWeight: number
   isOverEncumbered: boolean
@@ -76,7 +76,7 @@ defineEmits<{
   'remove-item': [id: string]
   'update-item': [id: string, draft: InventoryItemDraft]
   'move-item': [id: string]
-  'update-currency': [value: CharacterCurrency]
+  'update-currency': [value: CharacterCurrencyDTO]
   'update-attunement': [slotIndex: number, itemId: string | null]
 }>()
 

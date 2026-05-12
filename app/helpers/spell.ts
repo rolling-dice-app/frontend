@@ -1,6 +1,7 @@
 import { t } from '~/i18n'
 import { SPELL_SCHOOLS } from '~/constants/dnd'
-import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
+import type { SpellFormEntry } from '~/types/business/character-form'
 
 const VALID_SCHOOLS = new Set<string>(SPELL_SCHOOLS)
 
@@ -26,13 +27,15 @@ export function formatSpellComponents(
   return parts.join(' / ') || '—'
 }
 
-/** 對指定 id 的 entry 切換 isPrepared / isFavorite，回傳新陣列；id 不存在時原樣回傳。 */
+/** 對指定 spellId 的 entry 切換 isPrepared / isFavorite，回傳新陣列；spellId 不存在時原樣回傳。 */
 export function withToggledFlag(
-  spells: SpellEntry[],
-  id: string,
+  spells: SpellFormEntry[],
+  spellId: string,
   flag: 'isPrepared' | 'isFavorite',
-): SpellEntry[] {
-  return spells.map((entry) => (entry.id === id ? { ...entry, [flag]: !entry[flag] } : entry))
+): SpellFormEntry[] {
+  return spells.map((entry) =>
+    entry.spellId === spellId ? { ...entry, [flag]: !entry[flag] } : entry,
+  )
 }
 
 /** 將 SpellDTO 列表依環數分組並組內依中文名稱排序 */

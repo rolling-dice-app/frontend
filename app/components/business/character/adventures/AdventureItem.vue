@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
 import { AccordionItem, Icon } from '@ui'
+import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { AdventureEntry } from '~/types/business/adventure'
-import type { CharacterCurrency } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -76,7 +76,7 @@ defineEmits<{
   remove: [id: string]
 }>()
 
-const currencyLabels = computed<Record<keyof CharacterCurrency, string>>(() => ({
+const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
   cp: t('inventory.cpShort'),
   sp: t('inventory.spShort'),
   gp: t('inventory.gpShort'),
@@ -84,7 +84,7 @@ const currencyLabels = computed<Record<keyof CharacterCurrency, string>>(() => (
 }))
 
 const moneyParts = computed(() => {
-  const keys: (keyof CharacterCurrency)[] = ['pp', 'gp', 'sp', 'cp']
+  const keys: CurrencyKey[] = ['pp', 'gp', 'sp', 'cp']
   return keys
     .filter((k) => props.entry.moneyEarning[k] > 0)
     .map((k) => ({ key: k, label: currencyLabels.value[k], value: props.entry.moneyEarning[k] }))

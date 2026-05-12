@@ -1,10 +1,5 @@
 import { POINT_BUY_DEFAULT_SCORE } from '~/constants/dnd'
-import {
-  ABILITY_KEYS,
-  DEFAULT_CURRENCY,
-  createDefaultArmorClass,
-  type CharacterDTO,
-} from '@rolling-dice-app/core'
+import { ABILITY_KEYS, createDefaultArmorClass, type CharacterDTO } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import { buildCharacterUpdatePatch } from '~/helpers/character'
 import { createLogger } from '~/utils/log'
@@ -65,12 +60,10 @@ function characterToFormState(character: CharacterDTO): CharacterUpdateFormState
     })),
     spellcastingAbilities: [...character.spellcastingAbilities],
     customSpellcastingBonuses: { ...character.customSpellcastingBonuses },
-    spells: character.spells.map((entry) => ({ ...entry })),
+    spells: [],
     spellSlotsDelta: { ...character.spellSlotsDelta },
     pactSlotsDelta: { ...character.pactSlotsDelta },
     features: character.features.map((f) => ({ ...f, usage: { ...f.usage } })),
-    items: character.items.map((i) => ({ ...i })),
-    currency: { ...character.currency },
   }
 }
 
@@ -116,8 +109,6 @@ function createEmptyUpdateFormState(): CharacterUpdateFormState {
     spellSlotsDelta: {},
     pactSlotsDelta: {},
     features: [],
-    items: [],
-    currency: { ...DEFAULT_CURRENCY },
   }
 }
 

@@ -8,10 +8,11 @@ import {
   validateSpell,
   withToggledFlag,
 } from '~/helpers/spell'
-import type { SpellEntry, SpellDTO, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellDTO, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellFormEntry } from '~/types/business/character-form'
 
-const makeEntry = (id: string, isPrepared = false, isFavorite = false): SpellEntry => ({
-  id,
+const makeEntry = (spellId: string, isPrepared = false, isFavorite = false): SpellFormEntry => ({
+  spellId,
   isPrepared,
   isFavorite,
 })
@@ -193,24 +194,24 @@ describe('groupSpellsByLevel', () => {
   })
 })
 
-// ─── SpellEntry helpers ──────────────────────────────────────────────────────
+// ─── SpellFormEntry helpers ──────────────────────────────────────────────────
 
 describe('withToggledFlag', () => {
   it('切換 isPrepared 並回傳新陣列', () => {
     const entries = [makeEntry('a', false), makeEntry('b', true)]
     const result = withToggledFlag(entries, 'a', 'isPrepared')
-    expect(result[0]).toEqual({ id: 'a', isPrepared: true, isFavorite: false })
-    expect(result[1]).toEqual({ id: 'b', isPrepared: true, isFavorite: false })
+    expect(result[0]).toEqual({ spellId: 'a', isPrepared: true, isFavorite: false })
+    expect(result[1]).toEqual({ spellId: 'b', isPrepared: true, isFavorite: false })
     expect(result).not.toBe(entries)
   })
 
   it('切換 isFavorite 不影響 isPrepared', () => {
     const entries = [makeEntry('a', true, false)]
     const result = withToggledFlag(entries, 'a', 'isFavorite')
-    expect(result[0]).toEqual({ id: 'a', isPrepared: true, isFavorite: true })
+    expect(result[0]).toEqual({ spellId: 'a', isPrepared: true, isFavorite: true })
   })
 
-  it('id 不存在時原樣回傳每筆 entry', () => {
+  it('spellId 不存在時原樣回傳每筆 entry', () => {
     const entries = [makeEntry('a', true)]
     const result = withToggledFlag(entries, 'z', 'isPrepared')
     expect(result).toEqual(entries)

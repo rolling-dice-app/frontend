@@ -1,17 +1,17 @@
-import { DEFAULT_CURRENCY, type CharacterCurrency } from '@rolling-dice-app/core'
-import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
+import { CURRENCY_KEYS, DEFAULT_CURRENCY } from '@rolling-dice-app/core'
+import type {
+  AdventureEntry,
+  AdventureEntryDraft,
+  CurrencyAmount,
+} from '~/types/business/adventure'
 
-type CurrencyKey = keyof CharacterCurrency
-
-const CURRENCY_KEYS: readonly CurrencyKey[] = ['cp', 'sp', 'gp', 'pp']
-
-function addCurrency(a: CharacterCurrency, b: CharacterCurrency): CharacterCurrency {
+function addCurrency(a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount {
   return CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] + b[key] }), {
     ...DEFAULT_CURRENCY,
   })
 }
 
-function subtractCurrency(a: CharacterCurrency, b: CharacterCurrency): CharacterCurrency {
+function subtractCurrency(a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount {
   return CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] - b[key] }), {
     ...DEFAULT_CURRENCY,
   })
@@ -40,7 +40,7 @@ export function useCharacterAdventures(characterId: string) {
     })
   }
 
-  function applyCurrencyDelta(delta: (current: CharacterCurrency) => CharacterCurrency): boolean {
+  function applyCurrencyDelta(delta: (current: CurrencyAmount) => CurrencyAmount): boolean {
     const character = characterStore.getById(characterId)
     if (!character) return false
     const next = delta(character.currency)

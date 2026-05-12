@@ -26,14 +26,12 @@
 </template>
 
 <script setup lang="ts">
-import type { CharacterCurrency } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
-
-type CoinKey = keyof CharacterCurrency
 
 const { t } = useI18n()
 
-const COIN_FIELDS = computed<{ key: CoinKey; label: string }[]>(() => [
+const COIN_FIELDS = computed<{ key: CurrencyKey; label: string }[]>(() => [
   { key: 'pp', label: t('inventory.pp') },
   { key: 'gp', label: t('inventory.gp') },
   { key: 'sp', label: t('inventory.sp') },
@@ -41,11 +39,11 @@ const COIN_FIELDS = computed<{ key: CoinKey; label: string }[]>(() => [
 ])
 
 const props = defineProps<{
-  currency: CharacterCurrency
+  currency: CharacterCurrencyDTO
 }>()
 
 const emit = defineEmits<{
-  'update:currency': [value: CharacterCurrency]
+  'update:currency': [value: CharacterCurrencyDTO]
 }>()
 
 const coinWeight = computed(() => {
@@ -53,7 +51,7 @@ const coinWeight = computed(() => {
   return raw % 1 === 0 ? raw.toString() : raw.toFixed(2)
 })
 
-const onUpdate = (key: CoinKey, value: string): void => {
+const onUpdate = (key: CurrencyKey, value: string): void => {
   const num = Math.max(0, Math.floor(Number(value) || 0))
   emit('update:currency', { ...props.currency, [key]: num })
 }

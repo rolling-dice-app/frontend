@@ -236,7 +236,7 @@ import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {
   CHARACTER_TEXT_LIMITS,
   VALIDATION_LIMITS,
-  type InventoryItem,
+  type InventoryItemDTO,
   type InventoryLocation,
   type ItemType,
 } from '@rolling-dice-app/core'
@@ -246,7 +246,7 @@ const { t, messages } = useI18n()
 const toast = useToast()
 
 const props = defineProps<{
-  items: InventoryItem[]
+  items: InventoryItemDTO[]
   totalItemCount: number
   section: InventoryLocation
   title: string
@@ -345,10 +345,16 @@ const openCreate = (): void => {
   modalOpen.value = true
 }
 
-const openEdit = (item: InventoryItem): void => {
+const openEdit = (item: InventoryItemDTO): void => {
   editingId.value = item.id
-  const { id: _id, isAttuned: _isAttuned, ...rest } = item
-  draft.value = rest
+  draft.value = {
+    name: item.name,
+    description: item.description,
+    quantity: item.quantity,
+    weight: item.weight,
+    type: item.type,
+    location: item.location,
+  }
   modalOpen.value = true
 }
 

@@ -316,7 +316,7 @@ const filteredSpells = computed<SpellDTO[]>(() => {
 const groupedSpells = computed(() => groupSpellsByLevel(filteredSpells.value))
 
 const isLearned = (id: string): boolean => {
-  return formState.value.spells.some((entry) => entry.id === id)
+  return formState.value.spells.some((entry) => entry.spellId === id)
 }
 
 const itemEls = new Map<string, HTMLElement>()

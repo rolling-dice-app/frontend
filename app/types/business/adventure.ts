@@ -1,4 +1,7 @@
-import type { CharacterCurrency } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
+
+/** 金幣面額快照（不含樂觀鎖 token，純記錄四幣種數量） */
+export type CurrencyAmount = Omit<CharacterCurrencyDTO, 'updatedAt'>
 
 /** 單筆冒險 / 團務紀錄 */
 export interface AdventureEntry {
@@ -10,7 +13,7 @@ export interface AdventureEntry {
   /** 內容（純文字多行） */
   content: string
   /** 該場獲得金錢，依 cp / sp / gp / pp 分別記錄 */
-  moneyEarning: CharacterCurrency
+  moneyEarning: CurrencyAmount
   /** 該場獲得經驗值 */
   expEarning: number
   createdAt: string

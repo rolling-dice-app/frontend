@@ -242,7 +242,6 @@ describe('character store — updateCharacter', () => {
       skills: { ...character.skills },
       background: character.background,
       armorClass: { ...character.armorClass },
-      currency: { ...character.currency },
     })
     await store.updateCharacter('u-1', form)
 
@@ -302,13 +301,5 @@ describe('character store — updateCharacter', () => {
     const form = createMockUpdateFormState({ id: character.id, name: '新名' })
     await expect(store.updateCharacter('u-3', form)).rejects.toThrow('boom')
     expect(store.detailCache.get('u-3')?.name).toBe(character.name)
-  })
-})
-
-describe('character store — patchCharacter（仍未支援）', () => {
-  it('patchCharacter throw', async () => {
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    expect(() => store.patchCharacter('x', {})).toThrow(/尚未支援/)
   })
 })

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import CurrencyPanel from '~/components/business/character/form/inventory/CurrencyPanel.vue'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
-import type { CharacterCurrency } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('calculateCurrencyWeight', calculateCurrencyWeight)
@@ -13,15 +13,16 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const baseCurrency = (overrides: Partial<CharacterCurrency> = {}): CharacterCurrency => ({
+const baseCurrency = (overrides: Partial<CharacterCurrencyDTO> = {}): CharacterCurrencyDTO => ({
   cp: 0,
   sp: 0,
   gp: 0,
   pp: 0,
+  updatedAt: '2026-01-01T00:00:00.000Z',
   ...overrides,
 })
 
-const mountPanel = (currency: CharacterCurrency = baseCurrency()) =>
+const mountPanel = (currency: CharacterCurrencyDTO = baseCurrency()) =>
   mount(CurrencyPanel, {
     props: { currency },
     global: {
@@ -57,25 +58,33 @@ describe('CurrencyPanel (form)', () => {
     it('輸入新值 emit update:currency 含完整四欄與更新欄位', async () => {
       const wrapper = mountPanel(baseCurrency({ gp: 5 }))
       await wrapper.find('input#currency-gp').setValue('10')
-      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([{ cp: 0, sp: 0, gp: 10, pp: 0 }])
+      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([
+        expect.objectContaining({ cp: 0, sp: 0, gp: 10, pp: 0 }),
+      ])
     })
 
     it('負數輸入 clamp 為 0', async () => {
       const wrapper = mountPanel()
       await wrapper.find('input#currency-cp').setValue('-5')
-      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([{ cp: 0, sp: 0, gp: 0, pp: 0 }])
+      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([
+        expect.objectContaining({ cp: 0, sp: 0, gp: 0, pp: 0 }),
+      ])
     })
 
     it('小數輸入 floor 為整數', async () => {
       const wrapper = mountPanel()
       await wrapper.find('input#currency-sp').setValue('3.9')
-      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([{ cp: 0, sp: 3, gp: 0, pp: 0 }])
+      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([
+        expect.objectContaining({ cp: 0, sp: 3, gp: 0, pp: 0 }),
+      ])
     })
 
     it('空字串輸入視為 0', async () => {
       const wrapper = mountPanel(baseCurrency({ pp: 5 }))
       await wrapper.find('input#currency-pp').setValue('')
-      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([{ cp: 0, sp: 0, gp: 0, pp: 0 }])
+      expect(wrapper.emitted('update:currency')?.at(-1)).toEqual([
+        expect.objectContaining({ cp: 0, sp: 0, gp: 0, pp: 0 }),
+      ])
     })
   })
 })

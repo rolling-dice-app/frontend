@@ -381,12 +381,10 @@ describe('buildCharacterUpdatePatch', () => {
     attacks: c.attacks.map((a) => ({ ...a, damageDice: a.damageDice.map((d) => ({ ...d })) })),
     spellcastingAbilities: [...c.spellcastingAbilities],
     customSpellcastingBonuses: { ...c.customSpellcastingBonuses },
-    spells: c.spells.map((s) => ({ ...s })),
+    spells: [],
     spellSlotsDelta: { ...c.spellSlotsDelta },
     pactSlotsDelta: { ...c.pactSlotsDelta },
     features: c.features.map((f) => ({ ...f, usage: { ...f.usage } })),
-    items: c.items.map((i) => ({ ...i })),
-    currency: { ...c.currency },
   })
 
   it('無變動時只回傳 updatedAt', () => {
@@ -406,7 +404,6 @@ describe('buildCharacterUpdatePatch', () => {
     expect(patch.classes).toBeUndefined()
     expect(patch.stats).toBeUndefined()
     expect(patch.capabilities).toBeUndefined()
-    expect(patch.inventory).toBeUndefined()
   })
 
   it('只改 classes 時只回 classes section', () => {
@@ -454,13 +451,12 @@ describe('buildCharacterUpdatePatch', () => {
     const form = characterToForm(character)
     form.name = '新名字'
     form.customHpBonus = 10
-    form.currency = { cp: 0, sp: 0, gp: 50, pp: 0 }
+    form.spellcastingAbilities = ['intelligence']
     const patch = buildCharacterUpdatePatch(character, form)
     expect(patch.profile).toBeDefined()
     expect(patch.stats).toBeDefined()
-    expect(patch.inventory).toBeDefined()
+    expect(patch.capabilities).toBeDefined()
     expect(patch.classes).toBeUndefined()
-    expect(patch.capabilities).toBeUndefined()
   })
 
   it('陣列僅調換順序視為變動（drag reorder 應送出 patch）', () => {

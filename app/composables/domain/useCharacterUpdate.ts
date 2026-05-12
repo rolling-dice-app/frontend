@@ -1,6 +1,11 @@
 import { POINT_BUY_DEFAULT_SCORE } from '~/constants/dnd'
-import { ABILITY_KEYS, createDefaultArmorClass, type CharacterDTO } from '@rolling-dice-app/core'
-import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import {
+  ABILITY_KEYS,
+  createDefaultArmorClass,
+  type CharacterDTO,
+  type SpellEntryDTO,
+} from '@rolling-dice-app/core'
+import type { CharacterUpdateFormState, SpellFormEntry } from '~/types/business/character-form'
 import { buildCharacterUpdatePatch } from '~/helpers/character'
 import { createLogger } from '~/utils/log'
 
@@ -112,6 +117,13 @@ function createEmptyUpdateFormState(): CharacterUpdateFormState {
   }
 }
 
+const entryToFormSpell = (entry: SpellEntryDTO): SpellFormEntry => ({
+  spellId: entry.spellId,
+  isPrepared: entry.isPrepared,
+  isFavorite: entry.isFavorite,
+  sourceClass: entry.sourceClass,
+})
+
 const extractStatus = (err: unknown): number | undefined => {
   if (typeof err !== 'object' || err === null) return undefined
   const e = err as { response?: { status?: number }; statusCode?: number }
@@ -120,6 +132,8 @@ const extractStatus = (err: unknown): number | undefined => {
 
 export function useCharacterUpdate(id: string) {
   const store = useCharacterStore()
+  const spellsStore = useCharacterSpellsStore()
+  const apiErrorToast = useApiErrorToast()
   const activeTab = ref<UpdateTab>('basic')
 
   const character = computed(() => store.getById(id))
@@ -136,11 +150,50 @@ export function useCharacterUpdate(id: string) {
     character.value ? buildCharacterUpdatePatch(character.value, formState) : null,
   )
 
-  const hasChanges = computed(() => !!patch.value && Object.keys(patch.value).length > 1)
+  const hasMainChanges = computed(() => !!patch.value && Object.keys(patch.value).length > 1)
+
+  // ─── Spells buffer：edit 進入時自 spellsStore.entries 種子化 ──────────────
+
+  const spellsSeeded = ref(false)
+
+  const seedSpells = (): void => {
+    formState.spells = spellsStore.entries.map(entryToFormSpell)
+    spellsSeeded.value = true
+  }
+
+  // 若 detail 頁已先載過、store 內已有此角色資料，立即種子化；否則 onMounted 補載
+  if (spellsStore.characterId === id) seedSpells()
+
+  onMounted(async () => {
+    if (spellsSeeded.value) return
+    try {
+      await spellsStore.load(id)
+    } catch {
+      // error 透過 spellsStore.error 暴露；UI 端可決定如何顯示
+    }
+    seedSpells()
+  })
+
+  const diffSpells = (): { toLearn: string[]; toForget: string[] } => {
+    const baseline = new Set(spellsStore.entries.map((e) => e.spellId))
+    const formSet = new Set(formState.spells.map((e) => e.spellId))
+    const toLearn = [...formSet].filter((s) => !baseline.has(s))
+    const toForget = [...baseline].filter((s) => !formSet.has(s))
+    return { toLearn, toForget }
+  }
+
+  const hasSpellDiff = computed(() => {
+    if (!spellsSeeded.value) return false
+    const { toLearn, toForget } = diffSpells()
+    return toLearn.length > 0 || toForget.length > 0
+  })
+
+  const hasChanges = computed(() => hasMainChanges.value || hasSpellDiff.value)
 
   const canSubmit = computed(
     () =>
       !isSubmitting.value &&
+      spellsSeeded.value &&
       formState.name.trim().length > 0 &&
       formState.classes.every((entry) => entry.classKey !== null) &&
       hasChanges.value,
@@ -148,22 +201,59 @@ export function useCharacterUpdate(id: string) {
 
   const logger = createLogger('[CharacterUpdate]')
   const { t } = useI18n()
+  const { refresh: refreshSpellCatalog } = useSpells()
+
+  // ─── Submit：主幹 PATCH + N 個 spell mutations 並行 ──────────────────────
 
   const submit = async (): Promise<void> => {
     if (!canSubmit.value) return
     isSubmitting.value = true
     try {
-      await store.updateCharacter(id, formState)
-      useToast().success(t('ui.message.saveSuccess'))
+      const { toLearn, toForget } = diffSpells()
+      const mainPromise: Promise<unknown> = hasMainChanges.value
+        ? store.updateCharacter(id, formState)
+        : Promise.resolve()
+      const spellPromises: Promise<unknown>[] = [
+        ...toLearn.map((spellId) => spellsStore.learn(spellId)),
+        ...toForget.map((spellId) => spellsStore.forget(spellId)),
+      ]
+
+      const [mainResult, ...spellResults] = await Promise.allSettled([
+        mainPromise,
+        ...spellPromises,
+      ])
+
+      // 主幹 409 → 全頁失敗、navigate 至 detail 重新讀
+      if (mainResult!.status === 'rejected') {
+        const reason = mainResult!.reason
+        if (extractStatus(reason) === 409) {
+          useToast().error(t('ui.message.staleCharacter'))
+          await navigateTo(`/character/${id}`)
+          return
+        }
+        await apiErrorToast.handle(reason)
+      }
+
+      // 個別 spell op 失敗 → 各自 toast
+      for (const r of spellResults) {
+        if (r.status === 'rejected') {
+          await apiErrorToast.handle(r.reason, {
+            onStale: () => spellsStore.refetch(),
+            onSpellNotFound: () => refreshSpellCatalog(),
+          })
+        }
+      }
+
+      const anyFailed =
+        mainResult!.status === 'rejected' || spellResults.some((r) => r.status === 'rejected')
+      if (!anyFailed) useToast().success(t('ui.message.saveSuccess'))
+
+      // Re-seed：以伺服器當前狀態為基準
       const next = store.getById(id)
       if (next) Object.assign(formState, characterToFormState(next))
+      seedSpells()
     } catch (err) {
-      if (extractStatus(err) === 409) {
-        useToast().error(t('ui.message.staleCharacter'))
-        await navigateTo(`/character/${id}`)
-        return
-      }
-      logger.error('update submit failed:', err)
+      logger.error('submit unexpected:', err)
       useToast().error(t('ui.message.saveFailed'))
     } finally {
       isSubmitting.value = false

@@ -1,12 +1,11 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createMockCharacter, seedCharacterInStore } from '~/tests/fixtures/character'
-import type { InventoryItem } from '@rolling-dice-app/core'
+import type { InventoryItemDTO } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const CHAR_ID = 'inv-001'
 
-function makeItem(overrides: Partial<InventoryItem>): InventoryItem {
+function makeItem(overrides: Partial<InventoryItemDTO>): InventoryItemDTO {
   return {
     id: overrides.id ?? `item-${Math.random().toString(36).slice(2, 8)}`,
     name: overrides.name ?? '物品',
@@ -16,6 +15,8 @@ function makeItem(overrides: Partial<InventoryItem>): InventoryItem {
     type: overrides.type ?? 'other',
     location: overrides.location ?? 'backpack',
     isAttuned: overrides.isAttuned ?? false,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
   }
 }
 
@@ -30,15 +31,24 @@ function makeDraft(overrides: Partial<InventoryItemDraft> = {}): InventoryItemDr
   }
 }
 
-async function getComposable(characterId: string, items: InventoryItem[] = []) {
-  const character = createMockCharacter({ id: characterId, items })
-  seedCharacterInStore(character)
+async function getComposable(items: InventoryItemDTO[] = []) {
+  const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+  const store = useCharacterInventoryStore()
+  store.characterId = CHAR_ID
+  store.items = [...items]
+  store.currency = {
+    cp: 0,
+    sp: 0,
+    gp: 0,
+    pp: 0,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  }
 
-  const { useCharacterStore } = await import('~/stores/character')
-  vi.stubGlobal('useCharacterStore', useCharacterStore)
+  vi.stubGlobal('useCharacterInventoryStore', useCharacterInventoryStore)
+  vi.stubGlobal('useCharacterStore', () => ({ getById: () => null }))
 
   const { useCharacterInventory } = await import('~/composables/domain/useCharacterInventory')
-  return useCharacterInventory(characterId)
+  return { ...useCharacterInventory(CHAR_ID), store }
 }
 
 beforeEach(() => {
@@ -52,21 +62,21 @@ afterEach(() => {
   localStorage.clear()
 })
 
-// 註：背包 / 同調修改皆走 store.patchCharacter，backend update endpoint 上線前
-// 整套變更測試 skip，待 backend 補完恢復。
+// 整套 mutation 測試 skip：S2 之後 store action 內含 API 呼叫，需要 mock useApiFetch
+// 的全套網路層；待 S5 之後或加 store-spec 形式的新測試補回。
 
 describe.skip('useCharacterInventory — addItem / updateItem / removeItem 與 isAttuned', () => {
   it('addItem 加入的新物品 isAttuned 預設為 false', async () => {
-    const { items, addItem } = await getComposable(CHAR_ID)
-    addItem(makeDraft({ name: '長劍', type: 'weapon' }))
+    const { items, addItem } = await getComposable()
+    await addItem(makeDraft({ name: '長劍', type: 'weapon' }))
     expect(items.value).toHaveLength(1)
     expect(items.value[0]!.isAttuned).toBe(false)
   })
 
   it('updateItem 不會弄丟既有的 isAttuned', async () => {
     const item = makeItem({ id: 'i-1', name: '舊名', isAttuned: true })
-    const { items, updateItem } = await getComposable(CHAR_ID, [item])
-    updateItem('i-1', makeDraft({ name: '新名', type: 'armor' }))
+    const { items, updateItem } = await getComposable([item])
+    await updateItem('i-1', makeDraft({ name: '新名', type: 'armor' }))
     const updated = items.value.find((i) => i.id === 'i-1')
     expect(updated?.name).toBe('新名')
     expect(updated?.type).toBe('armor')
@@ -76,67 +86,10 @@ describe.skip('useCharacterInventory — addItem / updateItem / removeItem 與 i
   it('removeItem 移除已同調物品時 attunedItems 會自動少一個', async () => {
     const a = makeItem({ id: 'a', isAttuned: true })
     const b = makeItem({ id: 'b', isAttuned: true })
-    const { attunedItems, removeItem } = await getComposable(CHAR_ID, [a, b])
+    const { attunedItems, removeItem } = await getComposable([a, b])
     expect(attunedItems.value).toHaveLength(2)
-    removeItem('a')
+    await removeItem('a')
     expect(attunedItems.value).toHaveLength(1)
     expect(attunedItems.value[0]?.id).toBe('b')
-  })
-})
-
-describe.skip('useCharacterInventory — setAttunement', () => {
-  it('setAttunement(0, itemA) 將 itemA 設為已同調', async () => {
-    const a = makeItem({ id: 'a' })
-    const { items, attunedItems, setAttunement } = await getComposable(CHAR_ID, [a])
-    setAttunement(0, 'a')
-    expect(items.value.find((i) => i.id === 'a')?.isAttuned).toBe(true)
-    expect(attunedItems.value).toEqual([expect.objectContaining({ id: 'a' })])
-  })
-
-  it('切換同一個 slot 至另一個物品，舊物品變 false、新物品變 true', async () => {
-    const a = makeItem({ id: 'a', isAttuned: true })
-    const b = makeItem({ id: 'b' })
-    const { items, attunedItems, setAttunement } = await getComposable(CHAR_ID, [a, b])
-    setAttunement(0, 'b')
-    expect(items.value.find((i) => i.id === 'a')?.isAttuned).toBe(false)
-    expect(items.value.find((i) => i.id === 'b')?.isAttuned).toBe(true)
-    expect(attunedItems.value).toHaveLength(1)
-    expect(attunedItems.value[0]?.id).toBe('b')
-  })
-
-  it('setAttunement(0, null) 解除該 slot', async () => {
-    const a = makeItem({ id: 'a', isAttuned: true })
-    const { items, attunedItems, setAttunement } = await getComposable(CHAR_ID, [a])
-    setAttunement(0, null)
-    expect(items.value.find((i) => i.id === 'a')?.isAttuned).toBe(false)
-    expect(attunedItems.value).toHaveLength(0)
-  })
-
-  it('slotIndex 超出 ATTUNEMENT_SLOT_COUNT 範圍時不變更狀態', async () => {
-    const a = makeItem({ id: 'a' })
-    const { items, setAttunement } = await getComposable(CHAR_ID, [a])
-    setAttunement(3, 'a')
-    setAttunement(-1, 'a')
-    expect(items.value.find((i) => i.id === 'a')?.isAttuned).toBe(false)
-  })
-
-  it('newItemId 與該 slot 當前物品相同時為 no-op', async () => {
-    const a = makeItem({ id: 'a', isAttuned: true })
-    const { items, setAttunement } = await getComposable(CHAR_ID, [a])
-    setAttunement(0, 'a')
-    expect(items.value.find((i) => i.id === 'a')?.isAttuned).toBe(true)
-  })
-
-  it('已同調 3 件後，第 4 個 slot 不存在；attunedItems 仍只有 3 件', async () => {
-    const a = makeItem({ id: 'a', isAttuned: true })
-    const b = makeItem({ id: 'b', isAttuned: true })
-    const c = makeItem({ id: 'c', isAttuned: true })
-    const d = makeItem({ id: 'd' })
-    const { attunedItems, setAttunement } = await getComposable(CHAR_ID, [a, b, c, d])
-    expect(attunedItems.value).toHaveLength(3)
-    // slotIndex=3 超界 → no-op
-    setAttunement(3, 'd')
-    expect(attunedItems.value).toHaveLength(3)
-    expect(attunedItems.value.find((i) => i.id === 'd')).toBeUndefined()
   })
 })

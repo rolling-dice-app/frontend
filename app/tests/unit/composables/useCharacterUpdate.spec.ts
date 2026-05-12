@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
+import { onMounted } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockCharacter, seedCharacterInStore } from '~/tests/fixtures/character'
 
@@ -29,15 +30,24 @@ const MOCK_CHARACTER = createMockCharacter({
 
 const mockToastError = vi.fn()
 const mockToastSuccess = vi.fn()
+const mockApiErrorHandle = vi.fn()
 
 async function getComposable(characterId: string) {
   const { useCharacterStore } = await import('~/stores/character')
   vi.stubGlobal('useCharacterStore', useCharacterStore)
 
+  const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+  const spellsStore = useCharacterSpellsStore()
+  spellsStore.characterId = characterId
+  spellsStore.entries = []
+  vi.stubGlobal('useCharacterSpellsStore', useCharacterSpellsStore)
+
   const { useCharacterDerivedStats } = await import('~/composables/domain/useCharacterDerivedStats')
   vi.stubGlobal('useCharacterDerivedStats', useCharacterDerivedStats)
 
   vi.stubGlobal('useToast', () => ({ error: mockToastError, success: mockToastSuccess }))
+  vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
+  vi.stubGlobal('useSpells', () => ({ refresh: vi.fn(), spells: { value: [] } }))
 
   const { useCharacterUpdate } = await import('~/composables/domain/useCharacterUpdate')
   return useCharacterUpdate(characterId)
@@ -47,6 +57,7 @@ beforeEach(() => {
   vi.resetModules()
   setActivePinia(createPinia())
   vi.stubGlobal('navigateTo', mockNavigateTo)
+  vi.stubGlobal('onMounted', onMounted)
   seedCharacterInStore(MOCK_CHARACTER)
 })
 
@@ -221,16 +232,17 @@ describe('useCharacterUpdate — submit', () => {
     expect(mockNavigateTo).toHaveBeenCalledWith('/character/update-001')
   })
 
-  it('其他錯誤顯示 saveFailed toast', async () => {
+  it('其他錯誤交給 useApiErrorToast 處理', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    vi.spyOn(store, 'updateCharacter').mockRejectedValue(new Error('boom'))
+    const err = new Error('boom')
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue(err)
 
     const { submit, formState } = await getComposable('update-001')
     formState.name = '已改名'
     await submit()
 
-    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err)
     expect(mockNavigateTo).not.toHaveBeenCalled()
   })
 

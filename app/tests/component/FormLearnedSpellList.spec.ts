@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import LearnedSpellList from '~/components/business/character/form/spells/LearnedSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
-import type { SpellDTO, SpellEntry } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
+import type { SpellFormEntry } from '~/types/business/character-form'
 
 const spellMap = new Map<string, SpellDTO>()
 
@@ -38,7 +39,7 @@ const makeSpell = (overrides: Partial<SpellDTO> = {}): SpellDTO =>
     ...overrides,
   }) as SpellDTO
 
-const mountList = (spells: SpellEntry[] = []) =>
+const mountList = (spells: SpellFormEntry[] = []) =>
   mount(LearnedSpellList, {
     props: { spells },
     global: { mocks: { formatSpellLevel, groupSpellsByLevel } },
@@ -60,9 +61,9 @@ describe('LearnedSpellList (form)', () => {
       spellMap.set('c', makeSpell({ id: 'c', name: '光亮術', level: 0 }))
 
       const wrapper = mountList([
-        { id: 'a', isPrepared: false, isFavorite: false },
-        { id: 'b', isPrepared: false, isFavorite: false },
-        { id: 'c', isPrepared: false, isFavorite: false },
+        { spellId: 'a', isPrepared: false, isFavorite: false },
+        { spellId: 'b', isPrepared: false, isFavorite: false },
+        { spellId: 'c', isPrepared: false, isFavorite: false },
       ])
 
       const text = wrapper.text()
@@ -77,7 +78,7 @@ describe('LearnedSpellList (form)', () => {
 
     it('點按鈕 emit select [spellId]', async () => {
       spellMap.set('a', makeSpell({ id: 'a', name: '魔法飛彈' }))
-      const wrapper = mountList([{ id: 'a', isPrepared: false, isFavorite: false }])
+      const wrapper = mountList([{ spellId: 'a', isPrepared: false, isFavorite: false }])
       const button = wrapper.findAll('button').find((b) => b.text() === '魔法飛彈')!
       await button.trigger('click')
       expect(wrapper.emitted('select')).toEqual([['a']])
@@ -87,7 +88,7 @@ describe('LearnedSpellList (form)', () => {
   describe('找不到的法術', () => {
     it('資料庫查不到時顯示警示文字', () => {
       // 不在 spellMap 中的 id
-      const wrapper = mountList([{ id: 'missing-1', isPrepared: false, isFavorite: false }])
+      const wrapper = mountList([{ spellId: 'missing-1', isPrepared: false, isFavorite: false }])
       expect(wrapper.text()).toContain('資料庫中找不到下列法術：')
       expect(wrapper.text()).toContain('missing-1')
       expect(wrapper.text()).toContain('尚未掌握任何法術')
@@ -96,8 +97,8 @@ describe('LearnedSpellList (form)', () => {
     it('部分找到 / 部分缺漏：缺漏顯示在警示、找到顯示在分組', () => {
       spellMap.set('a', makeSpell({ id: 'a', name: '魔法飛彈', level: 1 }))
       const wrapper = mountList([
-        { id: 'a', isPrepared: false, isFavorite: false },
-        { id: 'gone', isPrepared: false, isFavorite: false },
+        { spellId: 'a', isPrepared: false, isFavorite: false },
+        { spellId: 'gone', isPrepared: false, isFavorite: false },
       ])
       const text = wrapper.text()
       expect(text).toContain('魔法飛彈')

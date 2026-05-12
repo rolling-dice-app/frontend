@@ -69,12 +69,9 @@ export function createMockCharacter(overrides: Partial<CharacterDTO> = {}): Char
     attacks: [],
     spellcastingAbilities: [],
     customSpellcastingBonuses: {},
-    spells: [],
     spellSlotsDelta: {},
     pactSlotsDelta: {},
     features: [],
-    items: [],
-    currency: { cp: 0, sp: 0, gp: 0, pp: 0 },
     ...overrides,
   }
 }
@@ -167,8 +164,6 @@ export function createMockUpdateFormState(
     spellSlotsDelta: {},
     pactSlotsDelta: {},
     features: [],
-    items: [],
-    currency: { cp: 0, sp: 0, gp: 0, pp: 0 },
     ...overrides,
   }
 }

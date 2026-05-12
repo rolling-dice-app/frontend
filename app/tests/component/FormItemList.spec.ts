@@ -5,7 +5,7 @@ import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import ItemList from '~/components/business/character/form/inventory/ItemList.vue'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
-import type { InventoryItem } from '@rolling-dice-app/core'
+import type { InventoryItemDTO } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('calculateItemsWeight', calculateItemsWeight)
@@ -55,22 +55,23 @@ const TextAreaStub = {
   inheritAttrs: false,
 }
 
-const makeItem = (overrides: Partial<InventoryItem> = {}): InventoryItem =>
-  ({
-    id: overrides.id ?? `i-${Math.random()}`,
-    name: '長劍',
-    description: null,
-    quantity: 1,
-    weight: 3,
-    type: 'weapon',
-    location: 'backpack',
-    isAttuned: false,
-    ...overrides,
-  }) as InventoryItem
+const makeItem = (overrides: Partial<InventoryItemDTO> = {}): InventoryItemDTO => ({
+  id: overrides.id ?? `i-${Math.random()}`,
+  name: '長劍',
+  description: null,
+  quantity: 1,
+  weight: 3,
+  type: 'weapon',
+  location: 'backpack',
+  isAttuned: false,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
+})
 
 const mountList = (
   params: {
-    items?: InventoryItem[]
+    items?: InventoryItemDTO[]
     totalItemCount?: number
     section?: 'backpack' | 'dimensionalBag'
     title?: string

@@ -2,26 +2,30 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import AppSelect from '~/components/common/AppSelect.vue'
 import AttunementPanel from '~/components/business/character/form/inventory/AttunementPanel.vue'
-import type { InventoryItem } from '@rolling-dice-app/core'
+import type { InventoryItemDTO } from '@rolling-dice-app/core'
 
-const makeItem = (overrides: Partial<InventoryItem> = {}): InventoryItem =>
-  ({
-    id: overrides.id ?? `i-${Math.random()}`,
-    name: '魔法戒指',
-    description: null,
-    quantity: 1,
-    weight: 0,
-    type: 'other',
-    location: 'backpack',
-    isAttuned: false,
-    ...overrides,
-  }) as InventoryItem
+const makeItem = (overrides: Partial<InventoryItemDTO> = {}): InventoryItemDTO => ({
+  id: overrides.id ?? `i-${Math.random()}`,
+  name: '魔法戒指',
+  description: null,
+  quantity: 1,
+  weight: 0,
+  type: 'other',
+  location: 'backpack',
+  isAttuned: false,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
+})
 
-const mountPanel = (params: { allItems?: InventoryItem[]; attunedItems?: InventoryItem[] } = {}) =>
+const mountPanel = (
+  params: { allItems?: InventoryItemDTO[]; attunedItems?: InventoryItemDTO[]; cap?: number } = {},
+) =>
   mount(AttunementPanel, {
     props: {
       allItems: params.allItems ?? [],
       attunedItems: params.attunedItems ?? [],
+      cap: params.cap ?? 3,
     },
     global: {
       components: { CommonAppSelect: AppSelect },

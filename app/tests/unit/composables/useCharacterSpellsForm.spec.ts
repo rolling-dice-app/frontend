@@ -15,7 +15,9 @@ describe('useCharacterSpellsForm', () => {
   it('toggleLearnedSpell 可新增與移除掌握的法術', () => {
     const { formState, spells } = setup()
     spells.toggleLearnedSpell(FIREBALL_ID)
-    expect(formState.spells).toEqual([{ id: FIREBALL_ID, isPrepared: false, isFavorite: false }])
+    expect(formState.spells).toEqual([
+      { spellId: FIREBALL_ID, isPrepared: false, isFavorite: false },
+    ])
     spells.toggleLearnedSpell(FIREBALL_ID)
     expect(formState.spells).toEqual([])
   })

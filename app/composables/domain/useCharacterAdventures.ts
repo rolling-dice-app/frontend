@@ -5,21 +5,15 @@ import type {
   CurrencyAmount,
 } from '~/types/business/adventure'
 
-function addCurrency(a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount {
-  return CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] + b[key] }), {
-    ...DEFAULT_CURRENCY,
-  })
-}
+const addCurrency = (a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount =>
+  CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] + b[key] }), { ...DEFAULT_CURRENCY })
 
-function subtractCurrency(a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount {
-  return CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] - b[key] }), {
-    ...DEFAULT_CURRENCY,
-  })
-}
+const subtractCurrency = (a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount =>
+  CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] - b[key] }), { ...DEFAULT_CURRENCY })
 
 export function useCharacterAdventures(characterId: string) {
   const adventureStore = useAdventureStore()
-  const characterStore = useCharacterStore()
+  const inventoryStore = useCharacterInventoryStore()
 
   const initial = adventureStore.load(characterId)
   const entries = ref<AdventureEntry[]>(initial.entries)
@@ -33,21 +27,34 @@ export function useCharacterAdventures(characterId: string) {
     entries.value.reduce((acc, entry) => acc + entry.expEarning, 0),
   )
 
-  function persistAdventures(): boolean {
-    return adventureStore.save(characterId, {
+  const persistAdventures = (): boolean =>
+    adventureStore.save(characterId, {
       entries: entries.value,
       syncMoneyToCurrency: syncMoneyToCurrency.value,
     })
+
+  /** 將 currency 推導後送到 inventory store；store 內部負責 PATCH + refetch + revert。 */
+  const applyCurrencyDelta = async (
+    delta: (current: CurrencyAmount) => CurrencyAmount,
+  ): Promise<boolean> => {
+    const current = inventoryStore.currency
+    if (!current) return false
+    const next = delta(current)
+    try {
+      await inventoryStore.updateCurrency({
+        updatedAt: current.updatedAt,
+        cp: next.cp,
+        sp: next.sp,
+        gp: next.gp,
+        pp: next.pp,
+      })
+      return true
+    } catch {
+      return false
+    }
   }
 
-  function applyCurrencyDelta(delta: (current: CurrencyAmount) => CurrencyAmount): boolean {
-    const character = characterStore.getById(characterId)
-    if (!character) return false
-    const next = delta(character.currency)
-    return characterStore.patchCharacter(characterId, { currency: next })
-  }
-
-  function addAdventure(draft: AdventureEntryDraft): boolean {
+  const addAdventure = async (draft: AdventureEntryDraft): Promise<boolean> => {
     const entry: AdventureEntry = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -55,32 +62,26 @@ export function useCharacterAdventures(characterId: string) {
       moneyEarning: { ...draft.moneyEarning },
     }
     if (syncMoneyToCurrency.value) {
-      if (!applyCurrencyDelta((c) => addCurrency(c, entry.moneyEarning))) {
-        return false
-      }
+      if (!(await applyCurrencyDelta((c) => addCurrency(c, entry.moneyEarning)))) return false
     }
     entries.value.push(entry)
     if (!persistAdventures()) {
       entries.value.pop()
       if (syncMoneyToCurrency.value) {
-        applyCurrencyDelta((c) => subtractCurrency(c, entry.moneyEarning))
+        await applyCurrencyDelta((c) => subtractCurrency(c, entry.moneyEarning))
       }
       return false
     }
     return true
   }
 
-  function updateAdventure(id: string, draft: AdventureEntryDraft): boolean {
+  const updateAdventure = async (id: string, draft: AdventureEntryDraft): Promise<boolean> => {
     const index = entries.value.findIndex((a) => a.id === id)
     if (index === -1) return true
     const old = entries.value[index]!
-    const next: AdventureEntry = {
-      ...old,
-      ...draft,
-      moneyEarning: { ...draft.moneyEarning },
-    }
+    const next: AdventureEntry = { ...old, ...draft, moneyEarning: { ...draft.moneyEarning } }
     if (syncMoneyToCurrency.value) {
-      const ok = applyCurrencyDelta((c) =>
+      const ok = await applyCurrencyDelta((c) =>
         addCurrency(subtractCurrency(c, old.moneyEarning), next.moneyEarning),
       )
       if (!ok) return false
@@ -89,7 +90,7 @@ export function useCharacterAdventures(characterId: string) {
     if (!persistAdventures()) {
       entries.value[index] = old
       if (syncMoneyToCurrency.value) {
-        applyCurrencyDelta((c) =>
+        await applyCurrencyDelta((c) =>
           addCurrency(subtractCurrency(c, next.moneyEarning), old.moneyEarning),
         )
       }
@@ -98,27 +99,25 @@ export function useCharacterAdventures(characterId: string) {
     return true
   }
 
-  function removeAdventure(id: string): boolean {
+  const removeAdventure = async (id: string): Promise<boolean> => {
     const index = entries.value.findIndex((a) => a.id === id)
     if (index === -1) return true
     const old = entries.value[index]!
     if (syncMoneyToCurrency.value) {
-      if (!applyCurrencyDelta((c) => subtractCurrency(c, old.moneyEarning))) {
-        return false
-      }
+      if (!(await applyCurrencyDelta((c) => subtractCurrency(c, old.moneyEarning)))) return false
     }
     entries.value.splice(index, 1)
     if (!persistAdventures()) {
       entries.value.splice(index, 0, old)
       if (syncMoneyToCurrency.value) {
-        applyCurrencyDelta((c) => addCurrency(c, old.moneyEarning))
+        await applyCurrencyDelta((c) => addCurrency(c, old.moneyEarning))
       }
       return false
     }
     return true
   }
 
-  function setSyncMoneyToCurrency(next: boolean): boolean {
+  const setSyncMoneyToCurrency = (next: boolean): boolean => {
     const previous = syncMoneyToCurrency.value
     syncMoneyToCurrency.value = next
     if (!persistAdventures()) {

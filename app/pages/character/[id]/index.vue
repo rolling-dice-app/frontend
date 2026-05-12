@@ -96,6 +96,7 @@
             :backpack-items="backpackItems"
             :dimensional-bag-items="dimensionalBagItems"
             :attuned-items="attunedItems"
+            :attuned-cap="attunedCap"
             :currency="currency"
             :backpack-load="backpackLoad"
             :max-carry-weight="maxCarryWeight"
@@ -169,6 +170,7 @@ const {
   backpackItems,
   dimensionalBagItems,
   attunedItems,
+  attunedCap,
   backpackLoad,
   maxCarryWeight,
   isOverEncumbered,

@@ -9,6 +9,7 @@
       <BusinessCharacterFormInventoryAttunementPanel
         :all-items="allItems"
         :attuned-items="attunedItems"
+        :cap="attunedCap"
         @update="(slotIndex, itemId) => $emit('update-attunement', slotIndex, itemId)"
       />
     </div>
@@ -65,6 +66,7 @@ const props = defineProps<{
   backpackItems: InventoryItemDTO[]
   dimensionalBagItems: InventoryItemDTO[]
   attunedItems: InventoryItemDTO[]
+  attunedCap: number
   currency: CharacterCurrencyDTO
   backpackLoad: number
   maxCarryWeight: number

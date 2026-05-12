@@ -137,7 +137,8 @@ import type { SpellDTO } from '@rolling-dice-app/core'
 const { t } = useI18n()
 
 const spellsStore = useCharacterSpellsStore()
-const { getSpell } = useSpells()
+const { getSpell, refresh: refreshCatalog } = useSpells()
+const apiErrorToast = useApiErrorToast()
 
 const headingId = useId()
 
@@ -160,15 +161,27 @@ const isPrepared = (spellId: string): boolean =>
 
 const onTogglePrepared = (spell: SpellDTO): void => {
   if (spell.level === 0) return
-  void spellsStore.togglePrepared(spell.id)
+  spellsStore.togglePrepared(spell.id)
 }
 
 const isFavorite = (spellId: string): boolean =>
   spellsStore.entries.some((entry) => entry.spellId === spellId && entry.isFavorite)
 
 const onToggleFavorite = (spell: SpellDTO): void => {
-  void spellsStore.toggleFavorite(spell.id)
+  spellsStore.toggleFavorite(spell.id)
 }
+
+watch(
+  () => spellsStore.mutationError,
+  (err) => {
+    if (!err) return
+    void apiErrorToast.handle(err, {
+      onStale: () => spellsStore.refetch(),
+      onSpellNotFound: () => refreshCatalog(),
+    })
+    spellsStore.clearMutationError()
+  },
+)
 
 const expandedSpellIds = ref<string[]>([])
 const itemEls = new Map<string, HTMLElement>()

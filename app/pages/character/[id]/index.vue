@@ -11,7 +11,7 @@
       </template>
     </CommonPageHeader>
 
-    <!-- Loading -->
+    <!-- Tier 1: 主幹 SSR loading -->
     <div
       v-if="status === 'pending'"
       class="flex min-h-[60dvh] items-center justify-center text-content-muted"
@@ -21,7 +21,7 @@
       {{ t('ui.state.loading') }}
     </div>
 
-    <!-- Error / Not found -->
+    <!-- Tier 1: 主幹載入失敗 / 找不到 -->
     <CommonNotFound
       v-else-if="status === 'error' || !character"
       :message="t('character.notFound')"
@@ -63,13 +63,36 @@
           <template #label>
             <span class="text-content">{{ t('spell.table') }}</span>
           </template>
-          <BusinessCharacterSpellsQuickView :character="character" />
+          <BusinessCharacterSpellsQuickView />
         </Tab>
         <Tab value="backpack">
           <template #label>
             <span class="text-content">{{ t('character.inventoryTab') }}</span>
           </template>
+          <!-- Tier 2: inventory + currency 各自 fetch -->
+          <div
+            v-if="inventoryPending"
+            class="flex min-h-[40dvh] items-center justify-center text-content-muted"
+            role="status"
+            aria-live="polite"
+          >
+            {{ t('ui.state.loading') }}
+          </div>
+          <div
+            v-else-if="inventoryError || !currency"
+            class="flex flex-col items-center gap-3 py-12 text-center"
+          >
+            <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
+            <button
+              type="button"
+              class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
+              @click="retryInventory"
+            >
+              {{ t('ui.state.retry') }}
+            </button>
+          </div>
           <BusinessCharacterFormInventoryTab
+            v-else
             :backpack-items="backpackItems"
             :dimensional-bag-items="dimensionalBagItems"
             :attuned-items="attunedItems"
@@ -105,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { Tab, Tabs } from '@ui'
 
 definePageMeta({ middleware: 'auth' })
@@ -118,7 +142,10 @@ const activeTab = ref('profile')
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 const characterStore = useCharacterStore()
+const inventoryStore = useCharacterInventoryStore()
+const spellsStore = useCharacterSpellsStore()
 
+// Tier 1：主幹 SSR
 const { status } = await useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
@@ -127,8 +154,15 @@ const { status } = await useAsyncData(
 
 const character = computed(() => characterStore.getById(id))
 
-const inventory = useCharacterInventory(id)
-const adventures = useCharacterAdventures(id)
+// Tier 2：三個 sub-resource onMounted 平行載入
+onMounted(() => {
+  void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id)])
+})
+
+onBeforeUnmount(() => {
+  inventoryStore.reset()
+  spellsStore.reset()
+})
 
 const {
   currency,
@@ -138,11 +172,25 @@ const {
   backpackLoad,
   maxCarryWeight,
   isOverEncumbered,
-} = inventory
+  itemsLoading,
+  itemsError,
+  currencyLoading,
+  currencyError,
+} = storeToRefs(inventoryStore)
+
+const inventoryPending = computed(
+  () => (itemsLoading.value || currencyLoading.value) && !currency.value,
+)
+const inventoryError = computed(() => itemsError.value ?? currencyError.value)
+const retryInventory = (): void => {
+  void inventoryStore.load(id)
+}
+
+const adventures = useCharacterAdventures(id)
 const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
 
 const toast = useToast()
-const notifyReadOnly = () => {
+const notifyReadOnly = (): void => {
   toast.error(t('ui.message.editingNotAvailable'))
 }
 </script>

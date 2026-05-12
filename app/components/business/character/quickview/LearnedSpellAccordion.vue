@@ -132,15 +132,11 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Checkbox, Icon } from '@ui'
-import type { CharacterDTO, SpellDTO } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
-const props = defineProps<{
-  character: CharacterDTO
-}>()
-
-const characterStore = useCharacterStore()
+const spellsStore = useCharacterSpellsStore()
 const { getSpell } = useSpells()
 
 const headingId = useId()
@@ -148,10 +144,10 @@ const headingId = useId()
 const learnedSpellDetails = computed(() => {
   const found: SpellDTO[] = []
   const missing: string[] = []
-  for (const entry of props.character.spells) {
-    const spell = getSpell(entry.id)
+  for (const entry of spellsStore.entries) {
+    const spell = getSpell(entry.spellId)
     if (spell) found.push(spell)
-    else missing.push(entry.id)
+    else missing.push(entry.spellId)
   }
   return { found, missing }
 })
@@ -159,29 +155,19 @@ const learnedSpellDetails = computed(() => {
 const groupedSpells = computed(() => groupSpellsByLevel(learnedSpellDetails.value.found))
 const missingNames = computed(() => learnedSpellDetails.value.missing)
 
-const isPrepared = (id: string): boolean => {
-  return props.character.spells.some((entry) => entry.id === id && entry.isPrepared)
-}
+const isPrepared = (spellId: string): boolean =>
+  spellsStore.entries.some((entry) => entry.spellId === spellId && entry.isPrepared)
 
 const onTogglePrepared = (spell: SpellDTO): void => {
   if (spell.level === 0) return
-  const latest = characterStore.getById(props.character.id)
-  if (!latest) return
-  characterStore.patchCharacter(props.character.id, {
-    spells: withToggledFlag(latest.spells, spell.id, 'isPrepared'),
-  })
+  void spellsStore.togglePrepared(spell.id)
 }
 
-const isFavorite = (id: string): boolean => {
-  return props.character.spells.some((entry) => entry.id === id && entry.isFavorite)
-}
+const isFavorite = (spellId: string): boolean =>
+  spellsStore.entries.some((entry) => entry.spellId === spellId && entry.isFavorite)
 
 const onToggleFavorite = (spell: SpellDTO): void => {
-  const latest = characterStore.getById(props.character.id)
-  if (!latest) return
-  characterStore.patchCharacter(props.character.id, {
-    spells: withToggledFlag(latest.spells, spell.id, 'isFavorite'),
-  })
+  void spellsStore.toggleFavorite(spell.id)
 }
 
 const expandedSpellIds = ref<string[]>([])

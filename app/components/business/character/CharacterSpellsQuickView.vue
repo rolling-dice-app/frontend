@@ -10,13 +10,8 @@
       </Button>
     </div>
     <div v-else class="flex flex-col gap-4 md:flex-row md:items-start">
-      <BusinessCharacterQuickviewLearnedSpellAccordion
-        ref="learnedRef"
-        :character="character"
-        class="min-w-0 md:flex-2"
-      />
+      <BusinessCharacterQuickviewLearnedSpellAccordion ref="learnedRef" class="min-w-0 md:flex-2" />
       <BusinessCharacterQuickviewFavoriteSpellList
-        :character="character"
         class="min-w-0 md:sticky md:top-4 md:flex-1"
         @select="onSelectFavorite"
       />
@@ -26,15 +21,18 @@
 
 <script setup lang="ts">
 import { Button } from '@ui'
-import type { CharacterDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
-defineProps<{
-  character: CharacterDTO
-}>()
+const { pending: catalogPending, error: catalogError, refresh: refreshCatalog } = useSpells()
+const spellsStore = useCharacterSpellsStore()
 
-const { pending, error, refresh } = useSpells()
+const pending = computed(() => catalogPending.value || spellsStore.loading)
+const error = computed(() => catalogError.value ?? spellsStore.error)
+
+const refresh = async (): Promise<void> => {
+  await Promise.allSettled([refreshCatalog(), spellsStore.refetch()])
+}
 
 const learnedRef = ref<{ focusSpell: (id: string) => Promise<void> } | null>(null)
 

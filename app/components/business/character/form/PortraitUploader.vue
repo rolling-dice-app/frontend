@@ -191,7 +191,7 @@ const cropConfirm = async () => {
   try {
     const output = drawToOutputCanvas(result.canvas)
     const blob = await canvasToWebp(output)
-    const url = await useAvatarUpload().upload(blob)
+    const url = await uploads().avatar(blob)
     avatar.value = url
     cropOpen.value = false
     releaseImageSrc()

@@ -8,12 +8,6 @@ import type { CharacterFormState, CharacterUpdateFormState } from '~/types/busin
 import type { CharacterListItem } from '~/types/business/character-list'
 import { buildCharacterUpdatePatch, formStateToCharacterPatch } from '~/helpers/character'
 
-/** 可由外部 patch 的欄位（排除身分識別與建立時間） */
-export type CharacterMutablePatch = Partial<Omit<CharacterDTO, 'id' | 'createdAt'>>
-
-const PATCH_NOT_SUPPORTED_MESSAGE =
-  'patchCharacter 尚未支援 (backend partial patch endpoint not implemented)'
-
 const cloneCharacter = (c: CharacterDTO): CharacterDTO =>
   JSON.parse(JSON.stringify(c)) as CharacterDTO
 
@@ -52,13 +46,13 @@ export const useCharacterStore = defineStore('character', () => {
   const detailLoading = ref(false)
   const detailError = ref<unknown>(null)
 
-  const characters = computed<CharacterListItem[]>(() => list.value)
+  const characterList = computed<CharacterListItem[]>(() => list.value)
 
   const loadList = async (): Promise<CharacterListItem[]> => {
     listLoading.value = true
     listError.value = null
     try {
-      const items = await useCharacterApi().listCharacters()
+      const items = await characters().list()
       list.value = items
       return items
     } catch (error) {
@@ -73,7 +67,7 @@ export const useCharacterStore = defineStore('character', () => {
     detailLoading.value = true
     detailError.value = null
     try {
-      const character = await useCharacterApi().getCharacter(id)
+      const character = await characters().get(id)
       detailCache.value.set(id, character)
       return cloneCharacter(character)
     } catch (error) {
@@ -86,7 +80,7 @@ export const useCharacterStore = defineStore('character', () => {
 
   const createCharacter = async (formState: CharacterFormState): Promise<CharacterDTO> => {
     const input = buildCreateInput(formState)
-    const created = await useCharacterApi().createCharacter(input)
+    const created = await characters().create(input)
     detailCache.value.set(created.id, created)
     list.value.push(characterToListItem(created))
     return cloneCharacter(created)
@@ -107,9 +101,9 @@ export const useCharacterStore = defineStore('character', () => {
     const patch = buildCharacterUpdatePatch(original, formState)
     if (Object.keys(patch).length <= 1) return cloneCharacter(original)
 
-    const api = useCharacterApi()
-    await api.updateCharacter(id, patch)
-    const next = await api.getCharacter(id)
+    const api = characters()
+    await api.update(id, patch)
+    const next = await api.get(id)
     detailCache.value.set(id, next)
     const nextItem = characterToListItem(next)
     const idx = list.value.findIndex((c) => c.id === id)
@@ -118,17 +112,13 @@ export const useCharacterStore = defineStore('character', () => {
   }
 
   const removeCharacter = async (id: string): Promise<void> => {
-    await useCharacterApi().deleteCharacter(id)
+    await characters().remove(id)
     detailCache.value.delete(id)
     list.value = list.value.filter((c) => c.id !== id)
   }
 
-  const patchCharacter = (_id: string, _patch: CharacterMutablePatch): never => {
-    throw new Error(`patchCharacter: ${PATCH_NOT_SUPPORTED_MESSAGE}`)
-  }
-
   return {
-    characters,
+    characters: characterList,
     list,
     detailCache,
     listLoading,
@@ -141,6 +131,5 @@ export const useCharacterStore = defineStore('character', () => {
     getById,
     updateCharacter,
     removeCharacter,
-    patchCharacter,
   }
 })

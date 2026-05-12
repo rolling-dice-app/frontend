@@ -1,111 +1,71 @@
-import { ATTUNEMENT_SLOT_COUNT } from '~/constants/inventory'
-import { getTotalScore } from '~/helpers/ability'
-import { calculateBackpackLoad, calculateMaxCarryWeight } from '~/helpers/inventory'
-import {
-  DEFAULT_CURRENCY,
-  type CharacterCurrency,
-  type InventoryItem,
+import { storeToRefs } from 'pinia'
+import type {
+  CharacterCurrencyDTO,
+  InventoryItemCreateBody,
+  InventoryItemUpdateBody,
 } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
-export function useCharacterInventory(characterId: string) {
-  const store = useCharacterStore()
+/**
+ * 背包與金幣的 component facade；對外維持既有 API 形狀，
+ * 內部全部委派給 useCharacterInventoryStore。
+ */
+export function useCharacterInventory(_characterId: string) {
+  const store = useCharacterInventoryStore()
+  const {
+    items,
+    currency,
+    backpackItems,
+    dimensionalBagItems,
+    attunedItems,
+    attunedCap,
+    backpackLoad,
+    maxCarryWeight,
+    isOverEncumbered,
+  } = storeToRefs(store)
 
-  const character = computed(() => store.getById(characterId))
-
-  const items = ref<InventoryItem[]>(character.value?.items.map((i) => ({ ...i })) ?? [])
-  const currency = computed<CharacterCurrency>(
-    () => character.value?.currency ?? { ...DEFAULT_CURRENCY },
-  )
-
-  const backpackItems = computed(() => items.value.filter((i) => i.location === 'backpack'))
-  const dimensionalBagItems = computed(() =>
-    items.value.filter((i) => i.location === 'dimensionalBag'),
-  )
-  const attunedItems = computed<InventoryItem[]>(() =>
-    items.value.filter((i) => i.isAttuned).slice(0, ATTUNEMENT_SLOT_COUNT),
-  )
-  const backpackLoad = computed(() => calculateBackpackLoad(backpackItems.value, currency.value))
-  const maxCarryWeight = computed(() => {
-    const str = character.value?.abilities.strength
-    return str ? calculateMaxCarryWeight(getTotalScore(str)) : 0
+  const draftToCreateBody = (draft: InventoryItemDraft): InventoryItemCreateBody => ({
+    name: draft.name,
+    description: draft.description,
+    quantity: draft.quantity,
+    weight: draft.weight,
+    type: draft.type,
+    location: draft.location,
   })
-  const isOverEncumbered = computed(() => backpackLoad.value > maxCarryWeight.value)
 
-  function persist(): boolean {
-    return store.patchCharacter(characterId, { items: items.value })
+  const addItem = (draft: InventoryItemDraft): Promise<unknown> =>
+    store.addItem(draftToCreateBody(draft))
+
+  const removeItem = (itemId: string): Promise<void> => store.removeItem(itemId)
+
+  const updateItem = (itemId: string, draft: InventoryItemDraft): Promise<void> => {
+    const item = store.items.find((i) => i.id === itemId)
+    if (!item) return Promise.resolve()
+    const body: InventoryItemUpdateBody = {
+      updatedAt: item.updatedAt,
+      ...draftToCreateBody(draft),
+    }
+    return store.patchItem(itemId, body)
   }
 
-  function addItem(draft: InventoryItemDraft): boolean {
-    items.value.push({ id: crypto.randomUUID(), ...draft, isAttuned: false })
-    if (!persist()) {
-      items.value.pop()
-      return false
-    }
-    return true
+  const moveItem = (itemId: string): Promise<void> => {
+    const item = store.items.find((i) => i.id === itemId)
+    if (!item) return Promise.resolve()
+    const nextLocation = item.location === 'backpack' ? 'dimensionalBag' : 'backpack'
+    return store.patchItem(itemId, { updatedAt: item.updatedAt, location: nextLocation })
   }
 
-  function removeItem(itemId: string): boolean {
-    const index = items.value.findIndex((i) => i.id === itemId)
-    if (index === -1) return true
-    const removed = items.value[index]!
-    items.value.splice(index, 1)
-    if (!persist()) {
-      items.value.splice(index, 0, removed)
-      return false
-    }
-    return true
-  }
+  const updateCurrency = (value: CharacterCurrencyDTO): Promise<void> =>
+    store.updateCurrency({
+      updatedAt: value.updatedAt,
+      cp: value.cp,
+      sp: value.sp,
+      gp: value.gp,
+      pp: value.pp,
+    })
 
-  function updateItem(itemId: string, draft: InventoryItemDraft): boolean {
-    const index = items.value.findIndex((i) => i.id === itemId)
-    if (index === -1) return true
-    const old = items.value[index]!
-    items.value[index] = { id: itemId, ...draft, isAttuned: old.isAttuned }
-    if (!persist()) {
-      items.value[index] = old
-      return false
-    }
-    return true
-  }
-
-  function moveItem(itemId: string): boolean {
-    const item = items.value.find((i) => i.id === itemId)
-    if (!item) return true
-    const previous = item.location
-    item.location = previous === 'backpack' ? 'dimensionalBag' : 'backpack'
-    if (!persist()) {
-      item.location = previous
-      return false
-    }
-    return true
-  }
-
-  function updateCurrency(value: CharacterCurrency): boolean {
-    return store.patchCharacter(characterId, { currency: value })
-  }
-
-  /** 設定第 slotIndex 個 slot 的同調物品；newItemId 為 null 時清空 slot。 */
-  function setAttunement(slotIndex: number, newItemId: string | null): boolean {
-    if (slotIndex < 0 || slotIndex >= ATTUNEMENT_SLOT_COUNT) return true
-    const current = attunedItems.value[slotIndex] ?? null
-    if (current?.id === newItemId) return true
-
-    const snapshot = items.value.map((i) => ({ ...i }))
-    if (current) {
-      const oldIdx = items.value.findIndex((i) => i.id === current.id)
-      if (oldIdx !== -1) items.value[oldIdx] = { ...items.value[oldIdx]!, isAttuned: false }
-    }
-    if (newItemId) {
-      const newIdx = items.value.findIndex((i) => i.id === newItemId)
-      if (newIdx !== -1) items.value[newIdx] = { ...items.value[newIdx]!, isAttuned: true }
-    }
-    if (!persist()) {
-      items.value = snapshot
-      return false
-    }
-    return true
-  }
+  const setAttunement = (slotIndex: number, newItemId: string | null): Promise<void> =>
+    store.setAttunement(slotIndex, newItemId)
 
   return {
     items,
@@ -113,6 +73,7 @@ export function useCharacterInventory(characterId: string) {
     backpackItems,
     dimensionalBagItems,
     attunedItems,
+    attunedCap,
     backpackLoad,
     maxCarryWeight,
     isOverEncumbered,

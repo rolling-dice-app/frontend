@@ -11,13 +11,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('useAvatarUpload', () => {
+describe('uploads().avatar', () => {
   it('成功上傳：以 multipart/form-data 帶 file 欄位呼叫 /uploads/avatar，回傳 url', async () => {
     mockApiFetch.mockResolvedValue({ url: 'https://avatars.example.com/u1/a.webp' })
-    const { useAvatarUpload } = await import('~/composables/api/useAvatarUpload')
+    const { uploads } = await import('~/api/uploads')
 
     const blob = new Blob(['x'], { type: 'image/webp' })
-    const url = await useAvatarUpload().upload(blob)
+    const url = await uploads().avatar(blob)
 
     expect(url).toBe('https://avatars.example.com/u1/a.webp')
     expect(mockApiFetch).toHaveBeenCalledOnce()
@@ -34,9 +34,9 @@ describe('useAvatarUpload', () => {
   it('apiFetch reject 時，error 透傳給呼叫端', async () => {
     const err = new Error('network down')
     mockApiFetch.mockRejectedValue(err)
-    const { useAvatarUpload } = await import('~/composables/api/useAvatarUpload')
+    const { uploads } = await import('~/api/uploads')
 
     const blob = new Blob(['x'], { type: 'image/webp' })
-    await expect(useAvatarUpload().upload(blob)).rejects.toBe(err)
+    await expect(uploads().avatar(blob)).rejects.toBe(err)
   })
 })

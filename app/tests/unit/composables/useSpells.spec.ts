@@ -28,7 +28,7 @@ function makeDto(overrides: Partial<SpellDTO> = {}): SpellDTO {
 }
 
 function stubListSpells(mock: ReturnType<typeof vi.fn>) {
-  vi.stubGlobal('useSpellApi', () => ({ listSpells: mock }))
+  vi.stubGlobal('spells', () => ({ list: mock }))
 }
 
 beforeEach(() => {

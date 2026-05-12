@@ -21,12 +21,12 @@ beforeEach(() => {
   mockCreateCharacter.mockReset()
   mockUpdateCharacter.mockReset()
   mockDeleteCharacter.mockReset()
-  vi.stubGlobal('useCharacterApi', () => ({
-    listCharacters: mockListCharacters,
-    getCharacter: mockGetCharacter,
-    createCharacter: mockCreateCharacter,
-    updateCharacter: mockUpdateCharacter,
-    deleteCharacter: mockDeleteCharacter,
+  vi.stubGlobal('characters', () => ({
+    list: mockListCharacters,
+    get: mockGetCharacter,
+    create: mockCreateCharacter,
+    update: mockUpdateCharacter,
+    remove: mockDeleteCharacter,
   }))
 })
 

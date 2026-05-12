@@ -137,7 +137,7 @@ import type { SpellDTO } from '@rolling-dice-app/core'
 const { t } = useI18n()
 
 const spellsStore = useCharacterSpellsStore()
-const { getSpell, refresh: refreshCatalog } = useSpells()
+const { getSpell } = useSpells()
 const apiErrorToast = useApiErrorToast()
 
 const headingId = useId()
@@ -175,10 +175,7 @@ watch(
   () => spellsStore.mutationError,
   (err) => {
     if (!err) return
-    void apiErrorToast.handle(err, {
-      onStale: () => spellsStore.refetch(),
-      onSpellNotFound: () => refreshCatalog(),
-    })
+    apiErrorToast.handle(err)
     spellsStore.clearMutationError()
   },
 )

@@ -40,7 +40,7 @@ export default {
   message: {
     saveSuccess: '已儲存',
     saveFailed: '儲存失敗，請稍後再試',
-    staleCharacter: '此角色已被其他裝置更新，將返回詳情頁',
+    systemError: '系統錯誤，請稍後再試',
     deleteFailed: '刪除失敗，請稍後再試',
     unknownError: '發生未知錯誤，請稍後再試',
     editingNotAvailable: '編輯功能尚未開放',

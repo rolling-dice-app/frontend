@@ -51,11 +51,82 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
 
 ## Notifications (Toast / Alert)
 
-1. Notification rendering is centrally managed; do not call toast directly from various components or composables.
-2. Trigger via the project's notification composable (`useToast`, defined in `app/composables/ui/useToast.ts` and shared as a module-level singleton) to keep coupling low.
-3. Error messages are meaningful to users — do not show raw HTTP status codes or technical messages.
+1. Backend mutation errors route through `useApiErrorToast().handle(err)` (single dispatcher; see "Mutation Error Routing" below). Frontend preemption messages, success / info toasts, and other UI feedback use `useToast()` directly.
+2. `useToast` (`app/composables/ui/useToast.ts`) is the project's notification composable, a module-level singleton.
+3. Error messages are meaningful to users — do not show raw HTTP status codes, backend codes, or technical messages.
 4. Transient errors (e.g., network timeout) use toast; decision-requiring errors (e.g., overwrite confirmation) use dialog.
 5. Success, warning, and error messages are visually and semantically distinct.
+
+## Mutation Error Routing
+
+This project deliberately **decouples user-facing error messages from backend error codes**.
+
+### Principle
+
+- **Frontend-preemptable** — input limits and UI-state limits that the frontend can reliably check before the request leaves (already-learned, attune cap, carry cap, file size / MIME, etc.). Block the action at the UI layer with a specific, localized message; **do not** send the request.
+- **Backend-only** — anything that requires server-side authority (auth, schema, concurrency, system anomalies, bypass attempts). The user gets a single generic system message; the engineer gets a structured log.
+
+If you find yourself maintaining a backend `code → message` dictionary on the frontend, you are probably substituting server feedback for frontend preemption. Push the check upstream.
+
+### useApiErrorToast — what it does, what it doesn't
+
+`useApiErrorToast` (`app/composables/ui/useApiErrorToast.ts`) is a single-purpose dispatcher: every backend `FetchError` (or any unknown error) yields
+
+- toast: `t('ui.message.systemError')`
+- log: `logger.error('[unhandled API error]', { code, status, url, err })`
+
+It does **not** parse backend codes, dispatch recovery callbacks, branch by HTTP status, or accept a namespace / fallback / recovery option. The signature is `handle(err: unknown): void`.
+
+```ts
+const apiErrorToast = useApiErrorToast()
+
+try {
+  await api.doThing()
+} catch (err) {
+  apiErrorToast.handle(err)
+}
+```
+
+If the failure needs a recovery side effect (e.g. refetch a slice to resync optimistic state), the caller triggers it **in parallel** with `handle()`, unconditionally — it does not depend on parsing the error:
+
+```ts
+for (const r of results) {
+  if (r.status === 'rejected') apiErrorToast.handle(r.reason)
+}
+if (results.some((r) => r.status === 'rejected')) {
+  await slice.refetch().catch(() => {})
+}
+```
+
+### Channel decision
+
+| Source of failure                          | Channel                                           |
+| ------------------------------------------ | ------------------------------------------------- |
+| Uncaught / page-level                      | `error.vue`                                       |
+| Initial GET (page or component three-state)| `useAsyncData` status + three-state UI            |
+| Frontend-preemptable rule violation        | Block at UI + `useToast().error()` with specifics |
+| Backend `FetchError` from a mutation       | `useApiErrorToast().handle()`                     |
+| Success / informational                    | `useToast().success() / .info()`                  |
+
+### Do NOT route through `useApiErrorToast`
+
+- Frontend preemption — emit the specific message at the UI block; no request goes out.
+- Success or info toasts.
+- 401 from `apiFetch` — handled by the fetch interceptor (auth store cleanup + redirect).
+
+### Adding a new failure scenario
+
+1. Can the frontend reliably know the answer before sending the request? If yes → add preemption logic in the relevant composable / component; add the user-facing string under the matching domain namespace (`spell.*`, `inventory.*`, `character.*`, …) — **not** under `ui.message.*`.
+2. Is recovery (refetch / re-sync) appropriate after this failure? → trigger it in the caller, unconditionally, in parallel with `apiErrorToast.handle()`. Do **not** add a backend-code branch to the dispatcher.
+3. Anything else → no change; it falls through to `systemError` + log.
+
+### Anti-patterns
+
+- Adding a backend `code → message` lookup dictionary to the frontend instead of preempting the rule.
+- Parsing HTTP status in callers to branch UI behavior (treats transport-layer signal as application semantics).
+- Showing a backend error code or its server-side message verbatim to the user.
+- Catching a `FetchError` to swap it for a friendlier `throw` (`useApiErrorToast` already does the friendly UX; rethrowing only loses the FetchError shape).
+
 
 ## Form Validation Errors
 

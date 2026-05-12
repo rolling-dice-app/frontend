@@ -29,16 +29,12 @@ describe('t() — leaf 取值', () => {
     expect(typeof value).toBe('string')
     expect(value.length).toBeGreaterThan(0)
   })
-
-  it('error.oauth 對應 OAuthErrorCode', () => {
-    expect(t('error.oauth.OAUTH_USER_DENIED')).toBe('你在 Google 取消了授權')
-  })
 })
 
 describe('t() — 動態 path（template literal）', () => {
-  it('動態 OAuth code 仍 type-safe 且可取值', () => {
-    const code = 'OAUTH_EMAIL_UNVERIFIED' as const
-    expect(t(`error.oauth.${code}`)).toBe('你的 Google 帳號 email 尚未驗證')
+  it('動態 spell school code 仍 type-safe 且可取值', () => {
+    const code = 'abjuration' as const
+    expect(t(`spell.school.${code}`)).toBe('防護')
   })
 })
 
@@ -214,6 +210,7 @@ describe('t() — ui namespace（通用 UI 用詞）', () => {
   it('message 通用提示', () => {
     expect(t('ui.message.saveFailed')).toBe('儲存失敗，請稍後再試')
     expect(t('ui.message.unknownError')).toBe('發生未知錯誤，請稍後再試')
+    expect(t('ui.message.systemError')).toBe('系統錯誤，請稍後再試')
   })
 })
 

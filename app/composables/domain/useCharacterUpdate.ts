@@ -7,7 +7,6 @@ import {
 } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, SpellFormEntry } from '~/types/business/character-form'
 import { buildCharacterUpdatePatch } from '~/helpers/character'
-import { createLogger } from '~/utils/log'
 
 export type UpdateTab = 'basic' | 'profile' | 'combat' | 'spells' | 'features' | 'backpack'
 
@@ -124,12 +123,6 @@ const entryToFormSpell = (entry: SpellEntryDTO): SpellFormEntry => ({
   sourceClass: entry.sourceClass,
 })
 
-const extractStatus = (err: unknown): number | undefined => {
-  if (typeof err !== 'object' || err === null) return undefined
-  const e = err as { response?: { status?: number }; statusCode?: number }
-  return e.response?.status ?? e.statusCode
-}
-
 export function useCharacterUpdate(id: string) {
   const store = useCharacterStore()
   const spellsStore = useCharacterSpellsStore()
@@ -199,9 +192,7 @@ export function useCharacterUpdate(id: string) {
       hasChanges.value,
   )
 
-  const logger = createLogger('[CharacterUpdate]')
   const { t } = useI18n()
-  const { refresh: refreshSpellCatalog } = useSpells()
 
   // ─── Submit：主幹 PATCH + N 個 spell mutations 並行 ──────────────────────
 
@@ -223,38 +214,33 @@ export function useCharacterUpdate(id: string) {
         ...spellPromises,
       ])
 
-      // 主幹 409 → 全頁失敗、navigate 至 detail 重新讀
+      // 主幹失敗 → 統一交給 useApiErrorToast；不在前端判狀態碼
       if (mainResult!.status === 'rejected') {
-        const reason = mainResult!.reason
-        if (extractStatus(reason) === 409) {
-          useToast().error(t('ui.message.staleCharacter'))
-          await navigateTo(`/character/${id}`)
-          return
-        }
-        await apiErrorToast.handle(reason)
+        apiErrorToast.handle(mainResult!.reason)
       }
 
-      // 個別 spell op 失敗 → 各自 toast
+      // 個別 spell op 失敗 → 各自 toast；前端不解析後端錯誤碼
       for (const r of spellResults) {
         if (r.status === 'rejected') {
-          await apiErrorToast.handle(r.reason, {
-            onStale: () => spellsStore.refetch(),
-            onSpellNotFound: () => refreshSpellCatalog(),
-          })
+          apiErrorToast.handle(r.reason)
         }
       }
 
-      const anyFailed =
-        mainResult!.status === 'rejected' || spellResults.some((r) => r.status === 'rejected')
+      const anySpellFailed = spellResults.some((r) => r.status === 'rejected')
+      const anyFailed = mainResult!.status === 'rejected' || anySpellFailed
       if (!anyFailed) useToast().success(t('ui.message.saveSuccess'))
+
+      // spell mutation 失敗 → 無條件 refetch 同步本地與 server 狀態（不解析錯誤類型）
+      if (anySpellFailed) {
+        await spellsStore.refetch().catch(() => {})
+      }
 
       // Re-seed：以伺服器當前狀態為基準
       const next = store.getById(id)
       if (next) Object.assign(formState, characterToFormState(next))
       seedSpells()
     } catch (err) {
-      logger.error('submit unexpected:', err)
-      useToast().error(t('ui.message.saveFailed'))
+      apiErrorToast.handle(err)
     } finally {
       isSubmitting.value = false
     }

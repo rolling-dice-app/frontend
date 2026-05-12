@@ -219,20 +219,22 @@ describe('useCharacterUpdate — submit', () => {
     expect(formState.name).toBe('已改名')
   })
 
-  it('409 stale 時顯示提示並導回 detail 頁', async () => {
+  it('主幹失敗（含 409）一律交給 useApiErrorToast，不在前端判狀態碼', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    vi.spyOn(store, 'updateCharacter').mockRejectedValue({ response: { status: 409 } })
+    const err = { response: { status: 409 } }
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue(err)
 
     const { submit, formState } = await getComposable('update-001')
     formState.name = '已改名'
     await submit()
 
-    expect(mockToastError).toHaveBeenCalledWith('此角色已被其他裝置更新，將返回詳情頁')
-    expect(mockNavigateTo).toHaveBeenCalledWith('/character/update-001')
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err)
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+    expect(mockToastError).not.toHaveBeenCalled()
   })
 
-  it('其他錯誤交給 useApiErrorToast 處理', async () => {
+  it('主幹丟出非 FetchError 也交給 useApiErrorToast', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
     const err = new Error('boom')

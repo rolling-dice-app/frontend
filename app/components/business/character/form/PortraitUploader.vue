@@ -71,7 +71,6 @@
 <script setup lang="ts">
 import { Button, Modal, Icon } from '@ui'
 import { Cropper } from 'vue-advanced-cropper'
-import type { AvatarErrorCode } from '~/types/business/avatar'
 
 const PREFLIGHT_MAX_BYTES = 5 * 1024 * 1024
 const OUTPUT_WIDTH = 768
@@ -80,8 +79,9 @@ const WEBP_QUALITY = 0.85
 
 const avatar = defineModel<string | null>({ required: true })
 
-const { t, messages } = useI18n()
+const { t } = useI18n()
 const toast = useToast()
+const apiErrorToast = useApiErrorToast()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const cropperRef = ref<InstanceType<typeof Cropper> | null>(null)
@@ -167,16 +167,6 @@ const canvasToWebp = (canvas: HTMLCanvasElement): Promise<Blob> =>
     )
   })
 
-const messageForError = (err: unknown): string => {
-  if (isFetchError(err)) {
-    const code = (err.data as { code?: string } | undefined)?.code
-    if (code && code in messages.value.error.avatar) {
-      return t(`error.avatar.${code as AvatarErrorCode}`)
-    }
-  }
-  return t('character.portrait.uploadFailed')
-}
-
 const cropConfirm = async () => {
   if (uploading.value) return
   const cropper = cropperRef.value
@@ -197,7 +187,7 @@ const cropConfirm = async () => {
     releaseImageSrc()
     resetFileInput()
   } catch (err) {
-    toast.error(messageForError(err))
+    apiErrorToast.handle(err)
   } finally {
     uploading.value = false
   }

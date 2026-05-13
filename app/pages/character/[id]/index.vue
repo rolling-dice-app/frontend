@@ -70,44 +70,46 @@
             <span class="text-content">{{ t('character.inventoryTab') }}</span>
           </template>
           <!-- Tier 2: inventory + currency 各自 fetch -->
-          <div
-            v-if="inventoryPending"
-            class="flex min-h-[40dvh] items-center justify-center text-content-muted"
-            role="status"
-            aria-live="polite"
-          >
-            {{ t('ui.state.loading') }}
-          </div>
-          <div
-            v-else-if="inventoryError || !currency"
-            class="flex flex-col items-center gap-3 py-12 text-center"
-          >
-            <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
-            <button
-              type="button"
-              class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
-              @click="retryInventory"
+          <div class="min-h-[40dvh] bg-canvas-elevated p-4">
+            <div
+              v-if="inventoryPending"
+              class="flex min-h-[calc(40dvh-2rem)] items-center justify-center text-content-muted"
+              role="status"
+              aria-live="polite"
             >
-              {{ t('ui.state.retry') }}
-            </button>
+              {{ t('ui.state.loading') }}
+            </div>
+            <div
+              v-else-if="inventoryError || !currency"
+              class="flex flex-col items-center gap-3 py-12 text-center"
+            >
+              <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
+              <button
+                type="button"
+                class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
+                @click="retryInventory"
+              >
+                {{ t('ui.state.retry') }}
+              </button>
+            </div>
+            <BusinessCharacterFormInventoryTab
+              v-else
+              :backpack-items="backpackItems"
+              :dimensional-bag-items="dimensionalBagItems"
+              :attuned-items="attunedItems"
+              :attuned-cap="attunedCap"
+              :currency="currency"
+              :backpack-load="backpackLoad"
+              :max-carry-weight="maxCarryWeight"
+              :is-over-encumbered="isOverEncumbered"
+              @add-item="notifyReadOnly"
+              @remove-item="notifyReadOnly"
+              @update-item="notifyReadOnly"
+              @move-item="notifyReadOnly"
+              @update-currency="notifyReadOnly"
+              @update-attunement="notifyReadOnly"
+            />
           </div>
-          <BusinessCharacterFormInventoryTab
-            v-else
-            :backpack-items="backpackItems"
-            :dimensional-bag-items="dimensionalBagItems"
-            :attuned-items="attunedItems"
-            :attuned-cap="attunedCap"
-            :currency="currency"
-            :backpack-load="backpackLoad"
-            :max-carry-weight="maxCarryWeight"
-            :is-over-encumbered="isOverEncumbered"
-            @add-item="notifyReadOnly"
-            @remove-item="notifyReadOnly"
-            @update-item="notifyReadOnly"
-            @move-item="notifyReadOnly"
-            @update-currency="notifyReadOnly"
-            @update-attunement="notifyReadOnly"
-          />
         </Tab>
         <Tab value="adventures">
           <template #label>

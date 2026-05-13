@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4 bg-canvas-elevated p-4">
+  <div class="space-y-4">
     <!-- Currency + Attunement (parallel) -->
     <div class="grid gap-4 md:grid-cols-2">
       <BusinessCharacterFormInventoryCurrencyPanel

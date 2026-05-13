@@ -52,10 +52,10 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
 
 When a page needs **≥3 independent GETs** to fully render (e.g. a character detail page requires character + combat-state + spells + inventory + currency), do not block initial render until all settle. Stagger fetches by tier:
 
-| Tier | When | What | Why |
-|---|---|---|---|
-| 1 — page skeleton | route enter / SSR `useAsyncData` | the primary entity required for layout, header, navigation | first paint is fast; user sees something immediately |
-| 2 — sub-resources | `onMounted` (parallel) | independent collections / sibling resources; each region owns its own loading skeleton | each region resolves on its own pace; one slow GET does not block others |
+| Tier              | When                             | What                                                                                   | Why                                                                      |
+| ----------------- | -------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1 — page skeleton | route enter / SSR `useAsyncData` | the primary entity required for layout, header, navigation                             | first paint is fast; user sees something immediately                     |
+| 2 — sub-resources | `onMounted` (parallel)           | independent collections / sibling resources; each region owns its own loading skeleton | each region resolves on its own pace; one slow GET does not block others |
 
 Rules:
 

@@ -100,13 +100,13 @@ if (results.some((r) => r.status === 'rejected')) {
 
 ### Channel decision
 
-| Source of failure                          | Channel                                           |
-| ------------------------------------------ | ------------------------------------------------- |
-| Uncaught / page-level                      | `error.vue`                                       |
-| Initial GET (page or component three-state)| `useAsyncData` status + three-state UI            |
-| Frontend-preemptable rule violation        | Block at UI + `useToast().error()` with specifics |
-| Backend `FetchError` from a mutation       | `useApiErrorToast().handle()`                     |
-| Success / informational                    | `useToast().success() / .info()`                  |
+| Source of failure                           | Channel                                           |
+| ------------------------------------------- | ------------------------------------------------- |
+| Uncaught / page-level                       | `error.vue`                                       |
+| Initial GET (page or component three-state) | `useAsyncData` status + three-state UI            |
+| Frontend-preemptable rule violation         | Block at UI + `useToast().error()` with specifics |
+| Backend `FetchError` from a mutation        | `useApiErrorToast().handle()`                     |
+| Success / informational                     | `useToast().success() / .info()`                  |
 
 ### Do NOT route through `useApiErrorToast`
 
@@ -126,7 +126,6 @@ if (results.some((r) => r.status === 'rejected')) {
 - Parsing HTTP status in callers to branch UI behavior (treats transport-layer signal as application semantics).
 - Showing a backend error code or its server-side message verbatim to the user.
 - Catching a `FetchError` to swap it for a friendlier `throw` (`useApiErrorToast` already does the friendly UX; rethrowing only loses the FetchError shape).
-
 
 ## Form Validation Errors
 

@@ -1,7 +1,12 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAdventuresStorageKey } from '~/constants/storage'
-import type { AdventureEntry, AdventureEntryDraft, AdventureLog, CurrencyAmount  } from '~/types/business/adventure'
+import type {
+  AdventureEntry,
+  AdventureEntryDraft,
+  AdventureLog,
+  CurrencyAmount,
+} from '~/types/business/adventure'
 
 const CHAR_ID = 'adv-001'
 

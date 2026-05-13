@@ -102,12 +102,17 @@
               :backpack-load="backpackLoad"
               :max-carry-weight="maxCarryWeight"
               :is-over-encumbered="isOverEncumbered"
-              @add-item="notifyReadOnly"
-              @remove-item="notifyReadOnly"
-              @update-item="notifyReadOnly"
-              @move-item="notifyReadOnly"
-              @update-currency="notifyReadOnly"
-              @update-attunement="notifyReadOnly"
+              @add-item="(draft) => runInventoryOp(() => inventory.addItem(draft))"
+              @remove-item="(itemId) => runInventoryOp(() => inventory.removeItem(itemId))"
+              @update-item="
+                (itemId, draft) => runInventoryOp(() => inventory.updateItem(itemId, draft))
+              "
+              @move-item="(itemId) => runInventoryOp(() => inventory.moveItem(itemId))"
+              @update-currency="(value) => runInventoryOp(() => inventory.updateCurrency(value))"
+              @update-attunement="
+                (slotIndex, itemId) =>
+                  runInventoryOp(() => inventory.setAttunement(slotIndex, itemId))
+              "
             />
           </div>
         </Tab>
@@ -192,6 +197,16 @@ const retryInventory = (): void => {
 
 const adventures = useCharacterAdventures(id)
 const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
+
+const inventory = useCharacterInventory(id)
+const apiErrorToast = useApiErrorToast()
+const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {
+  try {
+    await op()
+  } catch (err) {
+    apiErrorToast.handle(err)
+  }
+}
 
 const toast = useToast()
 const notifyReadOnly = (): void => {

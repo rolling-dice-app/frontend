@@ -5,6 +5,8 @@ import type {
   CharacterDTO,
   CharacterSummaryDTO,
   CharacterUpdateDTO,
+  CombatStateDTO,
+  CombatStateUpdateDTO,
   InventoryItemCreateBody,
   InventoryItemDTO,
   InventoryItemUpdateBody,
@@ -20,6 +22,7 @@ import type {
  *   - sub      /characters/:id/spells[/:spellId]
  *   - sub      /characters/:id/inventory[/items[/:itemId]]
  *   - sub      /characters/:id/currency
+ *   - sub      /characters/:id/combat-state
  */
 export const characters = () => {
   const apiFetch = useApiFetch()
@@ -78,6 +81,23 @@ export const characters = () => {
 
       patch: async (id: string, body: CharacterCurrencyUpdateBody): Promise<void> => {
         await apiFetch(`/characters/${id}/currency`, { method: 'PATCH', body })
+      },
+    },
+
+    combatState: {
+      get: (id: string): Promise<CombatStateDTO> =>
+        apiFetch<CombatStateDTO>(`/characters/${id}/combat-state`),
+
+      patch: async (id: string, body: CombatStateUpdateDTO): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state`, { method: 'PATCH', body })
+      },
+
+      shortRest: async (id: string): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/short-rest`, { method: 'POST' })
+      },
+
+      longRest: async (id: string): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST' })
       },
     },
   }

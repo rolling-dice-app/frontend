@@ -1,12 +1,9 @@
 import type { Ref } from 'vue'
-import { CLASS_CONFIG } from '~/constants/dnd'
-import { getCombatStateStorageKey } from '~/constants/storage'
-import { calculateTotalLevel } from '~/helpers/character'
 import {
   buildCombatStateBodyDefaults,
   DEATH_SAVE_THRESHOLD,
   type CombatStateDTO,
-  type ClassEntry,
+  type CombatStateUpdateDTO,
   type SpellLevel,
   type AbilityKey,
   type ClassKey,
@@ -17,35 +14,11 @@ const PERSIST_DEBOUNCE_MS = 300
 const createDefaultState = (characterId: string): CombatStateDTO => ({
   characterId,
   ...buildCombatStateBodyDefaults(),
-  updatedAt: new Date().toISOString(),
+  updatedAt: new Date(0).toISOString(),
 })
 
-const clampDeathSaveCount = (value: number | undefined): number =>
-  Math.min(DEATH_SAVE_THRESHOLD, Math.max(0, Math.floor(value ?? 0)))
-
-function normalizeState(stored: Partial<CombatStateDTO>, characterId: string): CombatStateDTO {
-  const fallback = createDefaultState(characterId)
-  return {
-    characterId,
-    hp: {
-      current: stored.hp?.current ?? null,
-      tempHp: Math.max(0, stored.hp?.tempHp ?? 0),
-      maxAdjustment: stored.hp?.maxAdjustment ?? 0,
-    },
-    acAdjustment: stored.acAdjustment ?? 0,
-    speedAdjustment: stored.speedAdjustment ?? 0,
-    savingThrowAdjustments: { ...stored.savingThrowAdjustments },
-    featureUsesSpent: { ...stored.featureUsesSpent },
-    hitDiceUsed: { ...stored.hitDiceUsed },
-    spellSlotsUsed: { ...stored.spellSlotsUsed },
-    pactSlotsUsed: { ...stored.pactSlotsUsed },
-    deathSaves: {
-      successes: clampDeathSaveCount(stored.deathSaves?.successes),
-      failures: clampDeathSaveCount(stored.deathSaves?.failures),
-    },
-    updatedAt: stored.updatedAt ?? fallback.updatedAt,
-  }
-}
+const clampDeathSave = (value: number): number =>
+  Math.min(DEATH_SAVE_THRESHOLD, Math.max(0, Math.floor(value)))
 
 /** 將 record[key] 設為 value，等於 defaultValue 時從 record 移除該 key 以保持稀疏 */
 function setSparseRecord<K extends string | number, T>(
@@ -61,50 +34,17 @@ function setSparseRecord<K extends string | number, T>(
   return value === defaultValue ? rest : { ...rest, [key]: value }
 }
 
-function sumUsedSlots(used: Partial<Record<SpellLevel, number>>): number {
-  return Object.values(used).reduce((sum, n) => sum + (n ?? 0), 0)
-}
-
-/** 長休：總回復額為 floor(totalLevel/2)（至少 1），依骰面由大到小貪婪分配 */
-function recoverHitDice(
-  used: Partial<Record<ClassKey, number>>,
-  classes: readonly ClassEntry[],
-): Partial<Record<ClassKey, number>> {
-  const totalLevel = calculateTotalLevel(classes)
-  if (totalLevel === 0) return {}
-
-  const sorted = [...classes].sort(
-    (a, b) => CLASS_CONFIG[b.classKey].hitDie - CLASS_CONFIG[a.classKey].hitDie,
-  )
-
-  let pool = Math.max(1, Math.floor(totalLevel / 2))
-  const result: Partial<Record<ClassKey, number>> = {}
-
-  for (const entry of sorted) {
-    const currentlyUsed = used[entry.classKey] ?? 0
-    if (currentlyUsed === 0) continue
-    const recover = pool > 0 ? Math.min(currentlyUsed, pool) : 0
-    pool -= recover
-    const remaining = currentlyUsed - recover
-    if (remaining > 0) {
-      result[entry.classKey] = remaining
-    }
-  }
-
-  return result
-}
-
 /**
  * 角色速查使用的戰況追蹤狀態：HP / 臨時生命 / AC・速度・豁免的臨時調整。
- * 以獨立 localStorage key 儲存，重整後可還原；與 CharacterDTO 主資料完全隔離。
+ * 透過 /characters/:id/combat-state 與 backend 同步；caller 需呼叫 load() 啟動載入。
  */
 export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<number>) {
-  const { t } = useI18n()
-  const storageKey = getCombatStateStorageKey(characterId)
-  const stored = getLocalStorage<CombatStateDTO>(storageKey)
-  const state = reactive<CombatStateDTO>(
-    stored ? normalizeState(stored, characterId) : createDefaultState(characterId),
-  )
+  const apiErrorToast = useApiErrorToast()
+  const state = reactive<CombatStateDTO>(createDefaultState(characterId))
+
+  const isLoading = ref(false)
+  const loadError = ref<unknown>(null)
+  const isReady = ref(false)
 
   /** 經調整後的最大生命；不可低於 1 */
   const effectiveMaxHp = computed(() => Math.max(1, baseMaxHp.value + state.hp.maxAdjustment))
@@ -113,8 +53,27 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     return Math.min(Math.max(0, value), effectiveMaxHp.value)
   }
 
-  function touch(): void {
-    state.updatedAt = new Date().toISOString()
+  // ─── Load / sync ──────────────────────────────────────────────────────
+
+  /** 套用 server 回傳的 DTO；期間 isReady=false 讓 watch 略過、避免觸發多餘 PATCH */
+  const applyServerDto = async (dto: CombatStateDTO): Promise<void> => {
+    isReady.value = false
+    Object.assign(state, dto)
+    await nextTick()
+    isReady.value = true
+  }
+
+  const load = async (): Promise<void> => {
+    isLoading.value = true
+    loadError.value = null
+    try {
+      const dto = await characters().combatState.get(characterId)
+      await applyServerDto(dto)
+    } catch (err) {
+      loadError.value = err
+    } finally {
+      isLoading.value = false
+    }
   }
 
   // ─── HP ───────────────────────────────────────────────────────────────
@@ -141,23 +100,19 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     if (remaining > 0) {
       state.hp.current = clampHp(displayCurrentHp.value - remaining)
     }
-    touch()
   }
 
   function healHp(amount: number): void {
     if (amount <= 0) return
     state.hp.current = clampHp(displayCurrentHp.value + amount)
-    touch()
   }
 
   function setTempHp(value: number): void {
     state.hp.tempHp = Math.max(0, value)
-    touch()
   }
 
   function adjustTempHp(delta: number): void {
     state.hp.tempHp = Math.max(0, state.hp.tempHp + delta)
-    touch()
   }
 
   function adjustMaxHp(delta: number): void {
@@ -165,32 +120,27 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     if (state.hp.current !== null) {
       state.hp.current = clampHp(state.hp.current)
     }
-    touch()
   }
 
   function resetHp(): void {
     state.hp.current = null
     state.hp.tempHp = 0
     state.hp.maxAdjustment = 0
-    touch()
   }
 
   // ─── Death saves ──────────────────────────────────────────────────────
 
   function setDeathSaveSuccess(value: number): void {
-    state.deathSaves.successes = clampDeathSaveCount(value)
-    touch()
+    state.deathSaves.successes = clampDeathSave(value)
   }
 
   function setDeathSaveFailure(value: number): void {
-    state.deathSaves.failures = clampDeathSaveCount(value)
-    touch()
+    state.deathSaves.failures = clampDeathSave(value)
   }
 
   function resetDeathSaves(): void {
     state.deathSaves.successes = 0
     state.deathSaves.failures = 0
-    touch()
   }
 
   watch(
@@ -207,12 +157,10 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   function adjustAc(delta: number): void {
     state.acAdjustment += delta
-    touch()
   }
 
   function adjustSpeed(delta: number): void {
     state.speedAdjustment += delta
-    touch()
   }
 
   function adjustSavingThrow(key: AbilityKey, delta: number): void {
@@ -223,7 +171,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       current + delta,
       0,
     )
-    touch()
   }
 
   // ─── Feature uses ─────────────────────────────────────────────────────
@@ -242,7 +189,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   function setFeatureUseSpent(featureId: string, value: number, max: number): void {
     const clamped = Math.min(Math.max(0, value), max)
     state.featureUsesSpent = setSparseRecord(state.featureUsesSpent, featureId, clamped, 0)
-    touch()
   }
 
   /** 對指定特性已使用次數 +/- delta，clamp 至 [0, max] */
@@ -262,7 +208,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   function setHitDiceUsed(classKey: ClassKey, value: number, level: number): void {
     const clamped = Math.min(Math.max(0, value), level)
     state.hitDiceUsed = setSparseRecord(state.hitDiceUsed, classKey, clamped, 0)
-    touch()
   }
 
   /** 調整指定職業已使用生命骰數，clamp 至 [0, level] */
@@ -280,7 +225,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   function setSpellSlotUsed(level: SpellLevel, value: number, max: number): void {
     const clamped = Math.min(Math.max(0, value), Math.max(0, max))
     state.spellSlotsUsed = setSparseRecord(state.spellSlotsUsed, level, clamped, 0)
-    touch()
   }
 
   function adjustSpellSlotUsed(level: SpellLevel, delta: number, max: number): void {
@@ -295,7 +239,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   function setPactSlotUsed(level: SpellLevel, value: number, max: number): void {
     const clamped = Math.min(Math.max(0, value), Math.max(0, max))
     state.pactSlotsUsed = setSparseRecord(state.pactSlotsUsed, level, clamped, 0)
-    touch()
   }
 
   function adjustPactSlotUsed(level: SpellLevel, delta: number, max: number): void {
@@ -305,73 +248,98 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   // ─── Rests ────────────────────────────────────────────────────────────
 
-  /**
-   * 短休：恢復傳入 id 對應的特性次數與全部契術環位，HP 與其他臨時調整不變。
-   * 回傳是否有實際變更，供呼叫端決定是否顯示完成訊息。
-   */
-  function shortRest(shortRestFeatureIds: string[]): boolean {
-    const targets = new Set(shortRestFeatureIds)
-    const hasPactToRecover = sumUsedSlots(state.pactSlotsUsed) > 0
-
-    if (targets.size === 0 && !hasPactToRecover) return false
-
-    if (targets.size > 0) {
-      state.featureUsesSpent = Object.fromEntries(
-        Object.entries(state.featureUsesSpent).filter(([k]) => !targets.has(k)),
-      ) as Partial<Record<string, number>>
+  /** 短休：呼叫 backend 計算恢復邏輯，完成後 re-GET 套用 server state；回傳是否成功 */
+  const shortRest = async (): Promise<boolean> => {
+    if (!isReady.value) return false
+    persist.cancel()
+    try {
+      await characters().combatState.shortRest(characterId)
+      const dto = await characters().combatState.get(characterId)
+      await applyServerDto(dto)
+      return true
+    } catch (err) {
+      apiErrorToast.handle(err)
+      return false
     }
-    if (hasPactToRecover) {
-      state.pactSlotsUsed = {}
-    }
-    touch()
-    return true
   }
 
-  /**
-   * 長休：HP 回滿、清空臨時調整、清空指定 id 對應的特性次數與所有法術位，
-   * 依「大骰面優先」貪婪回復生命骰。傳入的 longRestFeatureIds 應涵蓋
-   * recovery 為 shortRest 或 longRest 的特性；recovery 為 manual 的特性
-   * 由 caller 排除即可保留次數。
-   */
-  function longRest(
-    classes: readonly ClassEntry[] = [],
-    longRestFeatureIds: readonly string[] = [],
-  ): void {
-    state.hp.current = null
-    state.hp.tempHp = 0
-    state.hp.maxAdjustment = 0
-    state.acAdjustment = 0
-    state.speedAdjustment = 0
-    state.savingThrowAdjustments = {}
-    if (longRestFeatureIds.length > 0) {
-      const targets = new Set(longRestFeatureIds)
-      state.featureUsesSpent = Object.fromEntries(
-        Object.entries(state.featureUsesSpent).filter(([k]) => !targets.has(k)),
-      ) as Partial<Record<string, number>>
+  /** 長休：呼叫 backend 計算恢復邏輯（含 hit die 貪婪、HP 回滿等），完成後 re-GET 套用；回傳是否成功 */
+  const longRest = async (): Promise<boolean> => {
+    if (!isReady.value) return false
+    persist.cancel()
+    try {
+      await characters().combatState.longRest(characterId)
+      const dto = await characters().combatState.get(characterId)
+      await applyServerDto(dto)
+      return true
+    } catch (err) {
+      apiErrorToast.handle(err)
+      return false
     }
-    state.hitDiceUsed = recoverHitDice(state.hitDiceUsed, classes)
-    state.spellSlotsUsed = {}
-    state.pactSlotsUsed = {}
-    state.deathSaves.successes = 0
-    state.deathSaves.failures = 0
-    touch()
   }
 
   // ─── Persist ──────────────────────────────────────────────────────────
 
-  let hasNotifiedFailure = false
-  const persist = debounce((snapshot: CombatStateDTO) => {
-    if (setLocalStorage(storageKey, snapshot)) {
-      hasNotifiedFailure = false
-    } else if (!hasNotifiedFailure) {
-      hasNotifiedFailure = true
-      useToast().error(t('ui.message.persistFailedDataMayLost'))
-    }
+  let inFlight = false
+  /** 在 PATCH 飛行期間是否又被 user 動過；用來避免 GET response 覆蓋掉同時間的新改動 */
+  let dirtyDuringPatch = false
+  const persist = debounce(() => {
+    void runPersist()
   }, PERSIST_DEBOUNCE_MS)
 
+  async function runPersist(): Promise<void> {
+    if (inFlight) {
+      persist()
+      return
+    }
+    inFlight = true
+    dirtyDuringPatch = false
+    try {
+      const body: CombatStateUpdateDTO = {
+        updatedAt: state.updatedAt,
+        hp: { ...state.hp },
+        acAdjustment: state.acAdjustment,
+        speedAdjustment: state.speedAdjustment,
+        savingThrowAdjustments: { ...state.savingThrowAdjustments },
+        featureUsesSpent: { ...state.featureUsesSpent },
+        hitDiceUsed: { ...state.hitDiceUsed },
+        spellSlotsUsed: { ...state.spellSlotsUsed },
+        pactSlotsUsed: { ...state.pactSlotsUsed },
+        deathSaves: { ...state.deathSaves },
+      }
+      await characters().combatState.patch(characterId, body)
+      const fresh = await characters().combatState.get(characterId)
+      if (dirtyDuringPatch) {
+        // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
+        state.updatedAt = fresh.updatedAt
+      } else {
+        await applyServerDto(fresh)
+      }
+    } catch (err) {
+      apiErrorToast.handle(err)
+    } finally {
+      inFlight = false
+    }
+  }
+
+  // 不把 state.updatedAt 納入 dep；server re-GET 寫回 updatedAt 不可觸發 persist。
   watch(
-    () => state,
-    (current) => persist(JSON.parse(JSON.stringify(current)) as CombatStateDTO),
+    () => ({
+      hp: state.hp,
+      acAdjustment: state.acAdjustment,
+      speedAdjustment: state.speedAdjustment,
+      savingThrowAdjustments: state.savingThrowAdjustments,
+      featureUsesSpent: state.featureUsesSpent,
+      hitDiceUsed: state.hitDiceUsed,
+      spellSlotsUsed: state.spellSlotsUsed,
+      pactSlotsUsed: state.pactSlotsUsed,
+      deathSaves: state.deathSaves,
+    }),
+    () => {
+      if (!isReady.value) return
+      dirtyDuringPatch = true
+      persist()
+    },
     { deep: true },
   )
 
@@ -383,6 +351,11 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   return {
     state: readonly(state),
+    isLoading,
+    loadError,
+    isReady,
+    load,
+    retry: load,
     effectiveMaxHp,
     displayCurrentHp,
     adjustHp,

@@ -10,7 +10,7 @@
     text-color="white"
     @update:model-value="(open: boolean) => !open && remove(item.id)"
   >
-    <div class="flex items-start gap-2">
+    <div class="flex items-center gap-2">
       <Icon v-if="item.icon" :name="item.icon" :size="20" :color="accentColor(item.variant)" />
       <span>{{ item.message }}</span>
     </div>

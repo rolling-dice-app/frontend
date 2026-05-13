@@ -163,4 +163,5 @@ export default {
   emptyCampaignHint: '一場偉大的冒險，往往從踏出第一步開始',
   addCampaignRecord: '新增戰役紀錄',
   editCampaignRecord: '編輯戰役紀錄',
+  campaignRecordLimitReached: '戰役紀錄數量已達上限，請先刪除舊紀錄',
 }

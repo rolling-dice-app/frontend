@@ -68,6 +68,7 @@ export default {
   favoriteAction: '標記為常用',
   unfavoriteAction: '取消常用',
   learn: '掌握',
+  learnedSpellLimitReached: '已知法術數量已達上限，請先取消其他法術',
   prepare: '準備',
   searchPlaceholder: '搜尋法術名稱',
   filterLevel: '環數',

@@ -89,9 +89,11 @@
 
 <script setup lang="ts">
 import { Accordion, Toggle } from '@ui'
+import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const props = defineProps<{
   entries: CampaignEntry[]
@@ -116,6 +118,10 @@ const modalOpen = ref(false)
 const editing = ref<CampaignEntry | null>(null)
 
 const openCreate = (): void => {
+  if (props.entries.length >= VALIDATION_LIMITS.maxCampaignRecordsPerCharacter) {
+    toast.info(t('character.campaignRecordLimitReached'), { kind: 'hint' })
+    return
+  }
   editing.value = null
   modalOpen.value = true
 }

@@ -218,21 +218,27 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
+import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import type { ClassKey, SpellDTO, SourceKey, SpellSchool } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
+const toast = useToast()
 const { levelOptions, schoolOptions, classOptions, sourceOptions } = useSpellSelectOptions()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 
 const toggleLearnedSpell = (spellId: string): void => {
   const index = formState.value.spells.findIndex((entry) => entry.spellId === spellId)
-  if (index === -1) {
-    formState.value.spells.push({ spellId, isPrepared: false, isFavorite: false })
+  if (index !== -1) {
+    formState.value.spells.splice(index, 1)
     return
   }
-  formState.value.spells.splice(index, 1)
+  if (formState.value.spells.length >= VALIDATION_LIMITS.maxLearnedSpellsPerCharacter) {
+    toast.info(t('spell.learnedSpellLimitReached'), { kind: 'hint' })
+    return
+  }
+  formState.value.spells.push({ spellId, isPrepared: false, isFavorite: false })
 }
 
 const { spells } = useSpells()

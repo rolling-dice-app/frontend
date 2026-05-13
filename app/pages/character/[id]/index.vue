@@ -102,16 +102,18 @@
               :backpack-load="backpackLoad"
               :max-carry-weight="maxCarryWeight"
               :is-over-encumbered="isOverEncumbered"
-              @add-item="(draft) => runInventoryOp(() => inventory.addItem(draft))"
-              @remove-item="(itemId) => runInventoryOp(() => inventory.removeItem(itemId))"
+              @add-item="(draft) => runInventoryOp(() => inventoryStore.addItem(draft))"
+              @remove-item="(itemId) => runInventoryOp(() => inventoryStore.removeItem(itemId))"
               @update-item="
-                (itemId, draft) => runInventoryOp(() => inventory.updateItem(itemId, draft))
+                (itemId, draft) => runInventoryOp(() => inventoryStore.updateItem(itemId, draft))
               "
-              @move-item="(itemId) => runInventoryOp(() => inventory.moveItem(itemId))"
-              @update-currency="(value) => runInventoryOp(() => inventory.updateCurrency(value))"
+              @move-item="(itemId) => runInventoryOp(() => inventoryStore.moveItem(itemId))"
+              @update-currency="
+                (value) => runInventoryOp(() => inventoryStore.updateCurrency(value))
+              "
               @update-attunement="
                 (slotIndex, itemId) =>
-                  runInventoryOp(() => inventory.setAttunement(slotIndex, itemId))
+                  runInventoryOp(() => inventoryStore.setAttunement(slotIndex, itemId))
               "
             />
           </div>
@@ -198,7 +200,6 @@ const retryInventory = (): void => {
 const adventures = useCharacterAdventures(id)
 const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
 
-const inventory = useCharacterInventory(id)
 const apiErrorToast = useApiErrorToast()
 const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {
   try {

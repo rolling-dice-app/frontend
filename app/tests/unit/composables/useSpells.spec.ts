@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { SpellDTO, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
 import { useSpells } from '~/composables/domain/useSpells'
 
 const SPELL_ID_1 = 'aaaaaaaa-0000-0000-0000-000000000001'
@@ -71,40 +71,6 @@ describe('useSpells — 正常載入', () => {
     resolve([makeDto()])
     await refreshPromise
     expect(pending.value).toBe(false)
-  })
-})
-
-describe('useSpells — 未知學派過濾', () => {
-  it('未知學派的 dto 進入 skippedSpells，不進入 spells', async () => {
-    stubListSpells(
-      vi
-        .fn()
-        .mockResolvedValue([
-          makeDto(),
-          makeDto({ name: '謎之法術', school: 'unknown-school' as SpellSchool }),
-        ]),
-    )
-    const { spells, skippedSpells, refresh } = useSpells()
-    await refresh()
-    expect(spells.value).toHaveLength(1)
-    expect(skippedSpells.value).toHaveLength(1)
-    expect(skippedSpells.value[0]!.name).toBe('謎之法術')
-    expect(skippedSpells.value[0]!.school).toBe('unknown-school')
-  })
-
-  it('全部都是未知學派時 spells 為空陣列', async () => {
-    stubListSpells(
-      vi
-        .fn()
-        .mockResolvedValue([
-          makeDto({ school: 'unknown-a' as SpellSchool }),
-          makeDto({ school: 'unknown-b' as SpellSchool }),
-        ]),
-    )
-    const { spells, skippedSpells, refresh } = useSpells()
-    await refresh()
-    expect(spells.value).toHaveLength(0)
-    expect(skippedSpells.value).toHaveLength(2)
   })
 })
 

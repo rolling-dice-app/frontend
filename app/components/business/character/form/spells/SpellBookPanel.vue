@@ -225,7 +225,15 @@ const { t } = useI18n()
 const { levelOptions, schoolOptions, classOptions, sourceOptions } = useSpellSelectOptions()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
-const { toggleLearnedSpell } = useCharacterSpellsForm(formState.value)
+
+const toggleLearnedSpell = (spellId: string): void => {
+  const index = formState.value.spells.findIndex((entry) => entry.spellId === spellId)
+  if (index === -1) {
+    formState.value.spells.push({ spellId, isPrepared: false, isFavorite: false })
+    return
+  }
+  formState.value.spells.splice(index, 1)
+}
 
 const { spells } = useSpells()
 

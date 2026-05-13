@@ -1,79 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { SPELL_SCHOOLS } from '~/constants/dnd'
 import { useI18n } from '~/i18n'
 import {
   formatSpellComponents,
   formatSpellLevel,
   groupSpellsByLevel,
-  validateSpell,
   withToggledFlag,
 } from '~/helpers/spell'
-import type { SpellDTO, SpellSchool } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
 import type { SpellFormEntry } from '~/types/business/character-form'
 
 const makeEntry = (spellId: string, isPrepared = false, isFavorite = false): SpellFormEntry => ({
   spellId,
   isPrepared,
   isFavorite,
-})
-
-function makeDto(overrides: Partial<SpellDTO> = {}): SpellDTO {
-  return {
-    id: 'test-spell-id-0000-0000-000000000001',
-    name: '火焰箭',
-    engName: 'Fire Bolt',
-    level: 1,
-    school: 'evocation',
-    castingTime: '1 個動作',
-    range: '90 英尺',
-    verbal: true,
-    somatic: true,
-    material: '',
-    duration: '瞬間',
-    concentration: false,
-    ritual: false,
-    source: 'PHB',
-    classes: [],
-    desc: '測試描述',
-    ...overrides,
-  }
-}
-
-// ─── validateSpell ───────────────────────────────────────────────────────────
-
-describe('validateSpell', () => {
-  it('已知學派通過驗證並原樣回傳', () => {
-    const result = validateSpell(makeDto({ school: 'evocation' }))
-    expect(result).not.toBeNull()
-    expect(result!.school).toBe('evocation')
-  })
-
-  it('所有合法學派 key 皆通過驗證', () => {
-    for (const key of SPELL_SCHOOLS) {
-      const result = validateSpell(makeDto({ school: key as SpellSchool }))
-      expect(result).not.toBeNull()
-      expect(result!.school).toBe(key)
-    }
-  })
-
-  it('未知學派（如舊資料中文名）回傳 null', () => {
-    const result = validateSpell(makeDto({ school: 'unknown' as SpellSchool }))
-    expect(result).toBeNull()
-  })
-
-  it('level 0（戲法）可正常通過驗證', () => {
-    const result = validateSpell(makeDto({ level: 0, school: 'illusion' }))
-    expect(result).not.toBeNull()
-    expect(result!.level).toBe(0)
-    expect(result!.school).toBe('illusion')
-  })
-
-  it('保留其他欄位不變', () => {
-    const dto = makeDto({ name: '測試法術', school: 'abjuration' })
-    const result = validateSpell(dto)
-    expect(result!.name).toBe('測試法術')
-    expect(result!.castingTime).toBe(dto.castingTime)
-  })
 })
 
 // ─── CN_TO_SCHOOL reverse map ─────────────────────────────────────────────────

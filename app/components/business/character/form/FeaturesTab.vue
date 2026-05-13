@@ -242,9 +242,32 @@ const recoveryOptions = computed<{ value: FeatureUsageRecovery; label: string }[
 )
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
-const { addFeature, removeFeature, updateFeature, moveFeature } = useCharacterFeaturesForm(
-  formState.value,
-)
+
+const addFeature = (draft: FeatureDraft): void => {
+  formState.value.features.push({ id: crypto.randomUUID(), ...draft, usage: { ...draft.usage } })
+}
+
+const removeFeature = (id: string): void => {
+  const index = formState.value.features.findIndex((f) => f.id === id)
+  if (index !== -1) formState.value.features.splice(index, 1)
+}
+
+const updateFeature = (id: string, draft: FeatureDraft): void => {
+  const index = formState.value.features.findIndex((f) => f.id === id)
+  if (index !== -1) {
+    formState.value.features[index] = { id, ...draft, usage: { ...draft.usage } }
+  }
+}
+
+const moveFeature = (fromIndex: number, toIndex: number): void => {
+  const length = formState.value.features.length
+  if (fromIndex === toIndex) return
+  if (fromIndex < 0 || fromIndex >= length) return
+  if (toIndex < 0 || toIndex >= length) return
+  const [moved] = formState.value.features.splice(fromIndex, 1)
+  if (!moved) return
+  formState.value.features.splice(toIndex, 0, moved)
+}
 
 const draggingId = ref<string | null>(null)
 const overId = ref<string | null>(null)

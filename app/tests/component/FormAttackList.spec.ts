@@ -4,7 +4,6 @@ import { nextTick } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import AttackList from '~/components/business/character/form/combat/AttackList.vue'
-import { useCharacterAttacksForm } from '~/composables/domain/useCharacterAttacksForm'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { formatDamageSummary, getAttackHit, getHitBonusColorClass } from '~/helpers/combat'
 import { parseIntegerInput } from '~/utils/parse'
@@ -18,7 +17,6 @@ beforeEach(() => {
   vi.stubGlobal('getHitBonusColorClass', getHitBonusColorClass)
   vi.stubGlobal('formatDamageSummary', formatDamageSummary)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
-  vi.stubGlobal('useCharacterAttacksForm', useCharacterAttacksForm)
 })
 
 afterEach(() => {
@@ -126,7 +124,6 @@ const mountList = (
         getHitBonusColorClass,
         formatDamageSummary,
         parseIntegerInput,
-        useCharacterAttacksForm,
       },
     },
   })

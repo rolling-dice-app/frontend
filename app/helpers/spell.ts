@@ -1,15 +1,6 @@
 import { t } from '~/i18n'
-import { SPELL_SCHOOLS } from '~/constants/dnd'
 import type { SpellDTO } from '@rolling-dice-app/core'
 import type { SpellFormEntry } from '~/types/business/character-form'
-
-const VALID_SCHOOLS = new Set<string>(SPELL_SCHOOLS)
-
-/** 驗證法術資料的學派是否合法；學派未知則回傳 null，呼叫端負責收集。 */
-export function validateSpell(raw: SpellDTO): SpellDTO | null {
-  if (!VALID_SCHOOLS.has(raw.school)) return null
-  return raw
-}
 
 /** 將法術環數轉為當前 locale 的顯示字串（0 為戲法） */
 export function formatSpellLevel(level: number): string {

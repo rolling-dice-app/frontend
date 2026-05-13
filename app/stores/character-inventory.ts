@@ -8,6 +8,7 @@ import {
 } from '@rolling-dice-app/core'
 import { getTotalScore } from '~/helpers/ability'
 import { calculateBackpackLoad, calculateMaxCarryWeight } from '~/helpers/inventory'
+import type { InventoryItemDraft } from '~/types/business/character-form'
 import { createLogger } from '~/utils/log'
 
 const logger = createLogger('[CharacterInventoryStore]')
@@ -66,9 +67,18 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   // ─── Items mutations ──────────────────────────────────────────────────────
 
-  const addItem = async (body: InventoryItemCreateBody): Promise<InventoryItemDTO> => {
+  const draftToCreateBody = (draft: InventoryItemDraft): InventoryItemCreateBody => ({
+    name: draft.name,
+    description: draft.description,
+    quantity: draft.quantity,
+    weight: draft.weight,
+    type: draft.type,
+    location: draft.location,
+  })
+
+  const addItem = async (draft: InventoryItemDraft): Promise<InventoryItemDTO> => {
     if (!characterId.value) throw new Error('addItem: store not loaded')
-    const created = await characters().inventory.add(characterId.value, body)
+    const created = await characters().inventory.add(characterId.value, draftToCreateBody(draft))
     items.value = [...items.value, created]
     return created
   }
@@ -87,6 +97,19 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
       items.value = snapshot
       throw err
     }
+  }
+
+  const updateItem = async (itemId: string, draft: InventoryItemDraft): Promise<void> => {
+    const item = items.value.find((i) => i.id === itemId)
+    if (!item) return
+    await patchItem(itemId, { updatedAt: item.updatedAt, ...draftToCreateBody(draft) })
+  }
+
+  const moveItem = async (itemId: string): Promise<void> => {
+    const item = items.value.find((i) => i.id === itemId)
+    if (!item) return
+    const nextLocation = item.location === 'backpack' ? 'dimensionalBag' : 'backpack'
+    await patchItem(itemId, { updatedAt: item.updatedAt, location: nextLocation })
   }
 
   const removeItem = async (itemId: string): Promise<void> => {
@@ -199,6 +222,8 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     refetchCurrency,
     addItem,
     patchItem,
+    updateItem,
+    moveItem,
     removeItem,
     setAttunement,
     updateCurrency,

@@ -280,7 +280,19 @@ const props = defineProps<{
   proficiencyBonus: number
 }>()
 
-const { addAttack, removeAttack, updateAttack } = useCharacterAttacksForm(formState.value)
+const addAttack = (entry: AttackDraft): void => {
+  formState.value.attacks.push({ id: crypto.randomUUID(), ...entry })
+}
+
+const removeAttack = (id: string): void => {
+  const index = formState.value.attacks.findIndex((a) => a.id === id)
+  if (index !== -1) formState.value.attacks.splice(index, 1)
+}
+
+const updateAttack = (id: string, data: AttackDraft): void => {
+  const index = formState.value.attacks.findIndex((a) => a.id === id)
+  if (index !== -1) formState.value.attacks[index] = { id, ...data }
+}
 
 const abilityOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },

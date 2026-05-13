@@ -4,7 +4,6 @@ import { computed, nextTick, onBeforeUnmount, ref, useId } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import SpellBookPanel from '~/components/business/character/form/spells/SpellBookPanel.vue'
-import { useCharacterSpellsForm } from '~/composables/domain/useCharacterSpellsForm'
 import { useSpellSelectOptions } from '~/composables/ui/useSpellSelectOptions'
 import { formatSpellComponents, formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { debounce } from '~/utils/timing'
@@ -18,7 +17,6 @@ beforeEach(() => {
   vi.stubGlobal('useId', useId)
   vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
   vi.stubGlobal('useSpells', () => ({ spells: computed(() => allSpells.value) }))
-  vi.stubGlobal('useCharacterSpellsForm', useCharacterSpellsForm)
   vi.stubGlobal('useSpellSelectOptions', useSpellSelectOptions)
   vi.stubGlobal('formatSpellLevel', formatSpellLevel)
   vi.stubGlobal('formatSpellComponents', formatSpellComponents)
@@ -136,7 +134,6 @@ const mountPanel = (
         formatSpellLevel,
         formatSpellComponents,
         groupSpellsByLevel,
-        useCharacterSpellsForm,
         debounce,
       },
     },

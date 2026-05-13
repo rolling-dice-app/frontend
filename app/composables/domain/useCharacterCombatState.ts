@@ -45,6 +45,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   const isLoading = ref(false)
   const loadError = ref<unknown>(null)
   const isReady = ref(false)
+  const isResting = ref(false)
 
   /** 經調整後的最大生命；不可低於 1 */
   const effectiveMaxHp = computed(() => Math.max(1, baseMaxHp.value + state.hp.maxAdjustment))
@@ -250,8 +251,9 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   /** 短休：呼叫 backend 計算恢復邏輯，完成後 re-GET 套用 server state；回傳是否成功 */
   const shortRest = async (): Promise<boolean> => {
-    if (!isReady.value) return false
+    if (!isReady.value || isResting.value) return false
     persist.cancel()
+    isResting.value = true
     try {
       await characters().combatState.shortRest(characterId)
       const dto = await characters().combatState.get(characterId)
@@ -260,13 +262,16 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     } catch (err) {
       apiErrorToast.handle(err)
       return false
+    } finally {
+      isResting.value = false
     }
   }
 
   /** 長休：呼叫 backend 計算恢復邏輯（含 hit die 貪婪、HP 回滿等），完成後 re-GET 套用；回傳是否成功 */
   const longRest = async (): Promise<boolean> => {
-    if (!isReady.value) return false
+    if (!isReady.value || isResting.value) return false
     persist.cancel()
+    isResting.value = true
     try {
       await characters().combatState.longRest(characterId)
       const dto = await characters().combatState.get(characterId)
@@ -275,6 +280,8 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     } catch (err) {
       apiErrorToast.handle(err)
       return false
+    } finally {
+      isResting.value = false
     }
   }
 
@@ -354,6 +361,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     isLoading,
     loadError,
     isReady,
+    isResting,
     load,
     retry: load,
     effectiveMaxHp,

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 bg-canvas-elevated p-4">
+  <div class="relative space-y-6 bg-canvas-elevated p-4">
     <div
       v-if="isLoading && !isReady"
       class="flex min-h-[40dvh] items-center justify-center text-content-muted"
@@ -23,10 +23,20 @@
     </div>
     <template v-else>
       <header class="flex items-center justify-end gap-2">
-        <Button :radius="4" bg-color="var(--color-warning)" @click="onShortRest">
+        <Button
+          :radius="4"
+          bg-color="var(--color-warning)"
+          :disabled="isResting"
+          @click="onShortRest"
+        >
           {{ t('combat.shortRest') }}
         </Button>
-        <Button :radius="4" bg-color="var(--color-success)" @click="onLongRest">
+        <Button
+          :radius="4"
+          bg-color="var(--color-success)"
+          :disabled="isResting"
+          @click="onLongRest"
+        >
           {{ t('combat.longRest') }}
         </Button>
       </header>
@@ -125,6 +135,19 @@
         :saving-throw-adjustments="state.savingThrowAdjustments"
       />
     </template>
+
+    <div
+      v-if="isResting"
+      class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/40 backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <span
+        class="inline-block size-10 animate-spin rounded-full border-4 border-white/30 border-t-white"
+        aria-hidden="true"
+      />
+      <p class="text-sm font-medium text-white">{{ t('combat.resting') }}</p>
+    </div>
   </div>
 </template>
 
@@ -164,6 +187,7 @@ const {
   isLoading,
   loadError,
   isReady,
+  isResting,
   load,
   retry,
   effectiveMaxHp,

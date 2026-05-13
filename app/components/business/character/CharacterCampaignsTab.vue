@@ -1,83 +1,115 @@
 <template>
   <section aria-labelledby="campaigns-tab-label" class="p-4 space-y-4 bg-canvas-elevated">
-    <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg py-3">
-      <div class="flex items-center gap-3">
-        <h2 id="campaigns-tab-label" class="font-display text-lg font-bold text-content">
-          {{ t('character.campaignRecord') }}
-        </h2>
-        <span class="text-xs text-content-muted">
-          {{ entries.length }} {{ t('character.campaignCount') }}
-        </span>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-4">
-        <div class="text-xs text-content-muted">
-          {{ t('character.expEarnedTotal') }}
-          <span class="ml-1 font-medium text-content">{{ totalExpEarned }}</span>
-        </div>
-        <label class="flex items-center gap-2 text-xs text-content">
-          <Toggle
-            :model-value="syncMoneyToCurrency"
-            :aria-label="t('character.syncMoneyAria')"
-            color="var(--color-primary)"
-            @update:model-value="$emit('update:syncMoneyToCurrency', $event)"
-          />
-          <span>{{ t('character.syncMoneyToggle') }}</span>
-        </label>
-      </div>
+    <div
+      v-if="isLoading && !isReady"
+      class="flex min-h-[40dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      {{ t('ui.state.loading') }}
     </div>
 
-    <button
-      type="button"
-      :aria-label="t('character.addCampaignRecord')"
-      class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft bg-canvas-elevated py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
-      @click="openCreate"
+    <div
+      v-else-if="loadError && !isReady"
+      class="flex flex-col items-center gap-3 py-12 text-center"
     >
-      <span class="text-lg leading-none">+</span>
-    </button>
+      <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
+      <button
+        type="button"
+        class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
+        @click="$emit('retry')"
+      >
+        {{ t('ui.state.retry') }}
+      </button>
+    </div>
 
-    <p
-      v-if="entries.length === 0"
-      class="rounded-lg border border-dashed border-border-soft bg-surface-2 px-3 py-8 text-center text-xs text-content-muted"
-    >
-      {{ t('character.emptyCampaignMessage') }}
-    </p>
+    <template v-else>
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg py-3">
+        <div class="flex items-center gap-3">
+          <h2 id="campaigns-tab-label" class="font-display text-lg font-bold text-content">
+            {{ t('character.campaignRecord') }}
+          </h2>
+          <span class="text-xs text-content-muted">
+            {{ entries.length }} {{ t('character.campaignCount') }}
+          </span>
+        </div>
 
-    <Accordion v-else class="campaigns-accordion flex flex-col gap-2">
-      <BusinessCharacterCampaignsCampaignItem
-        v-for="entry in entries"
-        :key="entry.id"
-        :entry="entry"
-        @edit="openEdit"
-        @remove="$emit('remove', $event)"
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="text-xs text-content-muted">
+            {{ t('character.expEarnedTotal') }}
+            <span class="ml-1 font-medium text-content">{{ totalExpEarned }}</span>
+          </div>
+          <label class="flex items-center gap-2 text-xs text-content">
+            <Toggle
+              :model-value="syncMoneyToCurrency"
+              :aria-label="t('character.syncMoneyAria')"
+              color="var(--color-primary)"
+              @update:model-value="$emit('update:syncMoneyToCurrency', $event)"
+            />
+            <span>{{ t('character.syncMoneyToggle') }}</span>
+          </label>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        :aria-label="t('character.addCampaignRecord')"
+        class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft bg-canvas-elevated py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
+        @click="openCreate"
+      >
+        <span class="text-lg leading-none">+</span>
+      </button>
+
+      <p
+        v-if="entries.length === 0"
+        class="rounded-lg border border-dashed border-border-soft bg-surface-2 px-3 py-8 text-center text-xs text-content-muted"
+      >
+        {{ t('character.emptyCampaignMessage') }}
+      </p>
+
+      <Accordion v-else class="campaigns-accordion flex flex-col gap-2">
+        <BusinessCharacterCampaignsCampaignItem
+          v-for="entry in entries"
+          :key="entry.id"
+          :entry="entry"
+          @edit="openEdit"
+          @remove="$emit('remove', $event)"
+        />
+      </Accordion>
+
+      <BusinessCharacterCampaignsCampaignFormModal
+        v-model="modalOpen"
+        :editing="editing"
+        :submitting="submitting"
+        @save="onSave"
       />
-    </Accordion>
-
-    <BusinessCharacterCampaignsCampaignFormModal
-      v-model="modalOpen"
-      :editing="editing"
-      @save="onSave"
-    />
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
 import { Accordion, Toggle } from '@ui'
-import type { CampaignEntry, CampaignEntryDraft } from '~/types/business/campaign'
+import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   entries: CampaignEntry[]
   totalExpEarned: number
   syncMoneyToCurrency: boolean
+  isLoading: boolean
+  loadError: unknown
+  isReady: boolean
+  conflictSignal: number
+  submitting?: boolean
 }>()
 
 const emit = defineEmits<{
-  add: [draft: CampaignEntryDraft]
-  update: [id: string, draft: CampaignEntryDraft]
+  add: [draft: CampaignDraft]
+  update: [id: string, draft: CampaignDraft]
   remove: [id: string]
   'update:syncMoneyToCurrency': [value: boolean]
+  retry: []
 }>()
 
 const modalOpen = ref(false)
@@ -93,13 +125,21 @@ const openEdit = (entry: CampaignEntry): void => {
   modalOpen.value = true
 }
 
-const onSave = (draft: CampaignEntryDraft, editingId: string | null): void => {
+const onSave = (draft: CampaignDraft, editingId: string | null): void => {
   if (editingId) {
     emit('update', editingId, draft)
   } else {
     emit('add', draft)
   }
 }
+
+watch(
+  () => props.conflictSignal,
+  () => {
+    modalOpen.value = false
+    editing.value = null
+  },
+)
 </script>
 
 <style scoped>

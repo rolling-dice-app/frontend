@@ -1,19 +1,63 @@
-import { CURRENCY_KEYS, DEFAULT_CURRENCY } from '@rolling-dice-app/core'
-import type { CampaignEntry, CampaignEntryDraft, CurrencyAmount } from '~/types/business/campaign'
+import type { CampaignRecordCreateBody, CampaignRecordUpdateBody } from '@rolling-dice-app/core'
+import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
-const addCurrency = (a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount =>
-  CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] + b[key] }), { ...DEFAULT_CURRENCY })
+const STALE_CAMPAIGN_RECORD_VERSION = 'STALE_CAMPAIGN_RECORD_VERSION'
 
-const subtractCurrency = (a: CurrencyAmount, b: CurrencyAmount): CurrencyAmount =>
-  CURRENCY_KEYS.reduce((acc, key) => ({ ...acc, [key]: a[key] - b[key] }), { ...DEFAULT_CURRENCY })
+/** 樂觀鎖衝突偵測；duck-type 不依賴 FetchError instance（vitest 在 unit 解不到 ofetch transitive） */
+const isStaleVersionError = (err: unknown): boolean => {
+  if (typeof err !== 'object' || err === null) return false
+  const e = err as {
+    statusCode?: number
+    response?: { status?: number }
+    data?: { code?: unknown }
+  }
+  const status = e.statusCode ?? e.response?.status
+  if (status !== 409) return false
+  return e.data?.code === STALE_CAMPAIGN_RECORD_VERSION
+}
 
+const draftToCreateBody = (
+  draft: CampaignDraft,
+  applyMoneyToCurrency: boolean,
+): CampaignRecordCreateBody => ({
+  title: draft.title,
+  // TODO(campaign): 之後補 subtitle / teammates UI 時改帶實際值
+  subtitle: null,
+  content: draft.content,
+  date: draft.date,
+  teammates: [],
+  moneyEarning: { ...draft.moneyEarning },
+  expEarning: draft.expEarning,
+  applyMoneyToCurrency,
+})
+
+const draftToUpdateBody = (draft: CampaignDraft, updatedAt: string): CampaignRecordUpdateBody => ({
+  updatedAt,
+  title: draft.title,
+  content: draft.content,
+  date: draft.date,
+  moneyEarning: { ...draft.moneyEarning },
+  expEarning: draft.expEarning,
+})
+
+/**
+ * 角色戰役紀錄；對齊 /characters/:id/campaign-records 走 REST。
+ * - 載入透過 load() 顯式觸發，暴露 isLoading / loadError / isReady 三態
+ * - create 時依 syncMoneyToCurrency toggle 帶 applyMoneyToCurrency；update / remove 不再動 character currency
+ * - 409 樂觀鎖衝突 → toast 提示 + 重新 load + 透過 conflictSignal 通知 caller（用於關閉 modal）
+ */
 export function useCharacterCampaigns(characterId: string) {
-  const campaignStore = useCampaignStore()
-  const inventoryStore = useCharacterInventoryStore()
+  const apiErrorToast = useApiErrorToast()
+  const { t } = useI18n()
+  const toast = useToast()
 
-  const initial = campaignStore.load(characterId)
-  const entries = ref<CampaignEntry[]>(initial.entries)
-  const syncMoneyToCurrency = ref<boolean>(initial.syncMoneyToCurrency)
+  const entries = ref<CampaignEntry[]>([])
+  const isLoading = ref(false)
+  const loadError = ref<unknown>(null)
+  const isReady = ref(false)
+  const syncMoneyToCurrency = ref(true)
+  /** 每次發生 409 +1，UI 可 watch 之觸發 modal 關閉 */
+  const conflictSignal = ref(0)
 
   const sortedEntries = computed(() =>
     [...entries.value].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
@@ -23,113 +67,88 @@ export function useCharacterCampaigns(characterId: string) {
     entries.value.reduce((acc, entry) => acc + entry.expEarning, 0),
   )
 
-  const persistCampaigns = (): boolean =>
-    campaignStore.save(characterId, {
-      entries: entries.value,
-      syncMoneyToCurrency: syncMoneyToCurrency.value,
-    })
-
-  /** 將 currency 推導後送到 inventory store；store 內部負責 PATCH + refetch + revert。 */
-  const applyCurrencyDelta = async (
-    delta: (current: CurrencyAmount) => CurrencyAmount,
-  ): Promise<boolean> => {
-    const current = inventoryStore.currency
-    if (!current) return false
-    const next = delta(current)
+  const load = async (): Promise<void> => {
+    isLoading.value = true
+    loadError.value = null
     try {
-      await inventoryStore.updateCurrency({
-        updatedAt: current.updatedAt,
-        cp: next.cp,
-        sp: next.sp,
-        gp: next.gp,
-        pp: next.pp,
-      })
-      return true
-    } catch {
-      return false
+      entries.value = await characters().campaignRecords.list(characterId)
+      isReady.value = true
+    } catch (err) {
+      loadError.value = err
+    } finally {
+      isLoading.value = false
     }
   }
 
-  const addCampaign = async (draft: CampaignEntryDraft): Promise<boolean> => {
-    const entry: CampaignEntry = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      ...draft,
-      moneyEarning: { ...draft.moneyEarning },
-    }
-    if (syncMoneyToCurrency.value) {
-      if (!(await applyCurrencyDelta((c) => addCurrency(c, entry.moneyEarning)))) return false
-    }
-    entries.value.push(entry)
-    if (!persistCampaigns()) {
-      entries.value.pop()
-      if (syncMoneyToCurrency.value) {
-        await applyCurrencyDelta((c) => subtractCurrency(c, entry.moneyEarning))
-      }
-      return false
-    }
-    return true
+  const handleConflict = async (): Promise<void> => {
+    toast.error(t('ui.message.staleRecord'))
+    conflictSignal.value++
+    await load()
   }
 
-  const updateCampaign = async (id: string, draft: CampaignEntryDraft): Promise<boolean> => {
-    const index = entries.value.findIndex((a) => a.id === id)
-    if (index === -1) return true
-    const old = entries.value[index]!
-    const next: CampaignEntry = { ...old, ...draft, moneyEarning: { ...draft.moneyEarning } }
-    if (syncMoneyToCurrency.value) {
-      const ok = await applyCurrencyDelta((c) =>
-        addCurrency(subtractCurrency(c, old.moneyEarning), next.moneyEarning),
+  const addCampaign = async (draft: CampaignDraft): Promise<boolean> => {
+    try {
+      const dto = await characters().campaignRecords.create(
+        characterId,
+        draftToCreateBody(draft, syncMoneyToCurrency.value),
       )
-      if (!ok) return false
-    }
-    entries.value[index] = next
-    if (!persistCampaigns()) {
-      entries.value[index] = old
-      if (syncMoneyToCurrency.value) {
-        await applyCurrencyDelta((c) =>
-          addCurrency(subtractCurrency(c, next.moneyEarning), old.moneyEarning),
-        )
-      }
+      entries.value.push(dto)
+      return true
+    } catch (err) {
+      apiErrorToast.handle(err)
       return false
     }
-    return true
+  }
+
+  const updateCampaign = async (id: string, draft: CampaignDraft): Promise<boolean> => {
+    const target = entries.value.find((e) => e.id === id)
+    if (!target) return false
+    try {
+      await characters().campaignRecords.patch(
+        characterId,
+        id,
+        draftToUpdateBody(draft, target.updatedAt),
+      )
+      await load()
+      return true
+    } catch (err) {
+      if (isStaleVersionError(err)) {
+        await handleConflict()
+        return false
+      }
+      apiErrorToast.handle(err)
+      return false
+    }
   }
 
   const removeCampaign = async (id: string): Promise<boolean> => {
-    const index = entries.value.findIndex((a) => a.id === id)
-    if (index === -1) return true
-    const old = entries.value[index]!
-    if (syncMoneyToCurrency.value) {
-      if (!(await applyCurrencyDelta((c) => subtractCurrency(c, old.moneyEarning)))) return false
-    }
-    entries.value.splice(index, 1)
-    if (!persistCampaigns()) {
-      entries.value.splice(index, 0, old)
-      if (syncMoneyToCurrency.value) {
-        await applyCurrencyDelta((c) => addCurrency(c, old.moneyEarning))
-      }
+    try {
+      await characters().campaignRecords.remove(characterId, id)
+      entries.value = entries.value.filter((e) => e.id !== id)
+      return true
+    } catch (err) {
+      apiErrorToast.handle(err)
       return false
     }
-    return true
   }
 
-  const setSyncMoneyToCurrency = (next: boolean): boolean => {
-    const previous = syncMoneyToCurrency.value
+  const setSyncMoneyToCurrency = (next: boolean): void => {
     syncMoneyToCurrency.value = next
-    if (!persistCampaigns()) {
-      syncMoneyToCurrency.value = previous
-      return false
-    }
-    return true
   }
 
   return {
     entries: sortedEntries,
     totalExpEarned,
+    isLoading,
+    loadError,
+    isReady,
     syncMoneyToCurrency: readonly(syncMoneyToCurrency),
-    setSyncMoneyToCurrency,
+    conflictSignal: readonly(conflictSignal),
+    load,
+    retry: load,
     addCampaign,
     updateCampaign,
     removeCampaign,
+    setSyncMoneyToCurrency,
   }
 }

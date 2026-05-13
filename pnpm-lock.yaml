@@ -12,8 +12,8 @@ importers:
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.2)(pinia@3.0.4(typescript@6.0.2)(vue@3.5.32(typescript@6.0.2)))
       '@rolling-dice-app/core':
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^8.0.0
+        version: 8.0.1
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
@@ -1537,8 +1537,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.14':
     resolution: {integrity: sha512-ktoSqSpdex3xml4M3wV//KiF8MiQkMz8bz2e7SUJvCK9qyL/XjAnLLB+UO3+uE9RLxqUhuDzddc7Cf+EaZ169Q==}
 
-  '@rolling-dice-app/core@7.1.0':
-    resolution: {integrity: sha512-jpy5giD62UR/DuDgM350dOpjrnysjuB4DmTr8kva7awG2pYXBHkYJylVpSTyjoAMBoOJAk7xUbnEjhaexMCRbw==, tarball: https://npm.pkg.github.com/download/@rolling-dice-app/core/7.1.0/ddd5796f8f5a6bea668317b94d6152d6160fa66d}
+  '@rolling-dice-app/core@8.0.1':
+    resolution: {integrity: sha512-nScla8FifNEk/zBqeJHn396+vVOWiUl10nCmaWKWQ/5ClSqPBkcv06ETct8cGk2tzID610ZYNEVmRR2lJqqoeg==, tarball: https://npm.pkg.github.com/download/@rolling-dice-app/core/8.0.1/d95c9dac0e2f86837094675c8dcc04269bb7acc6}
 
   '@rollup/plugin-alias@6.0.0':
     resolution: {integrity: sha512-tPCzJOtS7uuVZd+xPhoy5W4vThe6KWXNmsFCNktaAh5RTqcLiSfT4huPQIXkgJ6YCOjJHvecOAzQxLFhPxKr+g==}
@@ -6712,7 +6712,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.14': {}
 
-  '@rolling-dice-app/core@7.1.0': {}
+  '@rolling-dice-app/core@8.0.1': {}
 
   '@rollup/plugin-alias@6.0.0(rollup@4.60.1)':
     optionalDependencies:

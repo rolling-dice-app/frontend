@@ -1,4 +1,7 @@
 import type {
+  CampaignRecordCreateBody,
+  CampaignRecordDTO,
+  CampaignRecordUpdateBody,
   CharacterCurrencyDTO,
   CharacterCurrencyUpdateBody,
   CharacterCreateDTO,
@@ -23,6 +26,7 @@ import type {
  *   - sub      /characters/:id/inventory[/items[/:itemId]]
  *   - sub      /characters/:id/currency
  *   - sub      /characters/:id/combat-state
+ *   - sub      /characters/:id/campaign-records[/:recordId]
  */
 export const characters = () => {
   const apiFetch = useApiFetch()
@@ -98,6 +102,32 @@ export const characters = () => {
 
       longRest: async (id: string): Promise<void> => {
         await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST' })
+      },
+    },
+
+    campaignRecords: {
+      list: (id: string): Promise<CampaignRecordDTO[]> =>
+        apiFetch<CampaignRecordDTO[]>(`/characters/${id}/campaign-records`),
+
+      create: (id: string, body: CampaignRecordCreateBody): Promise<CampaignRecordDTO> =>
+        apiFetch<CampaignRecordDTO>(`/characters/${id}/campaign-records`, {
+          method: 'POST',
+          body,
+        }),
+
+      patch: async (
+        id: string,
+        recordId: string,
+        body: CampaignRecordUpdateBody,
+      ): Promise<void> => {
+        await apiFetch(`/characters/${id}/campaign-records/${recordId}`, {
+          method: 'PATCH',
+          body,
+        })
+      },
+
+      remove: async (id: string, recordId: string): Promise<void> => {
+        await apiFetch(`/characters/${id}/campaign-records/${recordId}`, { method: 'DELETE' })
       },
     },
   }

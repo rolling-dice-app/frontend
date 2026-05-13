@@ -6,7 +6,7 @@
     <template #title>
       <div class="flex min-w-0 flex-1 items-start justify-between gap-3 pr-3">
         <h4 class="min-w-0 flex-1 truncate text-base font-bold text-content">
-          {{ entry.name }}
+          {{ entry.title }}
         </h4>
 
         <div class="flex shrink-0 flex-col items-end gap-1.5">
@@ -14,7 +14,7 @@
             <span
               role="button"
               tabindex="0"
-              :aria-label="`${t('ui.action.edit')} ${entry.name}`"
+              :aria-label="`${t('ui.action.edit')} ${entry.title}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
               @click.stop="$emit('edit', entry)"
               @keydown.enter.stop.prevent="$emit('edit', entry)"
@@ -25,7 +25,7 @@
             <span
               role="button"
               tabindex="0"
-              :aria-label="`${t('ui.action.delete')} ${entry.name}`"
+              :aria-label="`${t('ui.action.delete')} ${entry.title}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
               @click.stop="$emit('remove', entry.id)"
               @keydown.enter.stop.prevent="$emit('remove', entry.id)"

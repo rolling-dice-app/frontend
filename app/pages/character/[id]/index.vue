@@ -124,8 +124,13 @@
           </template>
           <BusinessCharacterCampaignsTab
             :entries="campaignEntries"
-            :total-exp-earned="totalExpEarned"
+            :total-exp-earned="campaignTotalExp"
             :sync-money-to-currency="syncMoneyToCurrency"
+            :is-loading="campaignsLoading"
+            :load-error="campaignsLoadError"
+            :is-ready="campaignsReady"
+            :conflict-signal="campaignConflictSignal"
+            @retry="retryCampaigns"
             @add="notifyReadOnly"
             @update="notifyReadOnly"
             @remove="notifyReadOnly"
@@ -164,9 +169,9 @@ const { status } = await useAsyncData(
 
 const character = computed(() => characterStore.getById(id))
 
-// Tier 2：三個 sub-resource onMounted 平行載入
+// Tier 2：四個 sub-resource onMounted 平行載入
 onMounted(() => {
-  void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id)])
+  void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id), campaigns.load()])
 })
 
 onBeforeUnmount(() => {
@@ -198,7 +203,18 @@ const retryInventory = (): void => {
 }
 
 const campaigns = useCharacterCampaigns(id)
-const { entries: campaignEntries, totalExpEarned, syncMoneyToCurrency } = campaigns
+const {
+  entries: campaignEntries,
+  totalExpEarned: campaignTotalExp,
+  syncMoneyToCurrency,
+  isLoading: campaignsLoading,
+  loadError: campaignsLoadError,
+  isReady: campaignsReady,
+  conflictSignal: campaignConflictSignal,
+} = campaigns
+const retryCampaigns = (): void => {
+  void campaigns.load()
+}
 
 const apiErrorToast = useApiErrorToast()
 const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {

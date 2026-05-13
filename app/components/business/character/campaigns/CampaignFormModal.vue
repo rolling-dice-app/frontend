@@ -12,17 +12,17 @@
       <div class="space-y-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div class="flex-1">
-            <label for="campaign-name" class="mb-1 block text-xs text-content">
+            <label for="campaign-title" class="mb-1 block text-xs text-content">
               {{ t('character.campaignField.name') }}
             </label>
             <CommonAppInput
-              id="campaign-name"
+              id="campaign-title"
               :radius="0"
-              :model-value="draft.name"
+              :model-value="draft.title"
               size="sm"
               outline
               class="w-full"
-              @update:model-value="draft.name = $event"
+              @update:model-value="draft.title = $event"
             />
           </div>
           <div>
@@ -50,7 +50,7 @@
               :border="false"
               :model-value="draft.content"
               :rows="4"
-              :maxlength="CHARACTER_TEXT_LIMITS.LONG"
+              :maxlength="VALIDATION_LIMITS.maxCampaignRecordContentLength"
               show-count
               :placeholder="t('character.campaignField.contentPlaceholder')"
               @update:model-value="draft.content = $event"
@@ -101,7 +101,7 @@
       <template #footer>
         <Button
           :radius="4"
-          :disabled="!draft.name.trim()"
+          :disabled="!draft.title.trim() || submitting"
           bg-color="var(--color-primary)"
           @click="onSave"
         >
@@ -114,24 +114,21 @@
 
 <script setup lang="ts">
 import { Button, Modal, TextArea } from '@ui'
-import {
-  CHARACTER_TEXT_LIMITS,
-  CURRENCY_KEYS,
-  DEFAULT_CURRENCY,
-  type CurrencyKey,
-} from '@rolling-dice-app/core'
-import type { CampaignEntry, CampaignEntryDraft } from '~/types/business/campaign'
+import { CURRENCY_KEYS, DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
+import type { CurrencyKey } from '@rolling-dice-app/core'
+import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
   editing: CampaignEntry | null
+  submitting?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  save: [draft: CampaignEntryDraft, editingId: string | null]
+  save: [draft: CampaignDraft, editingId: string | null]
 }>()
 
 const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
@@ -149,9 +146,9 @@ const todayISO = (): string => {
   return `${yyyy}-${mm}-${dd}`
 }
 
-const emptyDraft = (): CampaignEntryDraft => {
+const emptyDraft = (): CampaignDraft => {
   return {
-    name: '',
+    title: '',
     date: todayISO(),
     content: '',
     moneyEarning: { ...DEFAULT_CURRENCY },
@@ -164,7 +161,7 @@ const sanitizeNumber = (value: string): number => {
   return Math.max(0, parsed)
 }
 
-const draft = ref<CampaignEntryDraft>(emptyDraft())
+const draft = ref<CampaignDraft>(emptyDraft())
 
 watch(
   () => props.modelValue,
@@ -172,7 +169,7 @@ watch(
     if (open) {
       draft.value = props.editing
         ? {
-            name: props.editing.name,
+            title: props.editing.title,
             date: props.editing.date,
             content: props.editing.content,
             moneyEarning: { ...props.editing.moneyEarning },
@@ -184,9 +181,9 @@ watch(
 )
 
 const onSave = (): void => {
-  const payload: CampaignEntryDraft = {
+  const payload: CampaignDraft = {
     ...draft.value,
-    name: draft.value.name.trim(),
+    title: draft.value.title.trim(),
     moneyEarning: { ...draft.value.moneyEarning },
   }
   emit('save', payload, props.editing?.id ?? null)

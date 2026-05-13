@@ -64,14 +64,21 @@
       </template>
     </CommonPageHeader>
 
-    <!-- Loading -->
+    <!-- Loading skeleton：SSR idle + client pending 都顯示 -->
     <div
-      v-if="status === 'pending'"
-      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      v-if="status === 'idle' || status === 'pending'"
+      class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
       role="status"
       aria-live="polite"
+      aria-busy="true"
     >
-      {{ t('ui.state.loading') }}
+      <span class="sr-only">{{ t('ui.state.loading') }}</span>
+      <div
+        v-for="i in 6"
+        :key="i"
+        class="min-h-68 animate-pulse rounded-lg border border-border bg-bg-elevated"
+        aria-hidden="true"
+      />
     </div>
 
     <!-- Error -->
@@ -211,7 +218,10 @@ const toast = useToast()
 useHead({ title: t('character.card') })
 
 const characterStore = useCharacterStore()
+// server: false：SSR 階段不拉使用者資料，輸出對所有人一致的 skeleton HTML，
+// 避免 Vercel edge cache 把某使用者的角色列表共享給其他人。
 const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
+  server: false,
   lazy: false,
 })
 

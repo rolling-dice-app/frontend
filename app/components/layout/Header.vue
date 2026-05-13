@@ -11,31 +11,36 @@
         <h1 class="font-display text-xl">Rolling Dice</h1>
       </NuxtLink>
 
-      <!-- Auth -->
-      <div class="ml-auto flex items-center gap-3">
-        <template v-if="auth.isLoggedIn">
-          <span class="hidden text-sm text-content sm:inline">
-            {{ auth.user?.displayName }}
-          </span>
-          <Button
-            size="sm"
-            border-color="var(--color-primary)"
-            text-color="var(--color-primary)"
-            outline
-            @click="onLogout"
-          >
+      <!-- Auth (client-only：避免被 edge cache 污染) -->
+      <div class="ml-auto flex h-8 items-center gap-3">
+        <ClientOnly>
+          <template v-if="auth.isLoggedIn">
+            <span class="hidden text-sm text-content sm:inline">
+              {{ auth.user?.displayName }}
+            </span>
+            <Button
+              size="sm"
+              border-color="var(--color-primary)"
+              text-color="var(--color-primary)"
+              outline
+              @click="onLogout"
+            >
+              <span class="font-display flex items-center gap-1">
+                Log out
+                <Icon name="logout" />
+              </span>
+            </Button>
+          </template>
+          <Button v-else bg-color="var(--color-primary)" size="sm" @click="onLogin">
             <span class="font-display flex items-center gap-1">
-              Log out
-              <Icon name="logout" />
+              Log in
+              <Icon name="login" />
             </span>
           </Button>
-        </template>
-        <Button v-else bg-color="var(--color-primary)" size="sm" @click="onLogin">
-          <span class="font-display flex items-center gap-1">
-            Log in
-            <Icon name="login" />
-          </span>
-        </Button>
+          <template #fallback>
+            <span aria-hidden="true" class="h-8 w-20" />
+          </template>
+        </ClientOnly>
       </div>
     </div>
   </header>

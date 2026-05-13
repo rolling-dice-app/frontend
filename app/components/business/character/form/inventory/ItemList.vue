@@ -190,7 +190,7 @@
             outline
             :model-value="String(draft.weight)"
             class="w-full"
-            @update:model-value="draft.weight = Math.max(0, Number($event) || 0)"
+            @update:model-value="draft.weight = normalizeWeight($event)"
           />
         </div>
       </div>
@@ -235,6 +235,7 @@ import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {
   CHARACTER_TEXT_LIMITS,
+  MAX_DECIMAL_PRECISION,
   VALIDATION_LIMITS,
   type InventoryItemDTO,
   type InventoryLocation,
@@ -263,6 +264,13 @@ const emit = defineEmits<{
 // ─── Weight ───────────────────────────────────────────────────────────────────
 
 const totalWeight = computed(() => calculateItemsWeight(props.items))
+
+const WEIGHT_PRECISION_FACTOR = 10 ** MAX_DECIMAL_PRECISION
+const normalizeWeight = (raw: string): number => {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return 0
+  return Math.round(n * WEIGHT_PRECISION_FACTOR) / WEIGHT_PRECISION_FACTOR
+}
 
 // ─── Drag and Drop ────────────────────────────────────────────────────────────
 

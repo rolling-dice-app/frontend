@@ -6,7 +6,7 @@ const logger = createLogger('[CharacterSpellsStore]')
 
 type ToggleFlag = 'isPrepared' | 'isFavorite'
 
-const FLAG_DEBOUNCE_MS = 200
+const FLAG_DEBOUNCE_MS = 300
 
 export const useCharacterSpellsStore = defineStore('character-spells', () => {
   const characterId = ref<string | null>(null)

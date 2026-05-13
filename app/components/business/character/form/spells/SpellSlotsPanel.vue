@@ -82,8 +82,14 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { getSuggestedPactSlots, getSuggestedRegularSpellSlots } from '~/helpers/spell-slots'
-import type { SpellLevel, SpellSlots, SpellSlotsDelta } from '@rolling-dice-app/core'
+import {
+  getSuggestedPactSlots,
+  getSuggestedRegularSpellSlots,
+  type ClassEntry,
+  type SpellLevel,
+  type SpellSlots,
+  type SpellSlotsDelta,
+} from '@rolling-dice-app/core'
 import type { FormClassEntry } from '~/types/business/character-form'
 
 const { t } = useI18n()
@@ -127,8 +133,13 @@ const onTabJump = async (idx: number): Promise<void> => {
   tabButtons.value[idx]?.focus()
 }
 
-const regularBase = computed<SpellSlots>(() => getSuggestedRegularSpellSlots(props.classes))
-const pactBase = computed<SpellSlots>(() => getSuggestedPactSlots(props.classes))
+const persistedClasses = computed<ClassEntry[]>(() =>
+  props.classes.filter((c): c is ClassEntry => c.classKey !== null),
+)
+const regularBase = computed<SpellSlots>(() =>
+  getSuggestedRegularSpellSlots(persistedClasses.value),
+)
+const pactBase = computed<SpellSlots>(() => getSuggestedPactSlots(persistedClasses.value))
 
 const activeBase = computed<SpellSlots>(() =>
   activeTab.value === 'pact' ? pactBase.value : regularBase.value,

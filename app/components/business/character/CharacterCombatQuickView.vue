@@ -200,8 +200,8 @@ import {
   getSuggestedPactSlots,
   getSuggestedRegularSpellSlots,
   mergeSlots,
-} from '~/helpers/spell-slots'
-import type { CharacterDTO } from '@rolling-dice-app/core'
+  type CharacterDTO,
+} from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

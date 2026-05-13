@@ -3,8 +3,9 @@ import {
   getSuggestedPactSlots,
   getSuggestedRegularSpellSlots,
   mergeSlots,
-} from '~/helpers/spell-slots'
-import type { ClassEntry, ClassKey } from '@rolling-dice-app/core'
+  type ClassEntry,
+  type ClassKey,
+} from '@rolling-dice-app/core'
 
 const entry = (classKey: ClassKey, level: number): ClassEntry => ({
   classKey,
@@ -163,12 +164,9 @@ describe('getSuggestedRegularSpellSlots', () => {
       expect(getSuggestedRegularSpellSlots([])).toEqual({})
     })
 
-    it('null classKey 與等級 0 應略過', () => {
+    it('等級 0 應略過', () => {
       expect(
-        getSuggestedRegularSpellSlots([
-          { classKey: null, level: 5, subclass: null },
-          { classKey: 'wizard', level: 0, subclass: null },
-        ]),
+        getSuggestedRegularSpellSlots([{ classKey: 'wizard', level: 0, subclass: null }]),
       ).toEqual({})
     })
   })
@@ -203,8 +201,8 @@ describe('getSuggestedPactSlots', () => {
     expect(getSuggestedPactSlots([])).toEqual({})
   })
 
-  it('null classKey 應略過', () => {
-    expect(getSuggestedPactSlots([{ classKey: null, level: 5, subclass: null }])).toEqual({})
+  it('等級 0 應略過', () => {
+    expect(getSuggestedPactSlots([{ classKey: 'warlock', level: 0, subclass: null }])).toEqual({})
   })
 })
 

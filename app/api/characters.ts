@@ -103,6 +103,10 @@ export const characters = () => {
       longRest: async (id: string): Promise<void> => {
         await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST' })
       },
+
+      reset: async (id: string): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/reset`, { method: 'POST' })
+      },
     },
 
     campaignRecords: {

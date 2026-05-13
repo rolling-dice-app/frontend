@@ -46,6 +46,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   const loadError = ref<unknown>(null)
   const isReady = ref(false)
   const isResting = ref(false)
+  const isResetting = ref(false)
 
   /** 經調整後的最大生命；不可低於 1 */
   const effectiveMaxHp = computed(() => Math.max(1, baseMaxHp.value + state.hp.maxAdjustment))
@@ -285,6 +286,24 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     }
   }
 
+  /** 重置戰況追蹤資料：呼叫 backend 清空後 re-GET 套用 server state；回傳是否成功 */
+  const combatReset = async (): Promise<boolean> => {
+    if (!isReady.value || isResetting.value) return false
+    persist.cancel()
+    isResetting.value = true
+    try {
+      await characters().combatState.reset(characterId)
+      const dto = await characters().combatState.get(characterId)
+      await applyServerDto(dto)
+      return true
+    } catch (err) {
+      apiErrorToast.handle(err)
+      return false
+    } finally {
+      isResetting.value = false
+    }
+  }
+
   // ─── Persist ──────────────────────────────────────────────────────────
 
   let inFlight = false
@@ -362,6 +381,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     loadError,
     isReady,
     isResting,
+    isResetting,
     load,
     retry: load,
     effectiveMaxHp,
@@ -394,5 +414,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     resetDeathSaves,
     shortRest,
     longRest,
+    combatReset,
   }
 }

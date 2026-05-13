@@ -39,6 +39,14 @@
         >
           {{ t('combat.longRest') }}
         </Button>
+        <Button
+          :radius="4"
+          bg-color="var(--color-danger)"
+          :disabled="isResting"
+          @click="resetModalOpen = true"
+        >
+          {{ t('combat.reset') }}
+        </Button>
       </header>
 
       <div class="grid gap-4 md:grid-cols-2">
@@ -148,11 +156,44 @@
       />
       <p class="text-sm font-medium text-white">{{ t('combat.resting') }}</p>
     </div>
+
+    <Modal
+      v-model="resetModalOpen"
+      :title="t('combat.resetConfirmTitle')"
+      size="sm"
+      :show-close-button="false"
+      :close-on-click-outside="false"
+      :close-on-escape="false"
+      bg-color="var(--color-canvas-elevated)"
+      text-color="var(--color-content)"
+      border-color="var(--color-border)"
+    >
+      <p class="text-sm text-content">{{ t('combat.resetConfirmBody') }}</p>
+
+      <template #footer>
+        <Button
+          :radius="4"
+          bg-color="var(--color-surface)"
+          :disabled="isResetting"
+          @click="resetModalOpen = false"
+        >
+          {{ t('ui.action.cancel') }}
+        </Button>
+        <Button
+          :radius="4"
+          bg-color="var(--color-danger)"
+          :disabled="isResetting"
+          @click="onConfirmReset"
+        >
+          {{ isResetting ? t('combat.resetting') : t('ui.action.confirm') }}
+        </Button>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button } from '@ui'
+import { Button, Modal } from '@ui'
 import { useCharacterCombatState } from '~/composables/domain/useCharacterCombatState'
 import { useCharacterDerivedStatsFromCharacter } from '~/composables/domain/useCharacterDerivedStats'
 import {
@@ -188,6 +229,7 @@ const {
   loadError,
   isReady,
   isResting,
+  isResetting,
   load,
   retry,
   effectiveMaxHp,
@@ -207,7 +249,10 @@ const {
   setDeathSaveFailure,
   shortRest,
   longRest,
+  combatReset,
 } = useCharacterCombatState(props.character.id, totalHp)
+
+const resetModalOpen = ref(false)
 
 onMounted(() => {
   void load()
@@ -232,5 +277,12 @@ const onShortRest = async (): Promise<void> => {
 
 const onLongRest = async (): Promise<void> => {
   if (await longRest()) useToast().success(t('combat.longRestDone'), { kind: 'hint' })
+}
+
+const onConfirmReset = async (): Promise<void> => {
+  if (await combatReset()) {
+    useToast().success(t('combat.resetDone'), { kind: 'hint' })
+    resetModalOpen.value = false
+  }
 }
 </script>

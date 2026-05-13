@@ -164,6 +164,12 @@ export default {
   shortRestDone: '短休完成',
   longRestDone: '長休完成',
   resting: '休息中...',
+  reset: '重置',
+  resetting: '重置中...',
+  resetDone: '戰鬥狀態已重置',
+  resetConfirmTitle: '重置戰鬥狀態',
+  resetConfirmBody:
+    '此動作會清空當前 HP、臨時生命、死亡豁免、特性使用次數、生命骰、法術 slot 與所有臨時調整，且無法復原。',
 
   // 單位 / 距離
   unitFeet: '呎',

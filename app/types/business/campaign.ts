@@ -3,8 +3,8 @@ import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
 /** 金幣面額快照（不含樂觀鎖 token，純記錄四幣種數量） */
 export type CurrencyAmount = Omit<CharacterCurrencyDTO, 'updatedAt'>
 
-/** 單筆冒險 / 團務紀錄 */
-export interface AdventureEntry {
+/** 單筆戰役紀錄 */
+export interface CampaignEntry {
   id: string
   /** 場次 / 任務名稱 */
   name: string
@@ -19,12 +19,12 @@ export interface AdventureEntry {
   createdAt: string
 }
 
-/** 冒險紀錄草稿（尚未具備 id / createdAt） */
-export type AdventureEntryDraft = Omit<AdventureEntry, 'id' | 'createdAt'>
+/** 戰役紀錄草稿（尚未具備 id / createdAt） */
+export type CampaignEntryDraft = Omit<CampaignEntry, 'id' | 'createdAt'>
 
-/** 單一角色的冒險紀錄條目集合 */
-export interface AdventureLog {
-  entries: AdventureEntry[]
+/** 單一角色的戰役紀錄條目集合 */
+export interface CampaignLog {
+  entries: CampaignEntry[]
   /** 是否將 moneyEarning 自動同步到 character.currency */
   syncMoneyToCurrency: boolean
 }

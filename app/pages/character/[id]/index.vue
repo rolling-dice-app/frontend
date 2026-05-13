@@ -118,12 +118,12 @@
             />
           </div>
         </Tab>
-        <Tab value="adventures">
+        <Tab value="campaigns">
           <template #label>
-            <span class="text-content">{{ t('character.adventure') }}</span>
+            <span class="text-content">{{ t('character.campaign') }}</span>
           </template>
-          <BusinessCharacterAdventuresTab
-            :entries="adventureEntries"
+          <BusinessCharacterCampaignsTab
+            :entries="campaignEntries"
             :total-exp-earned="totalExpEarned"
             :sync-money-to-currency="syncMoneyToCurrency"
             @add="notifyReadOnly"
@@ -197,8 +197,8 @@ const retryInventory = (): void => {
   void inventoryStore.load(id)
 }
 
-const adventures = useCharacterAdventures(id)
-const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
+const campaigns = useCharacterCampaigns(id)
+const { entries: campaignEntries, totalExpEarned, syncMoneyToCurrency } = campaigns
 
 const apiErrorToast = useApiErrorToast()
 const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {

@@ -1,12 +1,12 @@
 <template>
-  <section aria-labelledby="adventures-tab-label" class="p-4 space-y-4 bg-canvas-elevated">
+  <section aria-labelledby="campaigns-tab-label" class="p-4 space-y-4 bg-canvas-elevated">
     <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg py-3">
       <div class="flex items-center gap-3">
-        <h2 id="adventures-tab-label" class="font-display text-lg font-bold text-content">
-          {{ t('character.adventureRecord') }}
+        <h2 id="campaigns-tab-label" class="font-display text-lg font-bold text-content">
+          {{ t('character.campaignRecord') }}
         </h2>
         <span class="text-xs text-content-muted">
-          {{ entries.length }} {{ t('character.adventureCount') }}
+          {{ entries.length }} {{ t('character.campaignCount') }}
         </span>
       </div>
 
@@ -29,7 +29,7 @@
 
     <button
       type="button"
-      :aria-label="t('character.addAdventureRecord')"
+      :aria-label="t('character.addCampaignRecord')"
       class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft bg-canvas-elevated py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
       @click="openCreate"
     >
@@ -40,11 +40,11 @@
       v-if="entries.length === 0"
       class="rounded-lg border border-dashed border-border-soft bg-surface-2 px-3 py-8 text-center text-xs text-content-muted"
     >
-      {{ t('character.emptyAdventureMessage') }}
+      {{ t('character.emptyCampaignMessage') }}
     </p>
 
-    <Accordion v-else class="adventures-accordion flex flex-col gap-2">
-      <BusinessCharacterAdventuresAdventureItem
+    <Accordion v-else class="campaigns-accordion flex flex-col gap-2">
+      <BusinessCharacterCampaignsCampaignItem
         v-for="entry in entries"
         :key="entry.id"
         :entry="entry"
@@ -53,7 +53,7 @@
       />
     </Accordion>
 
-    <BusinessCharacterAdventuresAdventureFormModal
+    <BusinessCharacterCampaignsCampaignFormModal
       v-model="modalOpen"
       :editing="editing"
       @save="onSave"
@@ -63,37 +63,37 @@
 
 <script setup lang="ts">
 import { Accordion, Toggle } from '@ui'
-import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
+import type { CampaignEntry, CampaignEntryDraft } from '~/types/business/campaign'
 
 const { t } = useI18n()
 
 defineProps<{
-  entries: AdventureEntry[]
+  entries: CampaignEntry[]
   totalExpEarned: number
   syncMoneyToCurrency: boolean
 }>()
 
 const emit = defineEmits<{
-  add: [draft: AdventureEntryDraft]
-  update: [id: string, draft: AdventureEntryDraft]
+  add: [draft: CampaignEntryDraft]
+  update: [id: string, draft: CampaignEntryDraft]
   remove: [id: string]
   'update:syncMoneyToCurrency': [value: boolean]
 }>()
 
 const modalOpen = ref(false)
-const editing = ref<AdventureEntry | null>(null)
+const editing = ref<CampaignEntry | null>(null)
 
 const openCreate = (): void => {
   editing.value = null
   modalOpen.value = true
 }
 
-const openEdit = (entry: AdventureEntry): void => {
+const openEdit = (entry: CampaignEntry): void => {
   editing.value = entry
   modalOpen.value = true
 }
 
-const onSave = (draft: AdventureEntryDraft, editingId: string | null): void => {
+const onSave = (draft: CampaignEntryDraft, editingId: string | null): void => {
   if (editingId) {
     emit('update', editingId, draft)
   } else {
@@ -103,11 +103,11 @@ const onSave = (draft: AdventureEntryDraft, editingId: string | null): void => {
 </script>
 
 <style scoped>
-.adventures-accordion :deep(> div) {
+.campaigns-accordion :deep(> div) {
   border-bottom-width: 0;
 }
 
-.adventures-accordion :deep(button:hover:not(:disabled)) {
+.campaigns-accordion :deep(button:hover:not(:disabled)) {
   background-color: var(--color-info-soft);
 }
 </style>

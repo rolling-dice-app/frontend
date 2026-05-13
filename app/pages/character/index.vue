@@ -150,7 +150,7 @@
         <h2 class="mt-4 font-display text-2xl font-bold text-content">
           {{ t('character.empty') }}
         </h2>
-        <p class="mt-2 text-sm">{{ t('character.emptyAdventureHint') }}</p>
+        <p class="mt-2 text-sm">{{ t('character.emptyCampaignHint') }}</p>
         <p
           class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
         >

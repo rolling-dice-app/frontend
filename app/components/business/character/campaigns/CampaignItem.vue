@@ -63,16 +63,16 @@
 <script setup lang="ts">
 import { AccordionItem, Icon } from '@ui'
 import type { CurrencyKey } from '@rolling-dice-app/core'
-import type { AdventureEntry } from '~/types/business/adventure'
+import type { CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  entry: AdventureEntry
+  entry: CampaignEntry
 }>()
 
 defineEmits<{
-  edit: [entry: AdventureEntry]
+  edit: [entry: CampaignEntry]
   remove: [id: string]
 }>()
 

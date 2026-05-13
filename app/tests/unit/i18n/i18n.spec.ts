@@ -55,7 +55,7 @@ describe('t() — character namespace 擴張（基本資料 / tab / 列表）', 
   it('tab / section 名稱', () => {
     expect(t('character.basicInfo')).toBe('基本資訊')
     expect(t('character.combatQuickView')).toBe('戰鬥速查')
-    expect(t('character.adventure')).toBe('冒險')
+    expect(t('character.campaign')).toBe('戰役')
   })
 
   it('列表 / 互動', () => {

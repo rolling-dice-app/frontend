@@ -97,14 +97,14 @@ export default {
   buildConfirmWarning: '主職業與屬性建立後將無法變更，確認送出嗎？',
   buildConfirmAction: '確認新增',
   abilitiesLabel: '屬性',
-  // 冒險 tab
-  adventureRecord: '冒險紀錄',
-  adventureCount: '筆',
+  // 戰役 tab
+  campaignRecord: '戰役紀錄',
+  campaignCount: '筆',
   expEarnedTotal: '累計獲得經驗',
-  syncMoneyAria: '將冒險獲得金錢同步到背包貨幣',
+  syncMoneyAria: '將戰役獲得金錢同步到背包貨幣',
   syncMoneyToggle: '自動更新背包資產',
-  emptyAdventureMessage: '尚未記錄任何冒險，按上方按鈕新增第一筆。',
-  adventureField: {
+  emptyCampaignMessage: '尚未記錄任何戰役，按上方按鈕新增第一筆。',
+  campaignField: {
     name: '名稱',
     date: '日期',
     contentOptional: '內容（選填）',
@@ -147,7 +147,7 @@ export default {
   combatModule: '戰鬥模組',
   combatQuickView: '戰鬥速查',
   inventoryTab: '背包',
-  adventure: '冒險',
+  campaign: '戰役',
 
   // 列表 / 互動
   addCharacter: '新增角色卡',
@@ -159,8 +159,8 @@ export default {
   enterDeleteMode: '進入刪除模式',
   leaveDeleteMode: '離開刪除模式',
 
-  // 冒險紀錄
-  emptyAdventureHint: '一場偉大的冒險，往往從踏出第一步開始',
-  addAdventureRecord: '新增冒險紀錄',
-  editAdventureRecord: '編輯冒險紀錄',
+  // 戰役紀錄
+  emptyCampaignHint: '一場偉大的冒險，往往從踏出第一步開始',
+  addCampaignRecord: '新增戰役紀錄',
+  editCampaignRecord: '編輯戰役紀錄',
 }

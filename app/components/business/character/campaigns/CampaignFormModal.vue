@@ -2,7 +2,7 @@
   <div style="display: contents">
     <Modal
       :model-value="modelValue"
-      :title="editing ? t('character.editAdventureRecord') : t('character.addAdventureRecord')"
+      :title="editing ? t('character.editCampaignRecord') : t('character.addCampaignRecord')"
       size="md"
       bg-color="var(--color-canvas-elevated)"
       text-color="var(--color-content)"
@@ -12,11 +12,11 @@
       <div class="space-y-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div class="flex-1">
-            <label for="adventure-name" class="mb-1 block text-xs text-content">
-              {{ t('character.adventureField.name') }}
+            <label for="campaign-name" class="mb-1 block text-xs text-content">
+              {{ t('character.campaignField.name') }}
             </label>
             <CommonAppInput
-              id="adventure-name"
+              id="campaign-name"
               :radius="0"
               :model-value="draft.name"
               size="sm"
@@ -26,11 +26,11 @@
             />
           </div>
           <div>
-            <label for="adventure-date" class="mb-1 block text-xs text-content">
-              {{ t('character.adventureField.date') }}
+            <label for="campaign-date" class="mb-1 block text-xs text-content">
+              {{ t('character.campaignField.date') }}
             </label>
             <input
-              id="adventure-date"
+              id="campaign-date"
               v-model="draft.date"
               type="date"
               style="color-scheme: dark"
@@ -40,33 +40,33 @@
         </div>
 
         <div>
-          <label for="adventure-content" class="mb-1 block text-xs text-content">
-            {{ t('character.adventureField.contentOptional') }}
+          <label for="campaign-content" class="mb-1 block text-xs text-content">
+            {{ t('character.campaignField.contentOptional') }}
           </label>
           <div class="rounded-md border border-primary bg-canvas-inset">
             <TextArea
-              id="adventure-content"
+              id="campaign-content"
               class="w-full"
               :border="false"
               :model-value="draft.content"
               :rows="4"
               :maxlength="CHARACTER_TEXT_LIMITS.LONG"
               show-count
-              :placeholder="t('character.adventureField.contentPlaceholder')"
+              :placeholder="t('character.campaignField.contentPlaceholder')"
               @update:model-value="draft.content = $event"
             />
           </div>
         </div>
 
         <div>
-          <p class="mb-1 text-xs text-content">{{ t('character.adventureField.moneyEarning') }}</p>
+          <p class="mb-1 text-xs text-content">{{ t('character.campaignField.moneyEarning') }}</p>
           <div class="grid grid-cols-4 gap-2">
             <div v-for="key in CURRENCY_KEYS" :key="key">
-              <label :for="`adventure-money-${key}`" class="mb-1 block text-xs text-content-muted">
+              <label :for="`campaign-money-${key}`" class="mb-1 block text-xs text-content-muted">
                 {{ currencyLabels[key] }}
               </label>
               <CommonAppInput
-                :id="`adventure-money-${key}`"
+                :id="`campaign-money-${key}`"
                 type="number"
                 min="0"
                 step="1"
@@ -81,11 +81,11 @@
         </div>
 
         <div class="w-32">
-          <label for="adventure-exp" class="mb-1 block text-xs text-content">
-            {{ t('character.adventureField.expEarning') }}
+          <label for="campaign-exp" class="mb-1 block text-xs text-content">
+            {{ t('character.campaignField.expEarning') }}
           </label>
           <CommonAppInput
-            id="adventure-exp"
+            id="campaign-exp"
             type="number"
             min="0"
             step="1"
@@ -120,18 +120,18 @@ import {
   DEFAULT_CURRENCY,
   type CurrencyKey,
 } from '@rolling-dice-app/core'
-import type { AdventureEntry, AdventureEntryDraft } from '~/types/business/adventure'
+import type { CampaignEntry, CampaignEntryDraft } from '~/types/business/campaign'
 
 const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
-  editing: AdventureEntry | null
+  editing: CampaignEntry | null
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  save: [draft: AdventureEntryDraft, editingId: string | null]
+  save: [draft: CampaignEntryDraft, editingId: string | null]
 }>()
 
 const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
@@ -149,7 +149,7 @@ const todayISO = (): string => {
   return `${yyyy}-${mm}-${dd}`
 }
 
-const emptyDraft = (): AdventureEntryDraft => {
+const emptyDraft = (): CampaignEntryDraft => {
   return {
     name: '',
     date: todayISO(),
@@ -164,7 +164,7 @@ const sanitizeNumber = (value: string): number => {
   return Math.max(0, parsed)
 }
 
-const draft = ref<AdventureEntryDraft>(emptyDraft())
+const draft = ref<CampaignEntryDraft>(emptyDraft())
 
 watch(
   () => props.modelValue,
@@ -184,7 +184,7 @@ watch(
 )
 
 const onSave = (): void => {
-  const payload: AdventureEntryDraft = {
+  const payload: CampaignEntryDraft = {
     ...draft.value,
     name: draft.value.name.trim(),
     moneyEarning: { ...draft.value.moneyEarning },

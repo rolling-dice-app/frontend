@@ -203,10 +203,6 @@ const hasAnySlot = computed(
 )
 
 const onShortRest = async (): Promise<void> => {
-  if (displayCurrentHp.value === 0) {
-    useToast().error(t('combat.shortRestInvalidWhenHpZero'))
-    return
-  }
   if (await shortRest()) useToast().success(t('combat.shortRestDone'), { kind: 'hint' })
 }
 

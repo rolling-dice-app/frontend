@@ -163,7 +163,6 @@ export default {
   longRest: '長休',
   shortRestDone: '短休完成',
   longRestDone: '長休完成',
-  shortRestInvalidWhenHpZero: '請先穩定傷勢',
 
   // 單位 / 距離
   unitFeet: '呎',

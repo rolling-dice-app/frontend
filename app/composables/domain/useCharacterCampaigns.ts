@@ -87,12 +87,18 @@ export function useCharacterCampaigns(characterId: string) {
   }
 
   const addCampaign = async (draft: CampaignDraft): Promise<boolean> => {
+    const applyMoney = syncMoneyToCurrency.value
     try {
       const dto = await characters().campaignRecords.create(
         characterId,
-        draftToCreateBody(draft, syncMoneyToCurrency.value),
+        draftToCreateBody(draft, applyMoney),
       )
       entries.value.push(dto)
+      if (applyMoney) {
+        void useCharacterInventoryStore()
+          .refetchCurrency()
+          .catch(() => {})
+      }
       return true
     } catch (err) {
       apiErrorToast.handle(err)

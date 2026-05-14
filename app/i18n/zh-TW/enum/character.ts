@@ -107,7 +107,7 @@ export default {
   campaignField: {
     name: '名稱',
     date: '日期',
-    contentOptional: '內容（選填）',
+    content: '內容',
     contentPlaceholder: '記錄這場團務的事件、戰利品、重要決策…',
     moneyEarning: '獲得金錢',
     expEarning: '獲得經驗值',

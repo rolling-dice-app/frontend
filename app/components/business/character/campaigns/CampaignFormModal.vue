@@ -14,6 +14,7 @@
           <div class="flex-1">
             <label for="campaign-title" class="mb-1 block text-xs text-content">
               {{ t('character.campaignField.name') }}
+              <span class="text-danger">*</span>
             </label>
             <CommonAppInput
               id="campaign-title"
@@ -41,7 +42,8 @@
 
         <div>
           <label for="campaign-content" class="mb-1 block text-xs text-content">
-            {{ t('character.campaignField.contentOptional') }}
+            {{ t('character.campaignField.content') }}
+            <span class="text-danger">*</span>
           </label>
           <div class="rounded-md border border-primary bg-canvas-inset">
             <TextArea
@@ -61,7 +63,7 @@
         <div>
           <p class="mb-1 text-xs text-content">{{ t('character.campaignField.moneyEarning') }}</p>
           <div class="grid grid-cols-4 gap-2">
-            <div v-for="key in CURRENCY_KEYS" :key="key">
+            <div v-for="key in COIN_KEYS" :key="key">
               <label :for="`campaign-money-${key}`" class="mb-1 block text-xs text-content-muted">
                 {{ currencyLabels[key] }}
               </label>
@@ -101,7 +103,7 @@
       <template #footer>
         <Button
           :radius="4"
-          :disabled="!draft.title.trim() || submitting"
+          :disabled="!draft.title.trim() || !draft.content.trim() || submitting"
           bg-color="var(--color-primary)"
           @click="onSave"
         >
@@ -114,11 +116,13 @@
 
 <script setup lang="ts">
 import { Button, Modal, TextArea } from '@ui'
-import { CURRENCY_KEYS, DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
+import { DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
+
+const COIN_KEYS: readonly CurrencyKey[] = ['pp', 'gp', 'sp', 'cp']
 
 const props = defineProps<{
   modelValue: boolean

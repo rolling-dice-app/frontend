@@ -17,6 +17,7 @@ const mockRemove = vi.fn<(id: string, recordId: string) => Promise<void>>()
 const mockApiErrorHandle = vi.fn()
 const mockToastError = vi.fn()
 const mockT = vi.fn((key: string) => key)
+const mockRefetchCurrency = vi.fn<() => Promise<unknown>>()
 
 const buildDto = (overrides: Partial<CampaignRecordDTO> = {}): CampaignRecordDTO => ({
   id: overrides.id ?? 'rec-1',
@@ -58,6 +59,8 @@ beforeEach(() => {
   )
   mockPatch.mockResolvedValue(undefined)
   mockRemove.mockResolvedValue(undefined)
+  mockRefetchCurrency.mockReset()
+  mockRefetchCurrency.mockResolvedValue(null)
 
   vi.stubGlobal('characters', () => ({
     campaignRecords: {
@@ -70,6 +73,9 @@ beforeEach(() => {
   vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
   vi.stubGlobal('useToast', () => ({ error: mockToastError, success: vi.fn() }))
   vi.stubGlobal('useI18n', () => ({ t: mockT }))
+  vi.stubGlobal('useCharacterInventoryStore', () => ({
+    refetchCurrency: mockRefetchCurrency,
+  }))
 })
 
 afterEach(() => {
@@ -155,6 +161,26 @@ describe('useCharacterCampaigns — addCampaign', () => {
     const ok = await cmp.addCampaign(draft)
     expect(ok).toBe(false)
     expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
+  })
+
+  it('sync 開啟時 create 成功後 fire inventoryStore.refetchCurrency 刷新背包資產', async () => {
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    await cmp.addCampaign(draft)
+    expect(mockRefetchCurrency).toHaveBeenCalledTimes(1)
+  })
+
+  it('sync 關閉時不觸發 refetchCurrency', async () => {
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    cmp.setSyncMoneyToCurrency(false)
+    await cmp.addCampaign(draft)
+    expect(mockRefetchCurrency).not.toHaveBeenCalled()
+  })
+
+  it('create 失敗時不觸發 refetchCurrency', async () => {
+    mockCreate.mockRejectedValue(new Error('fail'))
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    await cmp.addCampaign(draft)
+    expect(mockRefetchCurrency).not.toHaveBeenCalled()
   })
 })
 

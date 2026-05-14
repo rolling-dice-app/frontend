@@ -41,10 +41,10 @@
           </div>
           <label class="flex items-center gap-2 text-xs text-content">
             <Toggle
-              :model-value="syncMoneyToCurrency"
+              :model-value="applyMoneyToCurrency"
               :aria-label="t('character.syncMoneyAria')"
               color="var(--color-primary)"
-              @update:model-value="$emit('update:syncMoneyToCurrency', $event)"
+              @update:model-value="onToggleApplyMoney"
             />
             <span>{{ t('character.syncMoneyToggle') }}</span>
           </label>
@@ -94,11 +94,12 @@ import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
 const toast = useToast()
+const apiErrorToast = useApiErrorToast()
+const authStore = useAuthStore()
 
 const props = defineProps<{
   entries: CampaignEntry[]
   totalExpEarned: number
-  syncMoneyToCurrency: boolean
   isLoading: boolean
   loadError: unknown
   isReady: boolean
@@ -110,9 +111,19 @@ const emit = defineEmits<{
   add: [draft: CampaignDraft]
   update: [id: string, draft: CampaignDraft]
   remove: [id: string]
-  'update:syncMoneyToCurrency': [value: boolean]
   retry: []
 }>()
+
+const applyMoneyToCurrency = computed(() => authStore.user?.preference.applyMoneyToCurrency ?? true)
+
+const onToggleApplyMoney = async (next: boolean): Promise<void> => {
+  try {
+    await authStore.updatePreference({ applyMoneyToCurrency: next })
+  } catch (err) {
+    // store 未更新 → Toggle 自然 rerender 回原值，視覺自動 rollback
+    apiErrorToast.handle(err)
+  }
+}
 
 const modalOpen = ref(false)
 const editing = ref<CampaignEntry | null>(null)

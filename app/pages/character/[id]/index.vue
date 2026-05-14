@@ -117,7 +117,6 @@
           <BusinessCharacterCampaignsTab
             :entries="campaignEntries"
             :total-exp-earned="campaignTotalExp"
-            :sync-money-to-currency="syncMoneyToCurrency"
             :is-loading="campaignsLoading"
             :load-error="campaignsLoadError"
             :is-ready="campaignsReady"
@@ -126,7 +125,6 @@
             @add="(draft) => void campaigns.addCampaign(draft)"
             @update="(entryId, draft) => void campaigns.updateCampaign(entryId, draft)"
             @remove="(entryId) => void campaigns.removeCampaign(entryId)"
-            @update:sync-money-to-currency="campaigns.setSyncMoneyToCurrency"
           />
         </Tab>
       </Tabs>
@@ -198,7 +196,6 @@ const campaigns = useCharacterCampaigns(id)
 const {
   entries: campaignEntries,
   totalExpEarned: campaignTotalExp,
-  syncMoneyToCurrency,
   isLoading: campaignsLoading,
   loadError: campaignsLoadError,
   isReady: campaignsReady,

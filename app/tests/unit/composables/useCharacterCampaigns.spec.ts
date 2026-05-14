@@ -18,6 +18,7 @@ const mockApiErrorHandle = vi.fn()
 const mockToastError = vi.fn()
 const mockT = vi.fn((key: string) => key)
 const mockRefetchCurrency = vi.fn<() => Promise<unknown>>()
+const authPreference = { applyMoneyToCurrency: true as boolean | undefined }
 
 const buildDto = (overrides: Partial<CampaignRecordDTO> = {}): CampaignRecordDTO => ({
   id: overrides.id ?? 'rec-1',
@@ -29,7 +30,6 @@ const buildDto = (overrides: Partial<CampaignRecordDTO> = {}): CampaignRecordDTO
   teammates: overrides.teammates ?? [],
   moneyEarning: overrides.moneyEarning ?? { cp: 0, sp: 0, gp: 0, pp: 0 },
   expEarning: overrides.expEarning ?? 0,
-  sortOrder: overrides.sortOrder ?? 0,
   createdAt: overrides.createdAt ?? '2026-04-30T00:00:00.000Z',
   updatedAt: overrides.updatedAt ?? '2026-04-30T00:00:00.000Z',
 })
@@ -61,6 +61,7 @@ beforeEach(() => {
   mockRemove.mockResolvedValue(undefined)
   mockRefetchCurrency.mockReset()
   mockRefetchCurrency.mockResolvedValue(null)
+  authPreference.applyMoneyToCurrency = true
 
   vi.stubGlobal('characters', () => ({
     campaignRecords: {
@@ -75,6 +76,9 @@ beforeEach(() => {
   vi.stubGlobal('useI18n', () => ({ t: mockT }))
   vi.stubGlobal('useCharacterInventoryStore', () => ({
     refetchCurrency: mockRefetchCurrency,
+  }))
+  vi.stubGlobal('useAuthStore', () => ({
+    user: { preference: authPreference },
   }))
 })
 
@@ -130,22 +134,15 @@ describe('useCharacterCampaigns — addCampaign', () => {
     expEarning: 100,
   }
 
-  it('toggle 預設為 true，create body 帶 applyMoneyToCurrency: true', async () => {
+  it('create body 不再帶 applyMoneyToCurrency（旗標已搬到 user preference）', async () => {
     const cmp = useCharacterCampaigns(CHAR_ID)
     await cmp.addCampaign(draft)
     expect(mockCreate).toHaveBeenCalledTimes(1)
     const body = mockCreate.mock.calls[0]![1]
-    expect(body.applyMoneyToCurrency).toBe(true)
+    expect(body).not.toHaveProperty('applyMoneyToCurrency')
     expect(body.title).toBe('新場次')
     expect(body.subtitle).toBeNull()
     expect(body.teammates).toEqual([])
-  })
-
-  it('toggle 關閉時 create body 帶 applyMoneyToCurrency: false', async () => {
-    const cmp = useCharacterCampaigns(CHAR_ID)
-    cmp.setSyncMoneyToCurrency(false)
-    await cmp.addCampaign(draft)
-    expect(mockCreate.mock.calls[0]![1].applyMoneyToCurrency).toBe(false)
   })
 
   it('create 成功後 entries 加入回傳 DTO', async () => {
@@ -163,17 +160,24 @@ describe('useCharacterCampaigns — addCampaign', () => {
     expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
   })
 
-  it('sync 開啟時 create 成功後 fire inventoryStore.refetchCurrency 刷新背包資產', async () => {
+  it('preference.applyMoneyToCurrency=true 時 create 成功後 fire inventoryStore.refetchCurrency 刷新背包資產', async () => {
     const cmp = useCharacterCampaigns(CHAR_ID)
     await cmp.addCampaign(draft)
     expect(mockRefetchCurrency).toHaveBeenCalledTimes(1)
   })
 
-  it('sync 關閉時不觸發 refetchCurrency', async () => {
+  it('preference.applyMoneyToCurrency=false 時不觸發 refetchCurrency', async () => {
+    authPreference.applyMoneyToCurrency = false
     const cmp = useCharacterCampaigns(CHAR_ID)
-    cmp.setSyncMoneyToCurrency(false)
     await cmp.addCampaign(draft)
     expect(mockRefetchCurrency).not.toHaveBeenCalled()
+  })
+
+  it('preference.applyMoneyToCurrency=undefined 時視為 true，仍 fire refetchCurrency', async () => {
+    authPreference.applyMoneyToCurrency = undefined
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    await cmp.addCampaign(draft)
+    expect(mockRefetchCurrency).toHaveBeenCalledTimes(1)
   })
 
   it('create 失敗時不觸發 refetchCurrency', async () => {

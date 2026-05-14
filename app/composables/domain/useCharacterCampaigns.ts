@@ -16,10 +16,7 @@ const isStaleVersionError = (err: unknown): boolean => {
   return e.data?.code === STALE_CAMPAIGN_RECORD_VERSION
 }
 
-const draftToCreateBody = (
-  draft: CampaignDraft,
-  applyMoneyToCurrency: boolean,
-): CampaignRecordCreateBody => ({
+const draftToCreateBody = (draft: CampaignDraft): CampaignRecordCreateBody => ({
   title: draft.title,
   // TODO(campaign): 之後補 subtitle / teammates UI 時改帶實際值
   subtitle: null,
@@ -28,7 +25,6 @@ const draftToCreateBody = (
   teammates: [],
   moneyEarning: { ...draft.moneyEarning },
   expEarning: draft.expEarning,
-  applyMoneyToCurrency,
 })
 
 const draftToUpdateBody = (draft: CampaignDraft, updatedAt: string): CampaignRecordUpdateBody => ({
@@ -43,19 +39,19 @@ const draftToUpdateBody = (draft: CampaignDraft, updatedAt: string): CampaignRec
 /**
  * 角色戰役紀錄；對齊 /characters/:id/campaign-records 走 REST。
  * - 載入透過 load() 顯式觸發，暴露 isLoading / loadError / isReady 三態
- * - create 時依 syncMoneyToCurrency toggle 帶 applyMoneyToCurrency；update / remove 不再動 character currency
+ * - 是否同步 moneyEarning 到角色 currency 由 server 從 authed user.preference.applyMoneyToCurrency 決定
  * - 409 樂觀鎖衝突 → toast 提示 + 重新 load + 透過 conflictSignal 通知 caller（用於關閉 modal）
  */
 export function useCharacterCampaigns(characterId: string) {
   const apiErrorToast = useApiErrorToast()
   const { t } = useI18n()
   const toast = useToast()
+  const authStore = useAuthStore()
 
   const entries = ref<CampaignEntry[]>([])
   const isLoading = ref(false)
   const loadError = ref<unknown>(null)
   const isReady = ref(false)
-  const syncMoneyToCurrency = ref(true)
   /** 每次發生 409 +1，UI 可 watch 之觸發 modal 關閉 */
   const conflictSignal = ref(0)
 
@@ -87,12 +83,9 @@ export function useCharacterCampaigns(characterId: string) {
   }
 
   const addCampaign = async (draft: CampaignDraft): Promise<boolean> => {
-    const applyMoney = syncMoneyToCurrency.value
+    const applyMoney = authStore.user?.preference.applyMoneyToCurrency ?? true
     try {
-      const dto = await characters().campaignRecords.create(
-        characterId,
-        draftToCreateBody(draft, applyMoney),
-      )
+      const dto = await characters().campaignRecords.create(characterId, draftToCreateBody(draft))
       entries.value.push(dto)
       if (applyMoney) {
         void useCharacterInventoryStore()
@@ -138,23 +131,17 @@ export function useCharacterCampaigns(characterId: string) {
     }
   }
 
-  const setSyncMoneyToCurrency = (next: boolean): void => {
-    syncMoneyToCurrency.value = next
-  }
-
   return {
     entries: sortedEntries,
     totalExpEarned,
     isLoading,
     loadError,
     isReady,
-    syncMoneyToCurrency: readonly(syncMoneyToCurrency),
     conflictSignal: readonly(conflictSignal),
     load,
     retry: load,
     addCampaign,
     updateCampaign,
     removeCampaign,
-    setSyncMoneyToCurrency,
   }
 }

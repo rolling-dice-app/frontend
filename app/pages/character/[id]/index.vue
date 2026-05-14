@@ -168,6 +168,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  spellsStore.flushPending()
   inventoryStore.reset()
   spellsStore.reset()
 })

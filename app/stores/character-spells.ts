@@ -103,6 +103,11 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     mutationError.value = null
   }
 
+  /** 立即觸發所有 pending 的 toggle PATCH；unmount 前呼叫以保留最後一次寫入 */
+  const flushPending = (): void => {
+    for (const d of persistDebounces.values()) d.flush()
+  }
+
   const reset = (): void => {
     for (const d of persistDebounces.values()) d.cancel()
     persistDebounces.clear()
@@ -125,6 +130,7 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     togglePrepared,
     toggleFavorite,
     clearMutationError,
+    flushPending,
     reset,
   }
 })

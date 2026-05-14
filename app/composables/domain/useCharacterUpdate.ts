@@ -91,26 +91,13 @@ export function useCharacterUpdate(character: CharacterDTO) {
   const hasMainChanges = computed(() => Object.keys(patch.value).length > 1)
 
   // ─── Spells buffer：edit 進入時自 spellsStore.entries 種子化 ──────────────
-
-  const spellsSeeded = ref(false)
+  // page 層 useAsyncData 已預先 load spells，這裡可同步 seed，不需 flag / onMounted 補載。
 
   const seedSpells = (): void => {
     formState.spells = spellsStore.entries.map(entryToFormSpell)
-    spellsSeeded.value = true
   }
 
-  // 若 detail 頁已先載過、store 內已有此角色資料，立即種子化；否則 onMounted 補載
-  if (spellsStore.characterId === id) seedSpells()
-
-  onMounted(async () => {
-    if (spellsSeeded.value) return
-    try {
-      await spellsStore.load(id)
-    } catch {
-      // error 透過 spellsStore.error 暴露；UI 端可決定如何顯示
-    }
-    seedSpells()
-  })
+  seedSpells()
 
   const diffSpells = (): { toLearn: string[]; toForget: string[] } => {
     const baselineSet = new Set(spellsStore.entries.map((e) => e.spellId))
@@ -121,7 +108,6 @@ export function useCharacterUpdate(character: CharacterDTO) {
   }
 
   const hasSpellDiff = computed(() => {
-    if (!spellsSeeded.value) return false
     const { toLearn, toForget } = diffSpells()
     return toLearn.length > 0 || toForget.length > 0
   })
@@ -131,7 +117,6 @@ export function useCharacterUpdate(character: CharacterDTO) {
   const canSubmit = computed(
     () =>
       !isSubmitting.value &&
-      spellsSeeded.value &&
       formState.name.trim().length > 0 &&
       formState.classes.every((entry) => entry.classKey !== null) &&
       hasChanges.value,

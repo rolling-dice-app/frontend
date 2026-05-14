@@ -34,12 +34,16 @@ const id = getRouteParam(route.params.id)
 useHead({ title: t('character.editCharacter') })
 
 const characterStore = useCharacterStore()
+const spellsStore = useCharacterSpellsStore()
 const character = computed(() => characterStore.getById(id))
 
 // 與 list / detail 同步：私有資料不進 SSR HTML / payload。
+// spells 一併在此預載，讓 child 收到 character + spells 兩個 contract 都「必有值」。
 const { status } = await useAsyncData(
-  () => `character-${id}`,
-  () => characterStore.loadDetail(id),
+  () => `character-update-${id}`,
+  async () => {
+    await Promise.all([characterStore.loadDetail(id), spellsStore.load(id)])
+  },
   { server: false, lazy: false, watch: [() => id] },
 )
 </script>

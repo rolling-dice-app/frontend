@@ -43,7 +43,6 @@ export default {
     systemError: '系統錯誤，請稍後再試',
     deleteFailed: '刪除失敗，請稍後再試',
     unknownError: '發生未知錯誤，請稍後再試',
-    editingNotAvailable: '編輯功能尚未開放',
     persistFailedDataMayLost: '更新失敗，重整後資料可能遺失',
     staleRecord: '資料已被更新，請重新整理',
   },
@@ -53,10 +52,6 @@ export default {
     retry: '重試',
     loadFailed: '載入失敗',
     networkErrorHint: '請稍後再試，或檢查網路連線。',
-  },
-  /** 唯讀模式相關 banner / 提示 */
-  readOnly: {
-    detailBanner: '目前為唯讀模式，背包與戰役編輯尚未開放，待後端編輯端點上線後恢復。',
   },
   /** Aria-label / 共用螢幕閱讀器標籤 */
   aria: {

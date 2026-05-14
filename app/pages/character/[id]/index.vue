@@ -30,14 +30,6 @@
     />
 
     <div v-else>
-      <!-- Read-only banner -->
-      <div
-        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
-        role="status"
-      >
-        {{ t('ui.readOnly.detailBanner') }}
-      </div>
-
       <Tabs
         v-model="activeTab"
         type="border"
@@ -131,10 +123,10 @@
             :is-ready="campaignsReady"
             :conflict-signal="campaignConflictSignal"
             @retry="retryCampaigns"
-            @add="notifyReadOnly"
-            @update="notifyReadOnly"
-            @remove="notifyReadOnly"
-            @update:sync-money-to-currency="notifyReadOnly"
+            @add="(draft) => void campaigns.addCampaign(draft)"
+            @update="(entryId, draft) => void campaigns.updateCampaign(entryId, draft)"
+            @remove="(entryId) => void campaigns.removeCampaign(entryId)"
+            @update:sync-money-to-currency="campaigns.setSyncMoneyToCurrency"
           />
         </Tab>
       </Tabs>
@@ -223,10 +215,5 @@ const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {
   } catch (err) {
     apiErrorToast.handle(err)
   }
-}
-
-const toast = useToast()
-const notifyReadOnly = (): void => {
-  toast.error(t('ui.message.editingNotAvailable'))
 }
 </script>

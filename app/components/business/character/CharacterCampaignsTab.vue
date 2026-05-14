@@ -116,6 +116,14 @@ const emit = defineEmits<{
 
 const applyMoneyToCurrency = computed(() => authStore.user?.preference.applyMoneyToCurrency ?? true)
 
+// plan-aware：以 backend /auth/me 回的 limits 為主；
+// 未登入或 limits 尚未就緒時 fallback 到 VALIDATION_LIMITS（DB-blast ceiling）。
+const campaignRecordLimit = computed(
+  () =>
+    authStore.limits?.maxCampaignRecordsPerCharacter ??
+    VALIDATION_LIMITS.maxCampaignRecordsPerCharacter,
+)
+
 const onToggleApplyMoney = async (next: boolean): Promise<void> => {
   try {
     await authStore.updatePreference({ applyMoneyToCurrency: next })
@@ -129,7 +137,7 @@ const modalOpen = ref(false)
 const editing = ref<CampaignEntry | null>(null)
 
 const openCreate = (): void => {
-  if (props.entries.length >= VALIDATION_LIMITS.maxCampaignRecordsPerCharacter) {
+  if (props.entries.length >= campaignRecordLimit.value) {
     toast.info(t('character.campaignRecordLimitReached'), { kind: 'hint' })
     return
   }

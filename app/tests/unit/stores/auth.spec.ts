@@ -136,6 +136,20 @@ describe('useAuthStore — logout()', () => {
   })
 })
 
+describe('useAuthStore — clearSession()', () => {
+  it('同時把 user 與 limits 清為 null', () => {
+    vi.stubGlobal('useApiFetch', () => () => Promise.resolve(null))
+    const store = useAuthStore()
+    store.user = sampleUser
+    store.limits = sampleLimits
+
+    store.clearSession()
+
+    expect(store.user).toBe(null)
+    expect(store.limits).toBe(null)
+  })
+})
+
 describe('useAuthStore — updatePreference()', () => {
   it('PATCH /users/me 帶 merged preference + 當前 updatedAt，回傳寫回 user', async () => {
     const updated: User = {

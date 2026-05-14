@@ -8,7 +8,7 @@
         class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
         @click="modalOpen = true"
       >
-        <Icon name="edit" :size="14" />
+        <Icon name="edit" :size="18" />
       </button>
     </div>
     <div class="grid flex-1 grid-cols-2 gap-3">

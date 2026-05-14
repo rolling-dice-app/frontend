@@ -52,6 +52,7 @@ export default {
 
   // 金幣
   asset: '資產',
+  editCurrency: '編輯資產',
   cp: '銅幣 (cp)',
   sp: '銀幣 (sp)',
   gp: '金幣 (gp)',

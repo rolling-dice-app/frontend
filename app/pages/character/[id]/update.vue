@@ -15,9 +15,10 @@
       </template>
     </CommonPageHeader>
 
-    <!-- Loading -->
+    <!-- SSR idle + client pending 都顯示 loading；
+         server: false 時 SSR 初值是 idle，避免落入 NotFound 分支。 -->
     <div
-      v-if="status === 'pending'"
+      v-if="status === 'idle' || status === 'pending'"
       class="flex min-h-[60dvh] items-center justify-center text-content-muted"
       role="status"
       aria-live="polite"
@@ -115,10 +116,11 @@ useHead({ title: t('character.editCharacter') })
 
 const characterStore = useCharacterStore()
 
+// 與 list / detail 同步：私有資料不進 SSR HTML / payload。
 const { status } = await useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
-  { lazy: false, watch: [() => id] },
+  { server: false, lazy: false, watch: [() => id] },
 )
 
 const { activeTab, character, formState, isSubmitting, canSubmit, derived, submit } =

@@ -1,10 +1,4 @@
-import { POINT_BUY_DEFAULT_SCORE } from '~/constants/dnd'
-import {
-  ABILITY_KEYS,
-  createDefaultArmorClass,
-  type CharacterDTO,
-  type SpellEntryDTO,
-} from '@rolling-dice-app/core'
+import { ABILITY_KEYS, type CharacterDTO, type SpellEntryDTO } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, SpellFormEntry } from '~/types/business/character-form'
 import { buildCharacterUpdatePatch } from '~/helpers/character'
 
@@ -71,51 +65,6 @@ function characterToFormState(character: CharacterDTO): CharacterUpdateFormState
   }
 }
 
-function createEmptyUpdateFormState(): CharacterUpdateFormState {
-  return {
-    id: '',
-    name: '',
-    gender: null,
-    race: null,
-    subrace: null,
-    alignment: null,
-    classes: [{ classKey: null, level: 1, subclass: null }],
-    abilities: Object.fromEntries(
-      ABILITY_KEYS.map((key) => [key, { origin: POINT_BUY_DEFAULT_SCORE, race: 0, bonusScore: 0 }]),
-    ) as CharacterUpdateFormState['abilities'],
-    savingThrowExtras: [],
-    skills: {},
-    background: null,
-    isJackOfAllTrades: false,
-    isTough: false,
-    faith: null,
-    age: null,
-    height: null,
-    weight: null,
-    appearance: null,
-    story: null,
-    languages: null,
-    tools: null,
-    weaponProficiencies: null,
-    armorProficiencies: null,
-    avatar: null,
-    armorClass: createDefaultArmorClass(),
-    speedBonus: 0,
-    initiativeBonus: 0,
-    initiativeAbilityKey: null,
-    passivePerceptionBonus: 0,
-    passiveInsightBonus: 0,
-    customHpBonus: 0,
-    attacks: [],
-    spellcastingAbilities: [],
-    customSpellcastingBonuses: {},
-    spells: [],
-    spellSlotsDelta: {},
-    pactSlotsDelta: {},
-    features: [],
-  }
-}
-
 const entryToFormSpell = (entry: SpellEntryDTO): SpellFormEntry => ({
   spellId: entry.spellId,
   isPrepared: entry.isPrepared,
@@ -123,27 +72,23 @@ const entryToFormSpell = (entry: SpellEntryDTO): SpellFormEntry => ({
   sourceClass: entry.sourceClass,
 })
 
-export function useCharacterUpdate(id: string) {
+export function useCharacterUpdate(character: CharacterDTO) {
+  const id = character.id
   const store = useCharacterStore()
   const spellsStore = useCharacterSpellsStore()
   const apiErrorToast = useApiErrorToast()
   const activeTab = ref<UpdateTab>('basic')
 
-  const character = computed(() => store.getById(id))
-
-  const formState = reactive<CharacterUpdateFormState>(
-    character.value ? characterToFormState(character.value) : createEmptyUpdateFormState(),
-  )
+  const formState = reactive<CharacterUpdateFormState>(characterToFormState(character))
+  const baseline = computed(() => store.getById(id) ?? character)
 
   const derived = useCharacterDerivedStats(formState)
 
   const isSubmitting = ref(false)
 
-  const patch = computed(() =>
-    character.value ? buildCharacterUpdatePatch(character.value, formState) : null,
-  )
+  const patch = computed(() => buildCharacterUpdatePatch(baseline.value, formState))
 
-  const hasMainChanges = computed(() => !!patch.value && Object.keys(patch.value).length > 1)
+  const hasMainChanges = computed(() => Object.keys(patch.value).length > 1)
 
   // ─── Spells buffer：edit 進入時自 spellsStore.entries 種子化 ──────────────
 
@@ -168,10 +113,10 @@ export function useCharacterUpdate(id: string) {
   })
 
   const diffSpells = (): { toLearn: string[]; toForget: string[] } => {
-    const baseline = new Set(spellsStore.entries.map((e) => e.spellId))
+    const baselineSet = new Set(spellsStore.entries.map((e) => e.spellId))
     const formSet = new Set(formState.spells.map((e) => e.spellId))
-    const toLearn = [...formSet].filter((s) => !baseline.has(s))
-    const toForget = [...baseline].filter((s) => !formSet.has(s))
+    const toLearn = [...formSet].filter((s) => !baselineSet.has(s))
+    const toForget = [...baselineSet].filter((s) => !formSet.has(s))
     return { toLearn, toForget }
   }
 
@@ -248,7 +193,6 @@ export function useCharacterUpdate(id: string) {
 
   return {
     activeTab,
-    character,
     formState,
     isSubmitting,
     canSubmit,

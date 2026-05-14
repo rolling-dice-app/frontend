@@ -207,7 +207,6 @@
 <script setup lang="ts">
 import { Button, Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
-import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 definePageMeta({ middleware: 'auth' })
@@ -218,6 +217,8 @@ const toast = useToast()
 useHead({ title: t('character.card') })
 
 const characterStore = useCharacterStore()
+const authStore = useAuthStore()
+const apiErrorToast = useApiErrorToast()
 // server: false：SSR 階段不拉使用者資料，輸出對所有人一致的 skeleton HTML，
 // 避免 Vercel edge cache 把某使用者的角色列表共享給其他人。
 const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
@@ -227,15 +228,22 @@ const { status, refresh } = await useAsyncData('characters', () => characterStor
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)
 
-const isListMode = ref(false)
+// 顯示模式：以 user.preference.characterListLayout 為單一來源；
+// 整頁 auth-gated，未登入看不到滑塊，不需要 localStorage fallback。
+const setListMode = async (next: boolean): Promise<void> => {
+  try {
+    await authStore.updatePreference({ characterListLayout: next ? 'list' : 'grid' })
+  } catch (err) {
+    // store 未更新 → 滑塊透過 computed 自然 rerender 回原值，視覺自動 rollback
+    apiErrorToast.handle(err)
+  }
+}
 
-onMounted(() => {
-  const storedMode = getLocalStorage<string>(CHARACTER_VIEW_MODE_KEY)
-  if (storedMode === 'list') isListMode.value = true
-})
-
-watch(isListMode, (val) => {
-  setLocalStorage(CHARACTER_VIEW_MODE_KEY, val ? 'list' : 'grid')
+const isListMode = computed({
+  get: () => authStore.user?.preference.characterListLayout === 'list',
+  set: (val) => {
+    void setListMode(val)
+  },
 })
 
 // ── Delete ────────────────────────────────────────────────────────────────────

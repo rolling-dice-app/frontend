@@ -72,6 +72,7 @@ const makeCurrency = (overrides: Partial<CharacterCurrencyDTO> = {}): CharacterC
 
 describe('character-inventory store — load', () => {
   it('items 與 currency 平行 fetch；其一失敗不影響另一個', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     mockInventoryList.mockResolvedValue([makeItem()])
     mockCurrencyGet.mockRejectedValue(new Error('currency boom'))
 
@@ -83,6 +84,7 @@ describe('character-inventory store — load', () => {
     expect(store.itemsError).toBeNull()
     expect(store.currency).toBeNull()
     expect(store.currencyError).toMatchObject({ message: 'currency boom' })
+    expect(consoleError).toHaveBeenCalled()
   })
 })
 
@@ -208,6 +210,31 @@ describe('character-inventory store — setAttunement', () => {
     expect(mockInventoryPatch).toHaveBeenCalledOnce()
     expect(mockInventoryPatch.mock.calls[0]?.[1]).toBe('i-new')
     expect(mockInventoryPatch.mock.calls[0]?.[2].isAttuned).toBe(true)
+  })
+
+  it('detach 成功、attach 失敗時：rethrow 並 refetch 與 server 對齊', async () => {
+    const current = makeItem({ id: 'i-current', isAttuned: true })
+    const target = makeItem({ id: 'i-new', isAttuned: false })
+    // 1st list: 初始 load
+    mockInventoryList.mockResolvedValueOnce([current, target])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    // 2nd list: detach 成功後 patchItem 內部 refetch
+    mockInventoryList.mockResolvedValueOnce([{ ...current, isAttuned: false }, target])
+    // 3rd list: catch 內 refetchItems —— server 顯示「current 已 detach、target 仍未 attune」
+    mockInventoryList.mockResolvedValueOnce([{ ...current, isAttuned: false }, target])
+
+    mockInventoryPatch.mockResolvedValueOnce() // detach
+    mockInventoryPatch.mockRejectedValueOnce(new Error('attach boom'))
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    await expect(store.setAttunement(0, 'i-new')).rejects.toThrow('attach boom')
+
+    expect(mockInventoryList).toHaveBeenCalledTimes(3)
+    expect(store.items.find((i) => i.id === 'i-current')?.isAttuned).toBe(false)
+    expect(store.items.find((i) => i.id === 'i-new')?.isAttuned).toBe(false)
   })
 
   it('目標已在該 slot 時：no-op', async () => {

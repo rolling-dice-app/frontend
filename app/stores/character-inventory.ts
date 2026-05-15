@@ -131,16 +131,19 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     const current = attunedItems.value[slotIndex] ?? null
     if (current?.id === newItemId) return
 
-    const detachOps: Promise<void>[] = []
-    if (current) {
-      detachOps.push(patchItem(current.id, { updatedAt: current.updatedAt, isAttuned: false }))
-    }
-    await Promise.all(detachOps)
-
-    if (newItemId) {
-      const target = items.value.find((i) => i.id === newItemId)
-      if (!target) return
-      await patchItem(target.id, { updatedAt: target.updatedAt, isAttuned: true })
+    try {
+      if (current) {
+        await patchItem(current.id, { updatedAt: current.updatedAt, isAttuned: false })
+      }
+      if (newItemId) {
+        const target = items.value.find((i) => i.id === newItemId)
+        if (!target) return
+        await patchItem(target.id, { updatedAt: target.updatedAt, isAttuned: true })
+      }
+    } catch (err) {
+      // 多步操作：中間步驟可能已寫入 server；以 server truth 對齊本地，避免 UI 停留在 optimistic rollback 後的猜測值。
+      await refetchItems().catch(() => {})
+      throw err
     }
   }
 

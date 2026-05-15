@@ -51,6 +51,7 @@
         <span class="mb-1 block text-xs text-content">{{ t('settings.avatar') }}</span>
         <BusinessCharacterFormPortraitUploader
           v-model="avatar"
+          shape="avatar"
           :upload-fn="avatarUpload"
           :delete-fn="avatarDelete"
         />

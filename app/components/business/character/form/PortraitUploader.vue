@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <div class="aspect-3/4 w-full overflow-hidden border border-primary rounded-md bg-canvas-inset">
+  <div class="flex flex-col gap-8">
+    <div :class="boxClass">
       <img
         v-if="displaySrc && !imgError"
         :src="displaySrc"
@@ -44,7 +44,8 @@
           v-if="imageSrc"
           ref="cropperRef"
           :src="imageSrc"
-          :stencil-props="{ aspectRatio: 3 / 4 }"
+          :stencil-component="stencilComponent"
+          :stencil-props="{ aspectRatio: stencilAspectRatio }"
           image-restriction="fit-area"
           class="h-full w-full"
         />
@@ -77,12 +78,13 @@
 
 <script setup lang="ts">
 import { Button, Modal, Icon } from '@ui'
-import { Cropper } from 'vue-advanced-cropper'
+import { Cropper, CircleStencil, RectangleStencil } from 'vue-advanced-cropper'
 
 const PREFLIGHT_MAX_BYTES = 5 * 1024 * 1024
-const OUTPUT_WIDTH = 768
-const OUTPUT_HEIGHT = 1024
 const WEBP_QUALITY = 0.85
+
+const PORTRAIT_OUTPUT = { width: 768, height: 1024 }
+const AVATAR_OUTPUT = { width: 512, height: 512 }
 
 /**
  * immediate（傳 uploadFn）：裁切完即上傳並原子套用，avatar model 反映新 URL。
@@ -91,7 +93,21 @@ const WEBP_QUALITY = 0.85
 const props = defineProps<{
   uploadFn?: (blob: Blob) => Promise<string>
   deleteFn?: () => Promise<void>
+  /** portrait：3:4 直式矩形（預設）。avatar：1:1 圓形帳號頭像。 */
+  shape?: 'portrait' | 'avatar'
 }>()
+
+const isAvatar = computed(() => props.shape === 'avatar')
+
+const boxClass = computed(() =>
+  isAvatar.value
+    ? 'aspect-square mx-auto w-48 max-w-full overflow-hidden border border-primary rounded-full bg-canvas-inset'
+    : 'aspect-3/4 w-full overflow-hidden border border-primary rounded-md bg-canvas-inset',
+)
+
+const stencilComponent = computed(() => (isAvatar.value ? CircleStencil : RectangleStencil))
+const stencilAspectRatio = computed(() => (isAvatar.value ? 1 : 3 / 4))
+const outputSize = computed(() => (isAvatar.value ? AVATAR_OUTPUT : PORTRAIT_OUTPUT))
 
 // immediate 模式 uploadFn / deleteFn 必須成對：移除若不打後端會造成「看似刪除實際沒持久化」
 if (props.uploadFn && !props.deleteFn) {
@@ -192,12 +208,13 @@ const cropCancel = () => {
 }
 
 const drawToOutputCanvas = (sourceCanvas: HTMLCanvasElement): HTMLCanvasElement => {
+  const { width, height } = outputSize.value
   const out = document.createElement('canvas')
-  out.width = OUTPUT_WIDTH
-  out.height = OUTPUT_HEIGHT
+  out.width = width
+  out.height = height
   const ctx = out.getContext('2d')
   if (!ctx) throw new Error('canvas 2d context unavailable')
-  ctx.drawImage(sourceCanvas, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
+  ctx.drawImage(sourceCanvas, 0, 0, width, height)
   return out
 }
 

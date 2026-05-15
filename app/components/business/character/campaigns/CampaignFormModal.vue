@@ -191,6 +191,5 @@ const onSave = (): void => {
     moneyEarning: { ...draft.value.moneyEarning },
   }
   emit('save', payload, props.editing?.id ?? null)
-  emit('update:modelValue', false)
 }
 </script>

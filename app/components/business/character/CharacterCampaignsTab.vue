@@ -104,12 +104,11 @@ const props = defineProps<{
   loadError: unknown
   isReady: boolean
   conflictSignal: number
-  submitting?: boolean
+  addCampaign: (draft: CampaignDraft) => Promise<boolean>
+  updateCampaign: (id: string, draft: CampaignDraft) => Promise<boolean>
 }>()
 
-const emit = defineEmits<{
-  add: [draft: CampaignDraft]
-  update: [id: string, draft: CampaignDraft]
+defineEmits<{
   remove: [id: string]
   retry: []
 }>()
@@ -135,6 +134,7 @@ const onToggleApplyMoney = async (next: boolean): Promise<void> => {
 
 const modalOpen = ref(false)
 const editing = ref<CampaignEntry | null>(null)
+const submitting = ref(false)
 
 const openCreate = (): void => {
   if (props.entries.length >= campaignRecordLimit.value) {
@@ -150,11 +150,19 @@ const openEdit = (entry: CampaignEntry): void => {
   modalOpen.value = true
 }
 
-const onSave = (draft: CampaignDraft, editingId: string | null): void => {
-  if (editingId) {
-    emit('update', editingId, draft)
-  } else {
-    emit('add', draft)
+const onSave = async (draft: CampaignDraft, editingId: string | null): Promise<void> => {
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const ok = editingId
+      ? await props.updateCampaign(editingId, draft)
+      : await props.addCampaign(draft)
+    if (ok) {
+      modalOpen.value = false
+      editing.value = null
+    }
+  } finally {
+    submitting.value = false
   }
 }
 

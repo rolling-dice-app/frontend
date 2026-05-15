@@ -122,9 +122,9 @@
             :load-error="campaignsLoadError"
             :is-ready="campaignsReady"
             :conflict-signal="campaignConflictSignal"
+            :add-campaign="campaigns.addCampaign"
+            :update-campaign="campaigns.updateCampaign"
             @retry="retryCampaigns"
-            @add="(draft) => void campaigns.addCampaign(draft)"
-            @update="(entryId, draft) => void campaigns.updateCampaign(entryId, draft)"
             @remove="(entryId) => void campaigns.removeCampaign(entryId)"
           />
         </Tab>

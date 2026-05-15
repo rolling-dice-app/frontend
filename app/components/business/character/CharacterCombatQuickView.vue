@@ -23,30 +23,15 @@
     </div>
     <template v-else>
       <header class="flex items-center justify-end gap-2">
-        <Button
-          :radius="4"
-          bg-color="var(--color-warning)"
-          :disabled="isResting"
-          @click="onShortRest"
-        >
+        <CommonAppButton variant="neutral" :disabled="isResting" @click="onShortRest">
           {{ t('combat.shortRest') }}
-        </Button>
-        <Button
-          :radius="4"
-          bg-color="var(--color-success)"
-          :disabled="isResting"
-          @click="onLongRest"
-        >
+        </CommonAppButton>
+        <CommonAppButton variant="neutral" :disabled="isResting" @click="onLongRest">
           {{ t('combat.longRest') }}
-        </Button>
-        <Button
-          :radius="4"
-          bg-color="var(--color-danger)"
-          :disabled="isResting"
-          @click="resetModalOpen = true"
-        >
+        </CommonAppButton>
+        <CommonAppButton variant="danger" :disabled="isResting" @click="resetModalOpen = true">
           {{ t('combat.reset') }}
-        </Button>
+        </CommonAppButton>
       </header>
 
       <div class="grid gap-4 md:grid-cols-2">

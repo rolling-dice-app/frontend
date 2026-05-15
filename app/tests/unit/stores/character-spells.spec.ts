@@ -147,6 +147,7 @@ describe('character-spells store — toggleFlag debounce', () => {
   })
 
   it('PATCH 失敗時 mutationError 被設定且 refetch 取回 server truth', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const entry = makeEntry({ spellId: 'fireball', isPrepared: false })
     const serverTruth = makeEntry({ spellId: 'fireball', isPrepared: false })
     mockSpellsList.mockResolvedValueOnce([entry]).mockResolvedValue([serverTruth])
@@ -165,9 +166,11 @@ describe('character-spells store — toggleFlag debounce', () => {
     expect(store.mutationError).toBe(patchErr)
     // local 被 server truth 蓋回
     expect(store.entries[0]?.isPrepared).toBe(false)
+    expect(consoleError).toHaveBeenCalled()
   })
 
   it('clearMutationError 把 mutationError 歸 null', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     mockSpellsList.mockResolvedValueOnce([makeEntry()])
     const { useCharacterSpellsStore } = await import('~/stores/character-spells')
     const store = useCharacterSpellsStore()
@@ -183,6 +186,7 @@ describe('character-spells store — toggleFlag debounce', () => {
 
     store.clearMutationError()
     expect(store.mutationError).toBeNull()
+    expect(consoleError).toHaveBeenCalled()
   })
 })
 

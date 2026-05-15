@@ -142,7 +142,7 @@
     <NuxtLink
       v-else
       to="/character/build"
-      class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-lg border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('character.createCharacter')"
     >
       <!-- Dark scrim -->
@@ -150,16 +150,29 @@
         class="absolute inset-0 bg-overlay transition-opacity duration-200 group-hover:opacity-75"
         aria-hidden="true"
       />
+      <!-- 氛圍漸層（沉浸區 1 漸層，低飽和暖調，靜態）-->
+      <div
+        class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(184,134,14,0.07),transparent_70%)]"
+        aria-hidden="true"
+      />
 
       <!-- Content -->
-      <div class="relative z-10 px-6 py-12 text-content-muted">
-        <p class="font-display text-5xl text-content-faint" aria-hidden="true">⚔</p>
-        <h2 class="mt-4 font-display text-2xl font-bold text-content">
+      <div class="relative z-10 flex flex-col items-center px-6 py-12">
+        <div class="relative inline-flex items-center justify-center" aria-hidden="true">
+          <span
+            class="empty-glow absolute size-40 rounded-full bg-[radial-gradient(circle,rgba(184,134,14,0.20),transparent_70%)] blur-2xl"
+          />
+          <Icon name="double-sword" :size="72" class="relative text-content-faint" />
+        </div>
+        <h2 class="mt-6 font-display text-5xl font-bold text-content sm:text-6xl">
           {{ t('character.empty') }}
         </h2>
-        <p class="mt-2 text-sm">{{ t('character.emptyCampaignHint') }}</p>
+        <p class="mt-3 font-display text-lg text-content-muted sm:text-xl">
+          {{ t('character.emptyCampaignHint') }}
+        </p>
         <p
-          class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
+          class="mt-6 inline-block text-primary transition-[transform,color] duration-200 group-hover:text-primary-hover"
+          aria-hidden="true"
         >
           <Icon name="plus" :size="40" />
         </p>
@@ -305,5 +318,24 @@ const sortedCharacters = computed(() => {
 /* @ui Select 沒有 44px size（sm32/md40/lg48），把內層 trigger 撐到 44 對齊 toggle / trash */
 .sort-select :deep([role='combobox']) {
   height: 2.75rem;
+}
+
+/* empty state hero glow：沉浸區 1 動畫，緩慢呼吸（非 animate-pulse） */
+.empty-glow {
+  animation: empty-glow-breathe 7s ease-in-out infinite alternate;
+}
+@keyframes empty-glow-breathe {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-glow {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 </style>

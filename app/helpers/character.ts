@@ -22,6 +22,7 @@ import type {
 } from '~/types/business/character-form'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
+import { cleanText, cleanTextOrNull } from '~/utils/text'
 
 /** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */
 export type CharacterTier = 'common' | 'elite' | 'master' | 'legendary'
@@ -218,10 +219,10 @@ export function formStateToCharacterPatch(
   formState: CharacterFormStateBase,
 ): CharacterWritablePatch {
   // identity
-  const name = formState.name
+  const name = cleanText(formState.name)
   const gender = formState.gender
-  const race = formState.race
-  const subrace = formState.subrace
+  const race = cleanTextOrNull(formState.race)
+  const subrace = cleanTextOrNull(formState.subrace)
   const alignment = formState.alignment
 
   // progression
@@ -233,19 +234,19 @@ export function formStateToCharacterPatch(
   const isTough = formState.isTough
 
   // profile
-  const background = formState.background || null
-  const faith = formState.faith || null
+  const background = cleanTextOrNull(formState.background)
+  const faith = cleanTextOrNull(formState.faith)
   const age = formState.age ?? null
-  const height = formState.height || null
-  const weight = formState.weight || null
-  const appearance = formState.appearance || null
-  const story = formState.story || null
+  const height = cleanTextOrNull(formState.height)
+  const weight = cleanTextOrNull(formState.weight)
+  const appearance = cleanTextOrNull(formState.appearance)
+  const story = cleanTextOrNull(formState.story)
 
   // proficiencies
-  const languages = formState.languages || null
-  const tools = formState.tools || null
-  const weaponProficiencies = formState.weaponProficiencies || null
-  const armorProficiencies = formState.armorProficiencies || null
+  const languages = cleanTextOrNull(formState.languages)
+  const tools = cleanTextOrNull(formState.tools)
+  const weaponProficiencies = cleanTextOrNull(formState.weaponProficiencies)
+  const armorProficiencies = cleanTextOrNull(formState.armorProficiencies)
 
   // portrait
   const avatar = formState.avatar
@@ -276,22 +277,22 @@ export function formStateToCharacterPatch(
 }
 
 const toProfileSection = (form: CharacterUpdateFormState): CharacterProfile => ({
-  name: form.name,
+  name: cleanText(form.name),
   gender: form.gender,
-  race: form.race,
-  subrace: form.subrace,
+  race: cleanTextOrNull(form.race),
+  subrace: cleanTextOrNull(form.subrace),
   alignment: form.alignment,
-  background: form.background || null,
-  faith: form.faith || null,
+  background: cleanTextOrNull(form.background),
+  faith: cleanTextOrNull(form.faith),
   age: form.age ?? null,
-  height: form.height || null,
-  weight: form.weight || null,
-  appearance: form.appearance || null,
-  story: form.story || null,
-  languages: form.languages || null,
-  tools: form.tools || null,
-  weaponProficiencies: form.weaponProficiencies || null,
-  armorProficiencies: form.armorProficiencies || null,
+  height: cleanTextOrNull(form.height),
+  weight: cleanTextOrNull(form.weight),
+  appearance: cleanTextOrNull(form.appearance),
+  story: cleanTextOrNull(form.story),
+  languages: cleanTextOrNull(form.languages),
+  tools: cleanTextOrNull(form.tools),
+  weaponProficiencies: cleanTextOrNull(form.weaponProficiencies),
+  armorProficiencies: cleanTextOrNull(form.armorProficiencies),
   avatar: form.avatar,
 })
 

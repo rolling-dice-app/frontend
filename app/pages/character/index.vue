@@ -145,10 +145,9 @@
       class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('character.createCharacter')"
     >
-      <!-- Background image -->
-      <div class="absolute inset-0 bg-cover bg-center" aria-hidden="true" />
+      <!-- Dark scrim -->
       <div
-        class="absolute inset-0 bg-[rgba(19,16,17,0.8)] transition-opacity duration-200 group-hover:opacity-75"
+        class="absolute inset-0 bg-overlay transition-opacity duration-200 group-hover:opacity-75"
         aria-hidden="true"
       />
 

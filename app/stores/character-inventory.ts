@@ -85,16 +85,16 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const patchItem = async (itemId: string, body: InventoryItemUpdateBody): Promise<void> => {
     if (!characterId.value) throw new Error('patchItem: store not loaded')
-    const snapshot = items.value
-    const idx = snapshot.findIndex((i) => i.id === itemId)
+    const idx = items.value.findIndex((i) => i.id === itemId)
     if (idx === -1) throw new Error(`patchItem: itemId ${itemId} not in store`)
     const { updatedAt: _omit, ...optimistic } = body
-    items.value = snapshot.map((item, i) => (i === idx ? { ...item, ...optimistic } : item))
+    items.value = items.value.map((item, i) => (i === idx ? { ...item, ...optimistic } : item))
     try {
       await characters().inventory.patch(characterId.value, itemId, body)
       await refetchItems()
     } catch (err) {
-      items.value = snapshot
+      // 失敗對齊 server truth，避免 snapshot rollback 蓋掉並行 mutation 的成功結果
+      await refetchItems().catch(() => {})
       throw err
     }
   }
@@ -114,12 +114,12 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const removeItem = async (itemId: string): Promise<void> => {
     if (!characterId.value) throw new Error('removeItem: store not loaded')
-    const snapshot = items.value
-    items.value = snapshot.filter((i) => i.id !== itemId)
+    items.value = items.value.filter((i) => i.id !== itemId)
     try {
       await characters().inventory.remove(characterId.value, itemId)
     } catch (err) {
-      items.value = snapshot
+      // 失敗對齊 server truth，避免 snapshot rollback 蓋掉並行 mutation 的成功結果
+      await refetchItems().catch(() => {})
       throw err
     }
   }
@@ -131,19 +131,14 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     const current = attunedItems.value[slotIndex] ?? null
     if (current?.id === newItemId) return
 
-    try {
-      if (current) {
-        await patchItem(current.id, { updatedAt: current.updatedAt, isAttuned: false })
-      }
-      if (newItemId) {
-        const target = items.value.find((i) => i.id === newItemId)
-        if (!target) return
-        await patchItem(target.id, { updatedAt: target.updatedAt, isAttuned: true })
-      }
-    } catch (err) {
-      // 多步操作：中間步驟可能已寫入 server；以 server truth 對齊本地，避免 UI 停留在 optimistic rollback 後的猜測值。
-      await refetchItems().catch(() => {})
-      throw err
+    // patchItem 失敗時自身會 refetch 對齊 server truth，這裡不再額外 catch
+    if (current) {
+      await patchItem(current.id, { updatedAt: current.updatedAt, isAttuned: false })
+    }
+    if (newItemId) {
+      const target = items.value.find((i) => i.id === newItemId)
+      if (!target) return
+      await patchItem(target.id, { updatedAt: target.updatedAt, isAttuned: true })
     }
   }
 
@@ -151,16 +146,16 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const updateCurrency = async (body: CharacterCurrencyUpdateBody): Promise<void> => {
     if (!characterId.value) throw new Error('updateCurrency: store not loaded')
-    const snapshot = currency.value
-    if (snapshot) {
+    if (currency.value) {
       const { updatedAt: _omit, ...optimistic } = body
-      currency.value = { ...snapshot, ...optimistic }
+      currency.value = { ...currency.value, ...optimistic }
     }
     try {
       await characters().currency.patch(characterId.value, body)
       await refetchCurrency()
     } catch (err) {
-      currency.value = snapshot
+      // 失敗對齊 server truth，避免 snapshot rollback 蓋掉並行 mutation 的成功結果
+      await refetchCurrency().catch(() => {})
       throw err
     }
   }

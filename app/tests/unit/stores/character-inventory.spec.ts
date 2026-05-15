@@ -89,10 +89,13 @@ describe('character-inventory store — load', () => {
 })
 
 describe('character-inventory store — patchItem', () => {
-  it('失敗時還原 items 快照並 rethrow', async () => {
+  it('失敗時 refetch server truth 並 rethrow（不能用進入時 snapshot 蓋掉並行 mutation 結果）', async () => {
     const item = makeItem({ id: 'i-1', quantity: 1 })
+    // 1st list: 初始 load
     mockInventoryList.mockResolvedValueOnce([item])
     mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    // 2nd list: catch 內 refetchItems → server 仍是 quantity=1
+    mockInventoryList.mockResolvedValueOnce([item])
     mockInventoryPatch.mockRejectedValue(new Error('patch boom'))
 
     const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
@@ -103,7 +106,32 @@ describe('character-inventory store — patchItem', () => {
       store.patchItem('i-1', { updatedAt: item.updatedAt, quantity: 99 }),
     ).rejects.toThrow('patch boom')
 
+    // 失敗後本地對齊 server truth（server 仍是 quantity=1）；refetch 應被呼叫
+    expect(mockInventoryList).toHaveBeenCalledTimes(2)
     expect(store.items[0]?.quantity).toBe(1)
+  })
+
+  it('A 失敗 refetch 時，B 已成功寫入 server 的較新狀態應被保留', async () => {
+    const a = makeItem({ id: 'i-a', quantity: 1 })
+    const b = makeItem({ id: 'i-b', quantity: 1 })
+    // 1st list: 初始 load → [a, b]
+    mockInventoryList.mockResolvedValueOnce([a, b])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    // catch 內 refetchItems → server 顯示 a 沒變、b 已更新到 5（並行 B mutation 已成功的 server truth）
+    const bAfter = makeItem({ id: 'i-b', quantity: 5, updatedAt: '2026-05-02T00:00:00.000Z' })
+    mockInventoryList.mockResolvedValueOnce([a, bAfter])
+    mockInventoryPatch.mockRejectedValue(new Error('a patch boom'))
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    await expect(store.patchItem('i-a', { updatedAt: a.updatedAt, quantity: 99 })).rejects.toThrow(
+      'a patch boom',
+    )
+
+    // B 的 server truth (quantity=5) 不可被舊 snapshot 蓋成 1
+    expect(store.items.find((i) => i.id === 'i-b')?.quantity).toBe(5)
   })
 
   it('成功時 optimistic 套用、PATCH、再 refetch 同步 server 結果', async () => {
@@ -130,10 +158,13 @@ describe('character-inventory store — patchItem', () => {
 })
 
 describe('character-inventory store — removeItem', () => {
-  it('失敗時還原 items 快照並 rethrow', async () => {
+  it('失敗時 refetch server truth 並 rethrow（不能用進入時 snapshot 蓋掉並行 mutation 結果）', async () => {
     const item = makeItem({ id: 'i-1' })
+    // 1st list: 初始 load
     mockInventoryList.mockResolvedValueOnce([item])
     mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    // 2nd list: catch 內 refetchItems → server 仍有 item
+    mockInventoryList.mockResolvedValueOnce([item])
     mockInventoryRemove.mockRejectedValue(new Error('remove boom'))
 
     const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
@@ -141,13 +172,18 @@ describe('character-inventory store — removeItem', () => {
     await store.load('char-1')
 
     await expect(store.removeItem('i-1')).rejects.toThrow('remove boom')
+
+    expect(mockInventoryList).toHaveBeenCalledTimes(2)
     expect(store.items.map((i) => i.id)).toEqual(['i-1'])
   })
 })
 
 describe('character-inventory store — updateCurrency', () => {
-  it('失敗時還原 currency 快照並 rethrow', async () => {
+  it('失敗時 refetch server truth 並 rethrow', async () => {
     mockInventoryList.mockResolvedValueOnce([])
+    // 1st get: 初始 load
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency({ gp: 100 }))
+    // 2nd get: catch 內 refetchCurrency → server 仍是 100
     mockCurrencyGet.mockResolvedValueOnce(makeCurrency({ gp: 100 }))
     mockCurrencyPatch.mockRejectedValue(new Error('currency patch boom'))
 
@@ -159,6 +195,7 @@ describe('character-inventory store — updateCurrency', () => {
       store.updateCurrency({ updatedAt: store.currency!.updatedAt, gp: 0 }),
     ).rejects.toThrow('currency patch boom')
 
+    expect(mockCurrencyGet).toHaveBeenCalledTimes(2)
     expect(store.currency?.gp).toBe(100)
   })
 })

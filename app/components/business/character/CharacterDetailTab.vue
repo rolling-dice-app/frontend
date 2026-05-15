@@ -70,7 +70,7 @@
           <h2 id="section-proficiencies" class="font-display text-lg font-bold text-content">
             {{ t('character.proficiencies') }}
           </h2>
-          <table class="w-full text-sm">
+          <table class="w-full table-fixed text-sm">
             <thead>
               <tr class="border-b border-border-soft text-left text-xs text-content-muted">
                 <th class="pb-2 font-normal">{{ t('character.language') }}</th>
@@ -81,16 +81,16 @@
             </thead>
             <tbody>
               <tr class="border-b border-border-soft">
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.languages || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.tools || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.weaponProficiencies || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.armorProficiencies || t('character.emptyDash') }}
                 </td>
               </tr>
@@ -160,7 +160,7 @@
       </div>
       <div class="sm:w-1/4 md:w-1/3 w-full">
         <div
-          class="aspect-[3/4] w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
+          class="aspect-3/4 w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
         >
           <img
             v-if="character.avatar"

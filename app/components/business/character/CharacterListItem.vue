@@ -64,7 +64,7 @@
       v-if="isDeleteMode"
       type="button"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      class="ml-2 size-8 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
+      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
       @click.prevent="$emit('delete', character)"
     >
       <Icon name="close" :size="20" />

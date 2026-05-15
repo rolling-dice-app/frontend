@@ -12,6 +12,7 @@
             border-color="var(--rd--color-border)"
             color="var(--rd--color-text)"
             dropdown-bg="var(--rd--color-bg-elevated)"
+            option-hover-color="var(--color-canvas-inset)"
             class="sort-select w-21 xs:w-28"
             :aria-label="t('character.sortBy')"
           />
@@ -20,25 +21,25 @@
             type="button"
             :aria-pressed="isListMode"
             :aria-label="t('character.toggleViewMode')"
-            class="relative flex cursor-pointer items-center rounded-lg border border-border p-1"
+            class="relative flex h-11 cursor-pointer items-center overflow-hidden rounded-lg border border-border"
             @click="isListMode = !isListMode"
             @keydown.enter.prevent="isListMode = !isListMode"
             @keydown.space.prevent="isListMode = !isListMode"
           >
             <div
-              class="absolute top-1 left-1 size-8 rounded-md bg-primary transition-transform duration-200"
-              :class="isListMode ? 'translate-x-8' : 'translate-x-0'"
+              class="absolute top-0 left-0 h-full w-11 rounded-md bg-primary transition-transform duration-200"
+              :class="isListMode ? 'translate-x-11' : 'translate-x-0'"
               aria-hidden="true"
             />
             <span
-              class="relative z-10 flex size-8 items-center justify-center transition-colors duration-150"
+              class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
               :class="!isListMode ? 'text-text-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
               <Icon name="grid" :size="24" />
             </span>
             <span
-              class="relative z-10 flex size-8 items-center justify-center transition-colors duration-150"
+              class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
               :class="isListMode ? 'text-text-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
@@ -52,7 +53,7 @@
             :aria-label="
               isDeleteMode ? t('ui.action.leaveDeleteMode') : t('ui.action.enterDeleteMode')
             "
-            class="flex size-10 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
+            class="flex size-11 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
             :class="
               isDeleteMode ? 'bg-danger text-text-inverse' : 'text-content-muted hover:bg-surface'
             "
@@ -300,3 +301,10 @@ const sortedCharacters = computed(() => {
   return list.sort(byUpdated)
 })
 </script>
+
+<style scoped>
+/* @ui Select 沒有 44px size（sm32/md40/lg48），把內層 trigger 撐到 44 對齊 toggle / trash */
+.sort-select :deep([role='combobox']) {
+  height: 2.75rem;
+}
+</style>

@@ -16,7 +16,7 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
   /** 最近一次背景持久化失敗的錯誤；由 consumer watch 並交給 useApiErrorToast 處理。 */
   const mutationError = ref<unknown>(null)
 
-  /** 每個 (spellId, flag) 一支 debounce，避免不同 toggle 互相 cancel。 */
+  /** 每 spellId 一支 debounce；同 spell 的 prepared / favorite 合併 PATCH，避免兩個獨立 PATCH 帶同一 stale updatedAt 競態。 */
   const persistDebounces = new Map<string, DebouncedFn<[]>>()
 
   const load = async (id: string): Promise<SpellEntryDTO[]> => {
@@ -62,24 +62,28 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     }
   }
 
-  /** 將 (spellId, flag) 的當前 local 值持久化；失敗時 refetch 取回 server truth。 */
-  const persistFlag = async (spellId: string, flag: ToggleFlag): Promise<void> => {
+  /** 將指定 spell 當前的 prepared / favorite 一次送出；失敗時 refetch 取回 server truth。 */
+  const persistMergedFlags = async (spellId: string): Promise<void> => {
     if (!characterId.value) return
     const entry = entries.value.find((e) => e.spellId === spellId)
     if (!entry) return
     try {
-      const body: SpellEntryUpdateBody = { updatedAt: entry.updatedAt, [flag]: entry[flag] }
+      const body: SpellEntryUpdateBody = {
+        updatedAt: entry.updatedAt,
+        isPrepared: entry.isPrepared,
+        isFavorite: entry.isFavorite,
+      }
       await characters().spells.patch(characterId.value, spellId, body)
       await refetch()
     } catch (err) {
       mutationError.value = err
-      logger.error(`persistFlag(${spellId}, ${flag}) failed:`, err)
+      logger.error(`persistMergedFlags(${spellId}) failed:`, err)
       // 不丟出：debounce 把 promise 丟掉了；錯誤由 mutationError ref 傳給 consumer
       await refetch().catch(() => {})
     }
   }
 
-  /** 立刻翻 flag（視覺 optimistic），trailing 200ms 後才送 PATCH，避免連點 spam DB。 */
+  /** 立刻翻 flag（視覺 optimistic）；trailing debounce 後以 spellId 為單位合併送出當前兩個 flag。 */
   const toggleFlag = (spellId: string, flag: ToggleFlag): void => {
     const index = entries.value.findIndex((entry) => entry.spellId === spellId)
     if (index === -1) return
@@ -87,11 +91,10 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     entries.value = entries.value.map((entry, i) =>
       i === index ? { ...entry, [flag]: !current[flag] } : entry,
     )
-    const key = `${spellId}:${flag}`
-    let d = persistDebounces.get(key)
+    let d = persistDebounces.get(spellId)
     if (!d) {
-      d = debounce(() => void persistFlag(spellId, flag), FLAG_DEBOUNCE_MS)
-      persistDebounces.set(key, d)
+      d = debounce(() => void persistMergedFlags(spellId), FLAG_DEBOUNCE_MS)
+      persistDebounces.set(spellId, d)
     }
     d()
   }

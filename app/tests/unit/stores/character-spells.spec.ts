@@ -126,9 +126,11 @@ describe('character-spells store — toggleFlag debounce', () => {
     expect(body.isPrepared).toBe(false)
   })
 
-  it('prepared 與 favorite 使用獨立 debounce key，互不取消', async () => {
-    const entry = makeEntry({ spellId: 'fireball' })
-    mockSpellsList.mockResolvedValueOnce([entry]).mockResolvedValue([entry])
+  it('同 spell 連點 prepared + favorite 應合併成單一 PATCH（避免兩個獨立 PATCH 帶同一 stale updatedAt 競態）', async () => {
+    const entry = makeEntry({ spellId: 'fireball', isPrepared: false, isFavorite: false })
+    mockSpellsList
+      .mockResolvedValueOnce([entry])
+      .mockResolvedValue([{ ...entry, isPrepared: true, isFavorite: true }])
     mockSpellsPatch.mockResolvedValue()
 
     const { useCharacterSpellsStore } = await import('~/stores/character-spells')
@@ -140,10 +142,34 @@ describe('character-spells store — toggleFlag debounce', () => {
 
     await vi.advanceTimersByTimeAsync(FLAG_DEBOUNCE_MS)
 
+    expect(mockSpellsPatch).toHaveBeenCalledOnce()
+    const body = mockSpellsPatch.mock.calls[0]![2]
+    expect(body).toMatchObject({
+      updatedAt: entry.updatedAt,
+      isPrepared: true,
+      isFavorite: true,
+    })
+  })
+
+  it('不同 spell 的 toggle 各自獨立 debounce、互不合併', async () => {
+    const a = makeEntry({ spellId: 'fireball' })
+    const b = makeEntry({ id: 'entry-2', spellId: 'shield' })
+    mockSpellsList.mockResolvedValueOnce([a, b]).mockResolvedValue([a, b])
+    mockSpellsPatch.mockResolvedValue()
+
+    const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+    const store = useCharacterSpellsStore()
+    await store.load('char-1')
+
+    store.togglePrepared('fireball')
+    store.togglePrepared('shield')
+
+    await vi.advanceTimersByTimeAsync(FLAG_DEBOUNCE_MS)
+
     expect(mockSpellsPatch).toHaveBeenCalledTimes(2)
-    const bodies = mockSpellsPatch.mock.calls.map((c) => c[2])
-    expect(bodies.some((b) => 'isPrepared' in b)).toBe(true)
-    expect(bodies.some((b) => 'isFavorite' in b)).toBe(true)
+    const spellIds = mockSpellsPatch.mock.calls.map((c) => c[1])
+    expect(spellIds).toContain('fireball')
+    expect(spellIds).toContain('shield')
   })
 
   it('PATCH 失敗時 mutationError 被設定且 refetch 取回 server truth', async () => {

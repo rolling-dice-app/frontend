@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 import { Button, Modal, TextArea } from '@ui'
-import { DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
+import { CHARACTER_INT_LIMITS, DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
@@ -161,8 +161,7 @@ const emptyDraft = (): CampaignDraft => {
 }
 
 const sanitizeNumber = (value: string): number => {
-  const parsed = Math.floor(Number(value) || 0)
-  return Math.max(0, parsed)
+  return Math.max(0, parseIntegerInput(value, 0, CHARACTER_INT_LIMITS.LARGE_INT_MAX))
 }
 
 const draft = ref<CampaignDraft>(emptyDraft())

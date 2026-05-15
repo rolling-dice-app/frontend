@@ -174,7 +174,12 @@
             outline
             :model-value="String(draft.quantity)"
             class="w-full"
-            @update:model-value="draft.quantity = Math.max(1, Math.floor(Number($event) || 1))"
+            @update:model-value="
+              draft.quantity = Math.max(
+                1,
+                parseIntegerInput($event, 1, CHARACTER_INT_LIMITS.GENERAL_INT_MAX),
+              )
+            "
           />
         </div>
         <div class="w-32">
@@ -234,6 +239,7 @@ import { Badge, Button, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {
+  CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
   MAX_DECIMAL_PRECISION,
   VALIDATION_LIMITS,
@@ -269,7 +275,8 @@ const WEIGHT_PRECISION_FACTOR = 10 ** MAX_DECIMAL_PRECISION
 const normalizeWeight = (raw: string): number => {
   const n = Number(raw)
   if (!Number.isFinite(n) || n <= 0) return 0
-  return Math.round(n * WEIGHT_PRECISION_FACTOR) / WEIGHT_PRECISION_FACTOR
+  const rounded = Math.round(n * WEIGHT_PRECISION_FACTOR) / WEIGHT_PRECISION_FACTOR
+  return Math.min(CHARACTER_INT_LIMITS.GENERAL_INT_MAX, rounded)
 }
 
 // ─── Drag and Drop ────────────────────────────────────────────────────────────

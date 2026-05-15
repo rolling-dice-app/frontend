@@ -1,9 +1,18 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import CurrencyEditModal from '~/components/business/character/form/inventory/CurrencyEditModal.vue'
+import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
+
+beforeEach(() => {
+  vi.stubGlobal('parseIntegerInput', parseIntegerInput)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 const ModalStub = {
   name: 'Modal',

@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
 import { Button, Modal } from '@ui'
+import { CHARACTER_INT_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
@@ -74,7 +75,7 @@ watch(
 )
 
 const onUpdate = (key: CurrencyKey, value: string): void => {
-  draft[key] = Math.max(0, Math.floor(Number(value) || 0))
+  draft[key] = Math.max(0, parseIntegerInput(value, 0, CHARACTER_INT_LIMITS.LARGE_INT_MAX))
 }
 
 const isDirty = (): boolean =>

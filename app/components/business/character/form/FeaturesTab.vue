@@ -218,6 +218,7 @@ import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
 import {
+  CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
   VALIDATION_LIMITS,
   type CharacterFeature,
@@ -357,7 +358,10 @@ const onToggleHasUses = (checked: boolean): void => {
 
 const onUpdateMax = (value: string): void => {
   if (!draft.value.usage.hasUses) return
-  draft.value.usage.max = Math.max(1, parseIntegerInput(value, 1))
+  draft.value.usage.max = Math.max(
+    1,
+    parseIntegerInput(value, 1, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+  )
 }
 
 const onUpdateRecovery = (value: FeatureUsageRecovery): void => {

@@ -29,8 +29,8 @@ export const useApiErrorToast = () => {
   const { t } = useI18n()
   const logger = createLogger('[ApiError]')
 
-  const handle = (err: unknown): void => {
-    toast.error(t('ui.message.systemError'))
+  const handle = (err: unknown, options: { toastMessage?: string } = {}): void => {
+    toast.error(options.toastMessage ?? t('ui.message.systemError'))
     logger.error('[unhandled API error]', {
       code: extractCode(err),
       status: extractStatus(err),

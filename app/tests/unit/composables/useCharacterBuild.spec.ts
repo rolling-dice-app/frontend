@@ -10,12 +10,14 @@ vi.mock('~/helpers/dice', () => ({
 }))
 
 const mockToastError = vi.fn()
+const mockApiErrorHandle = vi.fn()
 
 async function getComposable() {
   const { useCharacterStore } = await import('~/stores/character')
   vi.stubGlobal('useCharacterStore', useCharacterStore)
 
   vi.stubGlobal('useToast', () => ({ error: mockToastError }))
+  vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
 
   const { useCharacterBuild } = await import('~/composables/domain/useCharacterBuild')
   return useCharacterBuild()
@@ -374,12 +376,13 @@ describe('useCharacterBuild — submit', () => {
     expect(arg.abilities.dexterity).toEqual({ origin: 14, race: -1 })
   })
 
-  it('store.createCharacter 拋出例外時應顯示錯誤 toast 且不導航', async () => {
+  it('store.createCharacter 拋出例外時應交給 useApiErrorToast 並覆寫文案為 saveFailed，且不導航', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
+    const err = new Error('unexpected')
     vi.spyOn(store, 'createCharacter').mockImplementation(() => {
-      throw new Error('unexpected')
+      throw err
     })
 
     const { formState, isSubmitting, submit } = await getComposable()
@@ -387,7 +390,7 @@ describe('useCharacterBuild — submit', () => {
     formState.classes[0]!.classKey = 'fighter'
 
     await submit()
-    expect(mockToastError).toHaveBeenCalledWith('儲存失敗，請稍後再試')
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err, { toastMessage: '儲存失敗，請稍後再試' })
     expect(mockNavigateTo).not.toHaveBeenCalled()
     expect(isSubmitting.value).toBe(false)
   })

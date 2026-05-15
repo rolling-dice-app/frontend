@@ -86,4 +86,17 @@ describe('useApiErrorToast — 統一吐 systemError + log', () => {
       status: 502,
     })
   })
+
+  it('toastMessage 覆寫應只動 toast 文案、log payload 維持一致', () => {
+    const { items } = useToast()
+    const { handle } = useApiErrorToast()
+    handle(makeFetchError({ status: 500, url: '/api/foo' }), {
+      toastMessage: '儲存失敗，請稍後再試',
+    })
+    expect(items[0]!.message).toBe('儲存失敗，請稍後再試')
+    expect(consoleErrorSpy.mock.calls[0]![2]).toMatchObject({
+      status: 500,
+      url: '/api/foo',
+    })
+  })
 })

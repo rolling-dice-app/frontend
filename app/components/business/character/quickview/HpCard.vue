@@ -4,7 +4,7 @@
       {{ t('combat.hp') }}
     </h3>
 
-    <div class="grid grid-cols-3 gap-2">
+    <div class="grid grid-cols-3 gap-2 tabular">
       <div
         class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3 gap-1"
       >

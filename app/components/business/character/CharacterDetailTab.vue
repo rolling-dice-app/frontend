@@ -98,7 +98,7 @@
           </table>
         </div>
         <!-- 職業資訊 -->
-        <div class="flex flex-col gap-4 flex-1">
+        <div class="flex flex-col gap-4 flex-1 tabular">
           <h2 id="section-classes" class="font-display text-lg font-bold text-content">
             {{ t('class.className') }}
           </h2>
@@ -188,7 +188,7 @@
             <h2 id="section-abilities-saves" class="font-display text-lg font-bold text-content">
               {{ t('character.abilitiesAndSaves') }}
             </h2>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-3 gap-3 tabular">
               <div
                 v-for="key in ABILITY_KEYS"
                 :key="key"
@@ -229,7 +229,7 @@
           <h2 id="section-other-abilities" class="font-display text-lg font-bold text-content">
             {{ t('character.otherAbilities') }}
           </h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 tabular">
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
@@ -284,7 +284,7 @@
         <h2 id="section-skills" class="mb-4 font-display text-lg font-bold text-content">
           {{ t('character.skillProficienciesTitle') }}
         </h2>
-        <div class="grid grid-cols-2 grid-rows-9 grid-flow-col gap-x-6 gap-y-2">
+        <div class="grid grid-cols-2 grid-rows-9 grid-flow-col gap-x-6 gap-y-2 tabular">
           <div
             v-for="skill in skillList"
             :key="skill.key"

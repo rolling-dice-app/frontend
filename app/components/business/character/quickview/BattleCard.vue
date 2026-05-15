@@ -3,7 +3,7 @@
     <h3 id="quickview-battle-label" class="mb-2 font-display text-sm font-bold text-content">
       {{ t('combat.battleSection') }}
     </h3>
-    <div class="flex flex-1 flex-col gap-2">
+    <div class="flex flex-1 flex-col gap-2 tabular">
       <div class="grid grid-cols-2 gap-2">
         <div
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"

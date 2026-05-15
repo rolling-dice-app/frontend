@@ -177,5 +177,4 @@ export type CharacterWritablePatch = Pick<
   | 'tools'
   | 'weaponProficiencies'
   | 'armorProficiencies'
-  | 'avatar'
 >

@@ -248,9 +248,6 @@ export function formStateToCharacterPatch(
   const weaponProficiencies = cleanTextOrNull(formState.weaponProficiencies)
   const armorProficiencies = cleanTextOrNull(formState.armorProficiencies)
 
-  // portrait
-  const avatar = formState.avatar
-
   return {
     name,
     gender,
@@ -272,11 +269,10 @@ export function formStateToCharacterPatch(
     tools,
     weaponProficiencies,
     armorProficiencies,
-    avatar,
   }
 }
 
-const toProfileSection = (form: CharacterUpdateFormState): CharacterProfile => ({
+const toProfileSection = (form: CharacterUpdateFormState): Omit<CharacterProfile, 'avatar'> => ({
   name: cleanText(form.name),
   gender: form.gender,
   race: cleanTextOrNull(form.race),
@@ -293,7 +289,6 @@ const toProfileSection = (form: CharacterUpdateFormState): CharacterProfile => (
   tools: cleanTextOrNull(form.tools),
   weaponProficiencies: cleanTextOrNull(form.weaponProficiencies),
   armorProficiencies: cleanTextOrNull(form.armorProficiencies),
-  avatar: form.avatar,
 })
 
 const toClassesSection = (form: CharacterUpdateFormState): CharacterClasses => ({
@@ -324,7 +319,7 @@ const toCapabilitiesSection = (form: CharacterUpdateFormState): CharacterCapabil
   features: form.features,
 })
 
-const originalProfile = (c: CharacterDTO): CharacterProfile => ({
+const originalProfile = (c: CharacterDTO): Omit<CharacterProfile, 'avatar'> => ({
   name: c.name,
   gender: c.gender,
   race: c.race,
@@ -341,7 +336,6 @@ const originalProfile = (c: CharacterDTO): CharacterProfile => ({
   tools: c.tools,
   weaponProficiencies: c.weaponProficiencies,
   armorProficiencies: c.armorProficiencies,
-  avatar: c.avatar,
 })
 
 const originalClasses = (c: CharacterDTO): CharacterClasses => ({ classes: c.classes })

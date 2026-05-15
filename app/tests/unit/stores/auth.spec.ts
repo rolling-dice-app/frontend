@@ -195,3 +195,64 @@ describe('useAuthStore — updatePreference()', () => {
     expect(apiFetch).not.toHaveBeenCalled()
   })
 })
+
+describe('useAuthStore — updateProfile()', () => {
+  it('displayName + preference 同時更新：preference 與當前 merge，帶 updatedAt，回傳寫回 user', async () => {
+    const updated: User = {
+      ...sampleUser,
+      displayName: 'Alice 2',
+      preference: { characterListLayout: 'list', applyMoneyToCurrency: true },
+      updatedAt: '2026-03-01T00:00:00Z',
+    }
+    const mockUpdateProfile = vi.fn().mockResolvedValue(updated)
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    await store.updateProfile({
+      displayName: 'Alice 2',
+      preference: { characterListLayout: 'list' },
+    })
+
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      displayName: 'Alice 2',
+      preference: { characterListLayout: 'list', applyMoneyToCurrency: true },
+      updatedAt: '2026-01-01T00:00:00Z',
+    })
+    expect(store.user).toEqual(updated)
+  })
+
+  it('只傳 displayName 時 body 不含 preference key', async () => {
+    const mockUpdateProfile = vi.fn().mockResolvedValue({ ...sampleUser, displayName: 'Bob' })
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    await store.updateProfile({ displayName: 'Bob' })
+
+    const body = mockUpdateProfile.mock.calls[0]![0] as Record<string, unknown>
+    expect(body).toEqual({ displayName: 'Bob', updatedAt: '2026-01-01T00:00:00Z' })
+    expect('preference' in body).toBe(false)
+  })
+
+  it('PATCH 失敗（409）時保留原 user 不動，錯誤往外拋', async () => {
+    const mockUpdateProfile = vi.fn().mockRejectedValue(fetchErrorWith(409))
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    await expect(store.updateProfile({ displayName: 'X' })).rejects.toMatchObject({
+      statusCode: 409,
+    })
+    expect(store.user).toEqual(sampleUser)
+  })
+
+  it('user 未登入時直接拋錯，不發 PATCH', async () => {
+    const mockUpdateProfile = vi.fn()
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
+
+    const store = useAuthStore()
+    await expect(store.updateProfile({ displayName: 'X' })).rejects.toThrow()
+    expect(mockUpdateProfile).not.toHaveBeenCalled()
+  })
+})

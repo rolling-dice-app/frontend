@@ -3,6 +3,7 @@ import character from './character'
 import classLabels from './class'
 import combat from './combat'
 import inventory from './inventory'
+import settings from './settings'
 import skill from './skill'
 import spell from './spell'
 
@@ -13,6 +14,7 @@ export const enumLabels = {
   class: classLabels,
   combat,
   inventory,
+  settings,
   skill,
   spell,
 }

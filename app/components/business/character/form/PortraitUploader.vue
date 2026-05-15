@@ -1,7 +1,14 @@
 <template>
   <div class="flex flex-col gap-2">
     <div class="aspect-3/4 w-full overflow-hidden border border-primary rounded-md bg-canvas-inset">
-      <img v-if="avatar" :src="avatar" alt="" class="h-full w-full object-cover" loading="lazy" />
+      <img
+        v-if="displaySrc && !imgError"
+        :src="displaySrc"
+        alt=""
+        class="h-full w-full object-cover"
+        loading="lazy"
+        @error="imgError = true"
+      />
       <div
         v-else
         class="h-full w-full flex flex-col gap-2 items-center justify-center px-3 text-center text-xs text-content-muted"
@@ -15,7 +22,7 @@
       type="button"
       :radius="4"
       bg-color="var(--color-danger)"
-      :disabled="uploading || !avatar"
+      :disabled="uploading || !displaySrc"
       @click="handleRemove"
     >
       {{ t('character.portrait.remove') }}
@@ -77,17 +84,56 @@ const OUTPUT_WIDTH = 768
 const OUTPUT_HEIGHT = 1024
 const WEBP_QUALITY = 0.85
 
+/**
+ * immediate（傳 uploadFn）：裁切完即上傳並原子套用，avatar model 反映新 URL。
+ * deferred（未傳 uploadFn）：blob 經 pendingBlob model 交外層於資源建立後上傳。
+ */
+const props = defineProps<{
+  uploadFn?: (blob: Blob) => Promise<string>
+  deleteFn?: () => Promise<void>
+}>()
+
+// immediate 模式 uploadFn / deleteFn 必須成對：移除若不打後端會造成「看似刪除實際沒持久化」
+if (props.uploadFn && !props.deleteFn) {
+  throw new Error('PortraitUploader: deleteFn is required when uploadFn is provided')
+}
+
 const avatar = defineModel<string | null>({ required: true })
+const pendingBlob = defineModel<Blob | null>('pendingBlob', { default: null })
 
 const { t } = useI18n()
 const toast = useToast()
 const apiErrorToast = useApiErrorToast()
+
+const isImmediate = computed(() => typeof props.uploadFn === 'function')
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const cropperRef = ref<InstanceType<typeof Cropper> | null>(null)
 const imageSrc = ref<string | null>(null)
 const cropOpen = ref(false)
 const uploading = ref(false)
+
+/** deferred 模式本地預覽（pendingBlob 的 objectURL）；與 server avatar URL 互斥優先。 */
+const pendingPreview = ref<string | null>(null)
+const displaySrc = computed(() => pendingPreview.value ?? avatar.value)
+
+/** 圖片載入失敗（R2 URL 尚未傳播 / 404）時退回空狀態占位，而非破圖。 */
+const imgError = ref(false)
+watch(displaySrc, () => {
+  imgError.value = false
+})
+
+const clearPendingPreview = () => {
+  if (pendingPreview.value) {
+    URL.revokeObjectURL(pendingPreview.value)
+    pendingPreview.value = null
+  }
+}
+
+const setPendingPreview = (blob: Blob) => {
+  clearPendingPreview()
+  pendingPreview.value = URL.createObjectURL(blob)
+}
 
 const releaseImageSrc = () => {
   if (imageSrc.value) {
@@ -181,8 +227,14 @@ const cropConfirm = async () => {
   try {
     const output = drawToOutputCanvas(result.canvas)
     const blob = await canvasToWebp(output)
-    const url = await uploads().avatar(blob)
-    avatar.value = url
+    if (isImmediate.value) {
+      const url = await props.uploadFn!(blob)
+      avatar.value = url
+      clearPendingPreview()
+    } else {
+      setPendingPreview(blob)
+      pendingBlob.value = blob
+    }
     cropOpen.value = false
     releaseImageSrc()
     resetFileInput()
@@ -193,11 +245,28 @@ const cropConfirm = async () => {
   }
 }
 
-const handleRemove = () => {
-  avatar.value = null
+const handleRemove = async () => {
+  if (uploading.value) return
+  if (!isImmediate.value) {
+    clearPendingPreview()
+    pendingBlob.value = null
+    return
+  }
+  if (avatar.value === null) return
+  uploading.value = true
+  try {
+    await props.deleteFn!()
+    avatar.value = null
+    clearPendingPreview()
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    uploading.value = false
+  }
 }
 
 onBeforeUnmount(() => {
   releaseImageSrc()
+  clearPendingPreview()
 })
 </script>

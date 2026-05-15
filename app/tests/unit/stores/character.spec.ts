@@ -159,7 +159,7 @@ describe('character store — createCharacter', () => {
     expect(store.list[0]).toMatchObject({ id: 'created-1', name: '新建' })
   })
 
-  it('avatar URL 透過 createInput 帶到 API；列表項保留 avatar', async () => {
+  it('createInput 不含 avatar（改由建立後 POST /characters/:id/avatar）；列表項取伺服器回傳 avatar', async () => {
     const url = 'https://avatars.example.com/u1/p.webp'
     const created = createMockCharacter({ id: 'created-2', name: '帶圖', avatar: url })
     mockCreateCharacter.mockResolvedValue(created)
@@ -170,7 +170,7 @@ describe('character store — createCharacter', () => {
     await store.createCharacter(formState)
 
     const input = mockCreateCharacter.mock.calls[0]![0] as Record<string, unknown>
-    expect(input.avatar).toBe(url)
+    expect('avatar' in input).toBe(false)
     expect(store.list[0]?.avatar).toBe(url)
   })
 })
@@ -209,6 +209,55 @@ describe('character store — removeCharacter', () => {
     await expect(store.removeCharacter('rm-x')).rejects.toThrow('boom')
     expect(store.list).toHaveLength(1)
     expect(store.detailCache.has('rm-x')).toBe(true)
+  })
+})
+
+describe('character store — refreshCharacterAfterAvatar', () => {
+  it('重抓角色：detailCache 更新成新 avatar/updatedAt，list 縮圖同步', async () => {
+    const before = createMockCharacter({
+      id: 'av-1',
+      name: '阿凡',
+      avatar: null,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    const after = createMockCharacter({
+      id: 'av-1',
+      name: '阿凡',
+      avatar: 'https://r2/av-1.webp',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    })
+    mockListCharacters.mockResolvedValue([charToSummary(before)])
+    mockGetCharacter.mockResolvedValueOnce(before).mockResolvedValueOnce(after)
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.loadDetail('av-1')
+
+    await store.refreshCharacterAfterAvatar('av-1')
+
+    expect(store.getById('av-1')).toMatchObject({
+      avatar: 'https://r2/av-1.webp',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    })
+    expect(store.list[0]).toMatchObject({
+      id: 'av-1',
+      avatar: 'https://r2/av-1.webp',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    })
+  })
+
+  it('list 內無對應項時只更新 detailCache，不丟錯', async () => {
+    const after = createMockCharacter({ id: 'av-2', avatar: 'https://r2/av-2.webp' })
+    mockListCharacters.mockResolvedValue([])
+    mockGetCharacter.mockResolvedValue(after)
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+
+    await expect(store.refreshCharacterAfterAvatar('av-2')).resolves.toBeUndefined()
+    expect(store.getById('av-2')).toMatchObject({ avatar: 'https://r2/av-2.webp' })
   })
 })
 

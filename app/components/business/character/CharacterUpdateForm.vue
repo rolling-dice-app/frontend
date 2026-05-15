@@ -42,7 +42,11 @@
         <template #label>
           <span class="text-content">{{ t('character.detailedSetting') }}</span>
         </template>
-        <BusinessCharacterFormProfileTab v-model:form-state="formState" />
+        <BusinessCharacterFormProfileTab
+          v-model:form-state="formState"
+          :avatar-upload-fn="avatarUpload"
+          :avatar-delete-fn="avatarDelete"
+        />
       </Tab>
 
       <Tab value="features">
@@ -91,9 +95,16 @@ const props = defineProps<{ character: CharacterDTO }>()
 
 const { t } = useI18n()
 
-const { activeTab, formState, isSubmitting, canSubmit, derived, submit } = useCharacterUpdate(
-  props.character,
-)
+const {
+  activeTab,
+  formState,
+  isSubmitting,
+  canSubmit,
+  derived,
+  submit,
+  avatarUpload,
+  avatarDelete,
+} = useCharacterUpdate(props.character)
 
 const {
   totalLevel,

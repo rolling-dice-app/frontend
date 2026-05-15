@@ -79,6 +79,7 @@ export default {
     fileTooLarge: '原檔超過 5 MB，請挑小一點的圖',
     invalidType: '不支援的檔案格式，請選圖片',
     uploadFailed: '上傳失敗，請稍後再試',
+    createdButAvatarFailed: '角色已建立，但肖像上傳失敗，可至編輯頁重試',
   },
   language: '語言',
   tool: '工具',

@@ -56,6 +56,8 @@ export function useCharacterBuild() {
   const store = useCharacterStore()
   const activeTab = ref<BuildTab>('basic')
   const formState = reactive<CharacterFormState>(createDefaultFormState())
+  /** deferred avatar：建立時還沒有 :id，裁好的 blob 暫存於此，建立成功後再原子上傳。 */
+  const pendingAvatar = ref<Blob | null>(null)
 
   const totalLevel = computed(() => calculateTotalLevel(formState.classes))
 
@@ -142,7 +144,19 @@ export function useCharacterBuild() {
     if (!canSubmit.value) return
     isSubmitting.value = true
     try {
-      await store.createCharacter(formState)
+      const created = await store.createCharacter(formState)
+      if (pendingAvatar.value) {
+        try {
+          await characters().uploadAvatar(created.id, pendingAvatar.value)
+        } catch (avatarError) {
+          // 角色已建立，不回滾；提示可至編輯頁補傳，並直接導向該角色編輯
+          apiErrorToast.handle(avatarError, {
+            toastMessage: t('character.portrait.createdButAvatarFailed'),
+          })
+          await navigateTo(`/character/${created.id}/update`)
+          return
+        }
+      }
       await navigateTo('/character')
     } catch (error) {
       apiErrorToast.handle(error, { toastMessage: t('ui.message.saveFailed') })
@@ -153,6 +167,7 @@ export function useCharacterBuild() {
   return {
     activeTab,
     formState,
+    pendingAvatar,
     totalLevel,
     isSubmitting,
     canSubmit,

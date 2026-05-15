@@ -41,7 +41,10 @@
         <template #label>
           <span class="text-content">{{ t('character.detailedSetting') }}</span>
         </template>
-        <BusinessCharacterFormProfileTab v-model:form-state="formState" />
+        <BusinessCharacterFormProfileTab
+          v-model:form-state="formState"
+          v-model:pending-avatar="pendingAvatar"
+        />
       </Tab>
     </Tabs>
 
@@ -78,8 +81,16 @@ const { t } = useI18n()
 
 useHead({ title: t('character.createCharacter') })
 
-const { activeTab, formState, totalLevel, isSubmitting, canSubmit, abilities, submit } =
-  useCharacterBuild()
+const {
+  activeTab,
+  formState,
+  pendingAvatar,
+  totalLevel,
+  isSubmitting,
+  canSubmit,
+  abilities,
+  submit,
+} = useCharacterBuild()
 const {
   pointBuyUsage,
   setAbilityMethod,

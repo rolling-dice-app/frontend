@@ -10,6 +10,7 @@ import {
 } from '@rolling-dice-app/core'
 
 const PERSIST_DEBOUNCE_MS = 300
+const PERSIST_RETRY_MS = 2000
 
 const createDefaultState = (characterId: string): CombatStateDTO => ({
   characterId,
@@ -309,6 +310,11 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   let inFlight = false
   /** 在 PATCH 飛行期間是否又被 user 動過；用來避免 GET response 覆蓋掉同時間的新改動 */
   let dirtyDuringPatch = false
+  /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
+  let retryScheduled = false
+  let retryTimer: ReturnType<typeof setTimeout> | null = null
+  /** 自動重試仍失敗後曝露給 UI 的最後一次錯誤；成功的 PATCH 會清空 */
+  const mutationError = ref<unknown>(null)
   const persist = debounce(() => {
     void runPersist()
   }, PERSIST_DEBOUNCE_MS)
@@ -317,6 +323,10 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     if (inFlight) {
       persist()
       return
+    }
+    if (retryTimer) {
+      clearTimeout(retryTimer)
+      retryTimer = null
     }
     inFlight = true
     dirtyDuringPatch = false
@@ -341,8 +351,19 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       } else {
         await applyServerDto(fresh)
       }
+      mutationError.value = null
+      retryScheduled = false
     } catch (err) {
-      apiErrorToast.handle(err)
+      if (!retryScheduled) {
+        retryScheduled = true
+        retryTimer = setTimeout(() => {
+          retryTimer = null
+          void runPersist()
+        }, PERSIST_RETRY_MS)
+      } else {
+        mutationError.value = err
+        apiErrorToast.handle(err)
+      }
     } finally {
       inFlight = false
     }
@@ -371,6 +392,10 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   if (getCurrentScope()) {
     onScopeDispose(() => {
+      if (retryTimer) {
+        clearTimeout(retryTimer)
+        retryTimer = null
+      }
       persist.flush()
     })
   }
@@ -379,6 +404,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     state: readonly(state),
     isLoading,
     loadError,
+    mutationError: readonly(mutationError),
     isReady,
     isResting,
     isResetting,

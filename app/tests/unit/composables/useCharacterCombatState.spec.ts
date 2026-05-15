@@ -577,18 +577,78 @@ describe('useCharacterCombatState — 持久化', () => {
     expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })
 
-  it('PATCH 失敗時應透過 useApiErrorToast 通報', async () => {
+  const PERSIST_RETRY_MS = 2000
+
+  it('PATCH 首次失敗應自動重試，重試成功不會 apiErrorToast 也不會暴露 mutationError', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const cs = useCharacterCombatState(CHAR_ID, ref(30))
     await cs.load()
-
+    mockPatch.mockClear()
     mockPatch.mockRejectedValueOnce(new Error('boom'))
+    mockPatch.mockResolvedValueOnce(undefined)
 
     cs.damageHp(5)
     await flushPersist()
     await nextTick()
 
-    expect(mockApiErrorHandle).toHaveBeenCalled()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(mockApiErrorHandle).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    await nextTick()
+
+    expect(mockPatch).toHaveBeenCalledTimes(2)
+    expect(mockApiErrorHandle).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBeNull()
+  })
+
+  it('連兩次 PATCH 失敗應暴露 mutationError 並透過 useApiErrorToast 通報', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    const err = new Error('boom-twice')
+    mockPatch.mockRejectedValue(err)
+
+    cs.damageHp(5)
+    await flushPersist()
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    await nextTick()
+
+    expect(mockPatch).toHaveBeenCalledTimes(2)
+    expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
+    expect(cs.mutationError.value).toBe(err)
+  })
+
+  it('暴露 mutationError 後 user 再次編輯，下一次成功 PATCH 應清空 mutationError', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    const err = new Error('boom-then-ok')
+    mockPatch.mockRejectedValueOnce(err)
+    mockPatch.mockRejectedValueOnce(err)
+
+    cs.damageHp(5)
+    await flushPersist()
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    await nextTick()
+
+    expect(cs.mutationError.value).toBe(err)
+
+    mockPatch.mockResolvedValueOnce(undefined)
+    cs.damageHp(1)
+    await flushPersist()
+    await nextTick()
+    await nextTick()
+
+    expect(cs.mutationError.value).toBeNull()
   })
 })
 

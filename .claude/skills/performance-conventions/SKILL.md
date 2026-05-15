@@ -48,6 +48,28 @@ Apply these rules when implementing, reviewing, or refactoring performance-sensi
 3. Push `useAsyncData` to complete first-screen fetches on the server (SSR), reducing client waterfall and improving LCP.
 4. Server routes can attach HTTP cache headers for CDN caching of static or low-update-rate data.
 
+### Tiered loading for multi-GET pages
+
+When a page needs **≥3 independent GETs** to fully render (e.g. a character detail page requires character + combat-state + spells + inventory + currency), do not block initial render until all settle. Stagger fetches by tier:
+
+| Tier              | When                             | What                                                                                   | Why                                                                      |
+| ----------------- | -------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1 — page skeleton | route enter / SSR `useAsyncData` | the primary entity required for layout, header, navigation                             | first paint is fast; user sees something immediately                     |
+| 2 — sub-resources | `onMounted` (parallel)           | independent collections / sibling resources; each region owns its own loading skeleton | each region resolves on its own pace; one slow GET does not block others |
+
+Rules:
+
+- **Failure isolation**: a single tier-2 GET failure shows a local error in its region, not a page-wide error.
+- **No serial chains** within a tier: tier 2 fetches fan out in parallel; never let one sub-resource block another.
+- **Don't downgrade tier-1 to tier-2** for above-the-fold data — that hurts LCP. The split is "what's needed for the page skeleton" vs "what fills the regions".
+- Total page-perceived wait = `max(tier-1 latency, fastest tier-2 region rendering its skeleton)` — not the sum of all GETs.
+
+Anti-patterns:
+
+- Stuffing all 5 GETs into a single `useAsyncData` / `Promise.all` at route enter — user waits for the slowest, gets a white screen.
+- Serial chained `.then`s of GETs that are actually independent.
+- Showing a single page-wide spinner that hides all regions until everything is ready.
+
 ## SSR Performance Highlights
 
 1. First-screen HTML ships server-rendered; LCP target is fast TTFB plus minimal render-blocking on the client.

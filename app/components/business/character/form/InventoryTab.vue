@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4 bg-canvas-elevated p-4">
+  <div class="space-y-4">
     <!-- Currency + Attunement (parallel) -->
     <div class="grid gap-4 md:grid-cols-2">
       <BusinessCharacterFormInventoryCurrencyPanel
@@ -9,6 +9,7 @@
       <BusinessCharacterFormInventoryAttunementPanel
         :all-items="allItems"
         :attuned-items="attunedItems"
+        :cap="attunedCap"
         @update="(slotIndex, itemId) => $emit('update-attunement', slotIndex, itemId)"
       />
     </div>
@@ -17,6 +18,7 @@
     <div class="grid gap-4 md:grid-cols-2">
       <BusinessCharacterFormInventoryItemList
         :items="backpackItems"
+        :total-item-count="allItems.length"
         section="backpack"
         :title="t('inventory.backpack')"
         @add="$emit('add-item', $event)"
@@ -26,6 +28,7 @@
       />
       <BusinessCharacterFormInventoryItemList
         :items="dimensionalBagItems"
+        :total-item-count="allItems.length"
         section="dimensionalBag"
         :title="t('inventory.dimensionalBag')"
         @add="$emit('add-item', $event)"
@@ -54,16 +57,17 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { formatWeight } from '~/helpers/inventory'
-import type { CharacterCurrency, InventoryItem } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO, InventoryItemDTO } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  backpackItems: InventoryItem[]
-  dimensionalBagItems: InventoryItem[]
-  attunedItems: InventoryItem[]
-  currency: CharacterCurrency
+  backpackItems: InventoryItemDTO[]
+  dimensionalBagItems: InventoryItemDTO[]
+  attunedItems: InventoryItemDTO[]
+  attunedCap: number
+  currency: CharacterCurrencyDTO
   backpackLoad: number
   maxCarryWeight: number
   isOverEncumbered: boolean
@@ -74,7 +78,7 @@ defineEmits<{
   'remove-item': [id: string]
   'update-item': [id: string, draft: InventoryItemDraft]
   'move-item': [id: string]
-  'update-currency': [value: CharacterCurrency]
+  'update-currency': [value: CharacterCurrencyDTO]
   'update-attunement': [slotIndex: number, itemId: string | null]
 }>()
 

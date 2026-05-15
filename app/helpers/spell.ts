@@ -1,17 +1,10 @@
-import { SPELL_SCHOOLS } from '~/constants/dnd'
-import type { SpellEntry, SpellDTO } from '@rolling-dice-app/core'
+import { t } from '~/i18n'
+import type { SpellDTO } from '@rolling-dice-app/core'
+import type { SpellFormEntry } from '~/types/business/character-form'
 
-const VALID_SCHOOLS = new Set<string>(SPELL_SCHOOLS)
-
-/** 驗證法術資料的學派是否合法；學派未知則回傳 null，呼叫端負責收集。 */
-export function validateSpell(raw: SpellDTO): SpellDTO | null {
-  if (!VALID_SCHOOLS.has(raw.school)) return null
-  return raw
-}
-
-/** 將法術環數轉為中文顯示（0 為戲法） */
+/** 將法術環數轉為當前 locale 的顯示字串（0 為戲法） */
 export function formatSpellLevel(level: number): string {
-  return level === 0 ? '戲法' : `${level} 環`
+  return level === 0 ? t('spell.cantrip') : `${level} ${t('spell.level')}`
 }
 
 /** 以「聲勢材」精簡字串描述法術成分 */
@@ -25,13 +18,15 @@ export function formatSpellComponents(
   return parts.join(' / ') || '—'
 }
 
-/** 對指定 id 的 entry 切換 isPrepared / isFavorite，回傳新陣列；id 不存在時原樣回傳。 */
+/** 對指定 spellId 的 entry 切換 isPrepared / isFavorite，回傳新陣列；spellId 不存在時原樣回傳。 */
 export function withToggledFlag(
-  spells: SpellEntry[],
-  id: string,
+  spells: SpellFormEntry[],
+  spellId: string,
   flag: 'isPrepared' | 'isFavorite',
-): SpellEntry[] {
-  return spells.map((entry) => (entry.id === id ? { ...entry, [flag]: !entry[flag] } : entry))
+): SpellFormEntry[] {
+  return spells.map((entry) =>
+    entry.spellId === spellId ? { ...entry, [flag]: !entry[flag] } : entry,
+  )
 }
 
 /** 將 SpellDTO 列表依環數分組並組內依中文名稱排序 */

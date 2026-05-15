@@ -92,6 +92,7 @@ export default {
   attack: '攻擊',
   attackModule: '攻擊模組',
   addAttack: '新增攻擊',
+  attackLimitReached: '攻擊數量已達上限，請先刪除舊項目',
   emptyAttack: '尚未設定任何攻擊',
   unnamed: '（未命名）',
   hitBonus: '命中',
@@ -125,6 +126,7 @@ export default {
   // 特性 / Feature
   feature: '特性',
   addFeature: '新增特性',
+  featureLimitReached: '特性數量已達上限，請先刪除舊項目',
   emptyFeature: '尚未設定任何特性',
   emptyFeatureDescription: '（無說明）',
   hasUses: '具有使用次數',
@@ -161,6 +163,13 @@ export default {
   longRest: '長休',
   shortRestDone: '短休完成',
   longRestDone: '長休完成',
+  resting: '休息中...',
+  reset: '重置',
+  resetting: '重置中...',
+  resetDone: '戰鬥狀態已重置',
+  resetConfirmTitle: '重置戰鬥狀態',
+  resetConfirmBody:
+    '此動作會清空當前 HP、臨時生命、死亡豁免、特性使用次數、生命骰、法術 slot 與所有臨時調整，且無法復原。',
 
   // 單位 / 距離
   unitFeet: '呎',

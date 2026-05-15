@@ -23,14 +23,17 @@
 
 <script setup lang="ts">
 import type { CharacterFormState } from '~/types/business/character-form'
-import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, CHARACTER_INT_LIMITS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
 const formState = defineModel<CharacterFormState>('formState', { required: true })
 
 const onUpdate = (key: AbilityKey, raw: string): void => {
-  const num = Math.trunc(Number(raw))
-  formState.value.abilities[key].race = Number.isFinite(num) ? num : 0
+  formState.value.abilities[key].race = parseIntegerInput(
+    raw,
+    0,
+    CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+  )
 }
 </script>

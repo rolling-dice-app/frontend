@@ -1,39 +1,46 @@
 <template>
-  <div class="space-y-2">
-    <h2 class="font-display text-lg font-bold text-content">{{ t('inventory.asset') }}</h2>
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <div v-for="coin in COIN_FIELDS" :key="coin.key">
-        <label :for="`currency-${coin.key}`" class="mb-1 block text-xs text-content-muted">
-          {{ coin.label }}
-        </label>
-        <CommonAppInput
-          :id="`currency-${coin.key}`"
-          type="number"
-          min="0"
-          step="1"
-          size="sm"
-          outline
-          :model-value="String(currency[coin.key])"
-          class="w-full"
-          @update:model-value="onUpdate(coin.key, $event)"
-        />
+  <div class="flex h-full flex-col space-y-2">
+    <div class="flex items-center justify-between">
+      <h2 class="font-display text-lg font-bold text-content">{{ t('inventory.asset') }}</h2>
+      <button
+        type="button"
+        :aria-label="t('inventory.editCurrency')"
+        class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+        @click="modalOpen = true"
+      >
+        <Icon name="edit" :size="18" />
+      </button>
+    </div>
+    <div class="grid flex-1 grid-cols-2 gap-3">
+      <div
+        v-for="coin in COIN_FIELDS"
+        :key="coin.key"
+        class="flex flex-col justify-center rounded-md border border-primary bg-canvas-inset px-2 py-1"
+      >
+        <div class="text-xs text-content-muted">{{ coin.label }}</div>
+        <div class="text-content">{{ currency[coin.key] }}</div>
       </div>
     </div>
     <p class="text-xs text-content-muted">
       {{ t('inventory.coinWeight') }}：{{ coinWeight }} {{ t('inventory.unitWeight') }}
     </p>
+
+    <BusinessCharacterFormInventoryCurrencyEditModal
+      v-model:open="modalOpen"
+      :currency="currency"
+      @confirm="(value) => emit('update:currency', value)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CharacterCurrency } from '@rolling-dice-app/core'
+import { Icon } from '@ui'
+import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
-
-type CoinKey = keyof CharacterCurrency
 
 const { t } = useI18n()
 
-const COIN_FIELDS = computed<{ key: CoinKey; label: string }[]>(() => [
+const COIN_FIELDS = computed<{ key: CurrencyKey; label: string }[]>(() => [
   { key: 'pp', label: t('inventory.pp') },
   { key: 'gp', label: t('inventory.gp') },
   { key: 'sp', label: t('inventory.sp') },
@@ -41,11 +48,11 @@ const COIN_FIELDS = computed<{ key: CoinKey; label: string }[]>(() => [
 ])
 
 const props = defineProps<{
-  currency: CharacterCurrency
+  currency: CharacterCurrencyDTO
 }>()
 
 const emit = defineEmits<{
-  'update:currency': [value: CharacterCurrency]
+  'update:currency': [value: CharacterCurrencyDTO]
 }>()
 
 const coinWeight = computed(() => {
@@ -53,8 +60,5 @@ const coinWeight = computed(() => {
   return raw % 1 === 0 ? raw.toString() : raw.toFixed(2)
 })
 
-const onUpdate = (key: CoinKey, value: string): void => {
-  const num = Math.max(0, Math.floor(Number(value) || 0))
-  emit('update:currency', { ...props.currency, [key]: num })
-}
+const modalOpen = ref(false)
 </script>

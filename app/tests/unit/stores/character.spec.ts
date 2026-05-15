@@ -1,11 +1,16 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createMockCharacter, createMockFormState } from '~/tests/fixtures/character'
-import type { CharacterDTO, CharacterSummaryDTO } from '@rolling-dice-app/core'
+import {
+  createMockCharacter,
+  createMockFormState,
+  createMockUpdateFormState,
+} from '~/tests/fixtures/character'
+import type { CharacterDTO, CharacterSummaryDTO, CharacterUpdateDTO } from '@rolling-dice-app/core'
 
 const mockListCharacters = vi.fn<() => Promise<CharacterSummaryDTO[]>>()
 const mockGetCharacter = vi.fn<(id: string) => Promise<CharacterDTO>>()
 const mockCreateCharacter = vi.fn<(...args: unknown[]) => Promise<CharacterDTO>>()
+const mockUpdateCharacter = vi.fn<(id: string, input: CharacterUpdateDTO) => Promise<void>>()
 const mockDeleteCharacter = vi.fn<(id: string) => Promise<void>>()
 
 beforeEach(() => {
@@ -14,12 +19,14 @@ beforeEach(() => {
   mockListCharacters.mockReset()
   mockGetCharacter.mockReset()
   mockCreateCharacter.mockReset()
+  mockUpdateCharacter.mockReset()
   mockDeleteCharacter.mockReset()
-  vi.stubGlobal('useCharacterApi', () => ({
-    listCharacters: mockListCharacters,
-    getCharacter: mockGetCharacter,
-    createCharacter: mockCreateCharacter,
-    deleteCharacter: mockDeleteCharacter,
+  vi.stubGlobal('characters', () => ({
+    list: mockListCharacters,
+    get: mockGetCharacter,
+    create: mockCreateCharacter,
+    update: mockUpdateCharacter,
+    remove: mockDeleteCharacter,
   }))
 })
 
@@ -205,16 +212,94 @@ describe('character store — removeCharacter', () => {
   })
 })
 
-describe('character store — 未支援的 mutation', () => {
-  it('updateCharacter throw', async () => {
+describe('character store — updateCharacter', () => {
+  it('cache 不存在時 throw', async () => {
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    expect(() => store.updateCharacter('x', {} as never)).toThrow(/尚未支援/)
+    await expect(store.updateCharacter('not-cached', createMockUpdateFormState())).rejects.toThrow(
+      /not loaded/,
+    )
+    expect(mockUpdateCharacter).not.toHaveBeenCalled()
   })
 
-  it('patchCharacter throw', async () => {
+  it('無變動時短路、不打 API', async () => {
+    const character = createMockCharacter({ id: 'u-1' })
+    mockGetCharacter.mockResolvedValue(character)
+
     const { useCharacterStore } = await import('~/stores/character')
     const store = useCharacterStore()
-    expect(() => store.patchCharacter('x', {})).toThrow(/尚未支援/)
+    await store.loadDetail('u-1')
+
+    // 完全比對的 form state（用 character 蓋過所有預設）
+    const form = createMockUpdateFormState({
+      id: character.id,
+      name: character.name,
+      gender: character.gender,
+      race: character.race,
+      alignment: character.alignment,
+      classes: character.classes.map((e) => ({ ...e })),
+      abilities: structuredClone(character.abilities),
+      skills: { ...character.skills },
+      background: character.background,
+      armorClass: { ...character.armorClass },
+    })
+    await store.updateCharacter('u-1', form)
+
+    expect(mockUpdateCharacter).not.toHaveBeenCalled()
+  })
+
+  it('有變動時送 PATCH、重新 fetch、同步 cache 與 list', async () => {
+    const before = createMockCharacter({ id: 'u-2', name: '舊名' })
+    const after = createMockCharacter({
+      id: 'u-2',
+      name: '新名',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    })
+    mockListCharacters.mockResolvedValue([
+      {
+        id: before.id,
+        name: before.name,
+        classes: before.classes,
+        level: 5,
+        avatar: before.avatar,
+        updatedAt: before.updatedAt,
+        race: before.race,
+      },
+    ])
+    mockGetCharacter.mockResolvedValueOnce(before).mockResolvedValueOnce(after)
+    mockUpdateCharacter.mockResolvedValue()
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.loadDetail('u-2')
+
+    const form = createMockUpdateFormState({ id: before.id, name: '新名' })
+    const result = await store.updateCharacter('u-2', form)
+
+    expect(mockUpdateCharacter).toHaveBeenCalledOnce()
+    const [calledId, calledPatch] = mockUpdateCharacter.mock.calls[0]!
+    expect(calledId).toBe('u-2')
+    expect(calledPatch.updatedAt).toBe(before.updatedAt)
+    expect(calledPatch.profile?.name).toBe('新名')
+
+    expect(mockGetCharacter).toHaveBeenCalledTimes(2)
+    expect(store.detailCache.get('u-2')?.name).toBe('新名')
+    expect(store.list[0]?.name).toBe('新名')
+    expect(result.name).toBe('新名')
+  })
+
+  it('API 失敗時 rethrow、不動 cache', async () => {
+    const character = createMockCharacter({ id: 'u-3' })
+    mockGetCharacter.mockResolvedValue(character)
+    mockUpdateCharacter.mockRejectedValue(new Error('boom'))
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadDetail('u-3')
+
+    const form = createMockUpdateFormState({ id: character.id, name: '新名' })
+    await expect(store.updateCharacter('u-3', form)).rejects.toThrow('boom')
+    expect(store.detailCache.get('u-3')?.name).toBe(character.name)
   })
 })

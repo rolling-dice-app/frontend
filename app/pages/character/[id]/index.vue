@@ -2,21 +2,19 @@
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <CommonPageHeader title="Character Detail" :show-back="true">
       <template v-if="character" #actions>
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          :title="t('ui.readOnly.editTooltip')"
-          class="rounded-sm border border-border bg-surface py-2 w-20 text-center text-content-faint cursor-not-allowed opacity-60"
+        <NuxtLink
+          :to="`/character/${id}/update`"
+          class="rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {{ t('ui.action.edit') }}
-        </button>
+        </NuxtLink>
       </template>
     </CommonPageHeader>
 
-    <!-- Loading -->
+    <!-- Tier 1: SSR idle + client pending 都顯示 loading；
+         server: false 時 SSR 初值是 idle，避免落入 NotFound 分支。 -->
     <div
-      v-if="status === 'pending'"
+      v-if="status === 'idle' || status === 'pending'"
       class="flex min-h-[60dvh] items-center justify-center text-content-muted"
       role="status"
       aria-live="polite"
@@ -24,7 +22,7 @@
       {{ t('ui.state.loading') }}
     </div>
 
-    <!-- Error / Not found -->
+    <!-- Tier 1: 主幹載入失敗 / 找不到 -->
     <CommonNotFound
       v-else-if="status === 'error' || !character"
       :message="t('character.notFound')"
@@ -33,14 +31,6 @@
     />
 
     <div v-else>
-      <!-- Read-only banner -->
-      <div
-        class="mb-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-content-muted"
-        role="status"
-      >
-        {{ t('ui.readOnly.detailBanner') }}
-      </div>
-
       <Tabs
         v-model="activeTab"
         type="border"
@@ -59,47 +49,83 @@
             <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <ClientOnly>
-            <BusinessCharacterCombatQuickView :character="character" />
+            <BusinessCharacterCombatQuickView ref="combatQuickViewRef" :character="character" />
           </ClientOnly>
         </Tab>
         <Tab value="spells">
           <template #label>
             <span class="text-content">{{ t('spell.table') }}</span>
           </template>
-          <BusinessCharacterSpellsQuickView :character="character" />
+          <BusinessCharacterSpellsQuickView />
         </Tab>
         <Tab value="backpack">
           <template #label>
             <span class="text-content">{{ t('character.inventoryTab') }}</span>
           </template>
-          <BusinessCharacterFormInventoryTab
-            :backpack-items="backpackItems"
-            :dimensional-bag-items="dimensionalBagItems"
-            :attuned-items="attunedItems"
-            :currency="currency"
-            :backpack-load="backpackLoad"
-            :max-carry-weight="maxCarryWeight"
-            :is-over-encumbered="isOverEncumbered"
-            @add-item="notifyReadOnly"
-            @remove-item="notifyReadOnly"
-            @update-item="notifyReadOnly"
-            @move-item="notifyReadOnly"
-            @update-currency="notifyReadOnly"
-            @update-attunement="notifyReadOnly"
-          />
+          <!-- Tier 2: inventory + currency 各自 fetch -->
+          <div class="min-h-[40dvh] bg-canvas-elevated p-4">
+            <div
+              v-if="inventoryPending"
+              class="flex min-h-[calc(40dvh-2rem)] items-center justify-center text-content-muted"
+              role="status"
+              aria-live="polite"
+            >
+              {{ t('ui.state.loading') }}
+            </div>
+            <div
+              v-else-if="inventoryError || !currency"
+              class="flex flex-col items-center gap-3 py-12 text-center"
+            >
+              <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
+              <button
+                type="button"
+                class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
+                @click="retryInventory"
+              >
+                {{ t('ui.state.retry') }}
+              </button>
+            </div>
+            <BusinessCharacterFormInventoryTab
+              v-else
+              :backpack-items="backpackItems"
+              :dimensional-bag-items="dimensionalBagItems"
+              :attuned-items="attunedItems"
+              :attuned-cap="attunedCap"
+              :currency="currency"
+              :backpack-load="backpackLoad"
+              :max-carry-weight="maxCarryWeight"
+              :is-over-encumbered="isOverEncumbered"
+              @add-item="(draft) => runInventoryOp(() => inventoryStore.addItem(draft))"
+              @remove-item="(itemId) => runInventoryOp(() => inventoryStore.removeItem(itemId))"
+              @update-item="
+                (itemId, draft) => runInventoryOp(() => inventoryStore.updateItem(itemId, draft))
+              "
+              @move-item="(itemId) => runInventoryOp(() => inventoryStore.moveItem(itemId))"
+              @update-currency="
+                (value) => runInventoryOp(() => inventoryStore.updateCurrency(value))
+              "
+              @update-attunement="
+                (slotIndex, itemId) =>
+                  runInventoryOp(() => inventoryStore.setAttunement(slotIndex, itemId))
+              "
+            />
+          </div>
         </Tab>
-        <Tab value="adventures">
+        <Tab value="campaigns">
           <template #label>
-            <span class="text-content">{{ t('character.adventure') }}</span>
+            <span class="text-content">{{ t('character.campaign') }}</span>
           </template>
-          <BusinessCharacterAdventuresTab
-            :entries="adventureEntries"
-            :total-exp-earned="totalExpEarned"
-            :sync-money-to-currency="syncMoneyToCurrency"
-            @add="notifyReadOnly"
-            @update="notifyReadOnly"
-            @remove="notifyReadOnly"
-            @update:sync-money-to-currency="notifyReadOnly"
+          <BusinessCharacterCampaignsTab
+            :entries="campaignEntries"
+            :total-exp-earned="campaignTotalExp"
+            :is-loading="campaignsLoading"
+            :load-error="campaignsLoadError"
+            :is-ready="campaignsReady"
+            :conflict-signal="campaignConflictSignal"
+            :add-campaign="campaigns.addCampaign"
+            :update-campaign="campaigns.updateCampaign"
+            @retry="retryCampaigns"
+            @remove="(entryId) => void campaigns.removeCampaign(entryId)"
           />
         </Tab>
       </Tabs>
@@ -108,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { Tab, Tabs } from '@ui'
 
 definePageMeta({ middleware: 'auth' })
@@ -121,31 +148,83 @@ const activeTab = ref('profile')
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 const characterStore = useCharacterStore()
+const inventoryStore = useCharacterInventoryStore()
+const spellsStore = useCharacterSpellsStore()
 
+const combatQuickViewRef = useTemplateRef<{ flushPersist: () => Promise<void> }>(
+  'combatQuickViewRef',
+)
+
+// Tier 1：主幹 client-only fetch
+// 與 list 頁同步：私有資料不進 SSR HTML / payload，避免 Vercel edge cache
+// 把某使用者的角色細節共享給其他人。
 const { status } = await useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
-  { lazy: false, watch: [() => id] },
+  { server: false, lazy: false, watch: [() => id] },
 )
 
 const character = computed(() => characterStore.getById(id))
 
-const inventory = useCharacterInventory(id)
-const adventures = useCharacterAdventures(id)
+// Tier 2：四個 sub-resource onMounted 平行載入
+onMounted(() => {
+  void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id), campaigns.load()])
+})
+
+// 路由離開時 await 戰況 quickview 的 flushPersist 保存最後一次寫入；
+// 此 hook 在 unmount 前 fire 且支援 await，比 onBeforeUnmount 的 fire-and-forget 更可靠。
+onBeforeRouteLeave(async () => {
+  await combatQuickViewRef.value?.flushPersist()
+})
+
+onBeforeUnmount(() => {
+  spellsStore.flushPending()
+  inventoryStore.reset()
+  spellsStore.reset()
+})
 
 const {
   currency,
   backpackItems,
   dimensionalBagItems,
   attunedItems,
+  attunedCap,
   backpackLoad,
   maxCarryWeight,
   isOverEncumbered,
-} = inventory
-const { entries: adventureEntries, totalExpEarned, syncMoneyToCurrency } = adventures
+  itemsLoading,
+  itemsError,
+  currencyLoading,
+  currencyError,
+} = storeToRefs(inventoryStore)
 
-const toast = useToast()
-const notifyReadOnly = () => {
-  toast.error(t('ui.message.editingNotAvailable'))
+const inventoryPending = computed(
+  () => (itemsLoading.value || currencyLoading.value) && !currency.value,
+)
+const inventoryError = computed(() => itemsError.value ?? currencyError.value)
+const retryInventory = (): void => {
+  void inventoryStore.load(id)
+}
+
+const campaigns = useCharacterCampaigns(id)
+const {
+  entries: campaignEntries,
+  totalExpEarned: campaignTotalExp,
+  isLoading: campaignsLoading,
+  loadError: campaignsLoadError,
+  isReady: campaignsReady,
+  conflictSignal: campaignConflictSignal,
+} = campaigns
+const retryCampaigns = (): void => {
+  void campaigns.load()
+}
+
+const apiErrorToast = useApiErrorToast()
+const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {
+  try {
+    await op()
+  } catch (err) {
+    apiErrorToast.handle(err)
+  }
 }
 </script>

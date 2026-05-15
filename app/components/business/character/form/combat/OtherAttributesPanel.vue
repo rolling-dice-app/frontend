@@ -34,7 +34,13 @@
             outline
             placeholder="0"
             class="mt-1 w-full"
-            @update:model-value="formState.customHpBonus = parseIntegerInput($event, 0)"
+            @update:model-value="
+              formState.customHpBonus = parseIntegerInput(
+                $event,
+                0,
+                CHARACTER_INT_LIMITS.GENERAL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -57,7 +63,13 @@
             outline
             placeholder="0"
             class="mt-1 w-full"
-            @update:model-value="formState.speedBonus = parseIntegerInput($event, 0)"
+            @update:model-value="
+              formState.speedBonus = parseIntegerInput(
+                $event,
+                0,
+                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -87,7 +99,13 @@
             outline
             placeholder="0"
             class="mt-1 w-full"
-            @update:model-value="formState.passiveInsightBonus = parseIntegerInput($event, 0)"
+            @update:model-value="
+              formState.passiveInsightBonus = parseIntegerInput(
+                $event,
+                0,
+                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -117,7 +135,13 @@
             outline
             placeholder="0"
             class="mt-1 w-full"
-            @update:model-value="formState.passivePerceptionBonus = parseIntegerInput($event, 0)"
+            @update:model-value="
+              formState.passivePerceptionBonus = parseIntegerInput(
+                $event,
+                0,
+                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -164,7 +188,13 @@
               outline
               placeholder="0"
               class="mt-1 w-full"
-              @update:model-value="formState.initiativeBonus = parseIntegerInput($event, 0)"
+              @update:model-value="
+                formState.initiativeBonus = parseIntegerInput(
+                  $event,
+                  0,
+                  CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+                )
+              "
             />
           </div>
         </div>
@@ -178,7 +208,7 @@ import { Toggle } from '@ui'
 import type { SelectOption } from '@ui'
 
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
-import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, CHARACTER_INT_LIMITS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

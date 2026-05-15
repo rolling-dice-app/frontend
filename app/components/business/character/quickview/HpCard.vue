@@ -85,7 +85,9 @@
             placeholder="0"
             :aria-label="t('combat.adjust')"
             class="w-9 sm:w-12"
-            @update:model-value="amount = parseIntegerInput($event, 0)"
+            @update:model-value="
+              amount = parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.GENERAL_INT_MAX)
+            "
           />
           <button
             type="button"
@@ -104,6 +106,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
+import { CHARACTER_INT_LIMITS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

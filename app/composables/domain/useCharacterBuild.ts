@@ -135,7 +135,7 @@ export function useCharacterBuild() {
 
   // ─── Submit ───────────────────────────────────────────────────────────
 
-  const logger = createLogger('[CharacterBuild]')
+  const apiErrorToast = useApiErrorToast()
   const { t } = useI18n()
 
   const submit = async (): Promise<void> => {
@@ -145,8 +145,7 @@ export function useCharacterBuild() {
       await store.createCharacter(formState)
       await navigateTo('/character')
     } catch (error) {
-      logger.error('submit failed:', error)
-      useToast().error(t('ui.message.saveFailed'))
+      apiErrorToast.handle(error, { toastMessage: t('ui.message.saveFailed') })
       isSubmitting.value = false
     }
   }

@@ -130,7 +130,7 @@
               :border="false"
               :model-value="draft.description ?? ''"
               :rows="3"
-              :maxlength="DESCRIPTION_MAX_LENGTH"
+              :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
               show-count
               :placeholder="t('combat.featureDescriptionPlaceholder')"
               @update:model-value="draft.description = $event ? $event : null"
@@ -217,12 +217,18 @@
 import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
-import type { CharacterFeature, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
+import {
+  CHARACTER_INT_LIMITS,
+  CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
+  type CharacterFeature,
+  type FeatureSource,
+  type FeatureUsageRecovery,
+} from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()
-
-const DESCRIPTION_MAX_LENGTH = 500
+const toast = useToast()
 
 const sourceOptions = computed<SelectOption[]>(() =>
   (Object.entries(messages.value.combat.featureSource) as [FeatureSource, string][]).map(
@@ -237,9 +243,32 @@ const recoveryOptions = computed<{ value: FeatureUsageRecovery; label: string }[
 )
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
-const { addFeature, removeFeature, updateFeature, moveFeature } = useCharacterFeaturesForm(
-  formState.value,
-)
+
+const addFeature = (draft: FeatureDraft): void => {
+  formState.value.features.push({ id: crypto.randomUUID(), ...draft, usage: { ...draft.usage } })
+}
+
+const removeFeature = (id: string): void => {
+  const index = formState.value.features.findIndex((f) => f.id === id)
+  if (index !== -1) formState.value.features.splice(index, 1)
+}
+
+const updateFeature = (id: string, draft: FeatureDraft): void => {
+  const index = formState.value.features.findIndex((f) => f.id === id)
+  if (index !== -1) {
+    formState.value.features[index] = { id, ...draft, usage: { ...draft.usage } }
+  }
+}
+
+const moveFeature = (fromIndex: number, toIndex: number): void => {
+  const length = formState.value.features.length
+  if (fromIndex === toIndex) return
+  if (fromIndex < 0 || fromIndex >= length) return
+  if (toIndex < 0 || toIndex >= length) return
+  const [moved] = formState.value.features.splice(fromIndex, 1)
+  if (!moved) return
+  formState.value.features.splice(toIndex, 0, moved)
+}
 
 const draggingId = ref<string | null>(null)
 const overId = ref<string | null>(null)
@@ -301,6 +330,10 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = (): void => {
+  if (formState.value.features.length >= VALIDATION_LIMITS.maxFeaturesPerCharacter) {
+    toast.info(t('combat.featureLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true
@@ -325,7 +358,10 @@ const onToggleHasUses = (checked: boolean): void => {
 
 const onUpdateMax = (value: string): void => {
   if (!draft.value.usage.hasUses) return
-  draft.value.usage.max = Math.max(1, parseIntegerInput(value, 1))
+  draft.value.usage.max = Math.max(
+    1,
+    parseIntegerInput(value, 1, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+  )
 }
 
 const onUpdateRecovery = (value: FeatureUsageRecovery): void => {

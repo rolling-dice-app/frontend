@@ -2,7 +2,7 @@
   <div class="space-y-2">
     <h2 class="font-display text-lg font-bold text-content">{{ t('inventory.attunement') }}</h2>
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <div v-for="slot in ATTUNEMENT_SLOT_COUNT" :key="slot">
+      <div v-for="slot in cap" :key="slot">
         <label :for="`attunement-slot-${slot}`" class="mb-1 block text-xs text-content-muted">
           Slot {{ slot }}
         </label>
@@ -19,21 +19,22 @@
       </div>
     </div>
     <p class="text-xs text-content-muted">
-      {{ t('inventory.attuned') }}：{{ attunedCount }} / {{ ATTUNEMENT_SLOT_COUNT }}
+      {{ t('inventory.attuned') }}：{{ attunedCount }} / {{ cap }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { SelectItem, SelectOptionGroup } from '@ui'
-import { ATTUNEMENT_SLOT_COUNT } from '~/constants/inventory'
-import type { InventoryItem, ItemType } from '@rolling-dice-app/core'
+import type { InventoryItemDTO, ItemType } from '@rolling-dice-app/core'
 
 const { t, messages } = useI18n()
 
 const props = defineProps<{
-  allItems: InventoryItem[]
-  attunedItems: InventoryItem[]
+  allItems: InventoryItemDTO[]
+  attunedItems: InventoryItemDTO[]
+  /** 同調上限；由 useCharacterInventoryStore 的 attunedCap getter（呼叫 core computeAttunedLimit）取得 */
+  cap: number
 }>()
 
 const emit = defineEmits<{

@@ -77,7 +77,7 @@
       <div class="flex items-end gap-3">
         <div class="flex-1">
           <label for="attack-modal-name" class="mb-1 block text-xs text-content">
-            {{ t('character.adventureField.name') }}
+            {{ t('character.campaignField.name') }}
           </label>
           <CommonAppInput
             id="attack-modal-name"
@@ -116,7 +116,13 @@
             outline
             placeholder="0"
             class="w-16"
-            @update:model-value="draft.extraHitBonus = parseIntegerInput($event)"
+            @update:model-value="
+              draft.extraHitBonus = parseIntegerInput(
+                $event,
+                undefined,
+                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -150,7 +156,12 @@
             outline
             placeholder="0"
             class="w-16"
-            @update:model-value="entry.count = parseIntegerInput($event, 0)"
+            @update:model-value="
+              entry.count = Math.max(
+                0,
+                parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+              )
+            "
           />
           <CommonAppSelect
             :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDieType')}`"
@@ -170,7 +181,9 @@
             outline
             placeholder="±0"
             class="w-16"
-            @update:model-value="entry.bonus = parseIntegerInput($event)"
+            @update:model-value="
+              entry.bonus = parseIntegerInput($event, undefined, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
+            "
           />
           <CommonAppSelect
             :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDamageType')}`"
@@ -228,7 +241,7 @@
             :border="false"
             :model-value="draft.comment ?? ''"
             :rows="3"
-            :maxlength="COMMENT_MAX_LENGTH"
+            :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
             show-count
             :placeholder="t('combat.attackCommentPlaceholder')"
             @update:model-value="draft.comment = $event ? $event : null"
@@ -253,12 +266,16 @@
 <script setup lang="ts">
 import { Modal, Button, Icon, Toggle, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import type {
-  AttackEntry,
-  DamageDieEntry,
-  AbilityKey,
-  DamageDieType,
-  DamageTypeKey,
+import {
+  ABILITY_KEYS,
+  CHARACTER_INT_LIMITS,
+  CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
+  type AttackEntry,
+  type DamageDieEntry,
+  type AbilityKey,
+  type DamageDieType,
+  type DamageTypeKey,
 } from '@rolling-dice-app/core'
 import type {
   AttackDraft,
@@ -266,9 +283,9 @@ import type {
   TotalAbilityScores,
 } from '~/types/business/character-form'
 import { DAMAGE_DIE_TYPES, DAMAGE_TYPE_KEYS } from '~/constants/dnd'
-import { ABILITY_KEYS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
+const toast = useToast()
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
 
@@ -277,7 +294,19 @@ const props = defineProps<{
   proficiencyBonus: number
 }>()
 
-const { addAttack, removeAttack, updateAttack } = useCharacterAttacksForm(formState.value)
+const addAttack = (entry: AttackDraft): void => {
+  formState.value.attacks.push({ id: crypto.randomUUID(), ...entry })
+}
+
+const removeAttack = (id: string): void => {
+  const index = formState.value.attacks.findIndex((a) => a.id === id)
+  if (index !== -1) formState.value.attacks.splice(index, 1)
+}
+
+const updateAttack = (id: string, data: AttackDraft): void => {
+  const index = formState.value.attacks.findIndex((a) => a.id === id)
+  if (index !== -1) formState.value.attacks[index] = { id, ...data }
+}
 
 const abilityOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },
@@ -293,8 +322,6 @@ const damageTypeOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('character.emptyDash') },
   ...DAMAGE_TYPE_KEYS.map((key) => ({ value: key, label: t(`combat.damageType.${key}`) })),
 ])
-
-const COMMENT_MAX_LENGTH = 100
 
 // ─── Modal 狀態 ───────────────────────────────────────────────────────────────
 
@@ -334,6 +361,10 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = () => {
+  if (formState.value.attacks.length >= VALIDATION_LIMITS.maxAttacksPerCharacter) {
+    toast.info(t('combat.attackLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true
@@ -354,8 +385,12 @@ const openEdit = (attack: AttackEntry) => {
 
 const saveAttack = () => {
   const entry: AttackDraft = {
-    ...draft.value,
+    name: cleanText(draft.value.name),
+    abilityKey: draft.value.abilityKey,
     damageDice: draft.value.damageDice.map((e) => ({ ...e })),
+    extraHitBonus: draft.value.extraHitBonus,
+    applyAbilityToDamage: draft.value.applyAbilityToDamage,
+    comment: cleanTextOrNull(draft.value.comment),
   }
   if (editingId.value) {
     updateAttack(editingId.value, entry)

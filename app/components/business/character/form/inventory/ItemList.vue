@@ -174,7 +174,12 @@
             outline
             :model-value="String(draft.quantity)"
             class="w-full"
-            @update:model-value="draft.quantity = Math.max(1, Math.floor(Number($event) || 1))"
+            @update:model-value="
+              draft.quantity = Math.max(
+                1,
+                parseIntegerInput($event, 1, CHARACTER_INT_LIMITS.GENERAL_INT_MAX),
+              )
+            "
           />
         </div>
         <div class="w-32">
@@ -190,7 +195,7 @@
             outline
             :model-value="String(draft.weight)"
             class="w-full"
-            @update:model-value="draft.weight = Math.max(0, Number($event) || 0)"
+            @update:model-value="draft.weight = normalizeWeight($event)"
           />
         </div>
       </div>
@@ -207,7 +212,7 @@
             :border="false"
             :model-value="draft.description ?? ''"
             :rows="2"
-            :maxlength="300"
+            :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
             show-count
             :placeholder="t('inventory.itemDescription')"
             @update:model-value="draft.description = $event || null"
@@ -233,13 +238,23 @@
 import { Badge, Button, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
-import type { InventoryItem, InventoryLocation, ItemType } from '@rolling-dice-app/core'
+import {
+  CHARACTER_INT_LIMITS,
+  CHARACTER_TEXT_LIMITS,
+  MAX_DECIMAL_PRECISION,
+  VALIDATION_LIMITS,
+  type InventoryItemDTO,
+  type InventoryLocation,
+  type ItemType,
+} from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t, messages } = useI18n()
+const toast = useToast()
 
 const props = defineProps<{
-  items: InventoryItem[]
+  items: InventoryItemDTO[]
+  totalItemCount: number
   section: InventoryLocation
   title: string
 }>()
@@ -255,6 +270,14 @@ const emit = defineEmits<{
 // ─── Weight ───────────────────────────────────────────────────────────────────
 
 const totalWeight = computed(() => calculateItemsWeight(props.items))
+
+const WEIGHT_PRECISION_FACTOR = 10 ** MAX_DECIMAL_PRECISION
+const normalizeWeight = (raw: string): number => {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return 0
+  const rounded = Math.round(n * WEIGHT_PRECISION_FACTOR) / WEIGHT_PRECISION_FACTOR
+  return Math.min(CHARACTER_INT_LIMITS.GENERAL_INT_MAX, rounded)
+}
 
 // ─── Drag and Drop ────────────────────────────────────────────────────────────
 
@@ -328,15 +351,25 @@ watch(modalOpen, (open) => {
 })
 
 const openCreate = (): void => {
+  if (props.totalItemCount >= VALIDATION_LIMITS.maxItemsPerCharacter) {
+    toast.info(t('inventory.itemLimitReached'), { kind: 'hint' })
+    return
+  }
   editingId.value = null
   draft.value = createEmptyDraft()
   modalOpen.value = true
 }
 
-const openEdit = (item: InventoryItem): void => {
+const openEdit = (item: InventoryItemDTO): void => {
   editingId.value = item.id
-  const { id: _id, isAttuned: _isAttuned, ...rest } = item
-  draft.value = rest
+  draft.value = {
+    name: item.name,
+    description: item.description,
+    quantity: item.quantity,
+    weight: item.weight,
+    type: item.type,
+    location: item.location,
+  }
   modalOpen.value = true
 }
 

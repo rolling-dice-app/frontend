@@ -13,17 +13,16 @@
 </template>
 
 <script setup lang="ts">
-import { isOAuthErrorCode } from '@rolling-dice-app/core'
-
 const { t } = useI18n()
 const route = useRoute()
+const logger = createLogger('[login]')
 
 const errorMessage = computed(() => {
   const code = route.query.error
   if (typeof code !== 'string') return null
-  if (isOAuthErrorCode(code)) return t(`error.oauth.${code}`)
-  console.warn('[login] unknown OAuth error code:', code)
-  return t('ui.message.unknownError')
+  // 前端不解析後端錯誤碼；原始 code 留在 log 供工程師追查，user 看通用訊息
+  logger.error('[OAuth redirect error]', { code })
+  return t('ui.message.systemError')
 })
 
 // 沒帶 ?error= 進來代表沒事在這頁，導回首頁

@@ -7,16 +7,21 @@ import type {
   AttackEntry,
   CharacterDTO,
   CharacterAbilityScores,
-  CharacterCurrency,
   CharacterFeature,
   GenderKey,
-  InventoryItem,
+  InventoryItemDTO,
   ClassKey,
   SkillProficiencies,
-  SpellEntry,
+  SpellEntryDTO,
   SpellSlotsDelta,
   SubclassKey,
 } from '@rolling-dice-app/core'
+
+/** 編輯頁 form 內持有的法術條目；只保留 buffer 所需欄位，不含 PK / 時間戳，submit 時 diff 對到 sub-endpoint */
+export type SpellFormEntry = Pick<
+  SpellEntryDTO,
+  'spellId' | 'isPrepared' | 'isFavorite' | 'sourceClass'
+>
 
 // ─── Form-only Class Entry ───────────────────────────────────────────────────
 
@@ -40,8 +45,11 @@ export type TotalAbilityScores = Record<AbilityKey, number>
 
 // ─── UI Drafts ───────────────────────────────────────────────────────────────
 
-/** 物品草稿（尚未具備 id；同調狀態由 composable 管理，不入草稿） */
-export type InventoryItemDraft = Omit<InventoryItem, 'id' | 'isAttuned'>
+/** 物品草稿（尚未具備 id / 時間戳；同調狀態由 sub-endpoint 與 store 管理，不入草稿） */
+export type InventoryItemDraft = Omit<
+  InventoryItemDTO,
+  'id' | 'isAttuned' | 'createdAt' | 'updatedAt'
+>
 
 /** 攻擊草稿（尚未具備 id 的攻擊條目，常見於新增/編輯 modal） */
 export type AttackDraft = Omit<AttackEntry, 'id'>
@@ -131,18 +139,14 @@ export interface CharacterUpdateFormState extends CharacterFormStateBase {
   spellcastingAbilities: AbilityKey[]
   /** 各施法主屬性的自定義調整值；只記錄非 0 項 */
   customSpellcastingBonuses: Partial<Record<AbilityKey, number>>
-  /** 角色掌握的法術 */
-  spells: SpellEntry[]
+  /** 角色掌握的法術 buffer；submit 時與原始 list diff 後送 POST/DELETE /spells */
+  spells: SpellFormEntry[]
   /** 一般施法者環位的使用者調整量 */
   spellSlotsDelta: SpellSlotsDelta
   /** 契術師 pact magic 環位的使用者調整量 */
   pactSlotsDelta: SpellSlotsDelta
   /** 角色特性列表 */
   features: CharacterFeature[]
-  /** 背包與儲物袋的物品列表 */
-  items: InventoryItem[]
-  /** 持有金錢 */
-  currency: CharacterCurrency
 }
 
 // ─── Store Mapper Internal ───────────────────────────────────────────────────

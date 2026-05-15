@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { AbilityKey } from '@rolling-dice-app/core'
+import { CHARACTER_INT_LIMITS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -79,7 +79,7 @@ const rows = computed(() =>
 )
 
 const onCustomChange = (key: AbilityKey, value: string): void => {
-  const parsed = parseIntegerInput(value, 0)
+  const parsed = parseIntegerInput(value, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
   const { [key]: _omit, ...rest } = customBonuses.value
   customBonuses.value = parsed === 0 ? rest : { ...rest, [key]: parsed }
 }

@@ -44,30 +44,27 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { CharacterDTO, SpellDTO } from '@rolling-dice-app/core'
+import type { SpellDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
-
-const props = defineProps<{
-  character: CharacterDTO
-}>()
 
 defineEmits<{
   select: [id: string]
 }>()
 
+const spellsStore = useCharacterSpellsStore()
 const { getSpell } = useSpells()
 
 const headingId = useId()
 
 const groupedSpells = computed(() => {
-  const spells: SpellDTO[] = []
-  for (const entry of props.character.spells) {
+  const spellList: SpellDTO[] = []
+  for (const entry of spellsStore.entries) {
     if (!entry.isFavorite) continue
-    const spell = getSpell(entry.id)
-    if (spell) spells.push(spell)
+    const spell = getSpell(entry.spellId)
+    if (spell) spellList.push(spell)
   }
-  return groupSpellsByLevel(spells)
+  return groupSpellsByLevel(spellList)
 })
 
 const totalCount = computed(() => groupedSpells.value.reduce((sum, g) => sum + g.spells.length, 0))

@@ -8,7 +8,9 @@ const sampleUser: User = {
   email: 'alice@example.com',
   displayName: 'Alice',
   avatarUrl: null,
+  preference: { characterListLayout: 'grid', applyMoneyToCurrency: true },
   createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
 }
 
 const sampleLimits: PlanLimits = {
@@ -131,5 +133,65 @@ describe('useAuthStore — logout()', () => {
     expect(apiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' })
     expect(store.user).toBe(null)
     expect(store.limits).toBe(null)
+  })
+})
+
+describe('useAuthStore — clearSession()', () => {
+  it('同時把 user 與 limits 清為 null', () => {
+    vi.stubGlobal('useApiFetch', () => () => Promise.resolve(null))
+    const store = useAuthStore()
+    store.user = sampleUser
+    store.limits = sampleLimits
+
+    store.clearSession()
+
+    expect(store.user).toBe(null)
+    expect(store.limits).toBe(null)
+  })
+})
+
+describe('useAuthStore — updatePreference()', () => {
+  it('PATCH /users/me 帶 merged preference + 當前 updatedAt，回傳寫回 user', async () => {
+    const updated: User = {
+      ...sampleUser,
+      preference: { characterListLayout: 'grid', applyMoneyToCurrency: false },
+      updatedAt: '2026-02-01T00:00:00Z',
+    }
+    const apiFetch = vi.fn().mockResolvedValue(updated)
+    vi.stubGlobal('useApiFetch', () => apiFetch)
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    await store.updatePreference({ applyMoneyToCurrency: false })
+
+    expect(apiFetch).toHaveBeenCalledWith('/users/me', {
+      method: 'PATCH',
+      body: {
+        preference: { characterListLayout: 'grid', applyMoneyToCurrency: false },
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+    })
+    expect(store.user).toEqual(updated)
+  })
+
+  it('PATCH 失敗時保留原 user 不動，把錯誤往外拋（caller 自行處理 toast / rollback）', async () => {
+    const apiFetch = vi.fn().mockRejectedValue(fetchErrorWith(409))
+    vi.stubGlobal('useApiFetch', () => apiFetch)
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    await expect(store.updatePreference({ applyMoneyToCurrency: false })).rejects.toMatchObject({
+      statusCode: 409,
+    })
+    expect(store.user).toEqual(sampleUser)
+  })
+
+  it('user 未登入時直接拋錯，不發 PATCH', async () => {
+    const apiFetch = vi.fn()
+    vi.stubGlobal('useApiFetch', () => apiFetch)
+
+    const store = useAuthStore()
+    await expect(store.updatePreference({ applyMoneyToCurrency: false })).rejects.toThrow()
+    expect(apiFetch).not.toHaveBeenCalled()
   })
 })

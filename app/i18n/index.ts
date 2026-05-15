@@ -50,8 +50,8 @@ const resolve = (path: string): string => {
  * 取對應 locale 的字串。path 是 messages tree 的 dot-path，TS 會檢查是否為合法 leaf。動態值可用 template literal：
  *
  *   t('ability.strength')
- *   t(`error.oauth.${code}`)         // code: OAuthErrorCode
  *   t(`character.alignment.${align}`) // align: AlignmentKey
+ *   t(`spell.school.${key}`)           // key: SpellSchool
  *
  * 找不到 leaf 時 fallback 為 path 字串本身（dev 時容易看出哪裡寫錯）。
  */

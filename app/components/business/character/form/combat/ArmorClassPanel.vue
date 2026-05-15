@@ -34,7 +34,13 @@
           size="sm"
           outline
           :placeholder="String(UNARMORED_AC_BASE)"
-          @update:model-value="formState.armorClass.value = parseIntegerInput($event)"
+          @update:model-value="
+            formState.armorClass.value = parseIntegerInput(
+              $event,
+              undefined,
+              CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+            )
+          "
         />
       </div>
 
@@ -81,7 +87,13 @@
           size="sm"
           outline
           placeholder="0"
-          @update:model-value="formState.armorClass.shieldValue = parseIntegerInput($event, 0)"
+          @update:model-value="
+            formState.armorClass.shieldValue = parseIntegerInput(
+              $event,
+              0,
+              CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+            )
+          "
         />
       </div>
     </div>
@@ -103,6 +115,7 @@ import type { SelectOption } from '@ui'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 import {
   ABILITY_KEYS,
+  CHARACTER_INT_LIMITS,
   UNARMORED_AC_BASE,
   type AbilityKey,
   type ArmorType,

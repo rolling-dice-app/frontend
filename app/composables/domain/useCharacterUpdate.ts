@@ -1,11 +1,6 @@
-import { POINT_BUY_DEFAULT_SCORE } from '~/constants/dnd'
-import {
-  ABILITY_KEYS,
-  DEFAULT_CURRENCY,
-  createDefaultArmorClass,
-  type CharacterDTO,
-} from '@rolling-dice-app/core'
-import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import { ABILITY_KEYS, type CharacterDTO, type SpellEntryDTO } from '@rolling-dice-app/core'
+import type { CharacterUpdateFormState, SpellFormEntry } from '~/types/business/character-form'
+import { buildCharacterUpdatePatch } from '~/helpers/character'
 
 export type UpdateTab = 'basic' | 'profile' | 'combat' | 'spells' | 'features' | 'backpack'
 
@@ -63,92 +58,130 @@ function characterToFormState(character: CharacterDTO): CharacterUpdateFormState
     })),
     spellcastingAbilities: [...character.spellcastingAbilities],
     customSpellcastingBonuses: { ...character.customSpellcastingBonuses },
-    spells: character.spells.map((entry) => ({ ...entry })),
+    spells: [],
     spellSlotsDelta: { ...character.spellSlotsDelta },
     pactSlotsDelta: { ...character.pactSlotsDelta },
     features: character.features.map((f) => ({ ...f, usage: { ...f.usage } })),
-    items: character.items.map((i) => ({ ...i })),
-    currency: { ...character.currency },
   }
 }
 
-function createEmptyUpdateFormState(): CharacterUpdateFormState {
-  return {
-    id: '',
-    name: '',
-    gender: null,
-    race: null,
-    subrace: null,
-    alignment: null,
-    classes: [{ classKey: null, level: 1, subclass: null }],
-    abilities: Object.fromEntries(
-      ABILITY_KEYS.map((key) => [key, { origin: POINT_BUY_DEFAULT_SCORE, race: 0, bonusScore: 0 }]),
-    ) as CharacterUpdateFormState['abilities'],
-    savingThrowExtras: [],
-    skills: {},
-    background: null,
-    isJackOfAllTrades: false,
-    isTough: false,
-    faith: null,
-    age: null,
-    height: null,
-    weight: null,
-    appearance: null,
-    story: null,
-    languages: null,
-    tools: null,
-    weaponProficiencies: null,
-    armorProficiencies: null,
-    avatar: null,
-    armorClass: createDefaultArmorClass(),
-    speedBonus: 0,
-    initiativeBonus: 0,
-    initiativeAbilityKey: null,
-    passivePerceptionBonus: 0,
-    passiveInsightBonus: 0,
-    customHpBonus: 0,
-    attacks: [],
-    spellcastingAbilities: [],
-    customSpellcastingBonuses: {},
-    spells: [],
-    spellSlotsDelta: {},
-    pactSlotsDelta: {},
-    features: [],
-    items: [],
-    currency: { ...DEFAULT_CURRENCY },
-  }
-}
+const entryToFormSpell = (entry: SpellEntryDTO): SpellFormEntry => ({
+  spellId: entry.spellId,
+  isPrepared: entry.isPrepared,
+  isFavorite: entry.isFavorite,
+  sourceClass: entry.sourceClass,
+})
 
-export function useCharacterUpdate(id: string) {
+export function useCharacterUpdate(character: CharacterDTO) {
+  const id = character.id
   const store = useCharacterStore()
+  const spellsStore = useCharacterSpellsStore()
+  const apiErrorToast = useApiErrorToast()
   const activeTab = ref<UpdateTab>('basic')
 
-  const character = computed(() => store.getById(id))
-
-  const formState = reactive<CharacterUpdateFormState>(
-    character.value ? characterToFormState(character.value) : createEmptyUpdateFormState(),
-  )
+  const formState = reactive<CharacterUpdateFormState>(characterToFormState(character))
+  const baseline = computed(() => store.getById(id) ?? character)
 
   const derived = useCharacterDerivedStats(formState)
 
-  // ─── Submit guard ─────────────────────────────────────────────────────
-  // backend 尚未提供 character update endpoint；submit 永久 disable 並提示。
-
   const isSubmitting = ref(false)
-  const canSubmit = computed(() => false)
+
+  const patch = computed(() => buildCharacterUpdatePatch(baseline.value, formState))
+
+  const hasMainChanges = computed(() => Object.keys(patch.value).length > 1)
+
+  // ─── Spells buffer：edit 進入時自 spellsStore.entries 種子化 ──────────────
+  // page 層 useAsyncData 已預先 load spells，這裡可同步 seed，不需 flag / onMounted 補載。
+
+  const seedSpells = (): void => {
+    formState.spells = spellsStore.entries.map(entryToFormSpell)
+  }
+
+  seedSpells()
+
+  const diffSpells = (): { toLearn: string[]; toForget: string[] } => {
+    const baselineSet = new Set(spellsStore.entries.map((e) => e.spellId))
+    const formSet = new Set(formState.spells.map((e) => e.spellId))
+    const toLearn = [...formSet].filter((s) => !baselineSet.has(s))
+    const toForget = [...baselineSet].filter((s) => !formSet.has(s))
+    return { toLearn, toForget }
+  }
+
+  const hasSpellDiff = computed(() => {
+    const { toLearn, toForget } = diffSpells()
+    return toLearn.length > 0 || toForget.length > 0
+  })
+
+  const hasChanges = computed(() => hasMainChanges.value || hasSpellDiff.value)
+
+  const canSubmit = computed(
+    () =>
+      !isSubmitting.value &&
+      formState.name.trim().length > 0 &&
+      formState.classes.every((entry) => entry.classKey !== null) &&
+      hasChanges.value,
+  )
 
   const { t } = useI18n()
 
+  // ─── Submit：主幹 PATCH + N 個 spell mutations 並行 ──────────────────────
+
   const submit = async (): Promise<void> => {
-    useToast().error(t('ui.message.editingNotAvailable'))
+    if (!canSubmit.value) return
+    isSubmitting.value = true
+    try {
+      const { toLearn, toForget } = diffSpells()
+      const mainPromise: Promise<unknown> = hasMainChanges.value
+        ? store.updateCharacter(id, formState)
+        : Promise.resolve()
+      const spellPromises: Promise<unknown>[] = [
+        ...toLearn.map((spellId) => spellsStore.learn(spellId)),
+        ...toForget.map((spellId) => spellsStore.forget(spellId)),
+      ]
+
+      const [mainResult, ...spellResults] = await Promise.allSettled([
+        mainPromise,
+        ...spellPromises,
+      ])
+
+      // 主幹失敗 → 統一交給 useApiErrorToast；不在前端判狀態碼
+      if (mainResult!.status === 'rejected') {
+        apiErrorToast.handle(mainResult!.reason)
+      }
+
+      // 個別 spell op 失敗 → 各自 toast；前端不解析後端錯誤碼
+      for (const r of spellResults) {
+        if (r.status === 'rejected') {
+          apiErrorToast.handle(r.reason)
+        }
+      }
+
+      const anySpellFailed = spellResults.some((r) => r.status === 'rejected')
+      const anyFailed = mainResult!.status === 'rejected' || anySpellFailed
+      if (!anyFailed) useToast().success(t('ui.message.saveSuccess'))
+
+      // spell mutation 失敗 → 無條件 refetch 同步本地與 server 狀態（不解析錯誤類型）
+      if (anySpellFailed) {
+        await spellsStore.refetch().catch(() => {})
+      }
+
+      // Re-seed：以伺服器當前狀態為基準
+      const next = store.getById(id)
+      if (next) Object.assign(formState, characterToFormState(next))
+      seedSpells()
+    } catch (err) {
+      apiErrorToast.handle(err)
+    } finally {
+      isSubmitting.value = false
+    }
   }
 
   return {
     activeTab,
-    character,
     formState,
     isSubmitting,
     canSubmit,
+    hasChanges,
     derived,
     submit,
   }

@@ -3,6 +3,12 @@ import {
   UNARMORED_AC_BASE,
   type ArmorClassConfig,
   type CharacterAbilityScores,
+  type CharacterCapabilities,
+  type CharacterClasses,
+  type CharacterDTO,
+  type CharacterProfile,
+  type CharacterStats,
+  type CharacterUpdateDTO,
   type ClassEntry,
   type AbilityKey,
   type ArmorType,
@@ -10,11 +16,13 @@ import {
 } from '@rolling-dice-app/core'
 import type {
   CharacterFormStateBase,
+  CharacterUpdateFormState,
   CharacterWritablePatch,
   TotalAbilityScores,
 } from '~/types/business/character-form'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
+import { cleanText, cleanTextOrNull } from '~/utils/text'
 
 /** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */
 export type CharacterTier = 'common' | 'elite' | 'master' | 'legendary'
@@ -211,10 +219,10 @@ export function formStateToCharacterPatch(
   formState: CharacterFormStateBase,
 ): CharacterWritablePatch {
   // identity
-  const name = formState.name
+  const name = cleanText(formState.name)
   const gender = formState.gender
-  const race = formState.race
-  const subrace = formState.subrace
+  const race = cleanTextOrNull(formState.race)
+  const subrace = cleanTextOrNull(formState.subrace)
   const alignment = formState.alignment
 
   // progression
@@ -226,19 +234,19 @@ export function formStateToCharacterPatch(
   const isTough = formState.isTough
 
   // profile
-  const background = formState.background || null
-  const faith = formState.faith || null
+  const background = cleanTextOrNull(formState.background)
+  const faith = cleanTextOrNull(formState.faith)
   const age = formState.age ?? null
-  const height = formState.height || null
-  const weight = formState.weight || null
-  const appearance = formState.appearance || null
-  const story = formState.story || null
+  const height = cleanTextOrNull(formState.height)
+  const weight = cleanTextOrNull(formState.weight)
+  const appearance = cleanTextOrNull(formState.appearance)
+  const story = cleanTextOrNull(formState.story)
 
   // proficiencies
-  const languages = formState.languages || null
-  const tools = formState.tools || null
-  const weaponProficiencies = formState.weaponProficiencies || null
-  const armorProficiencies = formState.armorProficiencies || null
+  const languages = cleanTextOrNull(formState.languages)
+  const tools = cleanTextOrNull(formState.tools)
+  const weaponProficiencies = cleanTextOrNull(formState.weaponProficiencies)
+  const armorProficiencies = cleanTextOrNull(formState.armorProficiencies)
 
   // portrait
   const avatar = formState.avatar
@@ -266,4 +274,140 @@ export function formStateToCharacterPatch(
     armorProficiencies,
     avatar,
   }
+}
+
+const toProfileSection = (form: CharacterUpdateFormState): CharacterProfile => ({
+  name: cleanText(form.name),
+  gender: form.gender,
+  race: cleanTextOrNull(form.race),
+  subrace: cleanTextOrNull(form.subrace),
+  alignment: form.alignment,
+  background: cleanTextOrNull(form.background),
+  faith: cleanTextOrNull(form.faith),
+  age: form.age ?? null,
+  height: cleanTextOrNull(form.height),
+  weight: cleanTextOrNull(form.weight),
+  appearance: cleanTextOrNull(form.appearance),
+  story: cleanTextOrNull(form.story),
+  languages: cleanTextOrNull(form.languages),
+  tools: cleanTextOrNull(form.tools),
+  weaponProficiencies: cleanTextOrNull(form.weaponProficiencies),
+  armorProficiencies: cleanTextOrNull(form.armorProficiencies),
+  avatar: form.avatar,
+})
+
+const toClassesSection = (form: CharacterUpdateFormState): CharacterClasses => ({
+  classes: form.classes.filter((entry): entry is ClassEntry => entry.classKey !== null),
+})
+
+const toStatsSection = (form: CharacterUpdateFormState): CharacterStats => ({
+  abilities: form.abilities,
+  skills: form.skills,
+  savingThrowExtras: form.savingThrowExtras,
+  isJackOfAllTrades: form.isJackOfAllTrades,
+  isTough: form.isTough,
+  armorClass: form.armorClass,
+  customHpBonus: form.customHpBonus,
+  speedBonus: form.speedBonus,
+  initiativeBonus: form.initiativeBonus,
+  initiativeAbilityKey: form.initiativeAbilityKey,
+  passivePerceptionBonus: form.passivePerceptionBonus,
+  passiveInsightBonus: form.passiveInsightBonus,
+})
+
+const toCapabilitiesSection = (form: CharacterUpdateFormState): CharacterCapabilities => ({
+  attacks: form.attacks,
+  spellcastingAbilities: form.spellcastingAbilities,
+  customSpellcastingBonuses: form.customSpellcastingBonuses,
+  spellSlotsDelta: form.spellSlotsDelta,
+  pactSlotsDelta: form.pactSlotsDelta,
+  features: form.features,
+})
+
+const originalProfile = (c: CharacterDTO): CharacterProfile => ({
+  name: c.name,
+  gender: c.gender,
+  race: c.race,
+  subrace: c.subrace,
+  alignment: c.alignment,
+  background: c.background,
+  faith: c.faith,
+  age: c.age,
+  height: c.height,
+  weight: c.weight,
+  appearance: c.appearance,
+  story: c.story,
+  languages: c.languages,
+  tools: c.tools,
+  weaponProficiencies: c.weaponProficiencies,
+  armorProficiencies: c.armorProficiencies,
+  avatar: c.avatar,
+})
+
+const originalClasses = (c: CharacterDTO): CharacterClasses => ({ classes: c.classes })
+
+const originalStats = (c: CharacterDTO): CharacterStats => ({
+  abilities: c.abilities,
+  skills: c.skills,
+  savingThrowExtras: c.savingThrowExtras,
+  isJackOfAllTrades: c.isJackOfAllTrades,
+  isTough: c.isTough,
+  armorClass: c.armorClass,
+  customHpBonus: c.customHpBonus,
+  speedBonus: c.speedBonus,
+  initiativeBonus: c.initiativeBonus,
+  initiativeAbilityKey: c.initiativeAbilityKey,
+  passivePerceptionBonus: c.passivePerceptionBonus,
+  passiveInsightBonus: c.passiveInsightBonus,
+})
+
+const originalCapabilities = (c: CharacterDTO): CharacterCapabilities => ({
+  attacks: c.attacks,
+  spellcastingAbilities: c.spellcastingAbilities,
+  customSpellcastingBonuses: c.customSpellcastingBonuses,
+  spellSlotsDelta: c.spellSlotsDelta,
+  pactSlotsDelta: c.pactSlotsDelta,
+  features: c.features,
+})
+
+const deepEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true
+  if (a === null || b === null) return a === b
+  if (typeof a !== 'object' || typeof b !== 'object') return false
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((v, i) => deepEqual(v, b[i]))
+  }
+  if (Array.isArray(b)) return false
+  const ao = a as Record<string, unknown>
+  const bo = b as Record<string, unknown>
+  const ak = Object.keys(ao)
+  const bk = Object.keys(bo)
+  if (ak.length !== bk.length) return false
+  return ak.every((k) => k in bo && deepEqual(ao[k], bo[k]))
+}
+
+const sectionChanged = <T>(a: T, b: T): boolean => !deepEqual(a, b)
+
+/** 以 section 為粒度比對 form state 與原始角色，產出 PATCH payload；updatedAt 作 optimistic lock token。 */
+export function buildCharacterUpdatePatch(
+  original: CharacterDTO,
+  form: CharacterUpdateFormState,
+): CharacterUpdateDTO {
+  const patch: CharacterUpdateDTO = { updatedAt: original.updatedAt }
+
+  const profile = toProfileSection(form)
+  if (sectionChanged(profile, originalProfile(original))) patch.profile = profile
+
+  const classes = toClassesSection(form)
+  if (sectionChanged(classes, originalClasses(original))) patch.classes = classes
+
+  const stats = toStatsSection(form)
+  if (sectionChanged(stats, originalStats(original))) patch.stats = stats
+
+  const capabilities = toCapabilitiesSection(form)
+  if (sectionChanged(capabilities, originalCapabilities(original)))
+    patch.capabilities = capabilities
+
+  return patch
 }

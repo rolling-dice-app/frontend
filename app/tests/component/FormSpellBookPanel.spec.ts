@@ -4,12 +4,11 @@ import { computed, nextTick, onBeforeUnmount, ref, useId } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import SpellBookPanel from '~/components/business/character/form/spells/SpellBookPanel.vue'
-import { useCharacterSpellsForm } from '~/composables/domain/useCharacterSpellsForm'
 import { useSpellSelectOptions } from '~/composables/ui/useSpellSelectOptions'
 import { formatSpellComponents, formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import { debounce } from '~/utils/timing'
-import type { SpellDTO, SpellEntry } from '@rolling-dice-app/core'
-import type { CharacterUpdateFormState } from '~/types/business/character-form'
+import type { SpellDTO } from '@rolling-dice-app/core'
+import type { CharacterUpdateFormState, SpellFormEntry } from '~/types/business/character-form'
 
 const allSpells = ref<SpellDTO[]>([])
 
@@ -18,7 +17,6 @@ beforeEach(() => {
   vi.stubGlobal('useId', useId)
   vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
   vi.stubGlobal('useSpells', () => ({ spells: computed(() => allSpells.value) }))
-  vi.stubGlobal('useCharacterSpellsForm', useCharacterSpellsForm)
   vi.stubGlobal('useSpellSelectOptions', useSpellSelectOptions)
   vi.stubGlobal('formatSpellLevel', formatSpellLevel)
   vi.stubGlobal('formatSpellComponents', formatSpellComponents)
@@ -106,7 +104,7 @@ const makeSpell = (overrides: Partial<SpellDTO> = {}): SpellDTO =>
     ...overrides,
   }) as SpellDTO
 
-const baseFormState = (spells: SpellEntry[] = []): CharacterUpdateFormState =>
+const baseFormState = (spells: SpellFormEntry[] = []): CharacterUpdateFormState =>
   ({ spells }) as unknown as CharacterUpdateFormState
 
 const mountPanel = (
@@ -136,7 +134,6 @@ const mountPanel = (
         formatSpellLevel,
         formatSpellComponents,
         groupSpellsByLevel,
-        useCharacterSpellsForm,
         debounce,
       },
     },
@@ -201,7 +198,7 @@ describe('SpellBookPanel (form)', () => {
     })
 
     it('已掌握法術 checkbox 勾選', () => {
-      const formState = baseFormState([{ id: 'a', isPrepared: false, isFavorite: false }])
+      const formState = baseFormState([{ spellId: 'a', isPrepared: false, isFavorite: false }])
       const wrapper = mountPanel({
         formState,
         spells: [makeSpell({ id: 'a', name: '魔法飛彈' })],
@@ -222,11 +219,11 @@ describe('SpellBookPanel (form)', () => {
         .findAll('input[type="checkbox"]')
         .find((c) => c.attributes('aria-label') === '掌握 魔法飛彈')!
       await cb.setValue(true)
-      expect(formState.spells).toEqual([{ id: 'a', isPrepared: false, isFavorite: false }])
+      expect(formState.spells).toEqual([{ spellId: 'a', isPrepared: false, isFavorite: false }])
     })
 
     it('取消已掌握法術會從 spells 移除', async () => {
-      const formState = baseFormState([{ id: 'a', isPrepared: false, isFavorite: false }])
+      const formState = baseFormState([{ spellId: 'a', isPrepared: false, isFavorite: false }])
       const wrapper = mountPanel({
         formState,
         spells: [makeSpell({ id: 'a', name: '魔法飛彈' })],

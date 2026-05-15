@@ -4,6 +4,9 @@
  * Opt-in via `definePageMeta({ middleware: 'auth' })`。
  */
 export default defineNuxtRouteMiddleware((to) => {
+  // auth-init 是 client-only plugin，SSR 期間 auth state 必為 null；
+  // 為避免 server-side redirect 被 edge cache 污染，middleware 也只在 client 跑。
+  if (import.meta.server) return
   const auth = useAuthStore()
   if (auth.isLoggedIn) return
   if (to.path === '/') return

@@ -1,5 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
+import { onMounted } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { CharacterDTO } from '@rolling-dice-app/core'
 import { createMockCharacter, seedCharacterInStore } from '~/tests/fixtures/character'
 
 const mockNavigateTo = vi.fn()
@@ -28,24 +30,35 @@ const MOCK_CHARACTER = createMockCharacter({
 })
 
 const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
+const mockApiErrorHandle = vi.fn()
 
-async function getComposable(characterId: string) {
+async function getComposable(character: CharacterDTO) {
   const { useCharacterStore } = await import('~/stores/character')
   vi.stubGlobal('useCharacterStore', useCharacterStore)
+
+  const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+  const spellsStore = useCharacterSpellsStore()
+  spellsStore.characterId = character.id
+  spellsStore.entries = []
+  vi.stubGlobal('useCharacterSpellsStore', useCharacterSpellsStore)
 
   const { useCharacterDerivedStats } = await import('~/composables/domain/useCharacterDerivedStats')
   vi.stubGlobal('useCharacterDerivedStats', useCharacterDerivedStats)
 
-  vi.stubGlobal('useToast', () => ({ error: mockToastError }))
+  vi.stubGlobal('useToast', () => ({ error: mockToastError, success: mockToastSuccess }))
+  vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
+  vi.stubGlobal('useSpells', () => ({ refresh: vi.fn(), spells: { value: [] } }))
 
   const { useCharacterUpdate } = await import('~/composables/domain/useCharacterUpdate')
-  return useCharacterUpdate(characterId)
+  return useCharacterUpdate(character)
 }
 
 beforeEach(() => {
   vi.resetModules()
   setActivePinia(createPinia())
   vi.stubGlobal('navigateTo', mockNavigateTo)
+  vi.stubGlobal('onMounted', onMounted)
   seedCharacterInStore(MOCK_CHARACTER)
 })
 
@@ -58,9 +71,8 @@ afterEach(() => {
 // ─── 初始狀態 ──────────────────────────────────────────────────────────────────
 
 describe('useCharacterUpdate — 初始狀態', () => {
-  it('應從 store 載入角色並映射至 formState', async () => {
-    const { formState, character } = await getComposable('update-001')
-    expect(character.value).toBeTruthy()
+  it('應將傳入 character 映射至 formState', async () => {
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.id).toBe('update-001')
     expect(formState.name).toBe('測試角色')
     expect(formState.gender).toBe('male')
@@ -68,25 +80,25 @@ describe('useCharacterUpdate — 初始狀態', () => {
   })
 
   it('應正確映射 abilities（保留 basicScore 與 bonusScore）', async () => {
-    const { formState } = await getComposable('update-001')
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.abilities.strength).toEqual({ origin: 15, race: 0, bonusScore: 2 })
     expect(formState.abilities.constitution).toEqual({ origin: 13, race: 0, bonusScore: 1 })
   })
 
   it('應正確映射 optional 欄位', async () => {
-    const { formState } = await getComposable('update-001')
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.faith).toBe('坦帕斯')
     expect(formState.age).toBe(35)
     expect(formState.height).toBe('180cm')
   })
 
   it('應正確映射 isTough', async () => {
-    const { formState } = await getComposable('update-001')
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.isTough).toBe(true)
   })
 
   it('應正確映射 classes', async () => {
-    const { formState } = await getComposable('update-001')
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.classes).toHaveLength(1)
     expect(formState.classes[0]).toEqual({
       classKey: 'fighter',
@@ -104,13 +116,13 @@ describe('useCharacterUpdate — 初始狀態', () => {
       ],
     })
     seedCharacterInStore(character)
-    const { formState } = await getComposable('update-sub-001')
+    const { formState } = await getComposable(character)
     expect(formState.classes[0]!.subclass).toBe('battleMaster')
     expect(formState.classes[1]!.subclass).toBeNull()
   })
 
   it('應正確映射 skills', async () => {
-    const { formState } = await getComposable('update-001')
+    const { formState } = await getComposable(MOCK_CHARACTER)
     expect(formState.skills).toEqual({ athletics: 'proficient' })
   })
 
@@ -120,7 +132,7 @@ describe('useCharacterUpdate — 初始狀態', () => {
       spellcastingAbilities: ['intelligence', 'charisma'],
     })
     seedCharacterInStore(character)
-    const { formState } = await getComposable('update-spell-001')
+    const { formState } = await getComposable(character)
     expect(formState.spellcastingAbilities).toEqual(['intelligence', 'charisma'])
   })
 
@@ -130,24 +142,13 @@ describe('useCharacterUpdate — 初始狀態', () => {
       customSpellcastingBonuses: { intelligence: 2 },
     })
     seedCharacterInStore(character)
-    const { formState } = await getComposable('update-spell-002')
+    const { formState } = await getComposable(character)
     expect(formState.customSpellcastingBonuses).toEqual({ intelligence: 2 })
   })
 
-  it('找不到角色時 formState.spellcastingAbilities 應為空陣列', async () => {
-    const { formState } = await getComposable('non-existent')
-    expect(formState.spellcastingAbilities).toEqual([])
-    expect(formState.customSpellcastingBonuses).toEqual({})
-  })
-
   it('activeTab 初始值應為 "basic"', async () => {
-    const { activeTab } = await getComposable('update-001')
+    const { activeTab } = await getComposable(MOCK_CHARACTER)
     expect(activeTab.value).toBe('basic')
-  })
-
-  it('找不到角色時 character 應為 undefined', async () => {
-    const { character } = await getComposable('non-existent')
-    expect(character.value).toBeUndefined()
   })
 })
 
@@ -155,26 +156,96 @@ describe('useCharacterUpdate — 初始狀態', () => {
 
 describe('useCharacterUpdate — 職業管理', () => {
   it('totalLevel 應正確計算所有職業等級總和', async () => {
-    const { formState, derived } = await getComposable('update-001')
+    const { formState, derived } = await getComposable(MOCK_CHARACTER)
     formState.classes.push({ classKey: null, level: 3, subclass: null })
     expect(derived.totalLevel.value).toBe(8)
   })
 })
 
-// ─── 編輯功能尚未開放（backend 未實作 update endpoint） ───────────────────────
+// ─── canSubmit / submit ──────────────────────────────────────────────────────
 
-describe('useCharacterUpdate — 編輯尚未開放', () => {
-  it('canSubmit 永遠為 false（不論 formState 內容）', async () => {
-    const { canSubmit, formState } = await getComposable('update-001')
-    expect(canSubmit.value).toBe(false)
-    formState.name = '其他名字'
+describe('useCharacterUpdate — canSubmit', () => {
+  it('未變更時為 false', async () => {
+    const { canSubmit } = await getComposable(MOCK_CHARACTER)
     expect(canSubmit.value).toBe(false)
   })
 
-  it('submit 呼叫顯示「編輯功能尚未開放」toast，不導航', async () => {
-    const { submit } = await getComposable('update-001')
+  it('變更 name 後為 true', async () => {
+    const { canSubmit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '其他名字'
+    expect(canSubmit.value).toBe(true)
+  })
+
+  it('name 清空時為 false', async () => {
+    const { canSubmit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '   '
+    expect(canSubmit.value).toBe(false)
+  })
+
+  it('任一 class 未選時為 false', async () => {
+    const { canSubmit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.classes.push({ classKey: null, level: 1, subclass: null })
+    expect(canSubmit.value).toBe(false)
+  })
+})
+
+describe('useCharacterUpdate — submit', () => {
+  it('成功時呼叫 store.updateCharacter、顯示 success toast、刷新 formState', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const next = { ...MOCK_CHARACTER, name: '已改名', updatedAt: '2026-02-01T00:00:00.000Z' }
+    const spy = vi.spyOn(store, 'updateCharacter').mockImplementation(async () => {
+      store.detailCache.set(next.id, next)
+      return next
+    })
+
+    const { submit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '已改名'
     await submit()
-    expect(mockToastError).toHaveBeenCalledWith('編輯功能尚未開放')
+
+    expect(spy).toHaveBeenCalledWith('update-001', formState)
+    expect(mockToastSuccess).toHaveBeenCalledWith('已儲存')
+    expect(formState.name).toBe('已改名')
+  })
+
+  it('主幹失敗（含 409）一律交給 useApiErrorToast，不在前端判狀態碼', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const err = { response: { status: 409 } }
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue(err)
+
+    const { submit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '已改名'
+    await submit()
+
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err)
     expect(mockNavigateTo).not.toHaveBeenCalled()
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  it('主幹丟出非 FetchError 也交給 useApiErrorToast', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const err = new Error('boom')
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue(err)
+
+    const { submit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '已改名'
+    await submit()
+
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err)
+    expect(mockNavigateTo).not.toHaveBeenCalled()
+  })
+
+  it('未滿足 canSubmit 時不呼叫 store', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const spy = vi.spyOn(store, 'updateCharacter')
+
+    const { submit } = await getComposable(MOCK_CHARACTER)
+    await submit()
+
+    expect(spy).not.toHaveBeenCalled()
+    expect(mockToastSuccess).not.toHaveBeenCalled()
   })
 })

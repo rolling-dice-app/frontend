@@ -6,23 +6,33 @@
     :x="item.x"
     :y="item.y"
     :duration="item.duration"
-    :bg-color="variantBgColor(item.variant)"
+    :bg-color="bgColor(item)"
     text-color="white"
     @update:model-value="(open: boolean) => !open && remove(item.id)"
   >
-    {{ item.message }}
+    <div class="flex items-center gap-2">
+      <Icon v-if="item.icon" :name="item.icon" :size="20" :color="accentColor(item.variant)" />
+      <span>{{ item.message }}</span>
+    </div>
   </Toast>
 </template>
 
 <script setup lang="ts">
-import { Toast } from '@ui'
-import type { ToastVariant } from '~/composables/ui/useToast'
+import { Icon, Toast } from '@ui'
+import type { ToastItem, ToastVariant } from '~/composables/ui/useToast'
 
 const { items, remove } = useToast()
 
-const variantBgColor = (variant: ToastVariant): string => {
-  if (variant === 'error') return 'var(--color-danger)'
-  if (variant === 'success') return 'var(--color-success)'
+const bgColor = (item: ToastItem): string => {
+  if (item.kind === 'system') return 'var(--color-toast-system-bg)'
+  if (item.variant === 'error') return 'var(--color-danger)'
+  if (item.variant === 'success') return 'var(--color-success)'
   return 'var(--color-primary)'
+}
+
+const accentColor = (variant: ToastVariant): string => {
+  if (variant === 'error') return 'var(--color-toast-system-accent-error)'
+  if (variant === 'success') return 'var(--color-toast-system-accent-success)'
+  return 'var(--color-toast-system-accent-info)'
 }
 </script>

@@ -1,16 +1,66 @@
 import { effectScope, ref, nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  buildCombatStateBodyDefaults,
+  type CombatStateDTO,
+  type CombatStateUpdateDTO,
+} from '@rolling-dice-app/core'
 import { useCharacterCombatState } from '~/composables/domain/useCharacterCombatState'
-import { getCombatStateStorageKey } from '~/constants/storage'
 
 const CHAR_ID = 'char-001'
+const INITIAL_UPDATED_AT = '2026-05-13T00:00:00.000Z'
+const REFRESH_UPDATED_AT = '2026-05-13T00:00:00.500Z'
 
 const mockToastSuccess = vi.fn()
 const mockToastError = vi.fn()
+const mockGet = vi.fn<(id: string) => Promise<CombatStateDTO>>()
+const mockPatch = vi.fn<(id: string, body: CombatStateUpdateDTO) => Promise<void>>()
+const mockShortRest = vi.fn<(id: string) => Promise<void>>()
+const mockLongRest = vi.fn<(id: string) => Promise<void>>()
+const mockResetEndpoint = vi.fn<(id: string) => Promise<void>>()
+const mockApiErrorHandle = vi.fn()
+
+const buildDto = (overrides: Partial<CombatStateDTO> = {}): CombatStateDTO => ({
+  characterId: CHAR_ID,
+  ...buildCombatStateBodyDefaults(),
+  updatedAt: INITIAL_UPDATED_AT,
+  ...overrides,
+})
+
+/** 預設：GET 回 default DTO，PATCH 回 undefined，第二次 GET（refresh）回較新 updatedAt */
+const installDefaultApi = (initial: Partial<CombatStateDTO> = {}): void => {
+  let getCount = 0
+  mockGet.mockImplementation(async () => {
+    getCount += 1
+    return getCount === 1
+      ? buildDto(initial)
+      : buildDto({ ...initial, updatedAt: REFRESH_UPDATED_AT })
+  })
+  mockPatch.mockResolvedValue(undefined)
+  mockShortRest.mockResolvedValue(undefined)
+  mockLongRest.mockResolvedValue(undefined)
+  mockResetEndpoint.mockResolvedValue(undefined)
+}
 
 beforeEach(() => {
-  localStorage.clear()
   vi.useFakeTimers()
+  mockGet.mockReset()
+  mockPatch.mockReset()
+  mockShortRest.mockReset()
+  mockLongRest.mockReset()
+  mockResetEndpoint.mockReset()
+  mockApiErrorHandle.mockReset()
+  installDefaultApi()
+  vi.stubGlobal('characters', () => ({
+    combatState: {
+      get: mockGet,
+      patch: mockPatch,
+      shortRest: mockShortRest,
+      longRest: mockLongRest,
+      reset: mockResetEndpoint,
+    },
+  }))
+  vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
   vi.stubGlobal('useToast', () => ({ success: mockToastSuccess, error: mockToastError }))
 })
 
@@ -21,9 +71,13 @@ afterEach(() => {
 })
 
 describe('useCharacterCombatState — 預設與初始狀態', () => {
-  it('localStorage 為空時 displayCurrentHp 應顯示 effectiveMaxHp', () => {
+  it('未呼叫 load() 時 state 為預設值，displayCurrentHp 應顯示 effectiveMaxHp', () => {
     const maxHp = ref(30)
-    const { displayCurrentHp, effectiveMaxHp, state } = useCharacterCombatState(CHAR_ID, maxHp)
+    const { displayCurrentHp, effectiveMaxHp, state, isReady } = useCharacterCombatState(
+      CHAR_ID,
+      maxHp,
+    )
+    expect(isReady.value).toBe(false)
     expect(state.hp.current).toBeNull()
     expect(state.hp.tempHp).toBe(0)
     expect(state.hp.maxAdjustment).toBe(0)
@@ -31,44 +85,34 @@ describe('useCharacterCombatState — 預設與初始狀態', () => {
     expect(displayCurrentHp.value).toBe(30)
   })
 
-  it('localStorage 有資料時應載入並 normalize', () => {
-    localStorage.setItem(
-      getCombatStateStorageKey(CHAR_ID),
-      JSON.stringify({
-        characterId: CHAR_ID,
-        hp: { current: 12, tempHp: 3, maxAdjustment: 5 },
-        acAdjustment: 2,
-        speedAdjustment: -5,
-        savingThrowAdjustments: { strength: 1 },
-        updatedAt: '2026-04-26T00:00:00.000Z',
-      }),
-    )
+  it('load() 回傳 DTO 應寫入 state 並 normalize', async () => {
+    installDefaultApi({
+      hp: { current: 12, tempHp: 3, maxAdjustment: 5 },
+      acAdjustment: 2,
+      speedAdjustment: -5,
+      savingThrowAdjustments: { strength: 1 },
+    })
     const maxHp = ref(30)
-    const { state, displayCurrentHp, effectiveMaxHp } = useCharacterCombatState(CHAR_ID, maxHp)
-    expect(state.hp.current).toBe(12)
-    expect(state.hp.tempHp).toBe(3)
-    expect(state.hp.maxAdjustment).toBe(5)
-    expect(effectiveMaxHp.value).toBe(35)
-    expect(state.acAdjustment).toBe(2)
-    expect(state.speedAdjustment).toBe(-5)
-    expect(state.savingThrowAdjustments.strength).toBe(1)
-    expect(displayCurrentHp.value).toBe(12)
+    const cs = useCharacterCombatState(CHAR_ID, maxHp)
+    await cs.load()
+    expect(cs.isReady.value).toBe(true)
+    expect(cs.state.hp.current).toBe(12)
+    expect(cs.state.hp.tempHp).toBe(3)
+    expect(cs.state.hp.maxAdjustment).toBe(5)
+    expect(cs.effectiveMaxHp.value).toBe(35)
+    expect(cs.state.acAdjustment).toBe(2)
+    expect(cs.state.speedAdjustment).toBe(-5)
+    expect(cs.state.savingThrowAdjustments.strength).toBe(1)
+    expect(cs.displayCurrentHp.value).toBe(12)
   })
 
-  it('舊資料缺 maxAdjustment 時 normalize 應補 0', () => {
-    localStorage.setItem(
-      getCombatStateStorageKey(CHAR_ID),
-      JSON.stringify({
-        characterId: CHAR_ID,
-        hp: { current: 10, tempHp: 0 },
-        acAdjustment: 0,
-        speedAdjustment: 0,
-        savingThrowAdjustments: {},
-        updatedAt: '2026-04-26T00:00:00.000Z',
-      }),
-    )
-    const { state } = useCharacterCombatState(CHAR_ID, ref(30))
-    expect(state.hp.maxAdjustment).toBe(0)
+  it('load() 失敗時 loadError 應記錄，isReady 維持 false', async () => {
+    const err = new Error('network down')
+    mockGet.mockRejectedValueOnce(err)
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    expect(cs.loadError.value).toBe(err)
+    expect(cs.isReady.value).toBe(false)
   })
 })
 
@@ -181,74 +225,6 @@ describe('useCharacterCombatState — 臨時調整', () => {
     adjustSavingThrow('strength', -1)
     expect(state.savingThrowAdjustments.strength).toBeUndefined()
   })
-
-  it('longRest 應清空所有臨時調整與 HP / tempHp / maxAdjustment，並清空指定 id 的 featureUsesSpent', () => {
-    const {
-      adjustAc,
-      adjustSpeed,
-      adjustSavingThrow,
-      setTempHp,
-      damageHp,
-      adjustMaxHp,
-      adjustFeatureUseSpent,
-      longRest,
-      state,
-    } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustAc(2)
-    adjustSpeed(-5)
-    adjustSavingThrow('strength', 1)
-    setTempHp(5)
-    damageHp(10)
-    adjustMaxHp(7)
-    adjustFeatureUseSpent('feat-1', 1, 3)
-
-    longRest([], ['feat-1'])
-
-    expect(state.acAdjustment).toBe(0)
-    expect(state.speedAdjustment).toBe(0)
-    expect(state.savingThrowAdjustments).toEqual({})
-    expect(state.hp.tempHp).toBe(0)
-    expect(state.hp.current).toBeNull()
-    expect(state.hp.maxAdjustment).toBe(0)
-    expect(state.featureUsesSpent).toEqual({})
-  })
-
-  it('longRest 應保留 manual recovery 對應的 featureUsesSpent 條目', () => {
-    const { adjustFeatureUseSpent, longRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('short-feat', 1, 2)
-    adjustFeatureUseSpent('long-feat', 1, 3)
-    adjustFeatureUseSpent('manual-feat', 1, 5)
-
-    longRest([], ['short-feat', 'long-feat'])
-
-    expect(state.featureUsesSpent['short-feat']).toBeUndefined()
-    expect(state.featureUsesSpent['long-feat']).toBeUndefined()
-    expect(state.featureUsesSpent['manual-feat']).toBe(1)
-  })
-
-  it('longRest 未傳入 longRestFeatureIds 時不動 featureUsesSpent', () => {
-    const { adjustFeatureUseSpent, longRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('manual-feat', 2, 5)
-
-    longRest()
-
-    expect(state.featureUsesSpent['manual-feat']).toBe(2)
-  })
-})
-
-describe('useCharacterCombatState — 休息 toast 通知', () => {
-  it('shortRest 有 feature 目標時回傳 true', () => {
-    const { adjustFeatureUseSpent, shortRest } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('feat-1', 1, 2)
-    expect(shortRest(['feat-1'])).toBe(true)
-  })
-
-  it('shortRest([]) 且無契術可回復時回傳 false 且不變更狀態', () => {
-    const { shortRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    const beforeUpdatedAt = state.updatedAt
-    expect(shortRest([])).toBe(false)
-    expect(state.updatedAt).toBe(beforeUpdatedAt)
-  })
 })
 
 describe('useCharacterCombatState — 生命骰', () => {
@@ -290,67 +266,6 @@ describe('useCharacterCombatState — 生命骰', () => {
     expect(getHitDiceUsed('fighter')).toBe(3)
     expect(getHitDiceUsed('wizard')).toBe(1)
   })
-
-  it('longRest 共回復 floor(totalLevel/2) 顆，依骰面由大到小貪婪分配', () => {
-    const { adjustHitDiceUsed, longRest, getHitDiceUsed } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustHitDiceUsed('fighter', 5, 5)
-    adjustHitDiceUsed('wizard', 2, 2)
-    adjustHitDiceUsed('rogue', 1, 1)
-    // totalLevel 8 → pool 4；hitDie: fighter d10 > rogue d8 > wizard d6
-    longRest([
-      { classKey: 'fighter', level: 5, subclass: null },
-      { classKey: 'wizard', level: 2, subclass: null },
-      { classKey: 'rogue', level: 1, subclass: null },
-    ])
-    expect(getHitDiceUsed('fighter')).toBe(1)
-    expect(getHitDiceUsed('rogue')).toBe(1)
-    expect(getHitDiceUsed('wizard')).toBe(2)
-  })
-
-  it('longRest 池有剩時應跨職業繼續分配', () => {
-    const { adjustHitDiceUsed, longRest, getHitDiceUsed } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustHitDiceUsed('fighter', 2, 4)
-    adjustHitDiceUsed('wizard', 4, 4)
-    // totalLevel 8 → pool 4；fighter 用完 2 後池剩 2 接著回 wizard 2 顆
-    longRest([
-      { classKey: 'fighter', level: 4, subclass: null },
-      { classKey: 'wizard', level: 4, subclass: null },
-    ])
-    expect(getHitDiceUsed('fighter')).toBe(0)
-    expect(getHitDiceUsed('wizard')).toBe(2)
-  })
-
-  it('longRest 至少回復 1 顆（總等級 1）', () => {
-    const { adjustHitDiceUsed, longRest, getHitDiceUsed } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustHitDiceUsed('fighter', 1, 1)
-    longRest([{ classKey: 'fighter', level: 1, subclass: null }])
-    expect(getHitDiceUsed('fighter')).toBe(0)
-  })
-
-  it('longRest 對未使用的職業不增條目', () => {
-    const { longRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    longRest([{ classKey: 'fighter', level: 5, subclass: null }])
-    expect(state.hitDiceUsed).toEqual({})
-  })
-
-  it('shortRest 不影響生命骰使用狀態', () => {
-    const { adjustHitDiceUsed, shortRest, getHitDiceUsed } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustHitDiceUsed('fighter', 2, 5)
-    shortRest([])
-    expect(getHitDiceUsed('fighter')).toBe(2)
-  })
 })
 
 describe('useCharacterCombatState — 特性次數', () => {
@@ -385,26 +300,6 @@ describe('useCharacterCombatState — 特性次數', () => {
     expect(state.featureUsesSpent['feat-1']).toBeUndefined()
   })
 
-  it('shortRest 僅恢復指定 id 的特性，其他不動', () => {
-    const { adjustFeatureUseSpent, shortRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('short-feat', 1, 2)
-    adjustFeatureUseSpent('long-feat', 1, 1)
-    shortRest(['short-feat'])
-    expect(state.featureUsesSpent['short-feat']).toBeUndefined()
-    expect(state.featureUsesSpent['long-feat']).toBe(1)
-  })
-
-  it('shortRest 與 HP / 臨時調整無關', () => {
-    const { adjustFeatureUseSpent, adjustAc, damageHp, shortRest, state, displayCurrentHp } =
-      useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('short-feat', 1, 2)
-    adjustAc(2)
-    damageHp(5)
-    shortRest(['short-feat'])
-    expect(state.acAdjustment).toBe(2)
-    expect(displayCurrentHp.value).toBe(25)
-  })
-
   it('setFeatureUseSpent 應直接 clamp 至 [0, max]', () => {
     const { setFeatureUseSpent, getFeatureUseSpent } = useCharacterCombatState(CHAR_ID, ref(30))
     setFeatureUseSpent('feat-1', -5, 3)
@@ -418,16 +313,6 @@ describe('useCharacterCombatState — 特性次數', () => {
     const beforeUpdatedAt = state.updatedAt
     adjustFeatureUseSpent('feat-1', 0, 3)
     expect(state.featureUsesSpent).toEqual({})
-    expect(state.updatedAt).toBe(beforeUpdatedAt)
-  })
-
-  it('shortRest([]) 應為 no-op，不變更 updatedAt', () => {
-    const { adjustFeatureUseSpent, shortRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustFeatureUseSpent('long-feat', 1, 2)
-    const beforeUpdatedAt = state.updatedAt
-    vi.advanceTimersByTime(10)
-    shortRest([])
-    expect(state.featureUsesSpent['long-feat']).toBe(1)
     expect(state.updatedAt).toBe(beforeUpdatedAt)
   })
 
@@ -487,54 +372,6 @@ describe('useCharacterCombatState — 法術位', () => {
     expect(state.spellSlotsUsed).toEqual({ 1: 1 })
     expect(state.pactSlotsUsed).toEqual({ 3: 1 })
   })
-
-  it('shortRest 應清空 pactSlotsUsed 但保留 spellSlotsUsed', () => {
-    const { adjustSpellSlotUsed, adjustPactSlotUsed, shortRest, state } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustSpellSlotUsed(1, 2, 4)
-    adjustPactSlotUsed(3, 2, 2)
-    shortRest([])
-    expect(state.spellSlotsUsed).toEqual({ 1: 2 })
-    expect(state.pactSlotsUsed).toEqual({})
-  })
-
-  it('shortRest 僅有契術可回復時應觸發回復並回傳 true', () => {
-    const { adjustPactSlotUsed, shortRest, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    adjustPactSlotUsed(3, 2, 2)
-    expect(shortRest([])).toBe(true)
-    expect(state.pactSlotsUsed).toEqual({})
-  })
-
-  it('longRest 應清空 spellSlotsUsed 與 pactSlotsUsed', () => {
-    const { adjustSpellSlotUsed, adjustPactSlotUsed, longRest, state } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    adjustSpellSlotUsed(1, 2, 4)
-    adjustPactSlotUsed(3, 1, 2)
-    longRest([])
-    expect(state.spellSlotsUsed).toEqual({})
-    expect(state.pactSlotsUsed).toEqual({})
-  })
-
-  it('normalize 載入舊資料無 spellSlotsUsed / pactSlotsUsed 時應補空物件', () => {
-    localStorage.setItem(
-      getCombatStateStorageKey(CHAR_ID),
-      JSON.stringify({
-        characterId: CHAR_ID,
-        hp: { current: 12, tempHp: 0, maxAdjustment: 0 },
-        acAdjustment: 0,
-        speedAdjustment: 0,
-        savingThrowAdjustments: {},
-        updatedAt: '2026-04-26T00:00:00.000Z',
-      }),
-    )
-    const { state } = useCharacterCombatState(CHAR_ID, ref(30))
-    expect(state.spellSlotsUsed).toEqual({})
-    expect(state.pactSlotsUsed).toEqual({})
-  })
 })
 
 describe('useCharacterCombatState — 死亡豁免', () => {
@@ -568,152 +405,538 @@ describe('useCharacterCombatState — 死亡豁免', () => {
   })
 
   it('HP 由 0 恢復為正值時應自動歸零 deathSaves', async () => {
-    const { damageHp, healHp, setDeathSaveSuccess, setDeathSaveFailure, state } =
-      useCharacterCombatState(CHAR_ID, ref(30))
-    damageHp(30)
-    expect(state.hp.current).toBe(0)
-    setDeathSaveSuccess(2)
-    setDeathSaveFailure(1)
-    healHp(5)
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    cs.damageHp(30)
+    expect(cs.state.hp.current).toBe(0)
+    cs.setDeathSaveSuccess(2)
+    cs.setDeathSaveFailure(1)
+    cs.healHp(5)
     await nextTick()
-    expect(state.deathSaves).toEqual({ successes: 0, failures: 0 })
+    expect(cs.state.deathSaves).toEqual({ successes: 0, failures: 0 })
   })
 
   it('HP 持續為 0 時不觸發歸零', async () => {
-    const { damageHp, setDeathSaveSuccess, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    damageHp(30)
-    setDeathSaveSuccess(2)
-    damageHp(5)
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    cs.damageHp(30)
+    cs.setDeathSaveSuccess(2)
+    cs.damageHp(5)
     await nextTick()
-    expect(state.deathSaves.successes).toBe(2)
+    expect(cs.state.deathSaves.successes).toBe(2)
   })
 
-  it('longRest 應清空 deathSaves', () => {
-    const { setDeathSaveSuccess, setDeathSaveFailure, longRest, state } = useCharacterCombatState(
-      CHAR_ID,
-      ref(30),
-    )
-    setDeathSaveSuccess(2)
-    setDeathSaveFailure(1)
-    longRest([])
-    expect(state.deathSaves).toEqual({ successes: 0, failures: 0 })
-  })
+  it('套用 server DTO 將 HP 從 0 拉回正值時不應誤觸 resetDeathSaves（不可蓋掉 server deathSaves）', async () => {
+    // load 第一次 GET 給「HP=0、deathSaves={2,1}」；後續 patch 後 GET 給「HP>0、deathSaves={2,1}」
+    let getCount = 0
+    mockGet.mockImplementation(async () => {
+      getCount += 1
+      return getCount === 1
+        ? buildDto({
+            hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
+            deathSaves: { successes: 2, failures: 1 },
+          })
+        : buildDto({
+            hp: { current: 10, tempHp: 0, maxAdjustment: 0 },
+            deathSaves: { successes: 2, failures: 1 },
+            updatedAt: REFRESH_UPDATED_AT,
+          })
+    })
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    expect(cs.state.hp.current).toBe(0)
+    expect(cs.state.deathSaves).toEqual({ successes: 2, failures: 1 })
 
-  it('localStorage 載入超出範圍的值應 clamp 至 [0, 3]', () => {
-    localStorage.setItem(
-      getCombatStateStorageKey(CHAR_ID),
-      JSON.stringify({
-        characterId: CHAR_ID,
-        hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
-        deathSaves: { successes: 99, failures: -5 },
-        updatedAt: '2026-04-26T00:00:00.000Z',
-      }),
-    )
-    const { state } = useCharacterCombatState(CHAR_ID, ref(30))
-    expect(state.deathSaves).toEqual({ successes: 3, failures: 0 })
-  })
+    // 觸發任意 mutation → debounce → PATCH → GET 套用第二份 DTO（HP 從 0 → 10）
+    cs.adjustAc(1)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(300)
+    await nextTick()
+    await nextTick()
 
-  it('舊資料無 deathSaves 欄位時應補預設', () => {
-    localStorage.setItem(
-      getCombatStateStorageKey(CHAR_ID),
-      JSON.stringify({
-        characterId: CHAR_ID,
-        hp: { current: 10, tempHp: 0, maxAdjustment: 0 },
-        updatedAt: '2026-04-26T00:00:00.000Z',
-      }),
-    )
-    const { state } = useCharacterCombatState(CHAR_ID, ref(30))
-    expect(state.deathSaves).toEqual({ successes: 0, failures: 0 })
+    // server 帶來的 HP 0→10 不可在 applyServerDto 期間誤觸 watcher 把 deathSaves 清成 0
+    expect(cs.state.hp.current).toBe(10)
+    expect(cs.state.deathSaves).toEqual({ successes: 2, failures: 1 })
   })
 })
 
 describe('useCharacterCombatState — 持久化', () => {
-  it('狀態變動後 debounce 結束應寫入 localStorage', async () => {
-    const { damageHp } = useCharacterCombatState(CHAR_ID, ref(30))
-    damageHp(5)
-    await nextTick()
-    expect(localStorage.getItem(getCombatStateStorageKey(CHAR_ID))).toBeNull()
+  const PERSIST_DEBOUNCE_MS = 300
 
-    vi.advanceTimersByTime(300)
-    const stored = JSON.parse(localStorage.getItem(getCombatStateStorageKey(CHAR_ID))!)
-    expect(stored.hp.current).toBe(25)
+  /** 把 mock 已排入的 microtask 跑完並推進 debounce */
+  const flushPersist = async (): Promise<void> => {
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+  }
+
+  it('load 之後狀態變動 debounce 結束應 PATCH /combat-state', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+
+    cs.damageHp(5)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    await flushPersist()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    const [id, body] = mockPatch.mock.calls[0]!
+    expect(id).toBe(CHAR_ID)
+    expect(body.updatedAt).toBe(INITIAL_UPDATED_AT)
+    expect(body.hp!.current).toBe(25)
   })
 
-  it('scope 結束時應 flush 尚未寫入的最後一筆變動', async () => {
-    const scope = effectScope()
-    scope.run(() => {
-      const { damageHp } = useCharacterCombatState(CHAR_ID, ref(30))
-      damageHp(5)
-    })
+  it('未 load 時狀態變動不會 PATCH', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    cs.damageHp(5)
+    await flushPersist()
+    expect(mockPatch).not.toHaveBeenCalled()
+  })
 
-    // 等 watch callback 排入 setTimeout，但不快進到 debounce 結束
+  it('load() 完成後沒有 user mutation 時不應觸發 PATCH', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    await flushPersist()
+    expect(mockPatch).not.toHaveBeenCalled()
+    // 只應有 load() 那次 GET，沒有 re-GET
+    expect(mockGet).toHaveBeenCalledTimes(1)
+  })
+
+  it('PATCH 後 re-GET 寫回 updatedAt 不應再次觸發 PATCH', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockGet.mockClear()
+
+    cs.damageHp(5)
+    await flushPersist()
     await nextTick()
-    expect(localStorage.getItem(getCombatStateStorageKey(CHAR_ID))).toBeNull()
+
+    // 第一輪：PATCH + 一次 re-GET
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(mockGet).toHaveBeenCalledTimes(1)
+
+    // 等 debounce 再過一輪：不應有第二次 PATCH
+    await flushPersist()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+  })
+
+  it('PATCH 成功後應再 GET 一次以刷新 updatedAt', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    expect(cs.state.updatedAt).toBe(INITIAL_UPDATED_AT)
+
+    cs.damageHp(5)
+    await flushPersist()
+    await nextTick()
+
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+  })
+
+  it('scope 結束時應只做純清理（不自動 flush）；caller 應顯式呼叫 flushPersist 保存最後一次寫入', async () => {
+    const scope = effectScope()
+    let captured: ReturnType<typeof useCharacterCombatState> | null = null
+    scope.run(() => {
+      captured = useCharacterCombatState(CHAR_ID, ref(30))
+    })
+    await captured!.load()
+    mockPatch.mockClear()
+    captured!.damageHp(5)
+
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
 
     scope.stop()
-    const stored = JSON.parse(localStorage.getItem(getCombatStateStorageKey(CHAR_ID))!)
-    expect(stored.hp.current).toBe(25)
+    await nextTick()
+    // dispose 不再 fire-and-forget；pending debounce 應被 cancel
+    expect(mockPatch).not.toHaveBeenCalled()
   })
 
-  it('不同 character 使用獨立 key，互不影響', async () => {
+  it('caller 可在 scope 結束前顯式 await flushPersist 保存最後一次寫入', async () => {
+    const scope = effectScope()
+    let captured: ReturnType<typeof useCharacterCombatState> | null = null
+    scope.run(() => {
+      captured = useCharacterCombatState(CHAR_ID, ref(30))
+    })
+    await captured!.load()
+    mockPatch.mockClear()
+    captured!.damageHp(5)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    await captured!.flushPersist()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    scope.stop()
+  })
+
+  it('不同 character 各自呼叫對應 id', async () => {
     const a = useCharacterCombatState('a', ref(30))
     const b = useCharacterCombatState('b', ref(20))
+    await a.load()
+    await b.load()
+    mockPatch.mockClear()
+
     a.damageHp(5)
     b.damageHp(2)
-    await nextTick()
-    vi.advanceTimersByTime(300)
+    await flushPersist()
 
-    const storedA = JSON.parse(localStorage.getItem(getCombatStateStorageKey('a'))!)
-    const storedB = JSON.parse(localStorage.getItem(getCombatStateStorageKey('b'))!)
-    expect(storedA.hp.current).toBe(25)
-    expect(storedB.hp.current).toBe(18)
+    const ids = mockPatch.mock.calls.map((c) => c[0])
+    expect(ids).toContain('a')
+    expect(ids).toContain('b')
   })
 
-  it('localStorage 寫入失敗時應 toast 一次，後續連續失敗不再 toast', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
-    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
-    const { damageHp } = useCharacterCombatState(CHAR_ID, ref(30))
+  it('PATCH 飛行期間 user 再次 mutate 時，GET 不應覆蓋該 mutation', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockGet.mockClear()
 
-    damageHp(5)
-    await nextTick()
-    vi.advanceTimersByTime(300)
-    expect(mockToastError).toHaveBeenCalledTimes(1)
-    expect(mockToastError).toHaveBeenCalledWith('更新失敗，重整後資料可能遺失')
+    // PATCH 與 GET 都用 deferred promise，模擬網路飛行中
+    let resolvePatch1: () => void = () => {}
+    let resolveGet1: (dto: CombatStateDTO) => void = () => {}
+    mockPatch.mockImplementationOnce(
+      () =>
+        new Promise<void>((res) => {
+          resolvePatch1 = res
+        }),
+    )
+    mockGet.mockImplementationOnce(
+      () =>
+        new Promise<CombatStateDTO>((res) => {
+          resolveGet1 = res
+        }),
+    )
 
-    damageHp(3)
+    // 第一次 mutate → 第一次 PATCH 起跑
+    cs.damageHp(5)
     await nextTick()
-    vi.advanceTimersByTime(300)
-    damageHp(2)
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(cs.state.hp.current).toBe(25)
+
+    // PATCH 飛行中，user 又 mutate（hp 25 → 20）
+    cs.damageHp(5)
     await nextTick()
-    vi.advanceTimersByTime(300)
-    expect(mockToastError).toHaveBeenCalledTimes(1)
+    expect(cs.state.hp.current).toBe(20)
+
+    // 解開 PATCH1，GET1 回傳 server 端「只看到第一次 damage」的狀態（hp=25）
+    resolvePatch1()
+    await nextTick()
+    resolveGet1(
+      buildDto({ hp: { current: 25, tempHp: 0, maxAdjustment: 0 }, updatedAt: REFRESH_UPDATED_AT }),
+    )
+    await nextTick()
+    await nextTick()
+
+    // user 的第二次 damage 不可被覆蓋；token 仍應更新
+    expect(cs.state.hp.current).toBe(20)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })
 
-  it('失敗後恢復成功再失敗時應重新 toast', async () => {
+  const PERSIST_RETRY_MS = 2000
+
+  it('PATCH 首次失敗應自動重試，重試成功不會 apiErrorToast 也不會暴露 mutationError', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
-    const { damageHp } = useCharacterCombatState(CHAR_ID, ref(30))
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockPatch.mockRejectedValueOnce(new Error('boom'))
+    mockPatch.mockResolvedValueOnce(undefined)
 
-    damageHp(5)
+    cs.damageHp(5)
+    await flushPersist()
     await nextTick()
-    vi.advanceTimersByTime(300)
-    expect(mockToastError).toHaveBeenCalledTimes(1)
 
-    setItemSpy.mockRestore()
-    damageHp(3)
-    await nextTick()
-    vi.advanceTimersByTime(300)
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(mockApiErrorHandle).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBeNull()
 
-    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
-    damageHp(2)
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
     await nextTick()
-    vi.advanceTimersByTime(300)
-    expect(mockToastError).toHaveBeenCalledTimes(2)
+    await nextTick()
+
+    expect(mockPatch).toHaveBeenCalledTimes(2)
+    expect(mockApiErrorHandle).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBeNull()
+  })
+
+  it('連兩次 PATCH 失敗應暴露 mutationError 並透過 useApiErrorToast 通報', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    const err = new Error('boom-twice')
+    mockPatch.mockRejectedValue(err)
+
+    cs.damageHp(5)
+    await flushPersist()
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    await nextTick()
+
+    expect(mockPatch).toHaveBeenCalledTimes(2)
+    expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
+    expect(cs.mutationError.value).toBe(err)
+  })
+
+  it('暴露 mutationError 後 user 再次編輯，下一次成功 PATCH 應清空 mutationError', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    const err = new Error('boom-then-ok')
+    mockPatch.mockRejectedValueOnce(err)
+    mockPatch.mockRejectedValueOnce(err)
+
+    cs.damageHp(5)
+    await flushPersist()
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    await nextTick()
+
+    expect(cs.mutationError.value).toBe(err)
+
+    mockPatch.mockResolvedValueOnce(undefined)
+    cs.damageHp(1)
+    await flushPersist()
+    await nextTick()
+    await nextTick()
+
+    expect(cs.mutationError.value).toBeNull()
+  })
+})
+
+describe('useCharacterCombatState — 短長休', () => {
+  const PERSIST_DEBOUNCE_MS = 300
+
+  const flushPersist = async (): Promise<void> => {
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+  }
+
+  it('shortRest 應呼叫 POST /short-rest 後再 GET 套用 server state', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockGet.mockClear()
+    mockShortRest.mockClear()
+
+    // 模擬 backend 完成 short rest 後 GET 回新狀態
+    mockGet.mockResolvedValueOnce(buildDto({ pactSlotsUsed: {}, updatedAt: REFRESH_UPDATED_AT }))
+
+    const ok = await cs.shortRest()
+
+    expect(ok).toBe(true)
+    expect(mockShortRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+  })
+
+  it('longRest 應呼叫 POST /long-rest 後再 GET 套用 server state', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockGet.mockClear()
+    mockLongRest.mockClear()
+
+    mockGet.mockResolvedValueOnce(
+      buildDto({
+        hp: { current: null, tempHp: 0, maxAdjustment: 0 },
+        updatedAt: REFRESH_UPDATED_AT,
+      }),
+    )
+
+    const ok = await cs.longRest()
+
+    expect(ok).toBe(true)
+    expect(mockLongRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+  })
+
+  it('未 load 時 shortRest / longRest 應為 no-op 且回傳 false', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    expect(await cs.shortRest()).toBe(false)
+    expect(await cs.longRest()).toBe(false)
+    expect(mockShortRest).not.toHaveBeenCalled()
+    expect(mockLongRest).not.toHaveBeenCalled()
+  })
+
+  it('rest 套用 server state 後不應觸發額外 PATCH', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+
+    await cs.shortRest()
+    await flushPersist()
+    expect(mockPatch).not.toHaveBeenCalled()
+  })
+
+  it('rest 前若有 pending PATCH，應被 flush 送出（不可丟失本地未存變更）', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockShortRest.mockClear()
+
+    cs.damageHp(5)
+    await nextTick()
+    // 此時 debounce 尚未 fire，PATCH pending
+
+    await cs.shortRest()
+
+    // PATCH 應在 shortRest endpoint 之前送出，且 body 反映本地新值
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(mockShortRest).toHaveBeenCalledTimes(1)
+    const patchOrder = mockPatch.mock.invocationCallOrder[0]!
+    const restOrder = mockShortRest.mock.invocationCallOrder[0]!
+    expect(patchOrder).toBeLessThan(restOrder)
+    const [, body] = mockPatch.mock.calls[0]!
+    expect(body.hp!.current).toBe(25)
+  })
+
+  it('flush 過程中暴露 mutationError 時應略過 rest endpoint（不犧牲本地資料）', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockShortRest.mockClear()
+    mockApiErrorHandle.mockClear()
+
+    // PATCH 連續兩次都失敗 → flushPersist 後 mutationError 會被設值
+    const err = new Error('patch-down')
+    mockPatch.mockRejectedValue(err)
+
+    cs.damageHp(5)
+    await nextTick()
+    const restPromise = cs.shortRest()
+    // 第一次失敗會排 2000ms 重試，flushPersist 會立刻 fire 重試
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.advanceTimersByTimeAsync(0)
+    const ok = await restPromise
+
+    expect(ok).toBe(false)
+    expect(mockShortRest).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBe(err)
+  })
+
+  it('shortRest POST→GET 飛行期間 user 改 state 不應觸發 PATCH（避免覆蓋 server-authoritative 結果）', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockShortRest.mockClear()
+
+    let resolveRest: () => void = () => {}
+    mockShortRest.mockImplementationOnce(() => new Promise<void>((res) => (resolveRest = res)))
+    mockGet.mockResolvedValueOnce(
+      buildDto({
+        hp: { current: 30, tempHp: 0, maxAdjustment: 0 },
+        updatedAt: REFRESH_UPDATED_AT,
+      }),
+    )
+
+    const restPromise = cs.shortRest()
+    await nextTick()
+
+    // POST 飛行中 user 又改 HP；persist watch 應被 isReady=false 擋住
+    cs.damageHp(7)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    resolveRest()
+    await restPromise
+    await nextTick()
+
+    // server-authoritative 結果生效，且 rest 後 isReady 應已恢復可用
+    expect(cs.state.hp.current).toBe(30)
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    // rest 後 user 再 mutate 應正常觸發 PATCH（驗證 isReady 已還原）
+    cs.damageHp(3)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+  })
+
+  it('shortRest POST 失敗時應透過 useApiErrorToast 通報並回傳 false', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockShortRest.mockRejectedValueOnce(new Error('boom'))
+
+    const ok = await cs.shortRest()
+
+    expect(ok).toBe(false)
+    expect(mockApiErrorHandle).toHaveBeenCalled()
+  })
+})
+
+describe('useCharacterCombatState — combatReset', () => {
+  const PERSIST_DEBOUNCE_MS = 300
+  const PERSIST_RETRY_MS = 2000
+
+  it('combatReset 應呼叫 POST /reset 後再 GET 套用 server state', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockGet.mockClear()
+    mockResetEndpoint.mockClear()
+    mockGet.mockResolvedValueOnce(buildDto({ updatedAt: REFRESH_UPDATED_AT }))
+
+    const ok = await cs.combatReset()
+
+    expect(ok).toBe(true)
+    expect(mockResetEndpoint).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+  })
+
+  it('reset 應清掉先前 PATCH 失敗排定的 retry timer，避免 stale PATCH 在 reset 後 fire', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+
+    // 先製造一次失敗 → retryScheduled=true、retryTimer 排定 2000ms 後重試
+    mockPatch.mockRejectedValueOnce(new Error('boom'))
+    cs.damageHp(5)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    mockPatch.mockClear()
+    mockResetEndpoint.mockClear()
+
+    await cs.combatReset()
+
+    // 推進到原本 retry 應該 fire 的時間；新增的 cleanup 應已 clear timer，PATCH 不應再被呼叫
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+  })
+
+  it('reset 後 mutationError 應被清空', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+
+    const err = new Error('twice')
+    mockPatch.mockRejectedValue(err)
+    cs.damageHp(5)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    expect(cs.mutationError.value).toBe(err)
+
+    mockPatch.mockReset()
+    mockPatch.mockResolvedValue(undefined)
+
+    await cs.combatReset()
+    expect(cs.mutationError.value).toBeNull()
   })
 })

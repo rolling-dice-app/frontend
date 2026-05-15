@@ -64,14 +64,21 @@
       </template>
     </CommonPageHeader>
 
-    <!-- Loading -->
+    <!-- Loading skeleton：SSR idle + client pending 都顯示 -->
     <div
-      v-if="status === 'pending'"
-      class="flex min-h-[60dvh] items-center justify-center text-content-muted"
+      v-if="status === 'idle' || status === 'pending'"
+      class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
       role="status"
       aria-live="polite"
+      aria-busy="true"
     >
-      {{ t('ui.state.loading') }}
+      <span class="sr-only">{{ t('ui.state.loading') }}</span>
+      <div
+        v-for="i in 6"
+        :key="i"
+        class="min-h-68 animate-pulse rounded-lg border border-border bg-bg-elevated"
+        aria-hidden="true"
+      />
     </div>
 
     <!-- Error -->
@@ -150,7 +157,7 @@
         <h2 class="mt-4 font-display text-2xl font-bold text-content">
           {{ t('character.empty') }}
         </h2>
-        <p class="mt-2 text-sm">{{ t('character.emptyAdventureHint') }}</p>
+        <p class="mt-2 text-sm">{{ t('character.emptyCampaignHint') }}</p>
         <p
           class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
         >
@@ -200,7 +207,6 @@
 <script setup lang="ts">
 import { Button, Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
-import { CHARACTER_VIEW_MODE_KEY } from '~/constants/storage'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 definePageMeta({ middleware: 'auth' })
@@ -211,21 +217,33 @@ const toast = useToast()
 useHead({ title: t('character.card') })
 
 const characterStore = useCharacterStore()
+const authStore = useAuthStore()
+const apiErrorToast = useApiErrorToast()
+// server: false：SSR 階段不拉使用者資料，輸出對所有人一致的 skeleton HTML，
+// 避免 Vercel edge cache 把某使用者的角色列表共享給其他人。
 const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
+  server: false,
   lazy: false,
 })
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)
 
-const isListMode = ref(false)
+// 顯示模式：以 user.preference.characterListLayout 為單一來源；
+// 整頁 auth-gated，未登入看不到滑塊，不需要 localStorage fallback。
+const setListMode = async (next: boolean): Promise<void> => {
+  try {
+    await authStore.updatePreference({ characterListLayout: next ? 'list' : 'grid' })
+  } catch (err) {
+    // store 未更新 → 滑塊透過 computed 自然 rerender 回原值，視覺自動 rollback
+    apiErrorToast.handle(err)
+  }
+}
 
-onMounted(() => {
-  const storedMode = getLocalStorage<string>(CHARACTER_VIEW_MODE_KEY)
-  if (storedMode === 'list') isListMode.value = true
-})
-
-watch(isListMode, (val) => {
-  setLocalStorage(CHARACTER_VIEW_MODE_KEY, val ? 'list' : 'grid')
+const isListMode = computed({
+  get: () => authStore.user?.preference.characterListLayout === 'list',
+  set: (val) => {
+    void setListMode(val)
+  },
 })
 
 // ── Delete ────────────────────────────────────────────────────────────────────

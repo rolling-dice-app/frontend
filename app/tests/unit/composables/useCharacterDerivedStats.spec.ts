@@ -52,8 +52,6 @@ function createFormState(
     spellSlotsDelta: {},
     pactSlotsDelta: {},
     features: [],
-    items: [],
-    currency: { cp: 0, sp: 0, gp: 0, pp: 0 },
     ...overrides,
   })
 }

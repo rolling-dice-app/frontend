@@ -24,6 +24,7 @@ export default {
   item: '物品',
   addItem: '新增物品',
   editItem: '編輯物品',
+  itemLimitReached: '物品數量已達上限，請先刪除舊項目',
   itemName: '名稱',
   itemDescription: '物品說明',
   itemDescriptionOptional: '描述（選填）',
@@ -51,6 +52,7 @@ export default {
 
   // 金幣
   asset: '資產',
+  editCurrency: '編輯資產',
   cp: '銅幣 (cp)',
   sp: '銀幣 (sp)',
   gp: '金幣 (gp)',

@@ -116,7 +116,13 @@
             outline
             placeholder="0"
             class="w-16"
-            @update:model-value="draft.extraHitBonus = parseIntegerInput($event)"
+            @update:model-value="
+              draft.extraHitBonus = parseIntegerInput(
+                $event,
+                undefined,
+                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              )
+            "
           />
         </div>
       </div>
@@ -150,7 +156,12 @@
             outline
             placeholder="0"
             class="w-16"
-            @update:model-value="entry.count = parseIntegerInput($event, 0)"
+            @update:model-value="
+              entry.count = Math.max(
+                0,
+                parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+              )
+            "
           />
           <CommonAppSelect
             :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDieType')}`"
@@ -170,7 +181,9 @@
             outline
             placeholder="±0"
             class="w-16"
-            @update:model-value="entry.bonus = parseIntegerInput($event)"
+            @update:model-value="
+              entry.bonus = parseIntegerInput($event, undefined, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
+            "
           />
           <CommonAppSelect
             :aria-label="`${t('combat.rowOrdinal')} ${index + 1} ${t('combat.rowDamageType')}`"
@@ -255,6 +268,7 @@ import { Modal, Button, Icon, Toggle, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import {
   ABILITY_KEYS,
+  CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
   VALIDATION_LIMITS,
   type AttackEntry,
@@ -371,8 +385,12 @@ const openEdit = (attack: AttackEntry) => {
 
 const saveAttack = () => {
   const entry: AttackDraft = {
-    ...draft.value,
+    name: cleanText(draft.value.name),
+    abilityKey: draft.value.abilityKey,
     damageDice: draft.value.damageDice.map((e) => ({ ...e })),
+    extraHitBonus: draft.value.extraHitBonus,
+    applyAbilityToDamage: draft.value.applyAbilityToDamage,
+    comment: cleanTextOrNull(draft.value.comment),
   }
   if (editingId.value) {
     updateAttack(editingId.value, entry)

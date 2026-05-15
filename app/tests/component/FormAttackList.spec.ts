@@ -7,6 +7,7 @@ import AttackList from '~/components/business/character/form/combat/AttackList.v
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { formatDamageSummary, getAttackHit, getHitBonusColorClass } from '~/helpers/combat'
 import { parseIntegerInput } from '~/utils/parse'
+import { cleanText, cleanTextOrNull } from '~/utils/text'
 import type { AttackEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -17,6 +18,8 @@ beforeEach(() => {
   vi.stubGlobal('getHitBonusColorClass', getHitBonusColorClass)
   vi.stubGlobal('formatDamageSummary', formatDamageSummary)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
+  vi.stubGlobal('cleanText', cleanText)
+  vi.stubGlobal('cleanTextOrNull', cleanTextOrNull)
 })
 
 afterEach(() => {

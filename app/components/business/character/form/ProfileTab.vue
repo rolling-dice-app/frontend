@@ -17,7 +17,13 @@
             :model-value="formState.age !== null ? String(formState.age) : ''"
             size="sm"
             outline
-            @update:model-value="formState.age = parseIntegerInput($event)"
+            @update:model-value="
+              formState.age = parseIntegerInput(
+                $event,
+                undefined,
+                CHARACTER_INT_LIMITS.GENERAL_INT_MAX,
+              )
+            "
           />
         </div>
         <div>
@@ -96,7 +102,7 @@
 
 <script setup lang="ts">
 import { TextArea } from '@ui'
-import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
+import { CHARACTER_INT_LIMITS, CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
 
 const { t } = useI18n()

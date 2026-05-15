@@ -1,8 +1,17 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import RaceAbilityBonusPanel from '~/components/business/character/form/basic/RaceAbilityBonusPanel.vue'
+import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterFormState } from '~/types/business/character-form'
+
+beforeEach(() => {
+  vi.stubGlobal('parseIntegerInput', parseIntegerInput)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 const baseFormState = (
   overrides: Partial<CharacterFormState['abilities']> = {},

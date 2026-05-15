@@ -250,7 +250,10 @@ const {
   shortRest,
   longRest,
   combatReset,
+  flushPersist,
 } = useCharacterCombatState(props.character.id, totalHp)
+
+defineExpose({ flushPersist })
 
 const resetModalOpen = ref(false)
 

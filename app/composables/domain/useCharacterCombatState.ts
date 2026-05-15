@@ -149,6 +149,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   watch(
     displayCurrentHp,
     (next, prev) => {
+      if (!isReady.value) return
       if (prev === 0 && next > 0) {
         resetDeathSaves()
       }
@@ -251,11 +252,14 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
 
   // ─── Rests ────────────────────────────────────────────────────────────
 
-  /** 短休：呼叫 backend 計算恢復邏輯，完成後 re-GET 套用 server state；回傳是否成功 */
+  /** 短休：先 flush 任何 pending PATCH 避免 server re-GET 蓋掉本地未存變更，再呼叫 backend 並套用結果 */
   const shortRest = async (): Promise<boolean> => {
     if (!isReady.value || isResting.value) return false
-    persist.cancel()
+    await flushPersist()
+    if (mutationError.value) return false
     isResting.value = true
+    // POST→GET 飛行期間 user 改 state 也會被 GET 結果覆蓋；isReady=false 攔截 persist watch 避免送出無效 PATCH
+    isReady.value = false
     try {
       await characters().combatState.shortRest(characterId)
       const dto = await characters().combatState.get(characterId)
@@ -265,15 +269,18 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       apiErrorToast.handle(err)
       return false
     } finally {
+      isReady.value = true
       isResting.value = false
     }
   }
 
-  /** 長休：呼叫 backend 計算恢復邏輯（含 hit die 貪婪、HP 回滿等），完成後 re-GET 套用；回傳是否成功 */
+  /** 長休：先 flush 任何 pending PATCH 避免 server re-GET 蓋掉本地未存變更，再呼叫 backend 並套用結果 */
   const longRest = async (): Promise<boolean> => {
     if (!isReady.value || isResting.value) return false
-    persist.cancel()
+    await flushPersist()
+    if (mutationError.value) return false
     isResting.value = true
+    isReady.value = false
     try {
       await characters().combatState.longRest(characterId)
       const dto = await characters().combatState.get(characterId)
@@ -283,6 +290,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       apiErrorToast.handle(err)
       return false
     } finally {
+      isReady.value = true
       isResting.value = false
     }
   }
@@ -291,7 +299,14 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   const combatReset = async (): Promise<boolean> => {
     if (!isReady.value || isResetting.value) return false
     persist.cancel()
+    if (retryTimer) {
+      clearTimeout(retryTimer)
+      retryTimer = null
+    }
+    retryScheduled = false
+    mutationError.value = null
     isResetting.value = true
+    isReady.value = false
     try {
       await characters().combatState.reset(characterId)
       const dto = await characters().combatState.get(characterId)
@@ -301,13 +316,15 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       apiErrorToast.handle(err)
       return false
     } finally {
+      isReady.value = true
       isResetting.value = false
     }
   }
 
   // ─── Persist ──────────────────────────────────────────────────────────
 
-  let inFlight = false
+  /** 當前飛行中的 PATCH+GET pipeline；同步指派以確保 flush 路徑能立刻 await */
+  let inFlightPromise: Promise<void> | null = null
   /** 在 PATCH 飛行期間是否又被 user 動過；用來避免 GET response 覆蓋掉同時間的新改動 */
   let dirtyDuringPatch = false
   /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
@@ -320,7 +337,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   }, PERSIST_DEBOUNCE_MS)
 
   async function runPersist(): Promise<void> {
-    if (inFlight) {
+    if (inFlightPromise) {
       persist()
       return
     }
@@ -328,7 +345,17 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       clearTimeout(retryTimer)
       retryTimer = null
     }
-    inFlight = true
+    inFlightPromise = doPersist()
+    try {
+      await inFlightPromise
+    } finally {
+      inFlightPromise = null
+    }
+  }
+
+  // Contract 假設：backend PATCH /combat-state 為純 setter — 不做 server-side clamp / normalize / 衍生欄位。
+  // 否則 dirtyDuringPatch 分支只接 updatedAt 的策略會讓 local 與 server 在 user 飛行中又動的欄位上偏離。
+  async function doPersist(): Promise<void> {
     dirtyDuringPatch = false
     try {
       const body: CombatStateUpdateDTO = {
@@ -364,8 +391,28 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
         mutationError.value = err
         apiErrorToast.handle(err)
       }
-    } finally {
-      inFlight = false
+    }
+  }
+
+  /** 把 pending debounce / 失敗重試立刻送出並等所有飛行中的 PATCH 結束；rest 前用以避免本地未存變更被 server re-GET 覆蓋 */
+  const flushPersist = async (): Promise<void> => {
+    while (true) {
+      persist.flush()
+      if (inFlightPromise) {
+        try {
+          await inFlightPromise
+        } catch {
+          // 失敗已由 doPersist 內處理（排重試 / mutationError + toast），不再向外拋
+        }
+        continue
+      }
+      if (retryTimer) {
+        clearTimeout(retryTimer)
+        retryTimer = null
+        void runPersist()
+        continue
+      }
+      return
     }
   }
 
@@ -390,13 +437,14 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     { deep: true },
   )
 
+  // scope dispose 只做純清理；保存最後一次寫入交由 caller 在 route leave 等可 await 的時機呼叫 flushPersist。
   if (getCurrentScope()) {
     onScopeDispose(() => {
+      persist.cancel()
       if (retryTimer) {
         clearTimeout(retryTimer)
         retryTimer = null
       }
-      persist.flush()
     })
   }
 
@@ -441,5 +489,6 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     shortRest,
     longRest,
     combatReset,
+    flushPersist,
   }
 }

@@ -17,6 +17,7 @@ const mockGet = vi.fn<(id: string) => Promise<CombatStateDTO>>()
 const mockPatch = vi.fn<(id: string, body: CombatStateUpdateDTO) => Promise<void>>()
 const mockShortRest = vi.fn<(id: string) => Promise<void>>()
 const mockLongRest = vi.fn<(id: string) => Promise<void>>()
+const mockResetEndpoint = vi.fn<(id: string) => Promise<void>>()
 const mockApiErrorHandle = vi.fn()
 
 const buildDto = (overrides: Partial<CombatStateDTO> = {}): CombatStateDTO => ({
@@ -38,6 +39,7 @@ const installDefaultApi = (initial: Partial<CombatStateDTO> = {}): void => {
   mockPatch.mockResolvedValue(undefined)
   mockShortRest.mockResolvedValue(undefined)
   mockLongRest.mockResolvedValue(undefined)
+  mockResetEndpoint.mockResolvedValue(undefined)
 }
 
 beforeEach(() => {
@@ -46,6 +48,7 @@ beforeEach(() => {
   mockPatch.mockReset()
   mockShortRest.mockReset()
   mockLongRest.mockReset()
+  mockResetEndpoint.mockReset()
   mockApiErrorHandle.mockReset()
   installDefaultApi()
   vi.stubGlobal('characters', () => ({
@@ -54,6 +57,7 @@ beforeEach(() => {
       patch: mockPatch,
       shortRest: mockShortRest,
       longRest: mockLongRest,
+      reset: mockResetEndpoint,
     },
   }))
   vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
@@ -401,24 +405,58 @@ describe('useCharacterCombatState — 死亡豁免', () => {
   })
 
   it('HP 由 0 恢復為正值時應自動歸零 deathSaves', async () => {
-    const { damageHp, healHp, setDeathSaveSuccess, setDeathSaveFailure, state } =
-      useCharacterCombatState(CHAR_ID, ref(30))
-    damageHp(30)
-    expect(state.hp.current).toBe(0)
-    setDeathSaveSuccess(2)
-    setDeathSaveFailure(1)
-    healHp(5)
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    cs.damageHp(30)
+    expect(cs.state.hp.current).toBe(0)
+    cs.setDeathSaveSuccess(2)
+    cs.setDeathSaveFailure(1)
+    cs.healHp(5)
     await nextTick()
-    expect(state.deathSaves).toEqual({ successes: 0, failures: 0 })
+    expect(cs.state.deathSaves).toEqual({ successes: 0, failures: 0 })
   })
 
   it('HP 持續為 0 時不觸發歸零', async () => {
-    const { damageHp, setDeathSaveSuccess, state } = useCharacterCombatState(CHAR_ID, ref(30))
-    damageHp(30)
-    setDeathSaveSuccess(2)
-    damageHp(5)
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    cs.damageHp(30)
+    cs.setDeathSaveSuccess(2)
+    cs.damageHp(5)
     await nextTick()
-    expect(state.deathSaves.successes).toBe(2)
+    expect(cs.state.deathSaves.successes).toBe(2)
+  })
+
+  it('套用 server DTO 將 HP 從 0 拉回正值時不應誤觸 resetDeathSaves（不可蓋掉 server deathSaves）', async () => {
+    // load 第一次 GET 給「HP=0、deathSaves={2,1}」；後續 patch 後 GET 給「HP>0、deathSaves={2,1}」
+    let getCount = 0
+    mockGet.mockImplementation(async () => {
+      getCount += 1
+      return getCount === 1
+        ? buildDto({
+            hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
+            deathSaves: { successes: 2, failures: 1 },
+          })
+        : buildDto({
+            hp: { current: 10, tempHp: 0, maxAdjustment: 0 },
+            deathSaves: { successes: 2, failures: 1 },
+            updatedAt: REFRESH_UPDATED_AT,
+          })
+    })
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    expect(cs.state.hp.current).toBe(0)
+    expect(cs.state.deathSaves).toEqual({ successes: 2, failures: 1 })
+
+    // 觸發任意 mutation → debounce → PATCH → GET 套用第二份 DTO（HP 從 0 → 10）
+    cs.adjustAc(1)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(300)
+    await nextTick()
+    await nextTick()
+
+    // server 帶來的 HP 0→10 不可在 applyServerDto 期間誤觸 watcher 把 deathSaves 清成 0
+    expect(cs.state.hp.current).toBe(10)
+    expect(cs.state.deathSaves).toEqual({ successes: 2, failures: 1 })
   })
 })
 
@@ -495,7 +533,7 @@ describe('useCharacterCombatState — 持久化', () => {
     expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })
 
-  it('scope 結束時應 flush 尚未送出的 PATCH', async () => {
+  it('scope 結束時應只做純清理（不自動 flush）；caller 應顯式呼叫 flushPersist 保存最後一次寫入', async () => {
     const scope = effectScope()
     let captured: ReturnType<typeof useCharacterCombatState> | null = null
     scope.run(() => {
@@ -510,7 +548,26 @@ describe('useCharacterCombatState — 持久化', () => {
 
     scope.stop()
     await nextTick()
+    // dispose 不再 fire-and-forget；pending debounce 應被 cancel
+    expect(mockPatch).not.toHaveBeenCalled()
+  })
+
+  it('caller 可在 scope 結束前顯式 await flushPersist 保存最後一次寫入', async () => {
+    const scope = effectScope()
+    let captured: ReturnType<typeof useCharacterCombatState> | null = null
+    scope.run(() => {
+      captured = useCharacterCombatState(CHAR_ID, ref(30))
+    })
+    await captured!.load()
+    mockPatch.mockClear()
+    captured!.damageHp(5)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    await captured!.flushPersist()
     expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    scope.stop()
   })
 
   it('不同 character 各自呼叫對應 id', async () => {
@@ -716,20 +773,93 @@ describe('useCharacterCombatState — 短長休', () => {
     expect(mockPatch).not.toHaveBeenCalled()
   })
 
-  it('rest 前若有 pending PATCH，應被取消（不在 rest 後送出）', async () => {
+  it('rest 前若有 pending PATCH，應被 flush 送出（不可丟失本地未存變更）', async () => {
     const cs = useCharacterCombatState(CHAR_ID, ref(30))
     await cs.load()
     mockPatch.mockClear()
+    mockShortRest.mockClear()
 
     cs.damageHp(5)
     await nextTick()
     // 此時 debounce 尚未 fire，PATCH pending
 
     await cs.shortRest()
-    await flushPersist()
 
-    // 既有 pending PATCH 已被 persist.cancel 清掉，rest 後不應有 PATCH
+    // PATCH 應在 shortRest endpoint 之前送出，且 body 反映本地新值
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    expect(mockShortRest).toHaveBeenCalledTimes(1)
+    const patchOrder = mockPatch.mock.invocationCallOrder[0]!
+    const restOrder = mockShortRest.mock.invocationCallOrder[0]!
+    expect(patchOrder).toBeLessThan(restOrder)
+    const [, body] = mockPatch.mock.calls[0]!
+    expect(body.hp!.current).toBe(25)
+  })
+
+  it('flush 過程中暴露 mutationError 時應略過 rest endpoint（不犧牲本地資料）', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockShortRest.mockClear()
+    mockApiErrorHandle.mockClear()
+
+    // PATCH 連續兩次都失敗 → flushPersist 後 mutationError 會被設值
+    const err = new Error('patch-down')
+    mockPatch.mockRejectedValue(err)
+
+    cs.damageHp(5)
+    await nextTick()
+    const restPromise = cs.shortRest()
+    // 第一次失敗會排 2000ms 重試，flushPersist 會立刻 fire 重試
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.advanceTimersByTimeAsync(0)
+    const ok = await restPromise
+
+    expect(ok).toBe(false)
+    expect(mockShortRest).not.toHaveBeenCalled()
+    expect(cs.mutationError.value).toBe(err)
+  })
+
+  it('shortRest POST→GET 飛行期間 user 改 state 不應觸發 PATCH（避免覆蓋 server-authoritative 結果）', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockShortRest.mockClear()
+
+    let resolveRest: () => void = () => {}
+    mockShortRest.mockImplementationOnce(() => new Promise<void>((res) => (resolveRest = res)))
+    mockGet.mockResolvedValueOnce(
+      buildDto({
+        hp: { current: 30, tempHp: 0, maxAdjustment: 0 },
+        updatedAt: REFRESH_UPDATED_AT,
+      }),
+    )
+
+    const restPromise = cs.shortRest()
+    await nextTick()
+
+    // POST 飛行中 user 又改 HP；persist watch 應被 isReady=false 擋住
+    cs.damageHp(7)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
     expect(mockPatch).not.toHaveBeenCalled()
+
+    resolveRest()
+    await restPromise
+    await nextTick()
+
+    // server-authoritative 結果生效，且 rest 後 isReady 應已恢復可用
+    expect(cs.state.hp.current).toBe(30)
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    // rest 後 user 再 mutate 應正常觸發 PATCH（驗證 isReady 已還原）
+    cs.damageHp(3)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
   })
 
   it('shortRest POST 失敗時應透過 useApiErrorToast 通報並回傳 false', async () => {
@@ -742,5 +872,71 @@ describe('useCharacterCombatState — 短長休', () => {
 
     expect(ok).toBe(false)
     expect(mockApiErrorHandle).toHaveBeenCalled()
+  })
+})
+
+describe('useCharacterCombatState — combatReset', () => {
+  const PERSIST_DEBOUNCE_MS = 300
+  const PERSIST_RETRY_MS = 2000
+
+  it('combatReset 應呼叫 POST /reset 後再 GET 套用 server state', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockGet.mockClear()
+    mockResetEndpoint.mockClear()
+    mockGet.mockResolvedValueOnce(buildDto({ updatedAt: REFRESH_UPDATED_AT }))
+
+    const ok = await cs.combatReset()
+
+    expect(ok).toBe(true)
+    expect(mockResetEndpoint).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockGet).toHaveBeenCalledTimes(1)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+  })
+
+  it('reset 應清掉先前 PATCH 失敗排定的 retry timer，避免 stale PATCH 在 reset 後 fire', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+
+    // 先製造一次失敗 → retryScheduled=true、retryTimer 排定 2000ms 後重試
+    mockPatch.mockRejectedValueOnce(new Error('boom'))
+    cs.damageHp(5)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    mockPatch.mockClear()
+    mockResetEndpoint.mockClear()
+
+    await cs.combatReset()
+
+    // 推進到原本 retry 應該 fire 的時間；新增的 cleanup 應已 clear timer，PATCH 不應再被呼叫
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    expect(mockPatch).not.toHaveBeenCalled()
+  })
+
+  it('reset 後 mutationError 應被清空', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+
+    const err = new Error('twice')
+    mockPatch.mockRejectedValue(err)
+    cs.damageHp(5)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    await nextTick()
+    expect(cs.mutationError.value).toBe(err)
+
+    mockPatch.mockReset()
+    mockPatch.mockResolvedValue(undefined)
+
+    await cs.combatReset()
+    expect(cs.mutationError.value).toBeNull()
   })
 })

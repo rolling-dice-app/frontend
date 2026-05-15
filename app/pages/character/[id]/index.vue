@@ -49,7 +49,7 @@
             <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <ClientOnly>
-            <BusinessCharacterCombatQuickView :character="character" />
+            <BusinessCharacterCombatQuickView ref="combatQuickViewRef" :character="character" />
           </ClientOnly>
         </Tab>
         <Tab value="spells">
@@ -151,6 +151,10 @@ const characterStore = useCharacterStore()
 const inventoryStore = useCharacterInventoryStore()
 const spellsStore = useCharacterSpellsStore()
 
+const combatQuickViewRef = useTemplateRef<{ flushPersist: () => Promise<void> }>(
+  'combatQuickViewRef',
+)
+
 // Tier 1：主幹 client-only fetch
 // 與 list 頁同步：私有資料不進 SSR HTML / payload，避免 Vercel edge cache
 // 把某使用者的角色細節共享給其他人。
@@ -165,6 +169,12 @@ const character = computed(() => characterStore.getById(id))
 // Tier 2：四個 sub-resource onMounted 平行載入
 onMounted(() => {
   void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id), campaigns.load()])
+})
+
+// 路由離開時 await 戰況 quickview 的 flushPersist 保存最後一次寫入；
+// 此 hook 在 unmount 前 fire 且支援 await，比 onBeforeUnmount 的 fire-and-forget 更可靠。
+onBeforeRouteLeave(async () => {
+  await combatQuickViewRef.value?.flushPersist()
 })
 
 onBeforeUnmount(() => {

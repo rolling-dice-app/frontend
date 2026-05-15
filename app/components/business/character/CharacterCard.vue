@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="`/character/${character.id}`"
-    class="group block transition-shadow duration-200 hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+    class="group block rounded-lg transition-shadow duration-200 hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
     :style="cardShadowStyle"
     :aria-label="`${t('character.viewLabel')} ${character.name}`"
   >

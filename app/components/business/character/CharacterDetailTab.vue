@@ -151,8 +151,10 @@
               <tr class="font-bold text-content">
                 <td class="pt-2 pr-2">{{ t('character.total') }}</td>
                 <td class="pt-2 pr-2 text-right">{{ totalLevel }}</td>
-                <td class="pt-2 pr-3 text-right">{{ t('character.emptyDash') }}</td>
-                <td class="pt-2 text-right" colspan="3">{{ totalHp }}</td>
+                <td class="pt-2 pr-2 text-right">{{ t('character.emptyDash') }}</td>
+                <td class="pt-2 pr-2 text-right">{{ t('combat.extraHpShort') }}</td>
+                <td class="pt-2 text-right">{{ character.customHpBonus }}</td>
+                <td class="pt-2 text-right">{{ totalHp }}</td>
               </tr>
             </tfoot>
           </table>
@@ -317,13 +319,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ABILITY_KEYS,
-  type CharacterDTO,
-  type AbilityKey,
-  type ProficiencyLevel,
-} from '@rolling-dice-app/core'
-import type { TotalAbilityScores } from '~/types/business/character-form'
+import { ABILITY_KEYS, type CharacterDTO, type ProficiencyLevel } from '@rolling-dice-app/core'
+import { useCharacterDerivedStatsFromCharacter } from '~/composables/domain/useCharacterDerivedStats'
 import { CLASS_CONFIG } from '~/constants/dnd'
 
 const { t, messages } = useI18n()
@@ -344,46 +341,19 @@ const conModifier = computed(() =>
   getAbilityModifier(getTotalScore(props.character.abilities.constitution)),
 )
 
-const totalAbilityScores = computed(
-  () =>
-    Object.fromEntries(
-      ABILITY_KEYS.map((key) => [key, getTotalScore(props.character.abilities[key])]),
-    ) as TotalAbilityScores,
-)
+const characterRef = computed(() => props.character)
 
-const baseAC = computed(() =>
-  getTotalArmorClass(props.character.armorClass, totalAbilityScores.value),
-)
-
-const passivePerception = computed(() =>
-  calculatePassiveScore({
-    abilityModifier: getAbilityModifier(totalAbilityScores.value.wisdom),
-    skillLevel: props.character.skills.perception ?? 'none',
-    proficiencyBonus: proficiencyBonus.value,
-    isJackOfAllTrades: props.character.isJackOfAllTrades,
-    extraBonus: props.character.passivePerceptionBonus,
-  }),
-)
-
-const passiveInsight = computed(() =>
-  calculatePassiveScore({
-    abilityModifier: getAbilityModifier(totalAbilityScores.value.wisdom),
-    skillLevel: props.character.skills.insight ?? 'none',
-    proficiencyBonus: proficiencyBonus.value,
-    isJackOfAllTrades: props.character.isJackOfAllTrades,
-    extraBonus: props.character.passiveInsightBonus,
-  }),
-)
-
-const totalInitiative = computed(() =>
-  calculateTotalInitiative({
-    dexModifier: getAbilityModifier(totalAbilityScores.value.dexterity),
-    extraAbilityModifier: props.character.initiativeAbilityKey
-      ? getAbilityModifier(totalAbilityScores.value[props.character.initiativeAbilityKey])
-      : 0,
-    initiativeBonus: props.character.initiativeBonus,
-  }),
-)
+const {
+  totalLevel,
+  totalAbilityScores,
+  proficiencyBonus,
+  savingThrowProficiencies,
+  totalHp,
+  totalArmorClass: baseAC,
+  totalInitiative,
+  totalPassivePerception: passivePerception,
+  totalPassiveInsight: passiveInsight,
+} = useCharacterDerivedStatsFromCharacter(characterRef)
 
 const classHpRows = computed(() =>
   props.character.classes.map((entry, index) => {
@@ -403,30 +373,13 @@ const classHpRows = computed(() =>
   }),
 )
 
-const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
-
-const savingThrowProficiencies = computed<AbilityKey[]>(() => [
-  ...calculateSavingThrowProficiencies(props.character.classes),
-  ...props.character.savingThrowExtras,
-])
-
-const toughBonus = computed(() => (props.character.isTough ? totalLevel.value * 2 : 0))
-
-const totalHp = computed(
-  () => classHpRows.value.reduce((sum, row) => sum + row.hp + row.conBonus, 0) + toughBonus.value,
+const savingThrowBonuses = computed(() =>
+  calculateSavingThrowBonuses({
+    abilityScores: totalAbilityScores.value,
+    proficiencies: savingThrowProficiencies.value,
+    proficiencyBonus: proficiencyBonus.value,
+  }),
 )
-
-const proficiencyBonus = computed(() => getProficiencyBonus(totalLevel.value))
-
-const savingThrowBonuses = computed(() => {
-  const result = {} as Record<AbilityKey, number>
-  for (const key of ABILITY_KEYS) {
-    const mod = getAbilityModifier(getTotalScore(props.character.abilities[key]))
-    const proficient = savingThrowProficiencies.value.includes(key)
-    result[key] = getSavingThrowBonus(mod, proficient, proficiencyBonus.value)
-  }
-  return result
-})
 
 // ─── Skill Computed ────────────────────────────────────────────────────────
 

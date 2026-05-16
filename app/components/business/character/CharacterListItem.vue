@@ -53,8 +53,9 @@
       </div>
     </NuxtLink>
 
-    <!-- Share button（常駐） -->
+    <!-- Share button：與刪除模式互斥，刪除模式時隱藏 -->
     <button
+      v-if="!isDeleteMode"
       type="button"
       :aria-label="`${t('character.share.action')} ${character.name}`"
       class="size-11 shrink-0 flex items-center justify-center rounded-md border border-border text-content-muted cursor-pointer hover:bg-surface hover:text-content transition-colors duration-150"

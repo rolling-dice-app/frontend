@@ -68,6 +68,7 @@
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <button
+            v-if="!isDeleteMode"
             type="button"
             :aria-label="`${t('character.share.action')} ${character.name}`"
             class="size-11 flex items-center justify-center rounded-md border border-border text-content-muted cursor-pointer hover:bg-surface hover:text-content transition-colors duration-150"

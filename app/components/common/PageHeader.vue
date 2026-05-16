@@ -1,6 +1,6 @@
 <template>
   <div class="my-6 flex flex-col xs:flex-row items-center justify-between gap-2 sm:gap-4">
-    <div class="flex min-w-0 items-center">
+    <div class="flex w-full min-w-0 items-center xs:w-auto">
       <button
         v-if="showBack"
         class="flex size-11 shrink-0 items-center justify-center rounded text-content-soft transition-colors hover:text-content cursor-pointer"

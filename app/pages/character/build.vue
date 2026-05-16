@@ -49,15 +49,14 @@
     </Tabs>
 
     <div class="mt-8 flex justify-end">
-      <Button
+      <CommonAppButton
+        variant="primary"
         :disabled="!canSubmit"
         :loading="isSubmitting"
-        :radius="4"
-        bg-color="var(--color-primary)"
         @click="openConfirm"
       >
         {{ t('character.saveCharacter') }}
-      </Button>
+      </CommonAppButton>
     </div>
 
     <BusinessCharacterBuildConfirmModal
@@ -71,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Tab, Tabs } from '@ui'
+import { Tab, Tabs } from '@ui'
 import { ABILITY_KEYS } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 

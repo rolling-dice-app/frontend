@@ -36,25 +36,19 @@
               </span>
               <span class="hidden text-sm sm:inline">{{ auth.user?.displayName }}</span>
             </NuxtLink>
-            <Button
-              size="sm"
-              border-color="var(--color-primary)"
-              text-color="var(--color-primary)"
-              outline
-              @click="onLogout"
-            >
+            <CommonAppButton variant="secondary" size="sm" @click="onLogout">
               <span class="font-display flex items-center gap-1">
                 Log out
                 <Icon name="logout" />
               </span>
-            </Button>
+            </CommonAppButton>
           </template>
-          <Button v-else bg-color="var(--color-primary)" size="sm" @click="onLogin">
+          <CommonAppButton v-else variant="primary" size="sm" @click="onLogin">
             <span class="font-display flex items-center gap-1">
               Log in
               <Icon name="login" />
             </span>
-          </Button>
+          </CommonAppButton>
           <template #fallback>
             <span aria-hidden="true" class="h-8 w-20" />
           </template>
@@ -65,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Icon } from '@ui'
+import { Icon } from '@ui'
 
 const { t } = useI18n()
 const auth = useAuthStore()

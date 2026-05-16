@@ -251,20 +251,15 @@
     </div>
 
     <template #footer>
-      <Button
-        :radius="4"
-        :disabled="!draft.name.trim()"
-        bg-color="var(--color-primary)"
-        @click="saveAttack"
-      >
+      <CommonAppButton variant="primary" :disabled="!draft.name.trim()" @click="saveAttack">
         {{ t('ui.action.confirm') }}
-      </Button>
+      </CommonAppButton>
     </template>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { Modal, Button, Icon, Toggle, TextArea } from '@ui'
+import { Modal, Icon, Toggle, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import {
   ABILITY_KEYS,

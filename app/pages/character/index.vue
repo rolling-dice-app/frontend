@@ -193,24 +193,22 @@
       </p>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button
+          <CommonAppButton
             type="button"
-            :radius="4"
-            bg-color="var(--color-surface-2)"
+            variant="ghost"
             :disabled="deleting"
             @click="onDeleteCancel"
           >
             {{ t('ui.action.cancel') }}
-          </Button>
-          <Button
+          </CommonAppButton>
+          <CommonAppButton
             type="button"
-            :radius="4"
-            bg-color="var(--color-danger)"
+            variant="danger"
             :disabled="deleting"
             @click="onDeleteConfirm"
           >
             {{ t('ui.action.delete') }}
-          </Button>
+          </CommonAppButton>
         </div>
       </template>
     </Modal>
@@ -218,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Icon, Modal, Select } from '@ui'
+import { Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
 import type { CharacterListItem } from '~/types/business/character-list'
 

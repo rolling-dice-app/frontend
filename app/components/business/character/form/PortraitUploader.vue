@@ -18,15 +18,14 @@
       </div>
     </div>
 
-    <Button
+    <CommonAppButton
       type="button"
-      :radius="4"
-      bg-color="var(--color-danger)"
+      variant="danger"
       :disabled="uploading || !displaySrc"
       @click="handleRemove"
     >
       {{ t('character.portrait.remove') }}
-    </Button>
+    </CommonAppButton>
 
     <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
@@ -52,24 +51,17 @@
       </div>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button
-            type="button"
-            :radius="4"
-            bg-color="var(--color-surface-2)"
-            :disabled="uploading"
-            @click="cropCancel"
-          >
+          <CommonAppButton type="button" variant="ghost" :disabled="uploading" @click="cropCancel">
             {{ t('character.portrait.cancel') }}
-          </Button>
-          <Button
+          </CommonAppButton>
+          <CommonAppButton
             type="button"
-            :radius="4"
-            bg-color="var(--color-primary)"
+            variant="primary"
             :disabled="uploading"
             @click="cropConfirm"
           >
             {{ uploading ? t('character.portrait.uploading') : t('character.portrait.confirm') }}
-          </Button>
+          </CommonAppButton>
         </div>
       </template>
     </Modal>
@@ -77,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Modal, Icon } from '@ui'
+import { Modal, Icon } from '@ui'
 import { Cropper, CircleStencil, RectangleStencil } from 'vue-advanced-cropper'
 
 const PREFLIGHT_MAX_BYTES = 5 * 1024 * 1024

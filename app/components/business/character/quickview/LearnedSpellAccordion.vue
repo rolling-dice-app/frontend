@@ -53,25 +53,32 @@
                       v-if="spell.ritual || spell.concentration || spell.material"
                       class="flex shrink-0 gap-1"
                     >
-                      <Badge
+                      <CommonAppBadge
                         v-if="spell.ritual"
+                        variant="status"
                         size="sm"
                         bg-color="var(--color-info)"
                         text-color="var(--color-info-soft)"
                       >
                         {{ t('spell.ritual') }}
-                      </Badge>
-                      <Badge
+                      </CommonAppBadge>
+                      <CommonAppBadge
                         v-if="spell.concentration"
+                        variant="status"
                         size="sm"
                         bg-color="var(--color-warning)"
                         text-color="var(--color-warning-soft)"
                       >
                         {{ t('spell.concentration') }}
-                      </Badge>
-                      <Badge v-if="spell.material" size="sm" bg-color="var(--color-surface-3)">
+                      </CommonAppBadge>
+                      <CommonAppBadge
+                        v-if="spell.material"
+                        variant="status"
+                        size="sm"
+                        bg-color="var(--color-surface-3)"
+                      >
                         {{ t('spell.consumed') }}
-                      </Badge>
+                      </CommonAppBadge>
                     </div>
                   </div>
                   <p class="mt-0.5 truncate text-xs text-content-muted">
@@ -131,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { Accordion, AccordionItem, Badge, Checkbox, Icon } from '@ui'
+import { Accordion, AccordionItem, Checkbox, Icon } from '@ui'
 import type { SpellDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()

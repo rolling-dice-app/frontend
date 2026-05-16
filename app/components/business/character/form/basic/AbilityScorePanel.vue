@@ -5,19 +5,16 @@
     <div>
       <p class="mb-1 text-xs text-content">{{ t('character.allocationMethod') }}</p>
       <div class="flex gap-2">
-        <Button
+        <CommonAppButton
           v-for="method in methods"
           :key="method.key"
+          :variant="abilityMethod === method.key ? 'primary' : 'secondary'"
           size="sm"
-          :outline="abilityMethod !== method.key"
-          border-color="var(--color-primary)"
-          bg-color="var(--color-primary)"
-          text-color="var(--color-content)"
           class="ability-button"
           @click="emit('update:method', method.key)"
         >
           {{ method.label }}
-        </Button>
+        </CommonAppButton>
       </div>
     </div>
 
@@ -37,18 +34,15 @@
           {{ slot.value }}
         </li>
       </ul>
-      <Button
+      <CommonAppButton
+        variant="secondary"
         size="sm"
-        outline
-        text-color="var(--color-primary)"
-        border-color="var(--color-primary)"
-        :radius="8"
         class="flex shrink-0 items-center gap-2"
         @click="emit('roll:all')"
       >
         <Icon name="dice-20" :size="16" />
         {{ t('character.rerollDice') }}
-      </Button>
+      </CommonAppButton>
     </div>
 
     <!-- Ability grid -->
@@ -111,23 +105,20 @@
       >
         {{ usageLabel }}
       </p>
-      <Button
+      <CommonAppButton
+        variant="secondary"
         size="sm"
-        outline
-        text-color="var(--color-primary)"
-        border-color="var(--color-primary)"
-        :radius="8"
         class="flex items-center gap-2"
         @click="emit('reset:abilities')"
       >
         {{ t('character.resetAbilities') }}
-      </Button>
+      </CommonAppButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button, Icon, type SelectOption } from '@ui'
+import { Icon, type SelectOption } from '@ui'
 import { CUSTOM_ABILITY_MAX, CUSTOM_ABILITY_MIN, POINT_BUY_BUDGET } from '~/constants/dnd'
 import type {
   AbilityMethod,

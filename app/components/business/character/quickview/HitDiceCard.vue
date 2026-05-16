@@ -21,9 +21,9 @@
           <span class="text-sm font-semibold text-content">
             {{ t(`class.label.${entry.classKey}`) }}
           </span>
-          <Badge size="sm" bg-color="var(--color-surface-2)">
+          <CommonAppBadge variant="default" size="sm">
             d{{ CLASS_CONFIG[entry.classKey].hitDie }}
-          </Badge>
+          </CommonAppBadge>
         </div>
 
         <div class="flex shrink-0 items-center">
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, Icon } from '@ui'
+import { Icon } from '@ui'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import type { ClassEntry, ClassKey } from '@rolling-dice-app/core'
 

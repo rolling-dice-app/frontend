@@ -80,18 +80,15 @@
             class="w-32"
           />
         </div>
-        <Button
+        <CommonAppButton
           v-if="hasActiveFilter"
+          variant="neutral"
           size="sm"
-          outline
-          :radius="4"
-          text-color="var(--color-content-muted)"
-          border-color="var(--color-border)"
           class="clear-filter-btn"
           @click="resetFilter"
         >
           {{ t('spell.filterClear') }}
-        </Button>
+        </CommonAppButton>
       </div>
 
       <div class="flex flex-wrap gap-x-5 gap-y-2 text-xs text-content">
@@ -154,22 +151,24 @@
                   <div class="flex items-center gap-2">
                     <p class="truncate text-sm font-semibold text-content">{{ spell.name }}</p>
                     <div v-if="spell.ritual || spell.concentration" class="flex shrink-0 gap-1">
-                      <Badge
+                      <CommonAppBadge
                         v-if="spell.ritual"
+                        variant="status"
                         size="sm"
                         bg-color="var(--color-info)"
                         text-color="var(--color-info-soft)"
                       >
                         {{ t('spell.ritual') }}
-                      </Badge>
-                      <Badge
+                      </CommonAppBadge>
+                      <CommonAppBadge
                         v-if="spell.concentration"
+                        variant="status"
                         size="sm"
                         bg-color="var(--color-warning)"
                         text-color="var(--color-warning-soft)"
                       >
                         {{ t('spell.concentration') }}
-                      </Badge>
+                      </CommonAppBadge>
                     </div>
                   </div>
                   <p class="mt-0.5 truncate text-xs text-content-muted">
@@ -217,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { Accordion, AccordionItem, Badge, Button, Checkbox, Toggle } from '@ui'
+import { Accordion, AccordionItem, Checkbox, Toggle } from '@ui'
 import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 import type { ClassKey, SpellDTO, SourceKey, SpellSchool } from '@rolling-dice-app/core'

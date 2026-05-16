@@ -38,18 +38,24 @@
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <p class="text-sm font-semibold text-content">{{ feature.name }}</p>
-              <Badge
+              <CommonAppBadge
+                variant="status"
                 size="sm"
                 :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
                 :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
               >
                 {{ t(`combat.featureSource.${feature.source}`) }}
-              </Badge>
-              <Badge v-if="feature.usage.hasUses" size="sm" bg-color="var(--color-surface-3)">
+              </CommonAppBadge>
+              <CommonAppBadge
+                v-if="feature.usage.hasUses"
+                variant="status"
+                size="sm"
+                bg-color="var(--color-surface-3)"
+              >
                 {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }} /
                 {{ feature.usage.max }}
                 {{ t('combat.uses') }}
-              </Badge>
+              </CommonAppBadge>
             </div>
             <p
               v-if="feature.description"
@@ -200,21 +206,16 @@
       </div>
 
       <template #footer>
-        <Button
-          :radius="4"
-          :disabled="!draft.name.trim()"
-          bg-color="var(--color-primary)"
-          @click="save"
-        >
+        <CommonAppButton variant="primary" :disabled="!draft.name.trim()" @click="save">
           {{ t('ui.action.confirm') }}
-        </Button>
+        </CommonAppButton>
       </template>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
+import { Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { FEATURE_SOURCE_BADGE_STYLES } from '~/constants/style'
 import {

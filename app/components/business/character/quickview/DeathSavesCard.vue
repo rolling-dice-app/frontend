@@ -8,7 +8,9 @@
       <h3 id="quickview-death-saves-label" class="font-display text-sm font-bold text-content">
         {{ t('combat.deathSave') }}
       </h3>
-      <Badge size="sm" :bg-color="statusBadgeColor">{{ statusLabel }}</Badge>
+      <CommonAppBadge variant="status" size="sm" :bg-color="statusBadgeColor">{{
+        statusLabel
+      }}</CommonAppBadge>
     </div>
 
     <div
@@ -67,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, Icon } from '@ui'
+import { Icon } from '@ui'
 import { rollD20 } from '~/helpers/dice'
 
 const { t } = useI18n()

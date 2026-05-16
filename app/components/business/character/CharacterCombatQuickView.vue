@@ -156,29 +156,19 @@
       <p class="text-sm text-content">{{ t('combat.resetConfirmBody') }}</p>
 
       <template #footer>
-        <Button
-          :radius="4"
-          bg-color="var(--color-surface)"
-          :disabled="isResetting"
-          @click="resetModalOpen = false"
-        >
+        <CommonAppButton variant="ghost" :disabled="isResetting" @click="resetModalOpen = false">
           {{ t('ui.action.cancel') }}
-        </Button>
-        <Button
-          :radius="4"
-          bg-color="var(--color-danger)"
-          :disabled="isResetting"
-          @click="onConfirmReset"
-        >
+        </CommonAppButton>
+        <CommonAppButton variant="danger" :disabled="isResetting" @click="onConfirmReset">
           {{ isResetting ? t('combat.resetting') : t('ui.action.confirm') }}
-        </Button>
+        </CommonAppButton>
       </template>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button, Modal } from '@ui'
+import { Modal } from '@ui'
 import { useCharacterCombatState } from '~/composables/domain/useCharacterCombatState'
 import { useCharacterDerivedStatsFromCharacter } from '~/composables/domain/useCharacterDerivedStats'
 import {

@@ -46,19 +46,19 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <Button :radius="4" bg-color="var(--color-surface-2)" @click="emit('cancel')">
+        <CommonAppButton variant="ghost" @click="emit('cancel')">
           {{ t('ui.action.cancel') }}
-        </Button>
-        <Button :radius="4" bg-color="var(--color-primary)" @click="emit('confirm')">
+        </CommonAppButton>
+        <CommonAppButton variant="primary" @click="emit('confirm')">
           {{ t('character.buildConfirmAction') }}
-        </Button>
+        </CommonAppButton>
       </div>
     </template>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { Button, Modal } from '@ui'
+import { Modal } from '@ui'
 import { ABILITY_KEYS } from '@rolling-dice-app/core'
 import type { FormClassEntry, TotalAbilityScores } from '~/types/business/character-form'
 

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
+import AppButton from '~/components/common/AppButton.vue'
 import AttackList from '~/components/business/character/form/combat/AttackList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { formatDamageSummary, getAttackHit, getHitBonusColorClass } from '~/helpers/combat'
@@ -119,7 +120,11 @@ const mountList = (
         Toggle: ToggleStub,
         TextArea: TextAreaStub,
       },
-      components: { CommonAppInput: AppInput, CommonAppSelect: AppSelect },
+      components: {
+        CommonAppInput: AppInput,
+        CommonAppSelect: AppSelect,
+        CommonAppButton: AppButton,
+      },
       mocks: {
         formatModifier,
         getAbilityModifier,

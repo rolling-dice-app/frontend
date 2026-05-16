@@ -15,7 +15,7 @@ import { RADIUS } from '~/constants/style'
 
 defineOptions({ inheritAttrs: false })
 
-type Variant = 'primary' | 'secondary' | 'neutral' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'neutral' | 'ghost' | 'danger' | 'warning'
 type Size = 'sm' | 'md' | 'lg'
 
 const props = withDefaults(
@@ -56,6 +56,12 @@ const variantProps = computed(() => {
         bgColor: 'var(--color-danger)',
         textColor: 'var(--color-content-inverse)',
         borderColor: 'var(--color-danger)',
+      }
+    case 'warning':
+      return {
+        bgColor: 'var(--color-warning)',
+        textColor: 'var(--color-content-inverse)',
+        borderColor: 'var(--color-warning)',
       }
     default:
       return {

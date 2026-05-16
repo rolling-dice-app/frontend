@@ -2,16 +2,15 @@
   <div>
     <CommonPageHeader title="Edit Character" :show-back="true">
       <template #actions>
-        <Button
+        <CommonAppButton
+          variant="primary"
           :disabled="!canSubmit"
           :loading="isSubmitting"
-          :radius="4"
           class="w-22"
-          bg-color="var(--color-primary)"
           @click="submit"
         >
           {{ t('ui.action.save') }}
-        </Button>
+        </CommonAppButton>
       </template>
     </CommonPageHeader>
 
@@ -88,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Tab, Tabs } from '@ui'
+import { Tab, Tabs } from '@ui'
 import type { CharacterDTO } from '@rolling-dice-app/core'
 
 const props = defineProps<{ character: CharacterDTO }>()

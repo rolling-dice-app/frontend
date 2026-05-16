@@ -32,15 +32,9 @@
           >
             {{ character.name }}
           </h3>
-          <Badge
-            class="shrink-0"
-            bg-color="var(--rd--color-surface-2)"
-            text-color="var(--rd--color-text-muted)"
-            :radius="4"
-            size="sm"
-          >
+          <CommonAppBadge variant="default" class="shrink-0" size="sm">
             {{ character.race ?? '-' }}
-          </Badge>
+          </CommonAppBadge>
         </div>
 
         <!-- Right: classKey + level badge -->
@@ -73,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, Icon } from '@ui'
+import { Icon } from '@ui'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 

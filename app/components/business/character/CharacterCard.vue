@@ -58,14 +58,9 @@
             </h3>
           </div>
           <div class="mt-2 flex items-center gap-2">
-            <Badge
-              bg-color="var(--rd--color-surface-2)"
-              text-color="var(--rd--color-text-muted)"
-              :radius="4"
-              size="sm"
-            >
+            <CommonAppBadge variant="default" size="sm">
               {{ character.race ?? '-' }}
-            </Badge>
+            </CommonAppBadge>
             <span class="text-xs text-content-muted">
               {{ character.classes.map((p) => t(`class.label.${p.classKey}`)).join(' / ') }}
             </span>
@@ -86,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, Card, Icon } from '@ui'
+import { Card, Icon } from '@ui'
 import { RADIUS } from '~/constants/style'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'

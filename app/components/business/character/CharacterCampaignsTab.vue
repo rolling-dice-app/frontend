@@ -176,10 +176,6 @@ watch(
 </script>
 
 <style scoped>
-.campaigns-accordion :deep(> div) {
-  border-bottom-width: 0;
-}
-
 .campaigns-accordion :deep(button:hover:not(:disabled)) {
   background-color: var(--color-info-soft);
 }

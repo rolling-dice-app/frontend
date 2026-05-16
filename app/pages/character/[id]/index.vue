@@ -173,11 +173,10 @@ onMounted(() => {
 
 // 路由離開時 await 戰況 quickview 的 flushPersist 保存最後一次寫入；
 // 此 hook 在 unmount 前 fire 且支援 await，比 onBeforeUnmount 的 fire-and-forget 更可靠。
+// store 清理也放這裡：Suspense 下 onBeforeUnmount 會晚於下一頁的 load() 而把它蓋掉，
+// route-leave 相對下一頁 setup 有明確先後，能保證「先 reset 再由下一頁 load」。
 onBeforeRouteLeave(async () => {
   await combatQuickViewRef.value?.flushPersist()
-})
-
-onBeforeUnmount(() => {
   spellsStore.flushPending()
   inventoryStore.reset()
   spellsStore.reset()

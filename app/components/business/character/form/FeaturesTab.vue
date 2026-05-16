@@ -136,6 +136,7 @@
               :border="false"
               :model-value="draft.description ?? ''"
               :rows="3"
+              max-height="8rem"
               :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
               show-count
               :placeholder="t('combat.featureDescriptionPlaceholder')"

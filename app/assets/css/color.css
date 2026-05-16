@@ -138,4 +138,20 @@
   --rd--tier-master: #4a7acf;
   --rd--tier-master-soft: rgba(74, 122, 207, 0.15);
   --rd--tier-master-gradient: #1a2032;
+
+  /* ─── Shadow ────────────────────────────────────────────────────────────────
+     design-language §9：4 級 elevation（elev-0 = none，直接用 shadow-none）。
+     inset 為操作區凹陷卡專用內陰影（非 elev 級距）。
+  ─────────────────────────────────────────────────────────────────────────── */
+  --rd--shadow-elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --rd--shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --rd--shadow-elev-3: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --rd--shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+
+  /* ─── Tier glow ─────────────────────────────────────────────────────────────
+     角色清單卡專用特例（design-language §9）。
+     強度 = base + level × step；純數值供 calc() 用，不進 @theme inline。
+  ─────────────────────────────────────────────────────────────────────────── */
+  --rd--tier-glow-base: 0.1;
+  --rd--tier-glow-step: 0.017;
 }

@@ -20,16 +20,17 @@
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-sm font-semibold text-content">{{ feature.name }}</span>
-                <Badge
+                <CommonAppBadge
+                  variant="status"
                   size="sm"
                   :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
                   :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
                 >
                   {{ t(`combat.featureSource.${feature.source}`) }}
-                </Badge>
-                <Badge v-if="feature.usage.hasUses" size="sm" bg-color="var(--color-surface-2)">
+                </CommonAppBadge>
+                <CommonAppBadge v-if="feature.usage.hasUses" variant="default" size="sm">
                   {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }}
-                </Badge>
+                </CommonAppBadge>
               </div>
             </div>
 
@@ -76,8 +77,8 @@
 </template>
 
 <script setup lang="ts">
-import { Accordion, AccordionItem, Badge, Icon } from '@ui'
-import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
+import { Accordion, AccordionItem, Icon } from '@ui'
+import { FEATURE_SOURCE_BADGE_STYLES } from '~/constants/style'
 import type { CharacterFeature } from '@rolling-dice-app/core'
 
 const { t } = useI18n()

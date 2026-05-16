@@ -95,7 +95,12 @@
       </div>
     </div>
     <div class="w-full md:w-1/3">
-      <BusinessCharacterFormPortraitUploader v-model="formState.avatar" />
+      <BusinessCharacterFormPortraitUploader
+        v-model="formState.avatar"
+        v-model:pending-blob="pendingAvatar"
+        :upload-fn="avatarUploadFn"
+        :delete-fn="avatarDeleteFn"
+      />
     </div>
   </div>
 </template>
@@ -107,5 +112,12 @@ import type { CharacterFormStateBase } from '~/types/business/character-form'
 
 const { t } = useI18n()
 
+/** avatar 模式由外層決定：編輯傳 upload/delete fn（immediate）；建立改用 pendingAvatar（deferred）。 */
+defineProps<{
+  avatarUploadFn?: (blob: Blob) => Promise<string>
+  avatarDeleteFn?: () => Promise<void>
+}>()
+
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
+const pendingAvatar = defineModel<Blob | null>('pendingAvatar', { default: null })
 </script>

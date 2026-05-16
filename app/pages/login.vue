@@ -17,16 +17,20 @@ const { t } = useI18n()
 const route = useRoute()
 const logger = createLogger('[login]')
 
-const errorMessage = computed(() => {
-  const code = route.query.error
-  if (typeof code !== 'string') return null
-  // 前端不解析後端錯誤碼；原始 code 留在 log 供工程師追查，user 看通用訊息
-  logger.error('[OAuth redirect error]', { code })
-  return t('ui.message.systemError')
-})
+const errorCode = route.query.error
+const hasError = typeof errorCode === 'string'
 
-// 沒帶 ?error= 進來代表沒事在這頁，導回首頁
-setTimeout(async () => await navigateTo('/', { replace: true }), 1000)
+// 沒帶 ?error= 代表沒事停在這頁，立即導回首頁（不留 timer，避免離頁後 fire 的 race）
+if (!hasError) {
+  await navigateTo('/', { replace: true })
+}
+
+if (hasError) {
+  // 前端不解析後端錯誤碼；原始 code 留在 log 供工程師追查，user 看通用訊息
+  logger.error('[OAuth redirect error]', { code: errorCode })
+}
+
+const errorMessage = computed(() => (hasError ? t('ui.message.systemError') : null))
 
 useHead({ title: t('ui.auth.authResult') })
 </script>

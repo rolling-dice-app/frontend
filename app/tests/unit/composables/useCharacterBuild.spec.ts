@@ -395,3 +395,65 @@ describe('useCharacterBuild — submit', () => {
     expect(isSubmitting.value).toBe(false)
   })
 })
+
+// ─── submit — deferred avatar ────────────────────────────────────────────────
+
+describe('useCharacterBuild — submit deferred avatar', () => {
+  const mockUploadAvatar = vi.fn()
+
+  beforeEach(() => {
+    mockUploadAvatar.mockReset()
+    vi.stubGlobal('characters', () => ({ uploadAvatar: mockUploadAvatar }))
+  })
+
+  it('無 pendingAvatar 時不呼叫 uploadAvatar，正常導向 /character', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'createCharacter').mockResolvedValue({ id: 'c-1' } as never)
+
+    const { formState, submit } = await getComposable()
+    formState.name = '無圖角色'
+    formState.classes[0]!.classKey = 'fighter'
+
+    await submit()
+    expect(mockUploadAvatar).not.toHaveBeenCalled()
+    expect(mockNavigateTo).toHaveBeenCalledWith('/character')
+  })
+
+  it('有 pendingAvatar 時建立後以 created.id + blob 原子上傳，再導向 /character', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'createCharacter').mockResolvedValue({ id: 'c-2' } as never)
+    mockUploadAvatar.mockResolvedValue({ url: 'https://r2/x.webp' })
+
+    const { formState, pendingAvatar, submit } = await getComposable()
+    formState.name = '帶圖角色'
+    formState.classes[0]!.classKey = 'fighter'
+    const blob = new Blob(['x'], { type: 'image/webp' })
+    pendingAvatar.value = blob
+
+    await submit()
+    expect(mockUploadAvatar).toHaveBeenCalledWith('c-2', blob)
+    expect(mockNavigateTo).toHaveBeenCalledWith('/character')
+  })
+
+  it('avatar 上傳失敗：角色不回滾，提示後導向該角色編輯頁而非 /character', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'createCharacter').mockResolvedValue({ id: 'c-3' } as never)
+    const err = new Error('avatar upload failed')
+    mockUploadAvatar.mockRejectedValue(err)
+
+    const { formState, pendingAvatar, submit } = await getComposable()
+    formState.name = '上傳失敗角色'
+    formState.classes[0]!.classKey = 'fighter'
+    pendingAvatar.value = new Blob(['x'], { type: 'image/webp' })
+
+    await submit()
+    expect(mockApiErrorHandle).toHaveBeenCalledWith(err, {
+      toastMessage: '角色已建立，但肖像上傳失敗，可至編輯頁重試',
+    })
+    expect(mockNavigateTo).toHaveBeenCalledWith('/character/c-3/update')
+    expect(mockNavigateTo).not.toHaveBeenCalledWith('/character')
+  })
+})

@@ -7,3 +7,8 @@ body {
   font-weight: 700;
   letter-spacing: 0.2em;
 }
+
+/* 等寬數字：並排 / 表格數字不因字寬不一而跳動（+5 / +10 / -1 對齊） */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

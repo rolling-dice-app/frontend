@@ -111,6 +111,17 @@ export const useCharacterStore = defineStore('character', () => {
     return cloneCharacter(next)
   }
 
+  /** avatar 原子變更後重抓角色，同步 detailCache（含新 updatedAt）與列表縮圖。 */
+  const refreshCharacterAfterAvatar = async (id: string): Promise<void> => {
+    const next = await characters().get(id)
+    detailCache.value.set(id, next)
+    const item = list.value.find((c) => c.id === id)
+    if (item) {
+      item.avatar = next.avatar
+      item.updatedAt = next.updatedAt
+    }
+  }
+
   const removeCharacter = async (id: string): Promise<void> => {
     await characters().remove(id)
     detailCache.value.delete(id)
@@ -130,6 +141,7 @@ export const useCharacterStore = defineStore('character', () => {
     createCharacter,
     getById,
     updateCharacter,
+    refreshCharacterAfterAvatar,
     removeCharacter,
   }
 })

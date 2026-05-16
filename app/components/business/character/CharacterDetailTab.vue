@@ -70,7 +70,7 @@
           <h2 id="section-proficiencies" class="font-display text-lg font-bold text-content">
             {{ t('character.proficiencies') }}
           </h2>
-          <table class="w-full text-sm">
+          <table class="w-full table-fixed text-sm">
             <thead>
               <tr class="border-b border-border-soft text-left text-xs text-content-muted">
                 <th class="pb-2 font-normal">{{ t('character.language') }}</th>
@@ -81,16 +81,16 @@
             </thead>
             <tbody>
               <tr class="border-b border-border-soft">
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.languages || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.tools || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.weaponProficiencies || t('character.emptyDash') }}
                 </td>
-                <td class="py-2 text-content-soft">
+                <td class="py-2 pr-4 align-top wrap-break-word text-content-soft">
                   {{ character.armorProficiencies || t('character.emptyDash') }}
                 </td>
               </tr>
@@ -98,7 +98,7 @@
           </table>
         </div>
         <!-- 職業資訊 -->
-        <div class="flex flex-col gap-4 flex-1">
+        <div class="flex flex-col gap-4 flex-1 tabular">
           <h2 id="section-classes" class="font-display text-lg font-bold text-content">
             {{ t('class.className') }}
           </h2>
@@ -160,7 +160,7 @@
       </div>
       <div class="sm:w-1/4 md:w-1/3 w-full">
         <div
-          class="aspect-[3/4] w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
+          class="aspect-3/4 w-full overflow-hidden border border-primary rounded-md bg-canvas-inset"
         >
           <img
             v-if="character.avatar"
@@ -188,7 +188,7 @@
             <h2 id="section-abilities-saves" class="font-display text-lg font-bold text-content">
               {{ t('character.abilitiesAndSaves') }}
             </h2>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-3 gap-3 tabular">
               <div
                 v-for="key in ABILITY_KEYS"
                 :key="key"
@@ -229,7 +229,7 @@
           <h2 id="section-other-abilities" class="font-display text-lg font-bold text-content">
             {{ t('character.otherAbilities') }}
           </h2>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 tabular">
             <div
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
@@ -284,7 +284,7 @@
         <h2 id="section-skills" class="mb-4 font-display text-lg font-bold text-content">
           {{ t('character.skillProficienciesTitle') }}
         </h2>
-        <div class="grid grid-cols-2 grid-rows-9 grid-flow-col gap-x-6 gap-y-2">
+        <div class="grid grid-cols-2 grid-rows-9 grid-flow-col gap-x-6 gap-y-2 tabular">
           <div
             v-for="skill in skillList"
             :key="skill.key"

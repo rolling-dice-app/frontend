@@ -232,17 +232,14 @@
       </div>
 
       <div class="flex items-center justify-between">
-        <Button
+        <CommonAppButton
+          variant="secondary"
           size="sm"
-          outline
           :disabled="isButtonDisabled"
-          text-color="var(--color-primary)"
-          border-color="var(--color-primary)"
-          :radius="8"
           @click="addClass"
         >
           + {{ t('class.addClass') }}
-        </Button>
+        </CommonAppButton>
         <p class="text-sm text-content-muted">
           {{ t('class.totalLevel') }}：
           <span :class="totalLevel > 20 ? 'text-danger font-bold' : ''">{{ totalLevel }}</span>
@@ -254,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Icon } from '@ui'
+import { Icon } from '@ui'
 import type { SelectOption } from '@ui'
 import { SUBCLASSES_BY_CLASS } from '~/constants/subclass'
 import type { CharacterFormStateBase } from '~/types/business/character-form'

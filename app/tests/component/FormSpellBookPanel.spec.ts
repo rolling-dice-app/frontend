@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, nextTick, onBeforeUnmount, ref, useId } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
+import AppButton from '~/components/common/AppButton.vue'
+import AppBadge from '~/components/common/AppBadge.vue'
 import SpellBookPanel from '~/components/business/character/form/spells/SpellBookPanel.vue'
 import { useSpellSelectOptions } from '~/composables/ui/useSpellSelectOptions'
 import { formatSpellComponents, formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
@@ -129,7 +131,12 @@ const mountPanel = (
         Checkbox: CheckboxStub,
         Toggle: ToggleStub,
       },
-      components: { CommonAppInput: AppInput, CommonAppSelect: AppSelect },
+      components: {
+        CommonAppInput: AppInput,
+        CommonAppSelect: AppSelect,
+        CommonAppButton: AppButton,
+        CommonAppBadge: AppBadge,
+      },
       mocks: {
         formatSpellLevel,
         formatSpellComponents,

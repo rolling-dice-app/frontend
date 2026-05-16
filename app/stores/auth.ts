@@ -1,4 +1,10 @@
-import type { MeResponseDTO, PlanLimits, User, UserPreference } from '@rolling-dice-app/core'
+import type {
+  MeResponseDTO,
+  PlanLimits,
+  User,
+  UserPreference,
+  UserProfileUpdateDTO,
+} from '@rolling-dice-app/core'
 
 /**
  * 使用者登入狀態 store。
@@ -54,5 +60,30 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = updated
   }
 
-  return { user, limits, isLoggedIn, clearSession, refresh, login, logout, updatePreference }
+  /** PATCH /users/me 更新 displayName / preference（樂觀鎖）；回傳新 user 寫回 store；409 外拋。 */
+  const updateProfile = async (patch: {
+    displayName?: string
+    preference?: Partial<UserPreference>
+  }): Promise<void> => {
+    const current = user.value
+    if (!current) throw new Error('updateProfile called without authed user')
+    const body: UserProfileUpdateDTO = { updatedAt: current.updatedAt }
+    if (patch.displayName !== undefined) body.displayName = patch.displayName
+    if (patch.preference !== undefined) {
+      body.preference = { ...current.preference, ...patch.preference }
+    }
+    user.value = await users().updateProfile(body)
+  }
+
+  return {
+    user,
+    limits,
+    isLoggedIn,
+    clearSession,
+    refresh,
+    login,
+    logout,
+    updatePreference,
+    updateProfile,
+  }
 })

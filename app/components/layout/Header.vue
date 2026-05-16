@@ -12,31 +12,35 @@
       </NuxtLink>
 
       <!-- Auth (client-only：避免被 edge cache 污染) -->
-      <div class="ml-auto flex h-8 items-center gap-3">
+      <div class="ml-auto flex h-8 items-center">
         <ClientOnly>
-          <template v-if="auth.isLoggedIn">
-            <span class="hidden text-sm text-content sm:inline">
-              {{ auth.user?.displayName }}
-            </span>
-            <Button
-              size="sm"
-              border-color="var(--color-primary)"
-              text-color="var(--color-primary)"
-              outline
-              @click="onLogout"
+          <NuxtLink
+            v-if="auth.isLoggedIn"
+            to="/settings"
+            class="flex size-11 items-center justify-center transition-opacity hover:opacity-80"
+            :aria-label="t('settings.title')"
+          >
+            <img
+              v-if="auth.user?.avatarUrl && !avatarError"
+              :src="auth.user.avatarUrl"
+              alt=""
+              class="h-8 w-8 rounded-full object-cover"
+              @error="avatarError = true"
+            />
+            <span
+              v-else
+              aria-hidden="true"
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-xs font-bold uppercase"
             >
-              <span class="font-display flex items-center gap-1">
-                Log out
-                <Icon name="logout" />
-              </span>
-            </Button>
-          </template>
-          <Button v-else bg-color="var(--color-primary)" size="sm" @click="onLogin">
-            <span class="font-display flex items-center gap-1">
-              Log in
+              {{ initials }}
+            </span>
+          </NuxtLink>
+          <CommonAppButton v-else variant="primary" size="sm" @click="onLogin">
+            <span class="flex items-center gap-1">
+              {{ t('ui.auth.login') }}
               <Icon name="login" />
             </span>
-          </Button>
+          </CommonAppButton>
           <template #fallback>
             <span aria-hidden="true" class="h-8 w-20" />
           </template>
@@ -47,17 +51,24 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Icon } from '@ui'
+import { Icon } from '@ui'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
 
+const initials = computed(() => (auth.user?.displayName ?? '?').trim().charAt(0).toUpperCase())
+
+/** avatar URL 載入失敗（尚未傳播 / 404）時退回 initials 而非破圖。 */
+const avatarError = ref(false)
+watch(
+  () => auth.user?.avatarUrl,
+  () => {
+    avatarError.value = false
+  },
+)
+
 const onLogin = () => {
   auth.login(route.fullPath)
-}
-
-const onLogout = async () => {
-  await auth.logout()
-  await navigateTo('/')
 }
 </script>

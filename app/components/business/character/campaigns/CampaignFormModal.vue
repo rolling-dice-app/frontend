@@ -101,21 +101,20 @@
       </div>
 
       <template #footer>
-        <Button
-          :radius="4"
+        <CommonAppButton
+          variant="primary"
           :disabled="!draft.title.trim() || !draft.content.trim() || submitting"
-          bg-color="var(--color-primary)"
           @click="onSave"
         >
           {{ t('ui.action.confirm') }}
-        </Button>
+        </CommonAppButton>
       </template>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button, Modal, TextArea } from '@ui'
+import { Modal, TextArea } from '@ui'
 import { CHARACTER_INT_LIMITS, DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'

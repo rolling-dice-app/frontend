@@ -49,13 +49,14 @@
           <Icon name="list" :size="14" class="shrink-0 text-content-muted" />
 
           <!-- Type badge -->
-          <Badge
+          <CommonAppBadge
+            variant="status"
             size="sm"
             bg-color="var(--color-surface-3)"
             class="shrink-0 hidden! xs:inline-flex!"
           >
             <span class="text-content-muted">{{ t(`inventory.itemType.${item.type}`) }}</span>
-          </Badge>
+          </CommonAppBadge>
 
           <!-- Name -->
           <div class="min-w-0 flex-1">
@@ -222,20 +223,15 @@
     </div>
 
     <template #footer>
-      <Button
-        :radius="4"
-        :disabled="!draft.name.trim()"
-        bg-color="var(--color-primary)"
-        @click="save"
-      >
+      <CommonAppButton variant="primary" :disabled="!draft.name.trim()" @click="save">
         {{ t('ui.action.confirm') }}
-      </Button>
+      </CommonAppButton>
     </template>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { Badge, Button, Icon, Modal, TextArea } from '@ui'
+import { Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {

@@ -320,14 +320,13 @@ describe('formStateToCharacterPatch', () => {
     expect(patch.tools).toBeNull()
     expect(patch.weaponProficiencies).toBeNull()
     expect(patch.armorProficiencies).toBeNull()
-    expect(patch.avatar).toBeNull()
   })
 
-  it('avatar URL 原樣帶入 patch', () => {
+  it('avatar 不併入 create patch（改由 POST /characters/:id/avatar 原子上傳）', () => {
     const url = 'https://avatars.example.com/avatars/u1/abc.webp'
     const form = createBaseFormState({ avatar: url })
     const patch = formStateToCharacterPatch(form)
-    expect(patch.avatar).toBe(url)
+    expect('avatar' in patch).toBe(false)
   })
 
   it('age 為 0 時應保留為 0，不視為 null', () => {

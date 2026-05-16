@@ -3,7 +3,7 @@
     <div class="flex min-w-0 items-center gap-2">
       <button
         v-if="showBack"
-        class="flex shrink-0 items-center rounded p-1 text-content-soft transition-colors hover:text-content cursor-pointer"
+        class="flex size-11 shrink-0 items-center justify-center rounded text-content-soft transition-colors hover:text-content cursor-pointer"
         :aria-label="t('ui.aria.backToParent')"
         @click="handleBack"
       >

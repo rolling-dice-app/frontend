@@ -28,15 +28,15 @@
     </div>
 
     <template #footer>
-      <Button :radius="4" bg-color="var(--color-primary)" @click="onConfirm">
+      <CommonAppButton variant="primary" @click="onConfirm">
         {{ t('ui.action.confirm') }}
-      </Button>
+      </CommonAppButton>
     </template>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { Button, Modal } from '@ui'
+import { Modal } from '@ui'
 import { CHARACTER_INT_LIMITS } from '@rolling-dice-app/core'
 import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
 

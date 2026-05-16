@@ -93,6 +93,12 @@
   --color-toast-system-accent-error: var(--rd--color-toast-system-accent-error);
   --color-toast-system-accent-success: var(--rd--color-toast-system-accent-success);
   --color-toast-system-accent-info: var(--rd--color-toast-system-accent-info);
+
+  /* shadow — elevation scale (design-language §9) */
+  --shadow-elev-1: var(--rd--shadow-elev-1);
+  --shadow-elev-2: var(--rd--shadow-elev-2);
+  --shadow-elev-3: var(--rd--shadow-elev-3);
+  --shadow-inset: var(--rd--shadow-inset);
 }
 
 /* ─── Utilities ─────────────────────────────────────────────────────────────── */
@@ -126,4 +132,16 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: tier-shimmer 3s linear infinite;
+}
+
+/* ─── Tier Glow ────────────────────────────────────────────────────────────── */
+/* 角色清單卡 hover 光暈（design-language §9 特例）。呼叫端只設
+   --tier-glow-rgb（tier 色 RGB 元組）/ --tier-glow-level（總等級）/ --tier-glow-radius，
+   強度由 token base + level × step 算出；transition 交由呼叫端 utility 控制。 */
+.tier-glow:hover {
+  box-shadow: 0 0 var(--tier-glow-radius)
+    rgba(
+      var(--tier-glow-rgb),
+      calc(var(--rd--tier-glow-base) + var(--tier-glow-level) * var(--rd--tier-glow-step))
+    );
 }

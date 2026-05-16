@@ -44,6 +44,8 @@ function characterToFormState(character: CharacterDTO): CharacterUpdateFormState
     tools: character.tools,
     weaponProficiencies: character.weaponProficiencies,
     armorProficiencies: character.armorProficiencies,
+    // avatar 不再進 update patch（改走 atomic POST/DELETE /characters/:id/avatar）；
+    // 此欄位僅作為 PortraitUploader v-model 的顯示來源
     avatar: character.avatar,
     armorClass: { ...character.armorClass },
     speedBonus: character.speedBonus ?? 0,
@@ -124,6 +126,19 @@ export function useCharacterUpdate(character: CharacterDTO) {
 
   const { t } = useI18n()
 
+  // ─── Avatar：atomic，與 Save 解耦；上傳/清除後重抓同步 updatedAt 避免後續 Save 409 ──
+
+  const avatarUpload = async (blob: Blob): Promise<string> => {
+    const { url } = await characters().uploadAvatar(id, blob)
+    await store.refreshCharacterAfterAvatar(id)
+    return url
+  }
+
+  const avatarDelete = async (): Promise<void> => {
+    await characters().deleteAvatar(id)
+    await store.refreshCharacterAfterAvatar(id)
+  }
+
   // ─── Submit：主幹 PATCH + N 個 spell mutations 並行 ──────────────────────
 
   const submit = async (): Promise<void> => {
@@ -184,5 +199,7 @@ export function useCharacterUpdate(character: CharacterDTO) {
     hasChanges,
     derived,
     submit,
+    avatarUpload,
+    avatarDelete,
   }
 }

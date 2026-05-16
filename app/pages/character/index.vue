@@ -12,6 +12,7 @@
             border-color="var(--rd--color-border)"
             color="var(--rd--color-text)"
             dropdown-bg="var(--rd--color-bg-elevated)"
+            option-hover-color="var(--color-canvas-inset)"
             class="sort-select w-21 xs:w-28"
             :aria-label="t('character.sortBy')"
           />
@@ -20,25 +21,25 @@
             type="button"
             :aria-pressed="isListMode"
             :aria-label="t('character.toggleViewMode')"
-            class="relative flex cursor-pointer items-center rounded-lg border border-border p-1"
+            class="relative flex h-11 cursor-pointer items-center overflow-hidden rounded-lg border border-border"
             @click="isListMode = !isListMode"
             @keydown.enter.prevent="isListMode = !isListMode"
             @keydown.space.prevent="isListMode = !isListMode"
           >
             <div
-              class="absolute top-1 left-1 size-8 rounded-md bg-primary transition-transform duration-200"
-              :class="isListMode ? 'translate-x-8' : 'translate-x-0'"
+              class="absolute top-0 left-0 h-full w-11 rounded-md bg-primary transition-transform duration-200"
+              :class="isListMode ? 'translate-x-11' : 'translate-x-0'"
               aria-hidden="true"
             />
             <span
-              class="relative z-10 flex size-8 items-center justify-center transition-colors duration-150"
+              class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
               :class="!isListMode ? 'text-text-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
               <Icon name="grid" :size="24" />
             </span>
             <span
-              class="relative z-10 flex size-8 items-center justify-center transition-colors duration-150"
+              class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
               :class="isListMode ? 'text-text-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
@@ -52,7 +53,7 @@
             :aria-label="
               isDeleteMode ? t('ui.action.leaveDeleteMode') : t('ui.action.enterDeleteMode')
             "
-            class="flex size-10 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
+            class="flex size-11 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
             :class="
               isDeleteMode ? 'bg-danger text-text-inverse' : 'text-content-muted hover:bg-surface'
             "
@@ -141,25 +142,37 @@
     <NuxtLink
       v-else
       to="/character/build"
-      class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-xl border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-lg border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('character.createCharacter')"
     >
-      <!-- Background image -->
-      <div class="absolute inset-0 bg-cover bg-center" aria-hidden="true" />
+      <!-- Dark scrim -->
       <div
-        class="absolute inset-0 bg-[rgba(19,16,17,0.8)] transition-opacity duration-200 group-hover:opacity-75"
+        class="absolute inset-0 bg-overlay transition-opacity duration-200 group-hover:opacity-75"
+        aria-hidden="true"
+      />
+      <!-- 氛圍漸層（沉浸區 1 漸層，低飽和暖調，靜態）-->
+      <div
+        class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(184,134,14,0.07),transparent_70%)]"
         aria-hidden="true"
       />
 
       <!-- Content -->
-      <div class="relative z-10 px-6 py-12 text-content-muted">
-        <p class="font-display text-5xl text-content-faint" aria-hidden="true">⚔</p>
-        <h2 class="mt-4 font-display text-2xl font-bold text-content">
+      <div class="relative z-10 flex flex-col items-center px-6 py-12">
+        <div class="relative inline-flex items-center justify-center" aria-hidden="true">
+          <span
+            class="empty-glow absolute size-40 rounded-full bg-[radial-gradient(circle,rgba(184,134,14,0.20),transparent_70%)] blur-2xl"
+          />
+          <Icon name="double-sword" :size="72" class="relative text-content-faint" />
+        </div>
+        <h2 class="mt-6 font-display text-5xl font-bold text-content sm:text-6xl">
           {{ t('character.empty') }}
         </h2>
-        <p class="mt-2 text-sm">{{ t('character.emptyCampaignHint') }}</p>
+        <p class="mt-3 font-display text-lg text-content-muted sm:text-xl">
+          {{ t('character.emptyCampaignHint') }}
+        </p>
         <p
-          class="mt-4 inline-block transition-[transform,color] duration-200 text-success group-hover:text-success-hover"
+          class="mt-6 inline-block text-primary transition-[transform,color] duration-200 group-hover:text-primary-hover"
+          aria-hidden="true"
         >
           <Icon name="plus" :size="40" />
         </p>
@@ -180,24 +193,22 @@
       </p>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button
+          <CommonAppButton
             type="button"
-            :radius="4"
-            bg-color="var(--color-surface-2)"
+            variant="ghost"
             :disabled="deleting"
             @click="onDeleteCancel"
           >
             {{ t('ui.action.cancel') }}
-          </Button>
-          <Button
+          </CommonAppButton>
+          <CommonAppButton
             type="button"
-            :radius="4"
-            bg-color="var(--color-danger)"
+            variant="danger"
             :disabled="deleting"
             @click="onDeleteConfirm"
           >
             {{ t('ui.action.delete') }}
-          </Button>
+          </CommonAppButton>
         </div>
       </template>
     </Modal>
@@ -205,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Icon, Modal, Select } from '@ui'
+import { Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
 import type { CharacterListItem } from '~/types/business/character-list'
 
@@ -300,3 +311,29 @@ const sortedCharacters = computed(() => {
   return list.sort(byUpdated)
 })
 </script>
+
+<style scoped>
+/* @ui Select 沒有 44px size（sm32/md40/lg48），把內層 trigger 撐到 44 對齊 toggle / trash */
+.sort-select :deep([role='combobox']) {
+  height: 2.75rem;
+}
+
+/* empty state hero glow：沉浸區 1 動畫，緩慢呼吸（非 animate-pulse） */
+.empty-glow {
+  animation: empty-glow-breathe 7s ease-in-out infinite alternate;
+}
+@keyframes empty-glow-breathe {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-glow {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+</style>

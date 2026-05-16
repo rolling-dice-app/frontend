@@ -2,16 +2,15 @@
   <div>
     <CommonPageHeader title="Edit Character" :show-back="true">
       <template #actions>
-        <Button
+        <CommonAppButton
+          variant="primary"
           :disabled="!canSubmit"
           :loading="isSubmitting"
-          :radius="4"
           class="w-22"
-          bg-color="var(--color-primary)"
           @click="submit"
         >
           {{ t('ui.action.save') }}
-        </Button>
+        </CommonAppButton>
       </template>
     </CommonPageHeader>
 
@@ -42,7 +41,11 @@
         <template #label>
           <span class="text-content">{{ t('character.detailedSetting') }}</span>
         </template>
-        <BusinessCharacterFormProfileTab v-model:form-state="formState" />
+        <BusinessCharacterFormProfileTab
+          v-model:form-state="formState"
+          :avatar-upload-fn="avatarUpload"
+          :avatar-delete-fn="avatarDelete"
+        />
       </Tab>
 
       <Tab value="features">
@@ -84,16 +87,23 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Tab, Tabs } from '@ui'
+import { Tab, Tabs } from '@ui'
 import type { CharacterDTO } from '@rolling-dice-app/core'
 
 const props = defineProps<{ character: CharacterDTO }>()
 
 const { t } = useI18n()
 
-const { activeTab, formState, isSubmitting, canSubmit, derived, submit } = useCharacterUpdate(
-  props.character,
-)
+const {
+  activeTab,
+  formState,
+  isSubmitting,
+  canSubmit,
+  derived,
+  submit,
+  avatarUpload,
+  avatarDelete,
+} = useCharacterUpdate(props.character)
 
 const {
   totalLevel,

@@ -2,8 +2,8 @@
   <div class="flex items-center gap-2">
     <NuxtLink
       :to="`/character/${character.id}`"
-      class="group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-      :style="cardShadowStyle"
+      class="tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      :style="tierGlowStyle"
       :aria-label="`${t('character.viewLabel')} ${character.name}`"
     >
       <!-- Thumbnail -->
@@ -32,15 +32,9 @@
           >
             {{ character.name }}
           </h3>
-          <Badge
-            class="shrink-0"
-            bg-color="var(--rd--color-surface-2)"
-            text-color="var(--rd--color-text-muted)"
-            :radius="4"
-            size="sm"
-          >
+          <CommonAppBadge variant="default" class="shrink-0" size="sm">
             {{ character.race ?? '-' }}
-          </Badge>
+          </CommonAppBadge>
         </div>
 
         <!-- Right: classKey + level badge -->
@@ -64,7 +58,7 @@
       v-if="isDeleteMode"
       type="button"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      class="ml-2 size-8 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
+      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
       @click.prevent="$emit('delete', character)"
     >
       <Icon name="close" :size="20" />
@@ -73,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, Icon } from '@ui'
+import { Icon } from '@ui'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 
@@ -119,10 +113,13 @@ const tier = computed(() => getCharacterTier(totalLevel.value))
 const tierConfig = computed(() => TIER_CONFIG[tier.value])
 const isMaxLevel = computed(() => totalLevel.value === 20)
 
-const cardShadowStyle = computed(() => {
-  const opacity = totalLevel.value * 0.017 + 0.1
-  return { '--card-shadow': `0 0 16px rgba(${tierConfig.value.shadowRgb}, ${opacity.toFixed(3)})` }
-})
+// tier-glow 強度/顏色由 .tier-glow class 用 token calc() 算（design-language §9）；
+// 此處只餵 tier 色 RGB、總等級、列表卡半徑 16px。
+const tierGlowStyle = computed(() => ({
+  '--tier-glow-rgb': tierConfig.value.shadowRgb,
+  '--tier-glow-level': totalLevel.value,
+  '--tier-glow-radius': '16px',
+}))
 
 const coverError = ref(false)
 

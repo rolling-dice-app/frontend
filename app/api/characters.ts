@@ -47,6 +47,17 @@ export const characters = () => {
       await apiFetch(`/characters/${id}`, { method: 'DELETE' })
     },
 
+    /** 上傳已裁剪的 WebP avatar blob，原子套用至該角色，回傳 R2 public URL */
+    uploadAvatar: (id: string, webpBlob: Blob): Promise<{ url: string }> => {
+      const fd = new FormData()
+      fd.append('file', webpBlob, 'avatar.webp')
+      return apiFetch<{ url: string }>(`/characters/${id}/avatar`, { method: 'POST', body: fd })
+    },
+
+    deleteAvatar: async (id: string): Promise<void> => {
+      await apiFetch(`/characters/${id}/avatar`, { method: 'DELETE' })
+    },
+
     spells: {
       list: (id: string): Promise<SpellEntryDTO[]> =>
         apiFetch<SpellEntryDTO[]>(`/characters/${id}/spells`),

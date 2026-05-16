@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CommonPageHeader title="Edit Character" :show-back="true">
+    <CommonPageHeader :title="character?.name || ''" :show-back="true">
       <template #actions>
         <CommonAppButton
           variant="primary"

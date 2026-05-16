@@ -7,7 +7,7 @@
         class="flex items-center gap-3 text-lg font-bold tracking-wider text-content transition-colors hover:text-primary"
         aria-label="Rolling Dice"
       >
-        <img src="~assets/images/dnd.png" alt="Dungeons & Dragons" class="w-16" />
+        <img src="~assets/images/dnd.png" alt="Dungeons & Dragons" class="w-16 hidden xs:block" />
         <h1 class="font-display text-xl">Rolling Dice</h1>
       </NuxtLink>
 

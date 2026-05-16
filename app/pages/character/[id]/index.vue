@@ -4,7 +4,7 @@
       <template v-if="character" #actions>
         <NuxtLink
           :to="`/character/${id}/update`"
-          class="rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          class="ml-auto rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {{ t('ui.action.edit') }}
         </NuxtLink>

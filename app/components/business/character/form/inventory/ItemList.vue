@@ -1,6 +1,6 @@
 <template>
   <div
-    class="rounded-lg border-2 transition-colors duration-150"
+    class="min-w-0 rounded-lg border-2 transition-colors duration-150"
     :class="isDragOver ? 'border-primary bg-primary/5' : 'border-transparent'"
     @dragover.prevent
     @dragenter="onDragEnter"
@@ -41,78 +41,115 @@
           v-for="item in items"
           :key="item.id"
           draggable="true"
-          class="flex cursor-grab items-center gap-2 px-3 py-2 active:cursor-grabbing"
+          class="cursor-grab px-3 py-2 active:cursor-grabbing"
           @dragstart="onDragStart($event, item.id)"
           @dragend="$emit('drag-end')"
         >
-          <!-- Drag handle -->
-          <Icon name="list" :size="14" class="shrink-0 text-content-muted" />
+          <div class="flex items-center gap-2">
+            <!-- Drag handle -->
+            <Icon name="list" :size="14" class="shrink-0 text-content-muted" />
 
-          <!-- Type badge -->
-          <CommonAppBadge
-            variant="status"
-            size="sm"
-            bg-color="var(--color-surface-3)"
-            class="shrink-0 hidden! xs:inline-flex!"
-          >
-            <span class="text-content-muted">{{ t(`inventory.itemType.${item.type}`) }}</span>
-          </CommonAppBadge>
-
-          <!-- Name -->
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <p class="truncate text-sm text-content">{{ item.name }}</p>
-              <Icon
-                v-if="item.isAttuned"
-                name="star"
-                class="text-primary"
-                :size="10"
-                :aria-label="t('inventory.attuned')"
-              />
+            <!-- Name -->
+            <div class="min-w-0 flex-1">
+              <div class="flex min-w-0 items-center gap-1.5">
+                <p class="min-w-0 flex-1 truncate text-sm text-content">{{ item.name }}</p>
+                <Icon
+                  v-if="item.isAttuned"
+                  name="star"
+                  class="shrink-0 text-primary"
+                  :size="10"
+                  :aria-label="t('inventory.attuned')"
+                />
+                <CommonAppBadge
+                  variant="status"
+                  size="sm"
+                  bg-color="var(--color-surface-3)"
+                  class="shrink-0"
+                >
+                  <span class="text-content-muted">{{ t(`inventory.itemType.${item.type}`) }}</span>
+                </CommonAppBadge>
+                <button
+                  v-if="item.description"
+                  type="button"
+                  :aria-expanded="isExpanded(item.id)"
+                  :aria-controls="`inv-item-desc-${item.id}`"
+                  :aria-label="`${
+                    isExpanded(item.id) ? t('ui.action.collapse') : t('ui.action.expand')
+                  } ${item.name}`"
+                  class="flex size-5 shrink-0 items-center justify-center rounded text-content-muted transition-colors duration-150 hover:text-content"
+                  @click="toggleExpand(item.id)"
+                >
+                  <Icon
+                    name="chevron-down"
+                    :size="12"
+                    class="transition-transform duration-300 ease-in-out"
+                    :class="{ 'rotate-180': isExpanded(item.id) }"
+                  />
+                </button>
+              </div>
             </div>
-            <p v-if="item.description" class="truncate text-xs text-content-muted">
-              {{ item.description }}
-            </p>
+
+            <!-- Stats -->
+            <div class="flex shrink-0 items-center gap-3 text-xs text-content-muted">
+              <span>×{{ item.quantity }}</span>
+              <span class="hidden xxs:inline">
+                {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
+              </span>
+              <span class="font-medium text-content hidden xxs:inline">
+                {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
+              </span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex shrink-0 items-center gap-1">
+              <!-- Move button (always visible for mobile convenience) -->
+              <button
+                type="button"
+                :aria-label="`${t('inventory.moveTo')}：${item.name}`"
+                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                @click="$emit('move-item', item.id)"
+              >
+                <Icon name="arrow-left-right" class="rotate-90 md:rotate-0" :size="12" />
+              </button>
+              <button
+                type="button"
+                :aria-label="`${t('ui.action.edit')} ${item.name}`"
+                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                @click="openEdit(item)"
+              >
+                <Icon name="edit" :size="14" />
+              </button>
+              <button
+                type="button"
+                :aria-label="`${t('ui.action.delete')} ${item.name}`"
+                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
+                @click="$emit('remove', item.id)"
+              >
+                <Icon name="trash" :size="14" />
+              </button>
+            </div>
           </div>
 
-          <!-- Stats -->
-          <div class="flex shrink-0 items-center gap-3 text-xs text-content-muted">
-            <span>×{{ item.quantity }}</span>
-            <span class="hidden xxs:inline">
-              {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
-            </span>
-            <span class="font-medium text-content hidden xxs:inline">
-              {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
-            </span>
-          </div>
+          <!-- Collapsed description preview -->
+          <p
+            v-if="item.description && !isExpanded(item.id)"
+            class="truncate px-6 pt-1 text-xs text-content-muted"
+          >
+            {{ item.description }}
+          </p>
 
-          <!-- Actions -->
-          <div class="flex shrink-0 items-center gap-1">
-            <!-- Move button (always visible for mobile convenience) -->
-            <button
-              type="button"
-              :aria-label="`${t('inventory.moveTo')}：${item.name}`"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
-              @click="$emit('move-item', item.id)"
-            >
-              <Icon name="arrow-left-right" class="rotate-90 md:rotate-0" :size="12" />
-            </button>
-            <button
-              type="button"
-              :aria-label="`${t('ui.action.edit')} ${item.name}`"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
-              @click="openEdit(item)"
-            >
-              <Icon name="edit" :size="14" />
-            </button>
-            <button
-              type="button"
-              :aria-label="`${t('ui.action.delete')} ${item.name}`"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
-              @click="$emit('remove', item.id)"
-            >
-              <Icon name="trash" :size="14" />
-            </button>
+          <!-- Description panel -->
+          <div
+            :id="`inv-item-desc-${item.id}`"
+            role="region"
+            class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+            :class="isExpanded(item.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
+          >
+            <div class="overflow-hidden">
+              <p class="whitespace-pre-wrap px-6 pb-2 pt-1 text-xs text-content-muted">
+                {{ item.description }}
+              </p>
+            </div>
           </div>
         </li>
       </ul>
@@ -274,6 +311,17 @@ const normalizeWeight = (raw: string): number => {
   if (!Number.isFinite(n) || n <= 0) return 0
   const rounded = Math.round(n * WEIGHT_PRECISION_FACTOR) / WEIGHT_PRECISION_FACTOR
   return Math.min(CHARACTER_INT_LIMITS.GENERAL_INT_MAX, rounded)
+}
+
+// ─── Description expand ───────────────────────────────────────────────────────
+
+const expandedIds = ref<Set<string>>(new Set())
+const isExpanded = (id: string): boolean => expandedIds.value.has(id)
+const toggleExpand = (id: string): void => {
+  const next = new Set(expandedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedIds.value = next
 }
 
 // ─── Drag and Drop ────────────────────────────────────────────────────────────

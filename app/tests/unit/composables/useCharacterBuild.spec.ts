@@ -451,7 +451,7 @@ describe('useCharacterBuild — submit deferred avatar', () => {
 
     await submit()
     expect(mockApiErrorHandle).toHaveBeenCalledWith(err, {
-      toastMessage: '角色已建立，但肖像上傳失敗，可至編輯頁重試',
+      toastMessage: '角色建立成功，但肖像上傳失敗，可至編輯頁重試',
     })
     expect(mockNavigateTo).toHaveBeenCalledWith('/character/c-3/update')
     expect(mockNavigateTo).not.toHaveBeenCalledWith('/character')

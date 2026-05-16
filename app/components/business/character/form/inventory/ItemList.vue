@@ -213,7 +213,8 @@
             :border="false"
             :model-value="draft.description ?? ''"
             :rows="2"
-            :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
+            max-height="12rem"
+            :maxlength="CHARACTER_TEXT_LIMITS.ITEM"
             show-count
             :placeholder="t('inventory.itemDescription')"
             @update:model-value="draft.description = $event || null"

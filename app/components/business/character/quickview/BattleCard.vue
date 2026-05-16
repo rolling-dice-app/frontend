@@ -9,7 +9,15 @@
           class="flex flex-col gap-1 items-center justify-center rounded-lg border border-border-soft bg-surface p-3"
         >
           <span class="text-xs text-content-muted">{{ t('combat.acValue') }}</span>
-          <div class="mt-1 flex items-center gap-2">
+          <span class="flex items-baseline gap-1">
+            <span class="text-2xl font-bold text-content">
+              {{ baseArmorClass + acAdjustment }}
+            </span>
+            <span v-if="acAdjustment !== 0" class="text-xs" :class="adjustmentColor(acAdjustment)">
+              ({{ formatModifier(acAdjustment) }})
+            </span>
+          </span>
+          <div class="flex gap-1">
             <button
               type="button"
               aria-label="AC -1"
@@ -18,18 +26,6 @@
             >
               <Icon name="minus" :size="14" />
             </button>
-            <span class="flex flex-1 items-baseline justify-center gap-1.5">
-              <span class="text-2xl font-bold text-content">
-                {{ baseArmorClass + acAdjustment }}
-              </span>
-              <span
-                v-if="acAdjustment !== 0"
-                class="text-xs"
-                :class="adjustmentColor(acAdjustment)"
-              >
-                ({{ formatModifier(acAdjustment) }})
-              </span>
-            </span>
             <button
               type="button"
               aria-label="AC +1"
@@ -47,7 +43,19 @@
           <span class="text-xs text-content-muted">
             {{ t('combat.speed') }}（{{ t('combat.unitFeet') }}）
           </span>
-          <div class="mt-1 flex items-center gap-2">
+          <span class="flex items-baseline gap-1">
+            <span class="text-2xl font-bold text-content">
+              {{ baseSpeed + speedAdjustment }}
+            </span>
+            <span
+              v-if="speedAdjustment !== 0"
+              class="text-xs"
+              :class="adjustmentColor(speedAdjustment)"
+            >
+              ({{ formatModifier(speedAdjustment) }})
+            </span>
+          </span>
+          <div class="flex gap-1">
             <button
               type="button"
               :aria-label="`${t('combat.speed')} -5`"
@@ -56,18 +64,6 @@
             >
               <Icon name="minus" :size="14" />
             </button>
-            <span class="flex flex-1 items-baseline justify-center gap-1.5">
-              <span class="text-2xl font-bold text-content">
-                {{ baseSpeed + speedAdjustment }}
-              </span>
-              <span
-                v-if="speedAdjustment !== 0"
-                class="text-xs"
-                :class="adjustmentColor(speedAdjustment)"
-              >
-                ({{ formatModifier(speedAdjustment) }})
-              </span>
-            </span>
             <button
               type="button"
               :aria-label="`${t('combat.speed')} +5`"

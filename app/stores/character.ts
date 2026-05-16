@@ -6,7 +6,11 @@ import {
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import type { CharacterListItem } from '~/types/business/character-list'
-import { buildCharacterUpdatePatch, formStateToCharacterPatch } from '~/helpers/character'
+import {
+  buildCharacterUpdatePatch,
+  calculateTotalLevel,
+  formStateToCharacterPatch,
+} from '~/helpers/character'
 
 const cloneCharacter = (c: CharacterDTO): CharacterDTO =>
   JSON.parse(JSON.stringify(c)) as CharacterDTO
@@ -30,7 +34,7 @@ const characterToListItem = (character: CharacterDTO): CharacterListItem => ({
   id: character.id,
   name: character.name,
   classes: character.classes,
-  level: character.classes.reduce((sum, entry) => sum + entry.level, 0),
+  level: calculateTotalLevel(character.classes),
   avatar: character.avatar,
   updatedAt: character.updatedAt,
   race: character.race,

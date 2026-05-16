@@ -99,15 +99,12 @@
 
 <script setup lang="ts">
 import { Drawer, Icon } from '@ui'
-import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import { rollD20, rollDice } from '~/helpers/dice'
 import {
   ABILITY_KEYS,
-  SKILL_KEYS,
   type AttackEntry,
   type CharacterDTO,
   type AbilityKey,
-  type ProficiencyLevel,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { D20RollEntry, DamageRollEntry, DamageRollLine, RollMode } from '~/types/business/dice'
@@ -155,17 +152,14 @@ const savingThrowRows = computed(() =>
   }),
 )
 
-const skillRows = computed(() => {
-  const jackBonus = props.character.isJackOfAllTrades ? Math.floor(props.proficiencyBonus / 2) : 0
-  return SKILL_KEYS.map((key) => {
-    const abilityKey = SKILL_TO_ABILITY_MAP[key]
-    const mod = getAbilityModifier(props.abilityScores[abilityKey])
-    const proficiency: ProficiencyLevel = props.character.skills[key] ?? 'none'
-    const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
-    const modifier = proficiency === 'none' ? base + jackBonus : base
-    return { key, label: t(`skill.${key}`), modifier }
-  })
-})
+const skillRows = computed(() =>
+  calculateSkillBonuses({
+    abilityScores: props.abilityScores,
+    skills: props.character.skills,
+    proficiencyBonus: props.proficiencyBonus,
+    isJackOfAllTrades: props.character.isJackOfAllTrades,
+  }).map(({ key, bonus }) => ({ key, label: t(`skill.${key}`), modifier: bonus })),
+)
 
 const handleD20Roll = (
   kind: D20RollEntry['kind'],

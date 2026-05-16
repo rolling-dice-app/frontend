@@ -319,13 +319,12 @@
 <script setup lang="ts">
 import {
   ABILITY_KEYS,
-  SKILL_KEYS,
   type CharacterDTO,
   type AbilityKey,
   type ProficiencyLevel,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import { CLASS_CONFIG, SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
+import { CLASS_CONFIG } from '~/constants/dnd'
 
 const { t, messages } = useI18n()
 
@@ -431,23 +430,20 @@ const savingThrowBonuses = computed(() => {
 
 // ─── Skill Computed ────────────────────────────────────────────────────────
 
-const skillList = computed(() => {
-  const jackBonus = props.character.isJackOfAllTrades ? Math.floor(proficiencyBonus.value / 2) : 0
-  return SKILL_KEYS.map((key) => {
-    const abilityKey = SKILL_TO_ABILITY_MAP[key]
-    const mod = getAbilityModifier(getTotalScore(props.character.abilities[abilityKey]))
-    const proficiency: ProficiencyLevel = props.character.skills[key] ?? 'none'
-    const base = getSkillBonus(mod, proficiency, proficiencyBonus.value)
-    const bonus = proficiency === 'none' ? base + jackBonus : base
-    return {
-      key,
-      name: t(`skill.${key}`),
-      proficiency,
-      bonus,
-      abilityName: t(`ability.${abilityKey}`),
-    }
-  })
-})
+const skillList = computed(() =>
+  calculateSkillBonuses({
+    abilityScores: totalAbilityScores.value,
+    skills: props.character.skills,
+    proficiencyBonus: proficiencyBonus.value,
+    isJackOfAllTrades: props.character.isJackOfAllTrades,
+  }).map(({ key, abilityKey, proficiency, bonus }) => ({
+    key,
+    name: t(`skill.${key}`),
+    proficiency,
+    bonus,
+    abilityName: t(`ability.${abilityKey}`),
+  })),
+)
 
 const modifierTextColor = (value: number): string => {
   if (value > 0) return 'text-success'

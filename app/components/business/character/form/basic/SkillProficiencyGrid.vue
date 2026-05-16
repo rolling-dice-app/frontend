@@ -15,7 +15,7 @@
         />
       </label>
     </div>
-    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-9">
       <div
         v-for="item in skillList"
         :key="item.key"

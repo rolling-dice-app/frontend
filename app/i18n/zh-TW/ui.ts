@@ -19,6 +19,8 @@ export default {
     submit: '送出',
     enterDeleteMode: '進入刪除模式',
     leaveDeleteMode: '離開刪除模式',
+    expand: '展開',
+    collapse: '收合',
   },
   /** 表單提示 */
   form: {

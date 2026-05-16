@@ -6,7 +6,7 @@
           variant="primary"
           :disabled="!canSubmit"
           :loading="isSubmitting"
-          class="w-22"
+          class="min-w-22 whitespace-nowrap"
           @click="submit"
         >
           {{ t('ui.action.save') }}

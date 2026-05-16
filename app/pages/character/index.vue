@@ -110,6 +110,7 @@
         :character="character"
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
+        @share="onShareRequest"
       />
       <NuxtLink
         to="/character/build"
@@ -128,6 +129,7 @@
         :character="character"
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
+        @share="onShareRequest"
       />
       <NuxtLink
         to="/character/build"
@@ -256,6 +258,24 @@ const isListMode = computed({
     void setListMode(val)
   },
 })
+
+// ── Share ─────────────────────────────────────────────────────────────────────
+
+// 先同步開新分頁（保住 user gesture 不被擋彈窗），再 await 複製連結。
+const onShareRequest = (character: CharacterListItem): void => {
+  const url = `${window.location.origin}/character/${character.id}/share`
+  window.open(url, '_blank', 'noopener')
+  void copyShareLink(url)
+}
+
+const copyShareLink = async (url: string): Promise<void> => {
+  try {
+    await navigator.clipboard.writeText(url)
+    toast.success(t('character.share.linkCopied'))
+  } catch {
+    toast.info(t('character.share.copyFailed'))
+  }
+}
 
 // ── Delete ────────────────────────────────────────────────────────────────────
 

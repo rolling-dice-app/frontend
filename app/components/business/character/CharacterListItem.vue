@@ -53,12 +53,22 @@
       </div>
     </NuxtLink>
 
+    <!-- Share button（常駐） -->
+    <button
+      type="button"
+      :aria-label="`${t('character.share.action')} ${character.name}`"
+      class="size-11 shrink-0 flex items-center justify-center rounded-md border border-border text-content-muted cursor-pointer hover:bg-surface hover:text-content transition-colors duration-150"
+      @click="$emit('share', character)"
+    >
+      <Icon name="external-link" :size="20" />
+    </button>
+
     <!-- Delete button -->
     <button
       v-if="isDeleteMode"
       type="button"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
+      class="size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
       @click.prevent="$emit('delete', character)"
     >
       <Icon name="close" :size="20" />
@@ -80,6 +90,7 @@ const props = defineProps<{
 
 defineEmits<{
   delete: [CharacterListItem]
+  share: [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

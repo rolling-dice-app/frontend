@@ -48,7 +48,11 @@ export default {
   attunement: '同調',
   attuned: '已同調',
   notAttuned: '未同調',
+  noAttuned: '無同調物品',
   detachAttunement: '— 解除同調 —',
+
+  // 唯讀檢視
+  emptyBag: '此袋無物品',
 
   // 金幣
   asset: '資產',

@@ -161,6 +161,16 @@ export default {
   enterDeleteMode: '進入刪除模式',
   leaveDeleteMode: '離開刪除模式',
 
+  // 分享頁
+  share: {
+    pageTitle: '角色卡分享',
+    action: '分享',
+    sharedBy: '分享者',
+    totalLevel: '總等級',
+    linkCopied: '已複製分享連結',
+    copyFailed: '已開啟分享頁，連結複製失敗，請手動複製網址',
+  },
+
   // 戰役紀錄
   emptyCampaignHint: '一場偉大的冒險，往往從踏出第一步開始',
   addCampaignRecord: '新增戰役紀錄',

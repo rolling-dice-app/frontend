@@ -2,7 +2,11 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SavingThrowList from '~/components/business/character/quickview/SavingThrowList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
-import { getSavingThrowBonus, getSpellSaveDc } from '~/helpers/character'
+import {
+  calculateSavingThrowBonuses,
+  getSavingThrowBonus,
+  getSpellSaveDc,
+} from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { AbilityKey } from '@rolling-dice-app/core'
 
@@ -10,6 +14,7 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSavingThrowBonus', getSavingThrowBonus)
+  vi.stubGlobal('calculateSavingThrowBonuses', calculateSavingThrowBonuses)
   vi.stubGlobal('getSpellSaveDc', getSpellSaveDc)
 })
 
@@ -46,7 +51,13 @@ const mountList = (
     },
     global: {
       stubs: { Icon: true },
-      mocks: { formatModifier, getAbilityModifier, getSavingThrowBonus, getSpellSaveDc },
+      mocks: {
+        formatModifier,
+        getAbilityModifier,
+        getSavingThrowBonus,
+        calculateSavingThrowBonuses,
+        getSpellSaveDc,
+      },
     },
   })
 

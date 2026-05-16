@@ -129,8 +129,6 @@ watch(
   },
 )
 
-const proficiencySet = computed(() => new Set(props.savingThrowProficiencies))
-
 const abilityRows = computed(() =>
   ABILITY_KEYS.map((key) => ({
     key,
@@ -139,18 +137,15 @@ const abilityRows = computed(() =>
   })),
 )
 
-const savingThrowRows = computed(() =>
-  ABILITY_KEYS.map((key) => {
-    const mod = getAbilityModifier(props.abilityScores[key])
-    const base = getSavingThrowBonus(mod, proficiencySet.value.has(key), props.proficiencyBonus)
-    const adjustment = props.savingThrowAdjustments[key] ?? 0
-    return {
-      key,
-      label: t(`ability.${key}`),
-      modifier: base + adjustment,
-    }
-  }),
-)
+const savingThrowRows = computed(() => {
+  const bonuses = calculateSavingThrowBonuses({
+    abilityScores: props.abilityScores,
+    proficiencies: props.savingThrowProficiencies,
+    proficiencyBonus: props.proficiencyBonus,
+    adjustments: props.savingThrowAdjustments,
+  })
+  return ABILITY_KEYS.map((key) => ({ key, label: t(`ability.${key}`), modifier: bonuses[key] }))
+})
 
 const skillRows = computed(() =>
   calculateSkillBonuses({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCharacterUpdatePatch,
   calculatePassiveScore,
+  calculateSavingThrowBonuses,
   calculateSavingThrowProficiencies,
   calculateTotalAbilityScores,
   calculateTotalHp,
@@ -732,5 +733,49 @@ describe('getSpellSaveDc', () => {
         customBonus: -2,
       }),
     ).toBe(12)
+  })
+})
+
+describe('calculateSavingThrowBonuses', () => {
+  const abilityScores: TotalAbilityScores = {
+    strength: 16, // mod +3
+    dexterity: 14, // mod +2
+    constitution: 12, // mod +1
+    intelligence: 10, // mod +0
+    wisdom: 8, // mod -1
+    charisma: 18, // mod +4
+  }
+
+  it('回傳六項；熟練項加 proficiencyBonus，未熟練只給屬性調整', () => {
+    const result = calculateSavingThrowBonuses({
+      abilityScores,
+      proficiencies: ['strength', 'constitution'],
+      proficiencyBonus: 3,
+    })
+    expect(Object.keys(result)).toHaveLength(6)
+    expect(result.strength).toBe(6) // +3 + 3
+    expect(result.constitution).toBe(4) // +1 + 3
+    expect(result.dexterity).toBe(2) // +2，無熟練
+  })
+
+  it('套用 adjustments（可正可負），未列出的 key 視為 0', () => {
+    const result = calculateSavingThrowBonuses({
+      abilityScores,
+      proficiencies: ['strength'],
+      proficiencyBonus: 3,
+      adjustments: { strength: 2, dexterity: -1 },
+    })
+    expect(result.strength).toBe(8) // +3 +3 +2
+    expect(result.dexterity).toBe(1) // +2 +(-1)
+    expect(result.wisdom).toBe(-1) // -1，無調整
+  })
+
+  it('adjustments 省略時等同全 0', () => {
+    const result = calculateSavingThrowBonuses({
+      abilityScores,
+      proficiencies: [],
+      proficiencyBonus: 4,
+    })
+    expect(result.charisma).toBe(4) // CHA 18 → mod +4，無熟練無調整
   })
 })

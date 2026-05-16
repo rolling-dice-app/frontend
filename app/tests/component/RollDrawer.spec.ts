@@ -4,7 +4,11 @@ import { nextTick, ref } from 'vue'
 import { createMockCharacter } from '~/tests/fixtures/character'
 import RollDrawer from '~/components/business/character/quickview/RollDrawer.vue'
 import { getAbilityModifier } from '~/helpers/ability'
-import { getSavingThrowBonus, getSkillBonus } from '~/helpers/character'
+import {
+  calculateSavingThrowBonuses,
+  getSavingThrowBonus,
+  getSkillBonus,
+} from '~/helpers/character'
 import { calculateSkillBonuses } from '~/helpers/skill'
 import { getAttackHit } from '~/helpers/combat'
 import type { AttackEntry, CharacterDTO } from '@rolling-dice-app/core'
@@ -29,6 +33,7 @@ beforeEach(() => {
   vi.stubGlobal('useDiceRollLog', () => ({ push, clear, entries }))
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSavingThrowBonus', getSavingThrowBonus)
+  vi.stubGlobal('calculateSavingThrowBonuses', calculateSavingThrowBonuses)
   vi.stubGlobal('getSkillBonus', getSkillBonus)
   vi.stubGlobal('calculateSkillBonuses', calculateSkillBonuses)
   vi.stubGlobal('getAttackHit', getAttackHit)

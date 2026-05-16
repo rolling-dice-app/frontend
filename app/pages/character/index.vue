@@ -3,7 +3,7 @@
     <!-- Page header -->
     <CommonPageHeader title="Characters" show-back>
       <template v-if="status === 'success' && characters.length > 0" #actions>
-        <div class="flex flex-col items-end gap-2 xs:flex-row xs:items-center">
+        <div class="flex justify-center xs:justify-end gap-2 w-full">
           <!-- 排序模式 -->
           <Select
             v-model="sortKey"

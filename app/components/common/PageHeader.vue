@@ -1,6 +1,6 @@
 <template>
-  <div class="my-6 flex items-center justify-between gap-2 sm:gap-4">
-    <div class="flex min-w-0 items-center gap-2">
+  <div class="my-6 flex flex-col xs:flex-row items-center justify-between gap-2 sm:gap-4">
+    <div class="flex min-w-0 items-center">
       <button
         v-if="showBack"
         class="flex size-11 shrink-0 items-center justify-center rounded text-content-soft transition-colors hover:text-content cursor-pointer"
@@ -9,11 +9,13 @@
       >
         <Icon name="chevron-left" :size="20" />
       </button>
-      <h2 class="truncate font-display text-lg font-bold text-primary sm:text-xl">
+      <h2 class="truncate font-display text-xl font-bold text-primary">
         {{ title }}
       </h2>
     </div>
-    <slot name="actions" />
+    <div class="flex w-full shrink-0 xs:w-auto xs:flex-1">
+      <slot name="actions" />
+    </div>
   </div>
 </template>
 

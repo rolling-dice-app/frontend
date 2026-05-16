@@ -83,7 +83,7 @@ export default {
   filterConcentration: '只顯示需要專注的法術',
 
   // misc
-  custom: '自定義',
+  custom: '額外',
   notSet: '尚未設定',
   castingBonus: '施法調整值',
   proficient: '熟練',

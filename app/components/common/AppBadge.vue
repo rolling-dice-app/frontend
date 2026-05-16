@@ -6,6 +6,7 @@
 
 <script setup lang="ts">
 import { Badge } from '@ui'
+import { RADIUS } from '~/constants/style'
 
 defineOptions({ inheritAttrs: false })
 
@@ -26,10 +27,10 @@ const variantProps = computed(() => {
     case 'tier':
       return { radius: 'full' as const }
     case 'status':
-      return { radius: 4 }
+      return { radius: RADIUS.sm }
     default:
       return {
-        radius: 4,
+        radius: RADIUS.sm,
         bgColor: 'var(--color-surface-2)',
         textColor: 'var(--color-content-muted)',
       }

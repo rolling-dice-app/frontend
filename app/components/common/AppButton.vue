@@ -2,7 +2,7 @@
   <Button
     v-bind="{ ...variantProps, ...$attrs }"
     :size="size"
-    :radius="6"
+    :radius="RADIUS.md"
     :class="[minHeightClass, hasSurfaceHover ? 'hover:bg-surface' : '']"
   >
     <slot />
@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
 import { Button } from '@ui'
+import { RADIUS } from '~/constants/style'
 
 defineOptions({ inheritAttrs: false })
 

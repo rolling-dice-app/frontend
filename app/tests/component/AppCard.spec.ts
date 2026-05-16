@@ -20,16 +20,16 @@ describe('AppCard', () => {
     expect(root.style.boxShadow).toBe('none')
   })
 
-  it('elevated lifts with shadow + elevated bg token', () => {
+  it('elevated lifts with elev-1 shadow token + elevated bg token', () => {
     const root = mountCard({ variant: 'elevated' }).element as HTMLElement
     expect(root.style.backgroundColor).toContain('var(--color-canvas-elevated)')
-    expect(root.style.boxShadow).not.toBe('none')
+    expect(root.className).toContain('shadow-elev-1')
   })
 
-  it('inset uses inset bg token + inner shadow utility', () => {
+  it('inset uses inset bg token + inset shadow token utility', () => {
     const root = mountCard({ variant: 'inset' }).element as HTMLElement
     expect(root.style.backgroundColor).toContain('var(--color-canvas-inset)')
-    expect(root.className).toContain('shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]')
+    expect(root.className).toContain('shadow-inset')
   })
 
   it('forwards header / footer slots, each padded', () => {

@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem, Badge, Icon } from '@ui'
-import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
+import { FEATURE_SOURCE_BADGE_STYLES } from '~/constants/style'
 import type { CharacterFeature } from '@rolling-dice-app/core'
 
 const { t } = useI18n()

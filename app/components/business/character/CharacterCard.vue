@@ -1,12 +1,12 @@
 <template>
   <NuxtLink
     :to="`/character/${character.id}`"
-    class="group block rounded-lg transition-shadow duration-200 hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-    :style="cardShadowStyle"
+    class="tier-glow group block rounded-lg transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+    :style="tierGlowStyle"
     :aria-label="`${t('character.viewLabel')} ${character.name}`"
   >
     <Card
-      :radius="8"
+      :radius="RADIUS.lg"
       :padding="0"
       shadow="none"
       :bg-color="'var(--rd--color-bg-elevated)'"
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { Badge, Card, Icon } from '@ui'
+import { RADIUS } from '~/constants/style'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 
@@ -136,10 +137,13 @@ const tier = computed(() => getCharacterTier(totalLevel.value))
 const tierConfig = computed(() => TIER_CONFIG[tier.value])
 const isMaxLevel = computed(() => totalLevel.value === 20)
 
-const cardShadowStyle = computed(() => {
-  const opacity = totalLevel.value * 0.017 + 0.1
-  return { '--card-shadow': `0 0 24px rgba(${tierConfig.value.shadowRgb}, ${opacity.toFixed(3)})` }
-})
+// tier-glow 強度/顏色由 .tier-glow class 用 token calc() 算（design-language §9）；
+// 此處只餵 tier 色 RGB、總等級、清單卡半徑 24px。
+const tierGlowStyle = computed(() => ({
+  '--tier-glow-rgb': tierConfig.value.shadowRgb,
+  '--tier-glow-level': totalLevel.value,
+  '--tier-glow-radius': '24px',
+}))
 
 const coverError = ref(false)
 const classIconError = ref(false)

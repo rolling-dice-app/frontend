@@ -2,8 +2,8 @@
   <div class="flex items-center gap-2">
     <NuxtLink
       :to="`/character/${character.id}`"
-      class="group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface hover:shadow-(--card-shadow) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-      :style="cardShadowStyle"
+      class="tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      :style="tierGlowStyle"
       :aria-label="`${t('character.viewLabel')} ${character.name}`"
     >
       <!-- Thumbnail -->
@@ -119,10 +119,13 @@ const tier = computed(() => getCharacterTier(totalLevel.value))
 const tierConfig = computed(() => TIER_CONFIG[tier.value])
 const isMaxLevel = computed(() => totalLevel.value === 20)
 
-const cardShadowStyle = computed(() => {
-  const opacity = totalLevel.value * 0.017 + 0.1
-  return { '--card-shadow': `0 0 16px rgba(${tierConfig.value.shadowRgb}, ${opacity.toFixed(3)})` }
-})
+// tier-glow 強度/顏色由 .tier-glow class 用 token calc() 算（design-language §9）；
+// 此處只餵 tier 色 RGB、總等級、列表卡半徑 16px。
+const tierGlowStyle = computed(() => ({
+  '--tier-glow-rgb': tierConfig.value.shadowRgb,
+  '--tier-glow-level': totalLevel.value,
+  '--tier-glow-radius': '16px',
+}))
 
 const coverError = ref(false)
 

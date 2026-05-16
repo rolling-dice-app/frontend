@@ -1,8 +1,8 @@
 <template>
   <Card
-    :shadow="shadowProp"
+    shadow="none"
     :bg-color="bgColor"
-    :radius="8"
+    :radius="RADIUS.lg"
     :padding="0"
     :class="extraClass"
     v-bind="$attrs"
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { Card } from '@ui'
+import { RADIUS } from '~/constants/style'
 
 defineOptions({ inheritAttrs: false })
 
@@ -42,10 +43,8 @@ const props = withDefaults(
   },
 )
 
-// design-language §8/§9：flat 無陰影 + 軟邊框；elevated 上浮（清單卡的 tier glow 不在此，§3）；
-// inset 凹陷內陰影。@ui Card 不支援 inset shadow / 響應式 padding，故補 class + padding=0。
-const shadowProp = computed(() => (props.variant === 'elevated' ? 'md' : 'none'))
-
+// design-language §8/§9：flat 無陰影 + 軟邊框；elevated 上浮 elev-1（清單卡 tier glow 不在此，§9）；
+// inset 凹陷內陰影。陰影一律走 app token class（shadow-none + extraClass），不依賴 @ui 的 --rui-shadow-card-*。
 const bgColor = computed(() => {
   switch (props.variant) {
     case 'elevated':
@@ -61,7 +60,9 @@ const bgColor = computed(() => {
 const extraClass = computed(() => {
   switch (props.variant) {
     case 'inset':
-      return 'shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]'
+      return 'shadow-inset'
+    case 'elevated':
+      return 'shadow-elev-1'
     case 'flat':
       return 'border border-border-soft'
     default:

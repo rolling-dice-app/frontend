@@ -216,7 +216,7 @@
 <script setup lang="ts">
 import { Badge, Button, Checkbox, Icon, Modal, TextArea } from '@ui'
 import type { SelectOption } from '@ui'
-import { FEATURE_SOURCE_BADGE_STYLES } from '~/components/business/character/feature-badge-styles'
+import { FEATURE_SOURCE_BADGE_STYLES } from '~/constants/style'
 import {
   CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,

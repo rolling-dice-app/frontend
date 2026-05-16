@@ -27,6 +27,8 @@ export function seedCharacterInStore(character: CharacterDTO): void {
 export function createMockCharacter(overrides: Partial<CharacterDTO> = {}): CharacterDTO {
   return {
     id: 'test-001',
+    shareable: false,
+    shareId: 'share-test-001',
     name: '測試角色',
     gender: 'male',
     race: 'human',

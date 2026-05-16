@@ -25,6 +25,7 @@
                 size="sm"
                 outline
                 :model-value="displayName"
+                :maxlength="maxNicknameLength"
                 :placeholder="t('settings.displayNamePlaceholder')"
                 @update:model-value="displayName = $event"
               />
@@ -106,7 +107,11 @@
 </template>
 
 <script setup lang="ts">
+import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
+
 definePageMeta({ middleware: 'auth' })
+
+const maxNicknameLength = VALIDATION_LIMITS.maxNicknameLength
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -142,8 +147,9 @@ const seedFromStore = () => {
 const canSave = computed(() => {
   const u = auth.user
   if (!u) return false
-  if (displayName.value.trim().length === 0) return false
-  return displayName.value.trim() !== u.displayName
+  const next = displayName.value.trim()
+  if (next.length === 0 || next.length > maxNicknameLength) return false
+  return next !== u.displayName
 })
 
 // avatar：atomic，與 Save 解耦。上傳/清除後 refresh 同步 updatedAt 與 Header。

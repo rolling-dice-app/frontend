@@ -52,6 +52,7 @@
               :border="false"
               :model-value="draft.content"
               :rows="4"
+              max-height="10rem"
               :maxlength="VALIDATION_LIMITS.maxCampaignRecordContentLength"
               show-count
               :placeholder="t('character.campaignField.contentPlaceholder')"

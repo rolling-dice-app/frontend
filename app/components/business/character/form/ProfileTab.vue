@@ -68,6 +68,7 @@
             :model-value="formState.appearance ?? ''"
             :placeholder="`${t('character.appearancePlaceholder')}${CHARACTER_TEXT_LIMITS.MEDIUM} ${t('character.storyPlaceholderUnit')}`"
             :rows="2"
+            max-height="6rem"
             :maxlength="CHARACTER_TEXT_LIMITS.MEDIUM"
             show-count
             @update:model-value="formState.appearance = $event || null"
@@ -87,6 +88,7 @@
             :model-value="formState.story ?? ''"
             :placeholder="`${t('character.storyPlaceholder')}${CHARACTER_TEXT_LIMITS.LONG} ${t('character.storyPlaceholderUnit')}`"
             :rows="10"
+            max-height="20rem"
             :maxlength="CHARACTER_TEXT_LIMITS.LONG"
             show-count
             @update:model-value="formState.story = $event || null"

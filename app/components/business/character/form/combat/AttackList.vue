@@ -241,6 +241,7 @@
             :border="false"
             :model-value="draft.comment ?? ''"
             :rows="3"
+            max-height="8rem"
             :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
             show-count
             :placeholder="t('combat.attackCommentPlaceholder')"

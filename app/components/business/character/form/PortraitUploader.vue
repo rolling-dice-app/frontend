@@ -72,7 +72,11 @@
 import { Modal, Icon } from '@ui'
 import { Cropper, CircleStencil, RectangleStencil } from 'vue-advanced-cropper'
 
+// 原始檔粗篩（裁切前）；非最終上傳限制。
 const PREFLIGHT_MAX_BYTES = 5 * 1024 * 1024
+// 裁切 re-encode 後的 webp 硬限，對齊 backend MAX_AVATAR_BYTES（1 MiB）；
+// 超過後端會回 AVATAR_TOO_LARGE 400，故先於前端攔下並給明確訊息。
+const MAX_OUTPUT_BYTES = 1024 * 1024
 const WEBP_QUALITY = 0.85
 
 const PORTRAIT_OUTPUT = { width: 768, height: 1024 }
@@ -236,6 +240,11 @@ const cropConfirm = async () => {
   try {
     const output = drawToOutputCanvas(result.canvas)
     const blob = await canvasToWebp(output)
+    if (blob.size > MAX_OUTPUT_BYTES) {
+      // 不關 Modal：保留裁切狀態讓使用者縮小範圍或換圖重試
+      toast.error(t('character.portrait.croppedTooLarge'))
+      return
+    }
     if (isImmediate.value) {
       const url = await props.uploadFn!(blob)
       avatar.value = url

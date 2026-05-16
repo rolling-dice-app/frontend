@@ -12,40 +12,32 @@
       </NuxtLink>
 
       <!-- Auth (client-only：避免被 edge cache 污染) -->
-      <div class="ml-auto flex h-8 items-center gap-3">
+      <div class="ml-auto flex h-8 items-center">
         <ClientOnly>
-          <template v-if="auth.isLoggedIn">
-            <NuxtLink
-              to="/settings"
-              class="flex items-center gap-2 text-content transition-colors hover:text-primary"
-              :aria-label="t('settings.title')"
+          <NuxtLink
+            v-if="auth.isLoggedIn"
+            to="/settings"
+            class="flex size-11 items-center justify-center transition-opacity hover:opacity-80"
+            :aria-label="t('settings.title')"
+          >
+            <img
+              v-if="auth.user?.avatarUrl && !avatarError"
+              :src="auth.user.avatarUrl"
+              alt=""
+              class="h-8 w-8 rounded-full object-cover"
+              @error="avatarError = true"
+            />
+            <span
+              v-else
+              aria-hidden="true"
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-xs font-bold uppercase"
             >
-              <img
-                v-if="auth.user?.avatarUrl && !avatarError"
-                :src="auth.user.avatarUrl"
-                alt=""
-                class="h-8 w-8 rounded-full object-cover"
-                @error="avatarError = true"
-              />
-              <span
-                v-else
-                aria-hidden="true"
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-xs font-bold uppercase"
-              >
-                {{ initials }}
-              </span>
-              <span class="hidden text-sm sm:inline">{{ auth.user?.displayName }}</span>
-            </NuxtLink>
-            <CommonAppButton variant="secondary" size="sm" @click="onLogout">
-              <span class="font-display flex items-center gap-1">
-                Log out
-                <Icon name="logout" />
-              </span>
-            </CommonAppButton>
-          </template>
+              {{ initials }}
+            </span>
+          </NuxtLink>
           <CommonAppButton v-else variant="primary" size="sm" @click="onLogin">
-            <span class="font-display flex items-center gap-1">
-              Log in
+            <span class="flex items-center gap-1">
+              {{ t('ui.auth.login') }}
               <Icon name="login" />
             </span>
           </CommonAppButton>
@@ -78,10 +70,5 @@ watch(
 
 const onLogin = () => {
   auth.login(route.fullPath)
-}
-
-const onLogout = async () => {
-  await auth.logout()
-  await navigateTo('/')
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
-    <CommonPageHeader title="Character Detail" :show-back="true">
+    <CommonPageHeader :title="character?.name || ''" :show-back="true">
       <template v-if="character" #actions>
         <NuxtLink
           :to="`/character/${id}/update`"

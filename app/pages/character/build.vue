@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
-    <CommonPageHeader title="Cast Your Character" :show-back="true" />
+    <CommonPageHeader :title="t('character.buildCharacterTitle')" :show-back="true" />
 
     <Tabs
       v-model="activeTab"

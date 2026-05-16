@@ -61,6 +61,23 @@ export function getSavingThrowBonus(
   return modifier + (proficient ? proficiencyBonus : 0)
 }
 
+/** 計算六項豁免最終加值（含熟練與額外調整），回傳 key→bonus 字典；UI 欄位由呼叫端處理。 */
+export function calculateSavingThrowBonuses(input: {
+  abilityScores: TotalAbilityScores
+  proficiencies: readonly AbilityKey[]
+  proficiencyBonus: number
+  adjustments?: Partial<Record<AbilityKey, number>>
+}): Record<AbilityKey, number> {
+  const profSet = new Set(input.proficiencies)
+  return Object.fromEntries(
+    ABILITY_KEYS.map((key) => {
+      const mod = getAbilityModifier(input.abilityScores[key])
+      const base = getSavingThrowBonus(mod, profSet.has(key), input.proficiencyBonus)
+      return [key, base + (input.adjustments?.[key] ?? 0)]
+    }),
+  ) as Record<AbilityKey, number>
+}
+
 /**
  * 計算法術豁免 DC：8 + 熟練 + 施法主屬性調整 + 自定義加值。
  */

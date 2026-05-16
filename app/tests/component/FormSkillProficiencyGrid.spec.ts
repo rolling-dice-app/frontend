@@ -5,7 +5,7 @@ import SkillProficiencyGrid from '~/components/business/character/form/basic/Ski
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
 import { useProficiencyOptions } from '~/composables/ui/useProficiencyOptions'
-import { applySkillProficiency } from '~/helpers/skill'
+import { applySkillProficiency, calculateSkillBonuses } from '~/helpers/skill'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
 import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
@@ -13,6 +13,7 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSkillBonus', getSkillBonus)
+  vi.stubGlobal('calculateSkillBonuses', calculateSkillBonuses)
   vi.stubGlobal('applySkillProficiency', applySkillProficiency)
   vi.stubGlobal('useProficiencyOptions', useProficiencyOptions)
 })
@@ -69,7 +70,13 @@ const mountGrid = (
     global: {
       stubs: { Toggle: ToggleStub },
       components: { CommonAppSelect: AppSelect },
-      mocks: { formatModifier, getAbilityModifier, getSkillBonus, applySkillProficiency },
+      mocks: {
+        formatModifier,
+        getAbilityModifier,
+        getSkillBonus,
+        calculateSkillBonuses,
+        applySkillProficiency,
+      },
     },
   })
 }

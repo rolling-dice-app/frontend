@@ -22,9 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import { SKILL_KEYS, type ProficiencyLevel, type SkillKey } from '@rolling-dice-app/core'
+import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -35,17 +34,14 @@ const props = defineProps<{
   isJackOfAllTrades: boolean
 }>()
 
-const skillList = computed(() => {
-  const jackBonus = props.isJackOfAllTrades ? Math.floor(props.proficiencyBonus / 2) : 0
-  return SKILL_KEYS.map((key) => {
-    const abilityKey = SKILL_TO_ABILITY_MAP[key]
-    const mod = getAbilityModifier(props.abilityScores[abilityKey])
-    const proficiency: ProficiencyLevel = props.skills[key] ?? 'none'
-    const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
-    const bonus = proficiency === 'none' ? base + jackBonus : base
-    return { key, name: t(`skill.${key}`), proficiency, bonus }
-  })
-})
+const skillList = computed(() =>
+  calculateSkillBonuses({
+    abilityScores: props.abilityScores,
+    skills: props.skills,
+    proficiencyBonus: props.proficiencyBonus,
+    isJackOfAllTrades: props.isJackOfAllTrades,
+  }).map(({ key, proficiency, bonus }) => ({ key, name: t(`skill.${key}`), proficiency, bonus })),
+)
 
 const dotClass = (level: ProficiencyLevel): string => {
   if (level === 'expertise') return 'bg-primary'

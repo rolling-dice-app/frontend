@@ -15,7 +15,7 @@
         />
       </label>
     </div>
-    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-9">
       <div
         v-for="item in skillList"
         :key="item.key"
@@ -45,9 +45,8 @@
 
 <script setup lang="ts">
 import { Toggle } from '@ui'
-import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { CharacterFormStateBase, TotalAbilityScores } from '~/types/business/character-form'
-import { SKILL_KEYS, type ProficiencyLevel } from '@rolling-dice-app/core'
+import type { ProficiencyLevel } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 const { options: proficiencyOptions } = useProficiencyOptions()
@@ -59,15 +58,12 @@ const props = defineProps<{
   proficiencyBonus: number
 }>()
 
-const skillList = computed(() => {
-  const jackBonus = formState.value.isJackOfAllTrades ? Math.floor(props.proficiencyBonus / 2) : 0
-  return SKILL_KEYS.map((key) => {
-    const abilityKey = SKILL_TO_ABILITY_MAP[key]
-    const mod = getAbilityModifier(props.abilityScores[abilityKey])
-    const proficiency: ProficiencyLevel = formState.value.skills[key] ?? 'none'
-    const base = getSkillBonus(mod, proficiency, props.proficiencyBonus)
-    const bonus = proficiency === 'none' ? base + jackBonus : base
-    return { key, name: t(`skill.${key}`), bonusText: formatModifier(bonus) }
-  })
-})
+const skillList = computed(() =>
+  calculateSkillBonuses({
+    abilityScores: props.abilityScores,
+    skills: formState.value.skills,
+    proficiencyBonus: props.proficiencyBonus,
+    isJackOfAllTrades: formState.value.isJackOfAllTrades,
+  }).map(({ key, bonus }) => ({ key, name: t(`skill.${key}`), bonusText: formatModifier(bonus) })),
+)
 </script>

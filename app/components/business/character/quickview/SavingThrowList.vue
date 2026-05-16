@@ -88,22 +88,24 @@ const emit = defineEmits<{
 
 const proficiencySet = computed(() => new Set(props.proficiencies))
 
-const rows = computed(() =>
-  ABILITY_KEYS.map((key) => {
-    const score = props.abilityScores[key]
-    const proficient = proficiencySet.value.has(key)
-    const modifier = getAbilityModifier(score)
-    const base = getSavingThrowBonus(modifier, proficient, props.proficiencyBonus)
-    const adjustment = props.adjustments[key] ?? 0
-    return {
-      key,
-      name: t(`ability.${key}`),
-      score,
-      proficient,
-      bonus: base + adjustment,
-      adjustment,
-    }
+const savingThrowBonuses = computed(() =>
+  calculateSavingThrowBonuses({
+    abilityScores: props.abilityScores,
+    proficiencies: props.proficiencies,
+    proficiencyBonus: props.proficiencyBonus,
+    adjustments: props.adjustments,
   }),
+)
+
+const rows = computed(() =>
+  ABILITY_KEYS.map((key) => ({
+    key,
+    name: t(`ability.${key}`),
+    score: props.abilityScores[key],
+    proficient: proficiencySet.value.has(key),
+    bonus: savingThrowBonuses.value[key],
+    adjustment: props.adjustments[key] ?? 0,
+  })),
 )
 
 const spellSaveRows = computed(() =>

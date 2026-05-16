@@ -24,7 +24,7 @@
         </label>
         <CommonAppSelect
           id="char-gender"
-          class="min-w-20"
+          class="min-w-22"
           placeholder=""
           :model-value="formState.gender || null"
           :options="genderOptions"

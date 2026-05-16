@@ -12,6 +12,6 @@ export default {
   planLimits: '方案上限',
   planActiveCharacters: '可顯示角色數',
   planTotalCharacters: '角色卡總上限',
-  planCampaignRecords: '每張卡冒險紀錄上限',
+  planCampaignRecords: '單一角色卡冒險紀錄上限',
   logout: '登出',
 }

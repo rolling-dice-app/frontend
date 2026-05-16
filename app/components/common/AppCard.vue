@@ -53,7 +53,8 @@ const bgColor = computed(() => {
     case 'inset':
       return 'var(--color-canvas-inset)'
     default:
-      return undefined
+      // flat：明確接深色 canvas-elevated，否則 @ui Card 會退回自身淺色預設
+      return 'var(--color-canvas-elevated)'
   }
 })
 

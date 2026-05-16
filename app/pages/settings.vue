@@ -1,69 +1,94 @@
 <template>
-  <div class="mx-auto max-w-3xl px-4 pb-6">
+  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6">
     <CommonPageHeader :title="t('settings.title')" :show-back="true" />
 
-    <div class="flex flex-col gap-6 bg-canvas-elevated p-4 sm:p-6 md:flex-row">
-      <div class="w-full space-y-6 md:w-2/3">
-        <div>
-          <label for="settings-display-name" class="mb-1 block text-xs text-content">
+    <CommonAppCard variant="flat">
+      <div class="space-y-6">
+        <div class="mx-auto w-48 max-w-full">
+          <BusinessCharacterFormPortraitUploader
+            v-model="avatar"
+            shape="avatar"
+            :upload-fn="avatarUpload"
+            :delete-fn="avatarDelete"
+          />
+        </div>
+
+        <div class="border-t border-border-soft pt-6">
+          <label for="settings-display-name" class="mb-1 block text-xs text-content-muted">
             {{ t('settings.displayName') }}
           </label>
-          <CommonAppInput
-            id="settings-display-name"
-            class="w-full"
-            :radius="0"
-            size="sm"
-            outline
-            :model-value="displayName"
-            :placeholder="t('settings.displayNamePlaceholder')"
-            @update:model-value="displayName = $event"
-          />
+          <div class="flex items-center gap-2">
+            <CommonAppInput
+              id="settings-display-name"
+              class="flex-1"
+              size="sm"
+              outline
+              :model-value="displayName"
+              :placeholder="t('settings.displayNamePlaceholder')"
+              @update:model-value="displayName = $event"
+            />
+            <CommonAppButton
+              variant="primary"
+              size="sm"
+              :disabled="!canSave"
+              :loading="isSaving"
+              @click="onSave"
+            >
+              {{ t('ui.action.save') }}
+            </CommonAppButton>
+          </div>
         </div>
 
-        <div>
-          <label for="settings-list-layout" class="mb-1 block text-xs text-content">
-            {{ t('settings.characterListLayout') }}
-          </label>
-          <CommonAppSelect
-            id="settings-list-layout"
-            class="w-32"
-            size="sm"
-            :model-value="layout"
-            :options="layoutOptions"
-            @update:model-value="layout = $event as 'grid' | 'list'"
-          />
-        </div>
+        <section class="border-t border-border-soft pt-6">
+          <h3 class="mb-3 text-lg font-semibold text-content">
+            {{ t('settings.accountSection') }}
+          </h3>
+          <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+            <dt class="text-content-muted">{{ t('settings.email') }}</dt>
+            <dd class="text-content-soft">{{ auth.user?.email }}</dd>
 
-        <div class="flex justify-end">
-          <Button
-            :disabled="!canSave"
-            :loading="isSaving"
-            :radius="4"
-            bg-color="var(--color-primary)"
-            @click="onSave"
-          >
-            {{ t('ui.action.save') }}
-          </Button>
+            <dt class="text-content-muted">{{ t('settings.joinedAt') }}</dt>
+            <dd class="text-content-soft tabular-nums">{{ joinedAt }}</dd>
+          </dl>
+        </section>
+
+        <section v-if="auth.limits" class="border-t border-border-soft pt-6">
+          <h3 class="mb-3 text-lg font-semibold text-content">
+            {{ t('settings.planLimits') }}
+          </h3>
+          <div class="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-content-muted">{{ t('settings.planActiveCharacters') }}</span>
+              <CommonAppBadge variant="default" class="tabular-nums">
+                {{ auth.limits.maxActiveCharacters }}
+              </CommonAppBadge>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-content-muted">{{ t('settings.planTotalCharacters') }}</span>
+              <CommonAppBadge variant="default" class="tabular-nums">
+                {{ auth.limits.maxCharacters }}
+              </CommonAppBadge>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-content-muted">{{ t('settings.planCampaignRecords') }}</span>
+              <CommonAppBadge variant="default" class="tabular-nums">
+                {{ auth.limits.maxCampaignRecordsPerCharacter }}
+              </CommonAppBadge>
+            </div>
+          </div>
+        </section>
+
+        <div class="border-t border-border-soft pt-6">
+          <CommonAppButton variant="secondary" type="button" class="w-full" @click="onLogout">
+            {{ t('settings.logout') }}
+          </CommonAppButton>
         </div>
       </div>
-
-      <div class="w-full md:w-1/3">
-        <span class="mb-1 block text-xs text-content">{{ t('settings.avatar') }}</span>
-        <BusinessCharacterFormPortraitUploader
-          v-model="avatar"
-          shape="avatar"
-          :upload-fn="avatarUpload"
-          :delete-fn="avatarDelete"
-        />
-      </div>
-    </div>
+    </CommonAppCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button } from '@ui'
-import type { SelectOption } from '@ui'
-
 definePageMeta({ middleware: 'auth' })
 
 const { t } = useI18n()
@@ -74,18 +99,26 @@ const apiErrorToast = useApiErrorToast()
 useHead({ title: t('settings.title') })
 
 const displayName = ref(auth.user?.displayName ?? '')
-const layout = ref<'grid' | 'list'>(auth.user?.preference.characterListLayout ?? 'grid')
 const avatar = ref<string | null>(auth.user?.avatarUrl ?? null)
 const isSaving = ref(false)
 
-const layoutOptions = computed<SelectOption[]>(() => [
-  { label: t('settings.layoutGrid'), value: 'grid' },
-  { label: t('settings.layoutList'), value: 'list' },
-])
+const joinedAt = computed(() =>
+  auth.user
+    ? new Intl.DateTimeFormat('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(auth.user.createdAt))
+    : '',
+)
+
+const onLogout = async (): Promise<void> => {
+  await auth.logout()
+  await navigateTo('/')
+}
 
 const seedFromStore = () => {
   displayName.value = auth.user?.displayName ?? ''
-  layout.value = auth.user?.preference.characterListLayout ?? 'grid'
   avatar.value = auth.user?.avatarUrl ?? null
 }
 
@@ -93,9 +126,7 @@ const canSave = computed(() => {
   const u = auth.user
   if (!u) return false
   if (displayName.value.trim().length === 0) return false
-  return (
-    displayName.value.trim() !== u.displayName || layout.value !== u.preference.characterListLayout
-  )
+  return displayName.value.trim() !== u.displayName
 })
 
 // avatar：atomic，與 Save 解耦。上傳/清除後 refresh 同步 updatedAt 與 Header。
@@ -116,7 +147,6 @@ const onSave = async (): Promise<void> => {
   try {
     await auth.updateProfile({
       displayName: displayName.value.trim(),
-      preference: { characterListLayout: layout.value },
     })
     toast.success(t('settings.saveSuccess'))
   } catch (err) {

@@ -48,6 +48,8 @@ const charToSummary = (c: CharacterDTO): CharacterSummaryDTO => ({
   avatar: c.avatar,
   updatedAt: c.updatedAt,
   race: c.race,
+  shareable: c.shareable,
+  shareId: c.shareId,
 })
 
 describe('character store — loadList', () => {
@@ -138,6 +140,8 @@ describe('character store — isAtCharacterLimit', () => {
       avatar: null,
       updatedAt: '2026-01-01T00:00:00Z',
       race: 'human',
+      shareable: false,
+      shareId: `chs_c-${i}`,
     }))
 
   beforeEach(() => {
@@ -389,6 +393,8 @@ describe('character store — updateCharacter', () => {
         avatar: before.avatar,
         updatedAt: before.updatedAt,
         race: before.race,
+        shareable: before.shareable,
+        shareId: before.shareId,
       },
     ])
     mockGetCharacter.mockResolvedValueOnce(before).mockResolvedValueOnce(after)

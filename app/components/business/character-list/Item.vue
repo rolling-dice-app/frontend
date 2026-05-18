@@ -52,16 +52,15 @@
       </div>
     </NuxtLink>
 
-    <!-- Share button：與刪除模式互斥，刪除模式時隱藏 -->
-    <button
+    <!-- Share menu：與刪除模式互斥，刪除模式時隱藏 -->
+    <BusinessCharacterListShareMenu
       v-if="!isDeleteMode"
-      type="button"
-      :aria-label="`${t('character.share.action')} ${character.name}`"
-      class="size-11 shrink-0 flex items-center justify-center rounded-md border border-border text-content-muted cursor-pointer hover:bg-surface hover:text-content transition-colors duration-150"
-      @click="$emit('share', character)"
-    >
-      <Icon name="external-link" :size="20" />
-    </button>
+      class="shrink-0"
+      :character="character"
+      @copy-link="$emit('copy-link', $event)"
+      @open-page="$emit('open-page', $event)"
+      @toggle-share="$emit('toggle-share', $event)"
+    />
 
     <!-- Delete button -->
     <button
@@ -90,7 +89,9 @@ const props = defineProps<{
 
 defineEmits<{
   delete: [CharacterListItem]
-  share: [CharacterListItem]
+  'copy-link': [CharacterListItem]
+  'open-page': [CharacterListItem]
+  'toggle-share': [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

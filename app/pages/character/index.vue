@@ -174,7 +174,9 @@
         :character="character"
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
-        @share="onShareRequest"
+        @copy-link="onCopyLink"
+        @open-page="onOpenSharePage"
+        @toggle-share="onToggleShare"
       />
       <button
         type="button"
@@ -194,7 +196,9 @@
         :character="character"
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
-        @share="onShareRequest"
+        @copy-link="onCopyLink"
+        @open-page="onOpenSharePage"
+        @toggle-share="onToggleShare"
       />
       <button
         type="button"
@@ -336,19 +340,39 @@ const isListMode = computed({
 
 // ── Share ─────────────────────────────────────────────────────────────────────
 
-// 先同步開新分頁（保住 user gesture 不被擋彈窗），再 await 複製連結。
-const onShareRequest = (character: CharacterListItem): void => {
-  const url = `${window.location.origin}/character/${character.id}/share`
-  window.open(url, '_blank', 'noopener')
-  void copyShareLink(url)
+const shareUrl = (character: CharacterListItem): string =>
+  `${window.location.origin}/share/${character.shareId}`
+
+// 未公開時連結無法存取，先擋下並提示。
+const ensureShareable = (character: CharacterListItem): boolean => {
+  if (character.shareable) return true
+  toast.error(t('character.share.requirePublic'))
+  return false
 }
 
-const copyShareLink = async (url: string): Promise<void> => {
+const onCopyLink = async (character: CharacterListItem): Promise<void> => {
+  if (!ensureShareable(character)) return
   try {
-    await navigator.clipboard.writeText(url)
+    await navigator.clipboard.writeText(shareUrl(character))
     toast.success(t('character.share.linkCopied'))
   } catch {
     toast.info(t('character.share.copyFailed'))
+  }
+}
+
+// 同步呼叫保住 user gesture，避免彈窗被擋。
+const onOpenSharePage = (character: CharacterListItem): void => {
+  if (!ensureShareable(character)) return
+  window.open(shareUrl(character), '_blank', 'noopener')
+}
+
+const onToggleShare = async (character: CharacterListItem): Promise<void> => {
+  const next = !character.shareable
+  try {
+    await characterStore.setCharacterShareable(character.id, next)
+    toast.success(t(next ? 'character.share.enabledToast' : 'character.share.disabledToast'))
+  } catch (err) {
+    apiErrorToast.handle(err)
   }
 }
 

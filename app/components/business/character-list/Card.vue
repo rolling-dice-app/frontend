@@ -66,15 +66,13 @@
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <button
+          <BusinessCharacterListShareMenu
             v-if="!isDeleteMode"
-            type="button"
-            :aria-label="`${t('character.share.action')} ${character.name}`"
-            class="size-11 flex items-center justify-center rounded-md border border-border text-content-muted cursor-pointer hover:bg-surface hover:text-content transition-colors duration-150"
-            @click.prevent.stop="$emit('share', character)"
-          >
-            <Icon name="external-link" :size="20" />
-          </button>
+            :character="character"
+            @copy-link="$emit('copy-link', $event)"
+            @open-page="$emit('open-page', $event)"
+            @toggle-share="$emit('toggle-share', $event)"
+          />
           <button
             v-if="isDeleteMode"
             type="button"
@@ -105,7 +103,9 @@ const props = defineProps<{
 
 defineEmits<{
   delete: [CharacterListItem]
-  share: [CharacterListItem]
+  'copy-link': [CharacterListItem]
+  'open-page': [CharacterListItem]
+  'toggle-share': [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

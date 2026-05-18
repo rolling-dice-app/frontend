@@ -21,6 +21,8 @@ export function seedCharacterInStore(character: CharacterDTO): void {
     avatar: character.avatar,
     updatedAt: character.updatedAt,
     race: character.race,
+    shareable: character.shareable,
+    shareId: character.shareId,
   })
 }
 

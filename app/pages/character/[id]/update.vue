@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-6xl px-4 pb-6">
+  <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <template v-if="status === 'idle' || status === 'pending'">
       <CommonPageHeader :title="character?.name || ''" :show-back="true" />
       <div

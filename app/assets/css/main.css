@@ -134,6 +134,15 @@
   animation: tier-shimmer 3s linear infinite;
 }
 
+/* design-language §10：reduced-motion 下 shimmer 變靜態金色 */
+@media (prefers-reduced-motion: reduce) {
+  .tier-shimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: var(--rd--color-primary);
+  }
+}
+
 /* ─── Tier Glow ────────────────────────────────────────────────────────────── */
 /* 角色清單卡 hover 光暈（design-language §9 特例）。呼叫端只設
    --tier-glow-rgb（tier 色 RGB 元組）/ --tier-glow-level（總等級）/ --tier-glow-radius，

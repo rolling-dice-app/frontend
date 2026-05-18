@@ -131,6 +131,13 @@
      T3 master  (Lv.11–16): 鋼鐵藍
      T4 legendary (Lv.17–20): 沿用現有 primary 金
   ─────────────────────────────────────────────────────────────────────────── */
+  --rd--tier-common-soft: rgba(
+    35,
+    31,
+    32,
+    0.75
+  ); /* T1 common：canvas@75%，badge 背板（無 tier 染色） */
+
   --rd--tier-elite: #4a9e6c;
   --rd--tier-elite-soft: rgba(74, 158, 108, 0.15);
   --rd--tier-elite-gradient: #1a2b22;

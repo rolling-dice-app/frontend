@@ -17,9 +17,9 @@
     placement="right"
     size="lg"
     :title="t('combat.roll')"
-    bg-color="var(--rd--color-panel)"
-    text-color="var(--rd--color-text)"
-    border-color="var(--rd--color-border)"
+    bg-color="var(--color-panel)"
+    text-color="var(--color-content)"
+    border-color="var(--color-border)"
   >
     <div class="flex h-full min-h-0 flex-col gap-3">
       <!-- 上 2/3：觸發區（單一大滾動容器） -->

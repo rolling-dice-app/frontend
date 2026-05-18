@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-6xl px-4 pb-6">
+  <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <!-- Page header -->
     <CommonPageHeader :title="t('character.characterListTitle')" show-back>
       <template v-if="status === 'success' && characters.length > 0" #actions>
@@ -9,9 +9,9 @@
             v-model="sortKey"
             :options="SORT_OPTIONS"
             :border="true"
-            border-color="var(--rd--color-border)"
-            color="var(--rd--color-text)"
-            dropdown-bg="var(--rd--color-bg-elevated)"
+            border-color="var(--color-border)"
+            color="var(--color-content)"
+            dropdown-bg="var(--color-canvas-elevated)"
             option-hover-color="var(--color-canvas-inset)"
             class="sort-select w-21 xs:w-28"
             :aria-label="t('character.sortBy')"
@@ -33,14 +33,14 @@
             />
             <span
               class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
-              :class="!isListMode ? 'text-text-inverse' : 'text-content-muted'"
+              :class="!isListMode ? 'text-content-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
               <Icon name="grid" :size="24" />
             </span>
             <span
               class="relative z-10 flex h-full w-11 items-center justify-center transition-colors duration-150"
-              :class="isListMode ? 'text-text-inverse' : 'text-content-muted'"
+              :class="isListMode ? 'text-content-inverse' : 'text-content-muted'"
               aria-hidden="true"
             >
               <Icon name="list" :size="24" />
@@ -55,7 +55,9 @@
             "
             class="flex size-11 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors duration-150"
             :class="
-              isDeleteMode ? 'bg-danger text-text-inverse' : 'text-content-muted hover:bg-surface'
+              isDeleteMode
+                ? 'bg-danger text-content-inverse'
+                : 'text-content-muted hover:bg-surface'
             "
             @click="isDeleteMode = !isDeleteMode"
           >
@@ -77,7 +79,7 @@
       <div
         v-for="i in 6"
         :key="i"
-        class="min-h-68 animate-pulse rounded-lg border border-border bg-bg-elevated"
+        class="min-h-68 animate-pulse motion-reduce:animate-none rounded-lg border border-border bg-canvas-elevated"
         aria-hidden="true"
       />
     </div>
@@ -90,13 +92,9 @@
     >
       <p class="font-display text-2xl text-content">{{ t('character.loadFailed') }}</p>
       <p class="text-sm">{{ t('ui.state.networkErrorHint') }}</p>
-      <button
-        type="button"
-        class="mt-2 rounded-md border border-border bg-surface px-4 py-2 text-content transition-colors hover:bg-surface-2"
-        @click="refresh()"
-      >
+      <CommonAppButton variant="warning" class="mt-2" @click="refresh()">
         {{ t('ui.state.retry') }}
-      </button>
+      </CommonAppButton>
     </div>
 
     <!-- Character grid -->
@@ -113,7 +111,7 @@
       />
       <NuxtLink
         to="/character/build"
-        class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-bg-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="48" />
@@ -131,7 +129,7 @@
       />
       <NuxtLink
         to="/character/build"
-        class="flex min-h-19 items-center justify-center rounded-lg border border-border bg-bg-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        class="flex min-h-19 items-center justify-center rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('character.addCharacter')"
       >
         <Icon name="plus" :size="28" />

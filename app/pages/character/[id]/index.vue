@@ -1,10 +1,10 @@
 <template>
-  <div class="mx-auto max-w-6xl px-4 pb-6">
+  <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <CommonPageHeader :title="character?.name || ''" :show-back="true">
       <template v-if="character" #actions>
         <NuxtLink
           :to="`/character/${id}/update`"
-          class="ml-auto rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          class="ml-auto rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-canvas-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {{ t('ui.action.edit') }}
         </NuxtLink>
@@ -77,13 +77,9 @@
               class="flex flex-col items-center gap-3 py-12 text-center"
             >
               <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
-              <button
-                type="button"
-                class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
-                @click="retryInventory"
-              >
+              <CommonAppButton variant="warning" @click="retryInventory">
                 {{ t('ui.state.retry') }}
-              </button>
+              </CommonAppButton>
             </div>
             <BusinessCharacterFormInventoryTab
               v-else

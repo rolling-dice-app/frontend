@@ -12,7 +12,7 @@
     @keydown.enter.prevent="toggleNav"
     @keydown.space.prevent="toggleNav"
   >
-    <Icon name="swipe-up" class="w-12 absolute animate-bounce -top-4" />
+    <Icon name="swipe-up" class="w-12 absolute animate-bounce motion-reduce:animate-none -top-4" />
     <span class="text-xs font-medium tracking-wide sm:text-sm">{{ t('ui.nav.swipeUp') }}</span>
   </div>
 
@@ -26,9 +26,9 @@
     size="sm"
     :show-close-button="false"
     :teleport-to="drawerPortal ?? 'body'"
-    bg-color="var(--rd--color-panel)"
-    text-color="var(--rd--color-text)"
-    border-color="var(--rd--color-border)"
+    bg-color="var(--color-panel)"
+    text-color="var(--color-content)"
+    border-color="var(--color-border)"
   >
     <template #header>
       <div class="bg-panel-2 w-full py-1 text-center text-primary font-display">

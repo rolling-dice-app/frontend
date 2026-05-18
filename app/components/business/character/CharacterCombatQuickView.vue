@@ -13,13 +13,9 @@
       class="flex flex-col items-center gap-3 py-12 text-center"
     >
       <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
-      <button
-        type="button"
-        class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
-        @click="retry"
-      >
+      <CommonAppButton variant="warning" @click="retry">
         {{ t('ui.state.retry') }}
-      </button>
+      </CommonAppButton>
     </div>
     <template v-else>
       <header class="flex items-center justify-end gap-2">
@@ -136,7 +132,7 @@
       aria-live="polite"
     >
       <span
-        class="inline-block size-10 animate-spin rounded-full border-4 border-white/30 border-t-white"
+        class="inline-block size-10 animate-spin motion-reduce:animate-none rounded-full border-4 border-white/30 border-t-white"
         aria-hidden="true"
       />
       <p class="text-sm font-medium text-white">{{ t('combat.resting') }}</p>

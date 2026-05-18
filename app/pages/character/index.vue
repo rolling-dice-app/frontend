@@ -67,21 +67,87 @@
       </template>
     </CommonPageHeader>
 
-    <!-- Loading skeleton：SSR idle + client pending 都顯示 -->
+    <!-- Loading skeleton：SSR idle + client pending 都顯示。
+         佈局依 isListMode 跟隨偏好，但 auth 為 client-only（auth-init.client 於 boot 即 await
+         refresh，首次 client render user 可能已載入）→ server 與 client 首幀的 isListMode 不一致。
+         故用 ClientOnly：server / 掛載前一律 grid skeleton（與 edge cache 共用 HTML 一致），
+         client 掛載後再切換成偏好佈局，由 ClientOnly 結構性消除 hydration mismatch。 -->
     <div
       v-if="status === 'idle' || status === 'pending'"
-      class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
       <span class="sr-only">{{ t('ui.state.loading') }}</span>
-      <div
-        v-for="i in 6"
-        :key="i"
-        class="min-h-68 animate-pulse motion-reduce:animate-none rounded-lg border border-border bg-canvas-elevated"
-        aria-hidden="true"
-      />
+
+      <ClientOnly>
+        <!-- list skeleton：鏡像 Item（僅 client 偏好 list 時） -->
+        <div v-if="isListMode" class="flex flex-col gap-2">
+          <div
+            v-for="i in 6"
+            :key="i"
+            class="flex animate-pulse motion-reduce:animate-none items-center gap-2"
+            aria-hidden="true"
+          >
+            <div
+              class="flex flex-1 items-center gap-3 rounded-lg border border-border bg-canvas-elevated px-3 py-2.5"
+            >
+              <div class="size-14 shrink-0 rounded-md bg-surface" />
+              <div class="flex-1 space-y-2">
+                <div class="h-4 w-1/3 rounded bg-surface" />
+                <div class="h-3 w-1/4 rounded bg-surface" />
+              </div>
+            </div>
+            <div class="size-11 shrink-0 rounded-md bg-surface" />
+          </div>
+        </div>
+
+        <!-- grid skeleton：鏡像 Card（client 偏好 grid） -->
+        <div
+          v-else
+          class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
+        >
+          <div
+            v-for="i in 6"
+            :key="i"
+            class="animate-pulse motion-reduce:animate-none overflow-hidden rounded-lg border border-border bg-canvas-elevated"
+            aria-hidden="true"
+          >
+            <div class="h-64 bg-surface" />
+            <div class="px-4 pb-4 pt-3">
+              <div class="h-6 w-2/3 rounded bg-surface" />
+              <div class="mt-2 flex gap-2">
+                <div class="h-5 w-12 rounded-full bg-surface" />
+                <div class="h-4 w-20 rounded bg-surface" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- server / 掛載前 fallback：統一用 card 樣式，edge cache HTML 對所有人一致；
+             client 掛載後才依偏好換成 grid 卡 / list 列骨架。 -->
+        <template #fallback>
+          <div
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
+          >
+            <div
+              v-for="i in 6"
+              :key="i"
+              class="animate-pulse motion-reduce:animate-none overflow-hidden rounded-lg border border-border bg-canvas-elevated"
+              aria-hidden="true"
+            >
+              <div class="h-64 bg-surface" />
+              <div class="px-4 pb-4 pt-3">
+                <div class="h-6 w-2/3 rounded bg-surface" />
+                <div class="mt-2 flex gap-2">
+                  <div class="h-5 w-12 rounded-full bg-surface" />
+                  <div class="h-4 w-20 rounded bg-surface" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </ClientOnly>
     </div>
 
     <!-- Error -->
@@ -112,7 +178,7 @@
       />
       <button
         type="button"
-        class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        class="flex min-h-84 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('character.addCharacter')"
         @click="onAddCharacter"
       >

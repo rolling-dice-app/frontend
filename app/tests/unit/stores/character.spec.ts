@@ -5,7 +5,13 @@ import {
   createMockFormState,
   createMockUpdateFormState,
 } from '~/tests/fixtures/character'
-import type { CharacterDTO, CharacterSummaryDTO, CharacterUpdateDTO } from '@rolling-dice-app/core'
+import type {
+  CharacterDTO,
+  CharacterSummaryDTO,
+  CharacterUpdateDTO,
+  PlanLimits,
+} from '@rolling-dice-app/core'
+import { useAuthStore } from '~/stores/auth'
 
 const mockListCharacters = vi.fn<() => Promise<CharacterSummaryDTO[]>>()
 const mockGetCharacter = vi.fn<(id: string) => Promise<CharacterDTO>>()
@@ -89,6 +95,76 @@ describe('character store — loadList', () => {
     await expect(store.loadList()).rejects.toThrow('boom')
     expect(store.listError).toBe(err)
     expect(store.listLoading).toBe(false)
+  })
+})
+
+describe('character store — ensureListLoaded', () => {
+  it('未載入時呼叫 loadList 並設 listLoaded', async () => {
+    mockListCharacters.mockResolvedValue([])
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    expect(store.listLoaded).toBe(false)
+    await store.ensureListLoaded()
+
+    expect(mockListCharacters).toHaveBeenCalledTimes(1)
+    expect(store.listLoaded).toBe(true)
+  })
+
+  it('已載入時為 no-op，不再打 API', async () => {
+    mockListCharacters.mockResolvedValue([])
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.ensureListLoaded()
+
+    expect(mockListCharacters).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('character store — isAtCharacterLimit', () => {
+  const limits: PlanLimits = {
+    maxCharacters: 20,
+    maxActiveCharacters: 3,
+    maxCampaignRecordsPerCharacter: 100,
+  }
+  const makeItems = (n: number): CharacterSummaryDTO[] =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `c-${i}`,
+      name: `角色 ${i}`,
+      classes: [],
+      level: 1,
+      avatar: null,
+      updatedAt: '2026-01-01T00:00:00Z',
+      race: 'human',
+    }))
+
+  beforeEach(() => {
+    vi.stubGlobal('useAuthStore', useAuthStore)
+  })
+
+  it('limits 未就緒時不視為達上限', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    store.list = makeItems(99)
+    expect(store.isAtCharacterLimit).toBe(false)
+  })
+
+  it('角色數低於上限時為 false', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    useAuthStore().limits = limits
+    const store = useCharacterStore()
+    store.list = makeItems(2)
+    expect(store.isAtCharacterLimit).toBe(false)
+  })
+
+  it('角色數達上限時為 true', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    useAuthStore().limits = limits
+    const store = useCharacterStore()
+    store.list = makeItems(3)
+    expect(store.isAtCharacterLimit).toBe(true)
   })
 })
 

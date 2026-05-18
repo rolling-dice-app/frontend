@@ -239,14 +239,9 @@ const { status, refresh } = useAsyncData('characters', () => characterStore.load
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)
 
-// limits 來自 /auth/me；ValidationLimits 無角色數 DB-blast ceiling，
-// 故 limits 未就緒時不前置攔截，交由 build 送出時的 backend 錯誤 backstop。
-const isAtCharacterLimit = computed(
-  () => authStore.limits != null && characters.value.length >= authStore.limits.maxActiveCharacters,
-)
-
+// 達上限時列表入口前置攔截；build 頁另有 character-limit guard，判斷統一由 store 提供。
 const onAddCharacter = () => {
-  if (isAtCharacterLimit.value) {
+  if (characterStore.isAtCharacterLimit) {
     toast.error(t('character.characterLimitReached'))
     return
   }

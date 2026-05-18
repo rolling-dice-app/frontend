@@ -64,7 +64,7 @@
       </p>
 
       <Accordion v-else class="campaigns-accordion flex flex-col gap-2">
-        <BusinessCharacterCampaignsCampaignItem
+        <BusinessCharacterDetailCampaignsCampaignItem
           v-for="entry in entries"
           :key="entry.id"
           :entry="entry"
@@ -73,7 +73,7 @@
         />
       </Accordion>
 
-      <BusinessCharacterCampaignsCampaignFormModal
+      <BusinessCharacterDetailCampaignsCampaignFormModal
         v-model="modalOpen"
         :editing="editing"
         :submitting="submitting"

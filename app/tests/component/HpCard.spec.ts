@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
-import HpCard from '~/components/business/character/quickview/HpCard.vue'
+import HpCard from '~/components/business/character-detail/quickview/HpCard.vue'
 import { formatModifier } from '~/helpers/ability'
 import { parseIntegerInput } from '~/utils/parse'
 

@@ -42,21 +42,24 @@
           <template #label>
             <span class="text-content">{{ t('character.detail') }}</span>
           </template>
-          <BusinessCharacterDetailTab :character="character" />
+          <BusinessCharacterDetailProfileTab :character="character" />
         </Tab>
         <Tab value="combat">
           <template #label>
             <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <ClientOnly>
-            <BusinessCharacterCombatQuickView ref="combatQuickViewRef" :character="character" />
+            <BusinessCharacterDetailCombatQuickView
+              ref="combatQuickViewRef"
+              :character="character"
+            />
           </ClientOnly>
         </Tab>
         <Tab value="spells">
           <template #label>
             <span class="text-content">{{ t('spell.table') }}</span>
           </template>
-          <BusinessCharacterSpellsQuickView />
+          <BusinessCharacterDetailSpellsQuickView />
         </Tab>
         <Tab value="backpack">
           <template #label>
@@ -111,7 +114,7 @@
           <template #label>
             <span class="text-content">{{ t('character.campaign') }}</span>
           </template>
-          <BusinessCharacterCampaignsTab
+          <BusinessCharacterDetailCampaignsTab
             :entries="campaignEntries"
             :total-exp-earned="campaignTotalExp"
             :is-loading="campaignsLoading"

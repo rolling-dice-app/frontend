@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
-import SpellSlotsCard from '~/components/business/character/quickview/SpellSlotsCard.vue'
+import SpellSlotsCard from '~/components/business/character-detail/quickview/SpellSlotsCard.vue'
 import type { SpellLevel, SpellSlots } from '@rolling-dice-app/core'
 
 vi.stubGlobal('useId', useId)

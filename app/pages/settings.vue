@@ -6,7 +6,7 @@
       <ClientOnly>
         <div class="space-y-6">
           <div class="mx-auto w-48 max-w-full">
-            <BusinessCharacterFormPortraitUploader
+            <CommonPortraitUploader
               v-model="avatar"
               shape="avatar"
               :upload-fn="avatarUpload"

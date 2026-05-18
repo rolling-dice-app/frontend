@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppSelect from '~/components/common/AppSelect.vue'
 import AppButton from '~/components/common/AppButton.vue'
-import AbilityScorePanel from '~/components/business/character/form/basic/AbilityScorePanel.vue'
+import AbilityScorePanel from '~/components/business/character-form/basic/AbilityScorePanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import type { AbilityScores, DiceSlot } from '~/types/business/character-form'
 

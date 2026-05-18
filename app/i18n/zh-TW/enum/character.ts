@@ -168,4 +168,5 @@ export default {
   addCampaignRecord: '新增戰役紀錄',
   editCampaignRecord: '編輯戰役紀錄',
   campaignRecordLimitReached: '戰役紀錄數量已達上限，請先刪除舊紀錄',
+  characterLimitReached: '角色卡數量已達方案上限',
 }

@@ -109,13 +109,14 @@
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
       />
-      <NuxtLink
-        to="/character/build"
+      <button
+        type="button"
         class="flex min-h-68 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('character.addCharacter')"
+        @click="onAddCharacter"
       >
         <Icon name="plus" :size="48" />
-      </NuxtLink>
+      </button>
     </div>
 
     <!-- Character list -->
@@ -127,13 +128,14 @@
         :is-delete-mode="isDeleteMode"
         @delete="onDeleteRequest"
       />
-      <NuxtLink
-        to="/character/build"
-        class="flex min-h-19 items-center justify-center rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      <button
+        type="button"
+        class="flex min-h-19 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('character.addCharacter')"
+        @click="onAddCharacter"
       >
         <Icon name="plus" :size="28" />
-      </NuxtLink>
+      </button>
     </div>
 
     <!-- Empty state -->
@@ -236,6 +238,20 @@ const { status, refresh } = await useAsyncData('characters', () => characterStor
 })
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)
+
+// limits 來自 /auth/me；ValidationLimits 無角色數 DB-blast ceiling，
+// 故 limits 未就緒時不前置攔截，交由 build 送出時的 backend 錯誤 backstop。
+const isAtCharacterLimit = computed(
+  () => authStore.limits != null && characters.value.length >= authStore.limits.maxActiveCharacters,
+)
+
+const onAddCharacter = () => {
+  if (isAtCharacterLimit.value) {
+    toast.error(t('character.characterLimitReached'))
+    return
+  }
+  void navigateTo('/character/build')
+}
 
 // 顯示模式：以 user.preference.characterListLayout 為單一來源；
 // 整頁 auth-gated，未登入看不到滑塊，不需要 localStorage fallback。

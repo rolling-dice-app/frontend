@@ -47,6 +47,11 @@ When the user asks for a review, audit, or refactor proposal, prioritize the fol
 3. Are error messages meaningful to the user, without leaking technical detail?
 4. Are error notifications routed through `useToast` (the single entry point) rather than scattered toast / alert calls?
 5. Do form errors surface at the field level?
+6. Is a frontend-preemptable check placed at the earliest user entry (so the
+   user never enters a doomed flow), rather than only failing at submit? And
+   conversely, are backend-authoritative failures left as post-action
+   backstops rather than guessed at client-side? (See
+   `error-handling-conventions` → Preemption placement.)
 
 ## Security Checks
 

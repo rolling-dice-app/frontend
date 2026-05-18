@@ -9,7 +9,7 @@
       :radius="RADIUS.lg"
       :padding="0"
       shadow="none"
-      :bg-color="'var(--rd--color-bg-elevated)'"
+      :bg-color="'var(--color-canvas-elevated)'"
       class="overflow-hidden border border-border transition-colors duration-200"
     >
       <!-- Cover: classKey image -->
@@ -69,7 +69,7 @@
           v-if="isDeleteMode"
           type="button"
           :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-          class="size-11 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
+          class="size-11 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-content-inverse"
           @click.prevent="$emit('delete', character)"
         >
           <Icon name="close" :size="20" />
@@ -102,7 +102,7 @@ const TIER_CONFIG: Record<
 > = {
   common: {
     textColor: 'var(--rd--color-text-muted)',
-    badgeBg: 'rgba(35, 31, 32, 0.75)',
+    badgeBg: 'var(--rd--tier-common-soft)',
     gradientEnd: 'var(--rd--color-bg-elevated)',
     shadowRgb: '160, 150, 140',
   },

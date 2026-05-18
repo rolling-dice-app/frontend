@@ -311,7 +311,7 @@
       <h2 id="section-background" class="mb-4 font-display text-lg font-bold text-content">
         {{ t('character.backgroundStory') }}
       </h2>
-      <div class="space-y-3">
+      <div class="whitespace-pre-line break-words text-sm text-content-soft">
         {{ character.story || t('character.emptyParenthesized') }}
       </div>
     </section>

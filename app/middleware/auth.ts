@@ -1,15 +1,16 @@
 /**
- * 守住需登入頁面：未登入時跳出 toast 提示並導回首頁，由 Header 的 Log in
- * 入口統一觸發 OAuth flow（單 provider 簡化路徑，不另設 /login picker）。
+ * 守住需登入頁面：未登入導回首頁（Header 的 Log in 統一觸發 OAuth）。
  * Opt-in via `definePageMeta({ middleware: 'auth' })`。
  */
 export default defineNuxtRouteMiddleware((to) => {
-  // auth-init 是 client-only plugin，SSR 期間 auth state 必為 null；
-  // 為避免 server-side redirect 被 edge cache 污染，middleware 也只在 client 跑。
+  // client-only：SSR 期 auth state 必為 null，server redirect 又會污染 edge cache。
   if (import.meta.server) return
   const auth = useAuthStore()
   if (auth.isLoggedIn) return
   if (to.path === '/') return
+  // 初次 hydration 走整頁重載避免 node mismatch（toast 隨重載丟失故略過）；
+  // SPA 導航無 SSR，軟導航 + toast 即可。
+  if (useNuxtApp().isHydrating) return navigateTo('/', { replace: true, external: true })
   useToast().info(t('ui.auth.loginRequired'))
   return navigateTo('/', { replace: true })
 })

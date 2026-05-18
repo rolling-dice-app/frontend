@@ -17,9 +17,9 @@
     placement="right"
     size="lg"
     :title="t('combat.roll')"
-    bg-color="var(--rd--color-panel)"
-    text-color="var(--rd--color-text)"
-    border-color="var(--rd--color-border)"
+    bg-color="var(--color-panel)"
+    text-color="var(--color-content)"
+    border-color="var(--color-border)"
   >
     <div class="flex h-full min-h-0 flex-col gap-3">
       <!-- 上 2/3：觸發區（單一大滾動容器） -->
@@ -29,7 +29,7 @@
             {{ t('combat.abilityCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
-            <BusinessCharacterQuickviewRollTriggerRow
+            <BusinessCharacterDetailQuickviewRollTriggerRow
               v-for="row in abilityRows"
               :key="row.key"
               :label="row.label"
@@ -44,7 +44,7 @@
             {{ t('combat.savingThrowCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
-            <BusinessCharacterQuickviewRollTriggerRow
+            <BusinessCharacterDetailQuickviewRollTriggerRow
               v-for="row in savingThrowRows"
               :key="row.key"
               :label="row.label"
@@ -61,7 +61,7 @@
             {{ t('combat.skillCheck') }}
           </h3>
           <ul class="grid grid-cols-2 gap-1.5">
-            <BusinessCharacterQuickviewRollTriggerRow
+            <BusinessCharacterDetailQuickviewRollTriggerRow
               v-for="row in skillRows"
               :key="row.key"
               :label="row.label"
@@ -76,7 +76,7 @@
             {{ t('combat.attack') }}
           </h3>
           <ul class="space-y-1.5">
-            <BusinessCharacterQuickviewRollAttackRow
+            <BusinessCharacterDetailQuickviewRollAttackRow
               v-for="attack in character.attacks"
               :key="attack.id"
               :attack="attack"
@@ -91,7 +91,7 @@
 
       <!-- 下 1/3：output -->
       <div class="min-h-0 grow basis-1/3">
-        <BusinessCharacterQuickviewRollOutputList :entries="entries" @clear="clear" />
+        <BusinessCharacterDetailQuickviewRollOutputList :entries="entries" @clear="clear" />
       </div>
     </div>
   </Drawer>

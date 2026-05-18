@@ -8,7 +8,11 @@
       {{ t('combat.emptyFeature') }}
     </p>
 
-    <Accordion v-else multiple class="feature-accordion grid items-start gap-2 sm:grid-cols-2">
+    <Accordion
+      v-else
+      multiple
+      class="feature-accordion grid items-start gap-2 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2"
+    >
       <AccordionItem
         v-for="feature in features"
         :key="feature.id"
@@ -18,23 +22,25 @@
         <template #title>
           <div class="flex min-h-7 min-w-0 flex-1 items-center justify-between gap-3">
             <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-1.5">
+              <div class="flex flex-col items-start gap-1">
                 <span class="text-sm font-semibold text-content">{{ feature.name }}</span>
-                <CommonAppBadge
-                  variant="status"
-                  size="sm"
-                  :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
-                  :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
-                >
-                  {{ t(`combat.featureSource.${feature.source}`) }}
-                </CommonAppBadge>
-                <CommonAppBadge v-if="feature.usage.hasUses" variant="default" size="sm">
-                  {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }}
-                </CommonAppBadge>
+                <div class="flex items-center gap-1">
+                  <CommonAppBadge
+                    variant="status"
+                    size="sm"
+                    :bg-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].bgColor"
+                    :text-color="FEATURE_SOURCE_BADGE_STYLES[feature.source].textColor"
+                  >
+                    {{ t(`combat.featureSource.${feature.source}`) }}
+                  </CommonAppBadge>
+                  <CommonAppBadge v-if="feature.usage.hasUses" variant="default" size="sm">
+                    {{ t(`combat.featureRecovery.${feature.usage.recovery}`) }}
+                  </CommonAppBadge>
+                </div>
               </div>
             </div>
 
-            <div v-if="feature.usage.hasUses" class="flex shrink-0 items-center gap-1">
+            <div v-if="feature.usage.hasUses" class="flex shrink-0 items-center">
               <span
                 role="button"
                 :tabindex="canDecrement(feature) ? 0 : -1"

@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { createMockCharacter } from '~/tests/fixtures/character'
-import RollDrawer from '~/components/business/character/quickview/RollDrawer.vue'
+import RollDrawer from '~/components/business/character-detail/quickview/RollDrawer.vue'
 import { getAbilityModifier } from '~/helpers/ability'
 import {
   calculateSavingThrowBonuses,
@@ -62,21 +62,21 @@ const DrawerStub = {
 }
 
 const TriggerRowStub = {
-  name: 'BusinessCharacterQuickviewRollTriggerRow',
+  name: 'BusinessCharacterDetailQuickviewRollTriggerRow',
   props: ['label', 'modifier'],
   emits: ['roll'],
   template: `<li data-trigger-row :data-label="label" :data-modifier="modifier" />`,
 }
 
 const AttackRowStub = {
-  name: 'BusinessCharacterQuickviewRollAttackRow',
+  name: 'BusinessCharacterDetailQuickviewRollAttackRow',
   props: ['attack', 'abilityScores', 'proficiencyBonus'],
   emits: ['rollHit', 'rollDamage'],
   template: `<li data-attack-row :data-name="attack.name" />`,
 }
 
 const OutputListStub = {
-  name: 'BusinessCharacterQuickviewRollOutputList',
+  name: 'BusinessCharacterDetailQuickviewRollOutputList',
   props: ['entries'],
   emits: ['clear'],
   template: `<div data-output-list />`,
@@ -124,9 +124,9 @@ const mountDrawer = (
       stubs: {
         Icon: true,
         Drawer: DrawerStub,
-        BusinessCharacterQuickviewRollTriggerRow: TriggerRowStub,
-        BusinessCharacterQuickviewRollAttackRow: AttackRowStub,
-        BusinessCharacterQuickviewRollOutputList: OutputListStub,
+        BusinessCharacterDetailQuickviewRollTriggerRow: TriggerRowStub,
+        BusinessCharacterDetailQuickviewRollAttackRow: AttackRowStub,
+        BusinessCharacterDetailQuickviewRollOutputList: OutputListStub,
       },
     },
   })

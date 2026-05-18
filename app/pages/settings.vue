@@ -1,12 +1,12 @@
 <template>
-  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6">
+  <div class="mx-auto max-w-2xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <CommonPageHeader :title="t('settings.title')" :show-back="true" />
 
     <CommonAppCard variant="flat">
       <ClientOnly>
         <div class="space-y-6">
           <div class="mx-auto w-48 max-w-full">
-            <BusinessCharacterFormPortraitUploader
+            <CommonPortraitUploader
               v-model="avatar"
               shape="avatar"
               :upload-fn="avatarUpload"

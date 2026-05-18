@@ -97,7 +97,7 @@
       </div>
     </div>
     <div class="w-full md:w-1/3">
-      <BusinessCharacterFormPortraitUploader
+      <CommonPortraitUploader
         v-model="formState.avatar"
         v-model:pending-blob="pendingAvatar"
         :upload-fn="avatarUploadFn"

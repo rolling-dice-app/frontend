@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import RollOutputList from '~/components/business/character/quickview/RollOutputList.vue'
+import RollOutputList from '~/components/business/character-detail/quickview/RollOutputList.vue'
 import { formatModifier } from '~/helpers/ability'
 import type { D20RollEntry, DamageRollEntry, RollEntry } from '~/types/business/dice'
 

@@ -10,8 +10,11 @@
       </CommonAppButton>
     </div>
     <div v-else class="flex flex-col gap-4 md:flex-row md:items-start">
-      <BusinessCharacterQuickviewLearnedSpellAccordion ref="learnedRef" class="min-w-0 md:flex-2" />
-      <BusinessCharacterQuickviewFavoriteSpellList
+      <BusinessCharacterDetailQuickviewLearnedSpellAccordion
+        ref="learnedRef"
+        class="min-w-0 md:flex-2"
+      />
+      <BusinessCharacterDetailQuickviewFavoriteSpellList
         class="min-w-0 md:sticky md:top-4 md:flex-1"
         @select="onSelectFavorite"
       />

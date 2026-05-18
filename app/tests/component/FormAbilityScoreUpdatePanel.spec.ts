@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import AbilityScoreUpdatePanel from '~/components/business/character/form/basic/AbilityScoreUpdatePanel.vue'
+import AbilityScoreUpdatePanel from '~/components/business/character-form/basic/AbilityScoreUpdatePanel.vue'
 import { formatModifier, getAbilityModifier, getTotalScore } from '~/helpers/ability'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 

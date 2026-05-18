@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
-import SpellSlotsPanel from '~/components/business/character/form/spells/SpellSlotsPanel.vue'
+import SpellSlotsPanel from '~/components/business/character-form/spells/SpellSlotsPanel.vue'
 import type { SpellLevel, SpellSlotsDelta, ClassKey, SubclassKey } from '@rolling-dice-app/core'
 import type { FormClassEntry } from '~/types/business/character-form'
 

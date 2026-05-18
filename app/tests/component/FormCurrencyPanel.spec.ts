@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
-import CurrencyPanel from '~/components/business/character/form/inventory/CurrencyPanel.vue'
-import CurrencyEditModal from '~/components/business/character/form/inventory/CurrencyEditModal.vue'
+import CurrencyPanel from '~/components/business/character-form/inventory/CurrencyPanel.vue'
+import CurrencyEditModal from '~/components/business/character-form/inventory/CurrencyEditModal.vue'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
 import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
 

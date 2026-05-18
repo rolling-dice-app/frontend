@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import DeathSavesCard from '~/components/business/character/quickview/DeathSavesCard.vue'
+import DeathSavesCard from '~/components/business/character-detail/quickview/DeathSavesCard.vue'
 
 vi.mock('~/helpers/dice', () => ({
   rollD20: vi.fn(),

@@ -2,7 +2,7 @@
   <div class="flex items-center gap-2">
     <NuxtLink
       :to="`/character/${character.id}`"
-      class="tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      class="tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :style="tierGlowStyle"
       :aria-label="`${t('character.viewLabel')} ${character.name}`"
     >
@@ -68,7 +68,7 @@
       v-if="isDeleteMode"
       type="button"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      class="size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-text-inverse"
+      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-content-inverse"
       @click.prevent="$emit('delete', character)"
     >
       <Icon name="close" :size="20" />
@@ -99,7 +99,7 @@ const TIER_CONFIG: Record<
 > = {
   common: {
     textColor: 'var(--rd--color-text-muted)',
-    badgeBg: 'rgba(35, 31, 32, 0.75)',
+    badgeBg: 'var(--rd--tier-common-soft)',
     shadowRgb: '160, 150, 140',
   },
   elite: {

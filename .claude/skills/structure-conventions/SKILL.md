@@ -323,6 +323,72 @@ app/
 3. Business-flow-coupled components don't get prematurely promoted to global shared components.
 4. The same UI pattern in multiple pages is the trigger for extraction.
 
+### `business/` Feature Folders & Layering
+
+**A feature folder maps to one page/flow, not a whole domain.** Split a domain
+along its page flows: `business/<domain>-<flow>/` (e.g. `character-list/`,
+`character-build/`, `character-detail/`, `character-update/`). Bundling every
+flow of a domain into one coarse `business/<domain>/` folder is the smell — it
+puts components owned by different pages at the same level and ownership stops
+being legible.
+
+Three kinds of folder live under `business/`:
+
+1. **Feature folder — `<domain>-<flow>/`**, owned by exactly one page/flow.
+   Internally **two tiers, no more**:
+   - **Tier 1 (folder root)** — components that page renders directly:
+     composites (e.g. `character-detail/CombatQuickView.vue`,
+     `character-update/Form.vue`) and presentational leaves (e.g.
+     `character-list/Card.vue`, `character-build/ConfirmModal.vue`).
+   - **Tier 2 (subfolder)** — **composite-private parts only**: consumed by
+     exactly one root composite of that feature, nothing else. e.g.
+     `character-detail/quickview/` (only `CombatQuickView` / `SpellsQuickView`
+     use it), `character-detail/campaigns/` (only `CampaignsTab`). Name it
+     after the area it covers.
+2. **Cross-feature shared building-block library — `<domain>-<shared>/`.** A
+   sibling folder (not inside any feature folder) holding parts reused by **two
+   or more** sibling feature folders. e.g. `character-form/` — `BasicTab` /
+   `ProfileTab` / `InventoryTab` (+ `basic/ combat/ inventory/ spells/` panels)
+   consumed by the `character-build` page, `character-update/Form.vue`, and the
+   `character-detail` backpack tab. It is shared _across_ features, so it must
+   not live under any one of them.
+3. **Generic / no business coupling → not under `business/` at all.** Promote
+   to `components/common`. e.g. a portrait/avatar image cropper used by both
+   `pages/settings.vue` and the character form → `components/common/PortraitUploader.vue`.
+
+**Placement test (decide in order):**
+
+1. No business coupling, or consumed by an unrelated domain's pages →
+   `components/common`.
+2. Reused by **two or more** sibling feature folders of the same domain →
+   cross-feature shared library `<domain>-<shared>/`.
+3. Consumed by exactly **one** feature's single root composite, nothing else →
+   that feature's Tier-2 composite-private subfolder.
+4. The page/flow's own page-facing surface (composite, or leaf the page
+   renders) → that feature folder's Tier-1 root.
+
+**Depth cap:** at most one extra grouping level inside a Tier-2 / shared
+subfolder, and only when one composite's part set is large enough to need it
+(e.g. `character-form/basic/`, `character-form/combat/`). Never a third level.
+
+**Naming:** the folder carries the `<domain>-<flow>` (or `<domain>-<shared>`)
+identity; files are named by Role only — `Card`, `Item`, `ConfirmModal`,
+`Form`, `ProfileTab`, `CombatQuickView` — and Nuxt derives the auto-import name
+from the path (`character-detail/CombatQuickView.vue` →
+`BusinessCharacterDetailCombatQuickView`). Drop the redundant domain prefix
+from filenames; this keeps auto-import names short and, chosen well, stable
+across a move (e.g. `character-update/Form.vue` and `character-form/**` keep
+their prior `BusinessCharacterUpdateForm` / `BusinessCharacterForm*` names).
+The `Role` suffix still signals page intent: `Tab` (static detail pane),
+`QuickView` (play-time live panel), `Card` / `Item` (list presentational),
+`Modal` (dialog), `Form` (edit container).
+
+**Invariant:** a component's home follows its consumers. If a part starts being
+reused by a second sibling feature it moves up to the shared library; if a
+different domain's page consumes it, it leaves `business/` for `common`. A
+same-feature page rendering a shared building-block does not pull that block
+into the feature folder — it stays in the shared library.
+
 ## Composable Structure Preferences
 
 1. Composable names are prefixed with `use` (e.g., `useXxx`).
@@ -367,6 +433,9 @@ When adding a file, decide in this order:
 8. Scattering test files without a unified strategy; pick centralized vs. co-located early and stay consistent.
 9. Mixing production code, shared mocks, and test logic inside `tests/` without clear layering.
 10. Locally restating types that belong in `@rolling-dice-app/core`.
+11. Leaving a component in a `business/<feature>/` subfolder when another
+    feature's pages consume it, or when it has no business coupling at all
+    (promote to `components/common` or a higher business folder instead).
 
 ## Output Requirements
 

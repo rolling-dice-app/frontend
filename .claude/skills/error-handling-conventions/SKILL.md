@@ -120,6 +120,30 @@ if (results.some((r) => r.status === 'rejected')) {
 2. Is recovery (refetch / re-sync) appropriate after this failure? → trigger it in the caller, unconditionally, in parallel with `apiErrorToast.handle()`. Do **not** add a backend-code branch to the dispatcher.
 3. Anything else → no change; it falls through to `systemError` + log.
 
+### Preemption placement — hoist to the earliest gate
+
+A frontend-preemptable check belongs at the **earliest UI affordance the user
+would otherwise act through**, not at the final submit. If the condition is
+already knowable before the user invests effort (navigating into a form, filling
+fields, opening a flow), block there — the user must never enter a flow that is
+already doomed.
+
+- The plan-limit on character creation is knowable on the list page from
+  `authStore.limits` + the loaded list. Block at the "add" entry
+  (`pages/character/index.vue` → `toast.error` + no `navigateTo`), **not** at
+  `build.vue` submit. Submit-time backend rejection stays only as the backstop
+  for what the client genuinely cannot know (e.g. `maxCharacters` including
+  soft-deleted rows).
+- Collection limits (`ItemList`, `AttackList`, `FeaturesTab`,
+  `SpellBookPanel`, `CharacterCampaignsTab`) already follow this — the guard sits
+  on the add action, not on form save.
+
+Corollary: do not "fix" a backend-authoritative failure by adding a speculative
+client guard. If the client cannot reliably know the answer (auth, concurrency,
+soft-deleted totals, races), it stays a post-action backstop via
+`useApiErrorToast().handle()`. Hoisting applies only to genuinely
+client-knowable preconditions.
+
 ### Anti-patterns
 
 - Adding a backend `code → message` lookup dictionary to the frontend instead of preempting the rule.

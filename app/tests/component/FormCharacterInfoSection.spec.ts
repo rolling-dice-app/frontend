@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import AppButton from '~/components/common/AppButton.vue'
-import CharacterInfoSection from '~/components/business/character/form/basic/CharacterInfoSection.vue'
+import CharacterInfoSection from '~/components/business/character-form/basic/CharacterInfoSection.vue'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterFormStateBase, FormClassEntry } from '~/types/business/character-form'
 

@@ -14,13 +14,9 @@
       class="flex flex-col items-center gap-3 py-12 text-center"
     >
       <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
-      <button
-        type="button"
-        class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
-        @click="$emit('retry')"
-      >
+      <CommonAppButton variant="warning" @click="$emit('retry')">
         {{ t('ui.state.retry') }}
-      </button>
+      </CommonAppButton>
     </div>
 
     <template v-else>
@@ -68,7 +64,7 @@
       </p>
 
       <Accordion v-else class="campaigns-accordion flex flex-col gap-2">
-        <BusinessCharacterCampaignsCampaignItem
+        <BusinessCharacterDetailCampaignsCampaignItem
           v-for="entry in entries"
           :key="entry.id"
           :entry="entry"
@@ -77,7 +73,7 @@
         />
       </Accordion>
 
-      <BusinessCharacterCampaignsCampaignFormModal
+      <BusinessCharacterDetailCampaignsCampaignFormModal
         v-model="modalOpen"
         :editing="editing"
         :submitting="submitting"

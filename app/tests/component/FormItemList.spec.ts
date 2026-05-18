@@ -5,7 +5,7 @@ import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import AppButton from '~/components/common/AppButton.vue'
 import AppBadge from '~/components/common/AppBadge.vue'
-import ItemList from '~/components/business/character/form/inventory/ItemList.vue'
+import ItemList from '~/components/business/character-form/inventory/ItemList.vue'
 import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import type { InventoryItemDTO } from '@rolling-dice-app/core'
 

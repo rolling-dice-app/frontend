@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppSelect from '~/components/common/AppSelect.vue'
-import SkillProficiencyGrid from '~/components/business/character/form/basic/SkillProficiencyGrid.vue'
+import SkillProficiencyGrid from '~/components/business/character-form/basic/SkillProficiencyGrid.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
 import { useProficiencyOptions } from '~/composables/ui/useProficiencyOptions'

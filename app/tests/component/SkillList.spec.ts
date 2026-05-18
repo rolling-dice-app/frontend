@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import SkillList from '~/components/business/character/quickview/SkillList.vue'
+import SkillList from '~/components/business/character-detail/quickview/SkillList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
 import { calculateSkillBonuses } from '~/helpers/skill'

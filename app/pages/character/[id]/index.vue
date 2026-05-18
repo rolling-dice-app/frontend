@@ -1,10 +1,10 @@
 <template>
-  <div class="mx-auto max-w-6xl px-4 pb-6">
+  <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <CommonPageHeader :title="character?.name || ''" :show-back="true">
       <template v-if="character" #actions>
         <NuxtLink
           :to="`/character/${id}/update`"
-          class="ml-auto rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          class="ml-auto rounded-sm border border-border bg-surface py-2 w-22 text-center text-content transition-colors hover:bg-canvas-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           {{ t('ui.action.edit') }}
         </NuxtLink>
@@ -42,21 +42,24 @@
           <template #label>
             <span class="text-content">{{ t('character.detail') }}</span>
           </template>
-          <BusinessCharacterDetailTab :character="character" />
+          <BusinessCharacterDetailProfileTab :character="character" />
         </Tab>
         <Tab value="combat">
           <template #label>
             <span class="text-content">{{ t('character.combatQuickView') }}</span>
           </template>
           <ClientOnly>
-            <BusinessCharacterCombatQuickView ref="combatQuickViewRef" :character="character" />
+            <BusinessCharacterDetailCombatQuickView
+              ref="combatQuickViewRef"
+              :character="character"
+            />
           </ClientOnly>
         </Tab>
         <Tab value="spells">
           <template #label>
             <span class="text-content">{{ t('spell.table') }}</span>
           </template>
-          <BusinessCharacterSpellsQuickView />
+          <BusinessCharacterDetailSpellsQuickView />
         </Tab>
         <Tab value="backpack">
           <template #label>
@@ -77,13 +80,9 @@
               class="flex flex-col items-center gap-3 py-12 text-center"
             >
               <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
-              <button
-                type="button"
-                class="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-content hover:bg-bg-elevated"
-                @click="retryInventory"
-              >
+              <CommonAppButton variant="warning" @click="retryInventory">
                 {{ t('ui.state.retry') }}
-              </button>
+              </CommonAppButton>
             </div>
             <BusinessCharacterFormInventoryTab
               v-else
@@ -115,7 +114,7 @@
           <template #label>
             <span class="text-content">{{ t('character.campaign') }}</span>
           </template>
-          <BusinessCharacterCampaignsTab
+          <BusinessCharacterDetailCampaignsTab
             :entries="campaignEntries"
             :total-exp-earned="campaignTotalExp"
             :is-loading="campaignsLoading"
@@ -158,10 +157,10 @@ const combatQuickViewRef = useTemplateRef<{ flushPersist: () => Promise<void> }>
 // Tier 1：主幹 client-only fetch
 // 與 list 頁同步：私有資料不進 SSR HTML / payload，避免 Vercel edge cache
 // 把某使用者的角色細節共享給其他人。
-const { status } = await useAsyncData(
+const { status } = useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
-  { server: false, lazy: false, watch: [() => id] },
+  { server: false, lazy: true, watch: [() => id] },
 )
 
 const character = computed(() => characterStore.getById(id))

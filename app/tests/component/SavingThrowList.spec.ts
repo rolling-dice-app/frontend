@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import SavingThrowList from '~/components/business/character/quickview/SavingThrowList.vue'
+import SavingThrowList from '~/components/business/character-detail/quickview/SavingThrowList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import {
   calculateSavingThrowBonuses,

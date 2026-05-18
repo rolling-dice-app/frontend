@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import BattleCard from '~/components/business/character/quickview/BattleCard.vue'
+import BattleCard from '~/components/business/character-detail/quickview/BattleCard.vue'
 import { formatModifier } from '~/helpers/ability'
 
 beforeEach(() => {

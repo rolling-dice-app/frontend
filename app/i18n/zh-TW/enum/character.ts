@@ -178,6 +178,8 @@ export default {
     linkCopied: '已複製連結',
     copyFailed: '連結複製失敗，請手動複製網址',
     requirePublic: '請先公開角色卡連結',
+    unavailable: '找不到這張角色卡',
+    unavailableHint: '連結可能已失效，或擁有者尚未公開分享',
   },
 
   // 戰役紀錄

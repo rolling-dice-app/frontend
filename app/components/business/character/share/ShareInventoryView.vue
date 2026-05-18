@@ -49,20 +49,82 @@
             :key="item.id"
             class="rounded-lg border border-border-soft bg-surface px-3 py-2"
           >
-            <div class="flex items-baseline justify-between gap-3">
-              <p class="min-w-0 flex-1 truncate text-sm font-semibold text-content">
-                {{ item.name }}
-              </p>
-              <span class="shrink-0 text-xs text-content-muted tabular">
-                ×{{ item.quantity }}
-                <span class="ml-1"
-                  >{{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}</span
-                >
-              </span>
+            <div class="flex items-center gap-2">
+              <div class="min-w-0 flex-1">
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <p class="min-w-0 flex-1 truncate text-sm font-semibold text-content">
+                    {{ item.name }}
+                  </p>
+                  <Icon
+                    v-if="item.isAttuned"
+                    name="star"
+                    class="shrink-0 text-primary"
+                    :size="10"
+                    :aria-label="t('inventory.attuned')"
+                  />
+                  <CommonAppBadge
+                    variant="status"
+                    size="sm"
+                    bg-color="var(--color-surface-3)"
+                    class="shrink-0"
+                  >
+                    <span class="text-content-muted">
+                      {{ t(`inventory.itemType.${item.type}`) }}
+                    </span>
+                  </CommonAppBadge>
+                  <button
+                    v-if="item.description"
+                    type="button"
+                    :aria-expanded="isExpanded(item.id)"
+                    :aria-controls="`share-inv-desc-${item.id}`"
+                    :aria-label="`${
+                      isExpanded(item.id) ? t('ui.action.collapse') : t('ui.action.expand')
+                    } ${item.name}`"
+                    class="flex size-5 shrink-0 items-center justify-center rounded text-content-muted transition-colors duration-150 hover:text-content"
+                    @click="toggleExpand(item.id)"
+                  >
+                    <Icon
+                      name="chevron-down"
+                      :size="12"
+                      class="transition-transform duration-300 ease-in-out"
+                      :class="{ 'rotate-180': isExpanded(item.id) }"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex shrink-0 items-center gap-3 text-xs text-content-muted tabular">
+                <span>×{{ item.quantity }}</span>
+                <span class="hidden xxs:inline">
+                  {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
+                </span>
+                <span class="hidden font-medium text-content xxs:inline">
+                  {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
+                </span>
+              </div>
             </div>
-            <p v-if="item.description" class="mt-1 text-xs whitespace-pre-line text-content-muted">
+
+            <!-- Collapsed description preview -->
+            <p
+              v-if="item.description && !isExpanded(item.id)"
+              class="truncate px-1 pt-1 text-xs text-content-muted"
+            >
               {{ item.description }}
             </p>
+
+            <!-- Description panel -->
+            <div
+              :id="`share-inv-desc-${item.id}`"
+              role="region"
+              class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+              :class="isExpanded(item.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
+            >
+              <div class="overflow-hidden">
+                <p class="whitespace-pre-wrap px-1 pb-1 pt-1 text-xs text-content-muted">
+                  {{ item.description }}
+                </p>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
@@ -99,6 +161,15 @@ const props = defineProps<{
   items: InventoryItemDTO[]
   currency: CharacterCurrencyDTO
 }>()
+
+const expandedIds = ref<Set<string>>(new Set())
+const isExpanded = (id: string): boolean => expandedIds.value.has(id)
+const toggleExpand = (id: string): void => {
+  const next = new Set(expandedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedIds.value = next
+}
 
 const backpackBagItems = computed(() => props.items.filter((item) => item.location === 'backpack'))
 const dimensionalBagItems = computed(() =>

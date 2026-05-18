@@ -52,7 +52,7 @@ export default {
   detachAttunement: '— 解除同調 —',
 
   // 唯讀檢視
-  emptyBag: '此袋無物品',
+  emptyBag: '無物品',
 
   // 金幣
   asset: '資產',

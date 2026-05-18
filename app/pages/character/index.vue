@@ -232,9 +232,9 @@ const authStore = useAuthStore()
 const apiErrorToast = useApiErrorToast()
 // server: false：SSR 階段不拉使用者資料，輸出對所有人一致的 skeleton HTML，
 // 避免 Vercel edge cache 把某使用者的角色列表共享給其他人。
-const { status, refresh } = await useAsyncData('characters', () => characterStore.loadList(), {
+const { status, refresh } = useAsyncData('characters', () => characterStore.loadList(), {
   server: false,
-  lazy: false,
+  lazy: true,
 })
 
 const characters = computed<CharacterListItem[]>(() => characterStore.characters)

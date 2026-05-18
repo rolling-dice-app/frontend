@@ -154,10 +154,10 @@ const combatQuickViewRef = useTemplateRef<{ flushPersist: () => Promise<void> }>
 // Tier 1：主幹 client-only fetch
 // 與 list 頁同步：私有資料不進 SSR HTML / payload，避免 Vercel edge cache
 // 把某使用者的角色細節共享給其他人。
-const { status } = await useAsyncData(
+const { status } = useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
-  { server: false, lazy: false, watch: [() => id] },
+  { server: false, lazy: true, watch: [() => id] },
 )
 
 const character = computed(() => characterStore.getById(id))

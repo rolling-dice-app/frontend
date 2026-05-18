@@ -1,12 +1,12 @@
 <template>
   <div>
-    <CommonPageHeader title="Edit Character" :show-back="true">
+    <CommonPageHeader :title="character?.name || ''" :show-back="true">
       <template #actions>
         <CommonAppButton
           variant="primary"
           :disabled="!canSubmit"
           :loading="isSubmitting"
-          class="min-w-22 whitespace-nowrap"
+          class="min-w-22 whitespace-nowrap ml-auto"
           @click="submit"
         >
           {{ t('ui.action.save') }}

@@ -2,6 +2,7 @@
 export default {
   title: '帳號設定',
   displayName: '暱稱',
+  displayNameLimit: '上限 10 字',
   displayNamePlaceholder: '輸入暱稱',
   avatar: '頭像',
   saveSuccess: '設定已更新',

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SkillList from '~/components/business/character/quickview/SkillList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSkillBonus } from '~/helpers/character'
+import { calculateSkillBonuses } from '~/helpers/skill'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { ProficiencyLevel, SkillKey } from '@rolling-dice-app/core'
 
@@ -10,6 +11,7 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSkillBonus', getSkillBonus)
+  vi.stubGlobal('calculateSkillBonuses', calculateSkillBonuses)
 })
 
 afterEach(() => {
@@ -40,7 +42,7 @@ const mountList = (
       isJackOfAllTrades: params.isJackOfAllTrades ?? false,
     },
     global: {
-      mocks: { formatModifier, getAbilityModifier, getSkillBonus },
+      mocks: { formatModifier, getAbilityModifier, getSkillBonus, calculateSkillBonuses },
     },
   })
 

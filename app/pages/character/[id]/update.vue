@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <template v-if="status === 'idle' || status === 'pending'">
-      <CommonPageHeader title="Edit Character" :show-back="true" />
+      <CommonPageHeader :title="character?.name || ''" :show-back="true" />
       <div
         class="flex min-h-[60dvh] items-center justify-center text-content-muted"
         role="status"
@@ -12,7 +12,7 @@
     </template>
 
     <template v-else-if="status === 'error' || !character">
-      <CommonPageHeader title="Edit Character" :show-back="true" />
+      <CommonPageHeader :title="character?.name || ''" :show-back="true" />
       <CommonNotFound
         :message="t('character.notFound')"
         back-to="/character"

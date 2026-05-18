@@ -97,6 +97,7 @@ export default {
   unnamed: '（未命名）',
   hitBonus: '命中',
   extraBonus: '額外加值',
+  extraHpShort: '額外',
   extraHit: '額外命中',
   damage: '傷害',
   damageRoll: '傷害骰',

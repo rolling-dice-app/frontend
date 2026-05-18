@@ -28,10 +28,9 @@
           />
           <div
             class="absolute right-2.5 top-2.5 rounded-full px-2.5 py-0.5 text-sm font-bold backdrop-blur-sm"
-            :class="{ 'tier-shimmer': isMaxLevel }"
             :style="{ backgroundColor: tierConfig.badgeBg, color: tierConfig.textColor }"
           >
-            Lv.{{ totalLevel }}
+            <span :class="{ 'tier-shimmer': isMaxLevel }">Lv.{{ totalLevel }}</span>
           </div>
         </div>
       </template>

@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 pb-6">
     <!-- Page header -->
-    <CommonPageHeader title="Characters" show-back>
+    <CommonPageHeader :title="t('character.characterListTitle')" show-back>
       <template v-if="status === 'success' && characters.length > 0" #actions>
-        <div class="flex flex-col items-end gap-2 xs:flex-row xs:items-center">
+        <div class="flex justify-end gap-2 w-full">
           <!-- 排序模式 -->
           <Select
             v-model="sortKey"

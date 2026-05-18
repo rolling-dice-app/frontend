@@ -39,6 +39,8 @@ export default {
   alignmentLabel: '陣營',
 
   // 角色實體 / meta
+  characterListTitle: '角色卡列表',
+  buildCharacterTitle: '建立角色卡',
   card: '角色卡',
   info: '角色資訊',
   detail: '角色詳情',

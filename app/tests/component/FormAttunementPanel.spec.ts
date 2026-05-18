@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import AppSelect from '~/components/common/AppSelect.vue'
-import AttunementPanel from '~/components/business/character/form/inventory/AttunementPanel.vue'
+import AttunementPanel from '~/components/business/character-form/inventory/AttunementPanel.vue'
 import type { InventoryItemDTO } from '@rolling-dice-app/core'
 
 const makeItem = (overrides: Partial<InventoryItemDTO> = {}): InventoryItemDTO => ({

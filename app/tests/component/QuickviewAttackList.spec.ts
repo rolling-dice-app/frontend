@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import AttackList from '~/components/business/character/quickview/AttackList.vue'
+import AttackList from '~/components/business/character-detail/quickview/AttackList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { formatDamageSummary, getAttackHit, getHitBonusColorClass } from '~/helpers/combat'
 import type { AttackEntry } from '@rolling-dice-app/core'

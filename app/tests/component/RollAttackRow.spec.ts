@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import RollAttackRow from '~/components/business/character/quickview/RollAttackRow.vue'
+import RollAttackRow from '~/components/business/character-detail/quickview/RollAttackRow.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import type { AttackEntry } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'

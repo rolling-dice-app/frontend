@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import AppButton from '~/components/common/AppButton.vue'
-import CurrencyEditModal from '~/components/business/character/form/inventory/CurrencyEditModal.vue'
+import CurrencyEditModal from '~/components/business/character-form/inventory/CurrencyEditModal.vue'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
 

@@ -32,7 +32,7 @@
 
       <div class="grid gap-4 md:grid-cols-2">
         <div class="flex flex-col gap-4">
-          <BusinessCharacterQuickviewHpCard
+          <BusinessCharacterDetailQuickviewHpCard
             :current-hp="displayCurrentHp"
             :max-hp="effectiveMaxHp"
             :max-adjustment="state.hp.maxAdjustment"
@@ -43,12 +43,12 @@
             @adjust-max="adjustMaxHp"
           />
           <div class="grid items-start gap-4 sm:grid-cols-2">
-            <BusinessCharacterQuickviewHitDiceCard
+            <BusinessCharacterDetailQuickviewHitDiceCard
               :classes="character.classes"
               :hit-dice-used="state.hitDiceUsed"
               @adjust="adjustHitDiceUsed"
             />
-            <BusinessCharacterQuickviewDeathSavesCard
+            <BusinessCharacterDetailQuickviewDeathSavesCard
               :active="displayCurrentHp === 0"
               :successes="state.deathSaves.successes"
               :failures="state.deathSaves.failures"
@@ -58,7 +58,7 @@
             />
           </div>
         </div>
-        <BusinessCharacterQuickviewBattleCard
+        <BusinessCharacterDetailQuickviewBattleCard
           :base-armor-class="totalArmorClass"
           :ac-adjustment="state.acAdjustment"
           :base-speed="totalSpeed"
@@ -73,7 +73,7 @@
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <BusinessCharacterQuickviewSavingThrowList
+        <BusinessCharacterDetailQuickviewSavingThrowList
           :ability-scores="totalAbilityScores"
           :proficiency-bonus="proficiencyBonus"
           :proficiencies="savingThrowProficiencies"
@@ -82,7 +82,7 @@
           :custom-spellcasting-bonuses="character.customSpellcastingBonuses"
           @adjust="adjustSavingThrow"
         />
-        <BusinessCharacterQuickviewSkillList
+        <BusinessCharacterDetailQuickviewSkillList
           :ability-scores="totalAbilityScores"
           :proficiency-bonus="proficiencyBonus"
           :skills="character.skills"
@@ -91,14 +91,14 @@
       </div>
 
       <div class="grid items-start gap-4 md:grid-cols-2">
-        <BusinessCharacterQuickviewFeatureList
+        <BusinessCharacterDetailQuickviewFeatureList
           :features="character.features"
           :feature-uses-spent="state.featureUsesSpent"
           @adjust="adjustFeatureUseSpent"
         />
 
         <div class="flex flex-col gap-4">
-          <BusinessCharacterQuickviewSpellSlotsCard
+          <BusinessCharacterDetailQuickviewSpellSlotsCard
             v-if="hasAnySlot"
             :spell-slots-base="spellSlotsBase"
             :spell-slots-used="state.spellSlotsUsed"
@@ -108,7 +108,7 @@
             @adjust-pact="adjustPactSlotUsed"
           />
 
-          <BusinessCharacterQuickviewAttackList
+          <BusinessCharacterDetailQuickviewAttackList
             :attacks="character.attacks"
             :ability-scores="totalAbilityScores"
             :proficiency-bonus="proficiencyBonus"
@@ -116,7 +116,7 @@
         </div>
       </div>
 
-      <BusinessCharacterQuickviewRollDrawer
+      <BusinessCharacterDetailQuickviewRollDrawer
         :character="character"
         :ability-scores="totalAbilityScores"
         :proficiency-bonus="proficiencyBonus"

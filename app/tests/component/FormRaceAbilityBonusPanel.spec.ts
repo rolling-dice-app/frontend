@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
-import RaceAbilityBonusPanel from '~/components/business/character/form/basic/RaceAbilityBonusPanel.vue'
+import RaceAbilityBonusPanel from '~/components/business/character-form/basic/RaceAbilityBonusPanel.vue'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterFormState } from '~/types/business/character-form'
 

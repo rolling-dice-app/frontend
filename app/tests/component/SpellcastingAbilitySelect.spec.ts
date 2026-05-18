@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
 import AppSelect from '~/components/common/AppSelect.vue'
-import SpellcastingAbilitySelect from '~/components/business/character/form/spells/SpellcastingAbilitySelect.vue'
+import SpellcastingAbilitySelect from '~/components/business/character-form/spells/SpellcastingAbilitySelect.vue'
 import { t } from '~/i18n'
 import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
 

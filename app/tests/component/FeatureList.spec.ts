@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import FeatureList from '~/components/business/character/quickview/FeatureList.vue'
+import FeatureList from '~/components/business/character-detail/quickview/FeatureList.vue'
 import type { CharacterFeature } from '@rolling-dice-app/core'
 
 const AccordionStub = {

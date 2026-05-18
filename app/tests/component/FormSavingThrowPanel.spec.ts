@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import SavingThrowPanel from '~/components/business/character/form/combat/SavingThrowPanel.vue'
+import SavingThrowPanel from '~/components/business/character-form/combat/SavingThrowPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus } from '~/helpers/character'
 import type { ClassEntry } from '@rolling-dice-app/core'

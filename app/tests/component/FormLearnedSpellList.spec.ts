@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useId } from 'vue'
-import LearnedSpellList from '~/components/business/character/form/spells/LearnedSpellList.vue'
+import LearnedSpellList from '~/components/business/character-form/spells/LearnedSpellList.vue'
 import { formatSpellLevel, groupSpellsByLevel } from '~/helpers/spell'
 import type { SpellDTO } from '@rolling-dice-app/core'
 import type { SpellFormEntry } from '~/types/business/character-form'

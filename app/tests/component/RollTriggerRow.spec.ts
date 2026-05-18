@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import RollTriggerRow from '~/components/business/character/quickview/RollTriggerRow.vue'
+import RollTriggerRow from '~/components/business/character-detail/quickview/RollTriggerRow.vue'
 import { formatModifier } from '~/helpers/ability'
 
 beforeEach(() => {

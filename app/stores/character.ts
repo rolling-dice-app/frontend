@@ -46,11 +46,18 @@ export const useCharacterStore = defineStore('character', () => {
 
   const listLoading = ref(false)
   const listError = ref<unknown>(null)
+  const listLoaded = ref(false)
 
   const detailLoading = ref(false)
   const detailError = ref<unknown>(null)
 
   const characterList = computed<CharacterListItem[]>(() => list.value)
+
+  // 角色數是否達方案上限；limits 來自 /auth/me，未就緒時不視為達上限（交由 build 送出時 backend backstop）。
+  const isAtCharacterLimit = computed(() => {
+    const limits = useAuthStore().limits
+    return limits != null && list.value.length >= limits.maxActiveCharacters
+  })
 
   const loadList = async (): Promise<CharacterListItem[]> => {
     listLoading.value = true
@@ -58,6 +65,7 @@ export const useCharacterStore = defineStore('character', () => {
     try {
       const items = await characters().list()
       list.value = items
+      listLoaded.value = true
       return items
     } catch (error) {
       listError.value = error
@@ -65,6 +73,12 @@ export const useCharacterStore = defineStore('character', () => {
     } finally {
       listLoading.value = false
     }
+  }
+
+  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
+  const ensureListLoaded = async (): Promise<void> => {
+    if (listLoaded.value) return
+    await loadList()
   }
 
   const loadDetail = async (id: string): Promise<CharacterDTO> => {
@@ -134,13 +148,16 @@ export const useCharacterStore = defineStore('character', () => {
 
   return {
     characters: characterList,
+    isAtCharacterLimit,
     list,
     detailCache,
     listLoading,
     listError,
+    listLoaded,
     detailLoading,
     detailError,
     loadList,
+    ensureListLoaded,
     loadDetail,
     createCharacter,
     getById,

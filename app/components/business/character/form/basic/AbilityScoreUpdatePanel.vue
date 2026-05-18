@@ -27,11 +27,11 @@
         :key="key"
         class="flex items-center justify-between gap-1 py-1"
       >
-        <label :for="`ability-${key}`" class="w-20 text-xs text-content truncate">
+        <span :id="`ability-${key}-label`" class="w-20 text-xs text-content truncate">
           {{ t(`ability.${key}`) }}（{{
             formatModifier(getAbilityModifier(getTotalScore(formState.abilities[key])))
           }}）
-        </label>
+        </span>
 
         <!-- origin (read-only) -->
         <span class="w-10 text-center font-mono text-sm text-content-muted">
@@ -44,7 +44,7 @@
         </span>
 
         <!-- bonusScore (editable stepper) -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1" role="group" :aria-labelledby="`ability-${key}-label`">
           <button
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"

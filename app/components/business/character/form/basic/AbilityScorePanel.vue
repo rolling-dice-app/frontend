@@ -48,9 +48,13 @@
     <!-- Ability grid -->
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
       <div v-for="key in ABILITY_KEYS" :key="key" class="space-y-1">
-        <label :for="`ability-${key}`" class="block text-xs text-content">
-          {{ t(`ability.${key}`)
-          }}<template v-if="!isDiceMode || diceCells[key].selectedId">
+        <label
+          :id="`ability-${key}-label`"
+          :for="isDiceMode ? `ability-${key}` : undefined"
+          class="block text-xs text-content"
+        >
+          {{ t(`ability.${key}`) }}
+          <template v-if="!isDiceMode || diceCells[key].selectedId">
             （{{
               formatModifier(getAbilityModifier(abilities[key].origin + abilities[key].race))
             }}）
@@ -58,7 +62,12 @@
         </label>
 
         <!-- Stepper (custom) -->
-        <div v-if="!isDiceMode" class="flex items-center gap-1 py-0.5">
+        <div
+          v-if="!isDiceMode"
+          class="flex items-center gap-1 py-0.5"
+          role="group"
+          :aria-labelledby="`ability-${key}-label`"
+        >
           <button
             type="button"
             class="flex items-center justify-center size-6 transition-colors hover:bg-surface-hover disabled:opacity-30"

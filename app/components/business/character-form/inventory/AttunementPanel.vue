@@ -12,6 +12,7 @@
           :model-value="attunedItems[slot - 1]?.id ?? null"
           :options="optionsForSlot(slot - 1)"
           :placeholder="t('inventory.notAttuned')"
+          :disabled="isSlotPending(slot - 1)"
           searchable
           class="w-full"
           @update:model-value="(v: string | number | null) => onChange(slot - 1, v)"
@@ -30,18 +31,28 @@ import type { InventoryItemDTO, ItemType } from '@rolling-dice-app/core'
 
 const { t, messages } = useI18n()
 
-const props = defineProps<{
-  allItems: InventoryItemDTO[]
-  attunedItems: InventoryItemDTO[]
-  /** 同調上限；由 useCharacterInventoryStore 的 attunedCap getter（呼叫 core computeAttunedLimit）取得 */
-  cap: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    allItems: InventoryItemDTO[]
+    attunedItems: InventoryItemDTO[]
+    /** 同調上限；由 useCharacterInventoryStore 的 attunedCap getter（呼叫 core computeAttunedLimit）取得 */
+    cap: number
+    /** patch in-flight 的 item id；slot 目前同調 item 在此集合內時鎖該 slot，防樂觀鎖 conflict */
+    pendingItemIds?: Set<string>
+  }>(),
+  { pendingItemIds: () => new Set() },
+)
 
 const emit = defineEmits<{
   update: [slotIndex: number, itemId: string | null]
 }>()
 
 const attunedCount = computed(() => props.attunedItems.length)
+
+const isSlotPending = (slotIndex: number): boolean => {
+  const current = props.attunedItems[slotIndex]
+  return current ? props.pendingItemIds.has(current.id) : false
+}
 
 const optionsForSlot = (slotIndex: number): SelectItem[] => {
   const occupiedByOthers = new Set(

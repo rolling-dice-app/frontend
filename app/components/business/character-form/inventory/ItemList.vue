@@ -40,7 +40,7 @@
         <li
           v-for="item in items"
           :key="item.id"
-          draggable="true"
+          :draggable="!props.pendingItemIds.has(item.id)"
           class="cursor-grab px-3 py-2 active:cursor-grabbing"
           @dragstart="onDragStart($event, item.id)"
           @dragend="$emit('drag-end')"
@@ -89,7 +89,8 @@
                   <button
                     type="button"
                     :aria-label="`${t('inventory.moveTo')}：${item.name}`"
-                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                    :disabled="props.pendingItemIds.has(item.id)"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-content-muted"
                     @click.stop="$emit('move-item', item.id)"
                   >
                     <Icon name="arrow-left-right" class="rotate-90 md:rotate-0" :size="12" />
@@ -97,7 +98,8 @@
                   <button
                     type="button"
                     :aria-label="`${t('ui.action.edit')} ${item.name}`"
-                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                    :disabled="props.pendingItemIds.has(item.id)"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-content-muted"
                     @click.stop="openEdit(item)"
                   >
                     <Icon name="edit" :size="14" />
@@ -283,12 +285,17 @@ import type { InventoryItemDraft } from '~/types/business/character-form'
 const { t, messages } = useI18n()
 const toast = useToast()
 
-const props = defineProps<{
-  items: InventoryItemDTO[]
-  totalItemCount: number
-  section: InventoryLocation
-  title: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    items: InventoryItemDTO[]
+    totalItemCount: number
+    section: InventoryLocation
+    title: string
+    /** patch in-flight 的 item id；該 item 的 move / edit / 拖曳於期間封鎖以防樂觀鎖 conflict */
+    pendingItemIds?: Set<string>
+  }>(),
+  { pendingItemIds: () => new Set() },
+)
 
 const emit = defineEmits<{
   add: [draft: InventoryItemDraft]
@@ -327,6 +334,10 @@ const isDragOver = ref(false)
 const dragEnterCount = ref(0)
 
 const onDragStart = (event: DragEvent, id: string): void => {
+  if (props.pendingItemIds.has(id)) {
+    event.preventDefault()
+    return
+  }
   event.dataTransfer?.setData('application/json', JSON.stringify({ id, section: props.section }))
 }
 

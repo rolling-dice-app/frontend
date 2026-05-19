@@ -77,6 +77,7 @@ const mountList = (
     totalItemCount?: number
     section?: 'backpack' | 'dimensionalBag'
     title?: string
+    pendingItemIds?: Set<string>
   } = {},
 ) =>
   mount(ItemList, {
@@ -85,6 +86,7 @@ const mountList = (
       totalItemCount: params.totalItemCount ?? params.items?.length ?? 0,
       section: params.section ?? 'backpack',
       title: params.title ?? '背包',
+      pendingItemIds: params.pendingItemIds ?? new Set<string>(),
     },
     global: {
       stubs: {
@@ -208,6 +210,41 @@ describe('ItemList (form)', () => {
         .find((b) => b.attributes('aria-label') === '編輯 長劍')!
       await edit.trigger('click')
       expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+    })
+  })
+
+  describe('pending 守衛', () => {
+    const btnByLabel = (wrapper: ReturnType<typeof mountList>, label: string) =>
+      wrapper.findAll('button').find((b) => b.attributes('aria-label') === label)!
+
+    it('pendingItemIds 含 item.id：move / edit 按鈕 disabled、<li> 不可拖曳', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['a']),
+      })
+      expect(btnByLabel(wrapper, '移至另一袋：長劍').attributes('disabled')).toBeDefined()
+      expect(btnByLabel(wrapper, '編輯 長劍').attributes('disabled')).toBeDefined()
+      // 刪除不鎖（removeItem 不走 patchItem）
+      expect(btnByLabel(wrapper, '刪除 長劍').attributes('disabled')).toBeUndefined()
+      expect(wrapper.findAll('ul > li')[1]!.attributes('draggable')).toBe('false')
+    })
+
+    it('disabled move 按鈕點擊不 emit move-item', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['a']),
+      })
+      await btnByLabel(wrapper, '移至另一袋：長劍').trigger('click')
+      expect(wrapper.emitted('move-item')).toBeUndefined()
+    })
+
+    it('pendingItemIds 不含該 id：按鈕正常可用、可拖曳', () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['other']),
+      })
+      expect(btnByLabel(wrapper, '移至另一袋：長劍').attributes('disabled')).toBeUndefined()
+      expect(wrapper.findAll('ul > li')[1]!.attributes('draggable')).toBe('true')
     })
   })
 

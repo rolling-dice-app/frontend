@@ -19,13 +19,19 @@ const makeItem = (overrides: Partial<InventoryItemDTO> = {}): InventoryItemDTO =
 })
 
 const mountPanel = (
-  params: { allItems?: InventoryItemDTO[]; attunedItems?: InventoryItemDTO[]; cap?: number } = {},
+  params: {
+    allItems?: InventoryItemDTO[]
+    attunedItems?: InventoryItemDTO[]
+    cap?: number
+    pendingItemIds?: Set<string>
+  } = {},
 ) =>
   mount(AttunementPanel, {
     props: {
       allItems: params.allItems ?? [],
       attunedItems: params.attunedItems ?? [],
       cap: params.cap ?? 3,
+      pendingItemIds: params.pendingItemIds ?? new Set<string>(),
     },
     global: {
       components: { CommonAppSelect: AppSelect },
@@ -67,6 +73,30 @@ describe('AttunementPanel (form)', () => {
       const slot1 = wrapper.findComponent({ name: 'Select' })
       slot1.vm.$emit('update:modelValue', null)
       expect(wrapper.emitted('update')?.at(-1)).toEqual([0, null])
+    })
+  })
+
+  describe('pending 守衛', () => {
+    it('slot 目前同調 item 在 pendingItemIds 內 → 該 slot select disabled，其他 slot 不受影響', () => {
+      const ring = makeItem({ id: 'ring', name: '魔法戒指' })
+      const wrapper = mountPanel({
+        allItems: [ring],
+        attunedItems: [ring],
+        pendingItemIds: new Set(['ring']),
+      })
+      const slots = wrapper.findAllComponents({ name: 'Select' })
+      expect(slots[0]!.props('disabled')).toBe(true)
+      expect(slots[1]!.props('disabled')).toBe(false)
+    })
+
+    it('pendingItemIds 不含同調 item → select 不 disabled', () => {
+      const ring = makeItem({ id: 'ring', name: '魔法戒指' })
+      const wrapper = mountPanel({
+        allItems: [ring],
+        attunedItems: [ring],
+        pendingItemIds: new Set(['other']),
+      })
+      expect(wrapper.findAllComponents({ name: 'Select' })[0]!.props('disabled')).toBe(false)
     })
   })
 

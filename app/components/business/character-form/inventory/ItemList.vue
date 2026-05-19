@@ -44,13 +44,14 @@
           class="cursor-grab px-3 py-2 active:cursor-grabbing"
           @dragstart="onDragStart($event, item.id)"
           @dragend="$emit('drag-end')"
+          @click="item.description && toggleExpand(item.id)"
         >
           <div class="flex items-center gap-2">
             <!-- Drag handle -->
             <Icon name="list" :size="14" class="shrink-0 text-content-muted" />
 
-            <!-- Name -->
             <div class="min-w-0 flex-1">
+              <!-- Name -->
               <div class="flex min-w-0 items-center gap-1.5">
                 <p class="min-w-0 flex-1 truncate text-sm text-content">{{ item.name }}</p>
                 <Icon
@@ -68,75 +69,71 @@
                 >
                   <span class="text-content-muted">{{ t(`inventory.itemType.${item.type}`) }}</span>
                 </CommonAppBadge>
-                <button
-                  v-if="item.description"
-                  type="button"
-                  :aria-expanded="isExpanded(item.id)"
-                  :aria-controls="`inv-item-desc-${item.id}`"
-                  :aria-label="`${
-                    isExpanded(item.id) ? t('ui.action.collapse') : t('ui.action.expand')
-                  } ${item.name}`"
-                  class="flex size-5 shrink-0 items-center justify-center rounded text-content-muted transition-colors duration-150 hover:text-content"
-                  @click="toggleExpand(item.id)"
-                >
-                  <Icon
-                    name="chevron-down"
-                    :size="12"
-                    class="transition-transform duration-300 ease-in-out"
-                    :class="{ 'rotate-180': isExpanded(item.id) }"
-                  />
-                </button>
+              </div>
+
+              <div class="mt-1 flex items-center justify-between gap-3">
+                <!-- Stats -->
+                <div class="flex items-center gap-3 text-xs text-content-muted">
+                  <span>×{{ item.quantity }}</span>
+                  <span class="hidden xxs:inline">
+                    {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
+                  </span>
+                  <span class="font-medium text-content hidden xxs:inline">
+                    {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
+                  </span>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex shrink-0 gap-1">
+                  <!-- Move button (always visible for mobile convenience) -->
+                  <button
+                    type="button"
+                    :aria-label="`${t('inventory.moveTo')}：${item.name}`"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                    @click.stop="$emit('move-item', item.id)"
+                  >
+                    <Icon name="arrow-left-right" class="rotate-90 md:rotate-0" :size="12" />
+                  </button>
+                  <button
+                    type="button"
+                    :aria-label="`${t('ui.action.edit')} ${item.name}`"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+                    @click.stop="openEdit(item)"
+                  >
+                    <Icon name="edit" :size="14" />
+                  </button>
+                  <button
+                    type="button"
+                    :aria-label="`${t('ui.action.delete')} ${item.name}`"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
+                    @click.stop="$emit('remove', item.id)"
+                  >
+                    <Icon name="trash" :size="14" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- Stats -->
-            <div class="flex shrink-0 items-center gap-3 text-xs text-content-muted">
-              <span>×{{ item.quantity }}</span>
-              <span class="hidden xxs:inline">
-                {{ formatWeight(item.weight) }} {{ t('inventory.unitWeight') }}
-              </span>
-              <span class="font-medium text-content hidden xxs:inline">
-                {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
-              </span>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex shrink-0 items-center gap-1">
-              <!-- Move button (always visible for mobile convenience) -->
-              <button
-                type="button"
-                :aria-label="`${t('inventory.moveTo')}：${item.name}`"
-                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
-                @click="$emit('move-item', item.id)"
-              >
-                <Icon name="arrow-left-right" class="rotate-90 md:rotate-0" :size="12" />
-              </button>
-              <button
-                type="button"
-                :aria-label="`${t('ui.action.edit')} ${item.name}`"
-                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
-                @click="openEdit(item)"
-              >
-                <Icon name="edit" :size="14" />
-              </button>
-              <button
-                type="button"
-                :aria-label="`${t('ui.action.delete')} ${item.name}`"
-                class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
-                @click="$emit('remove', item.id)"
-              >
-                <Icon name="trash" :size="14" />
-              </button>
-            </div>
+            <!-- Expand toggle (far right, vertically centered) -->
+            <button
+              v-if="item.description"
+              type="button"
+              :aria-expanded="isExpanded(item.id)"
+              :aria-controls="`inv-item-desc-${item.id}`"
+              :aria-label="`${
+                isExpanded(item.id) ? t('ui.action.collapse') : t('ui.action.expand')
+              } ${item.name}`"
+              class="flex size-7 shrink-0 items-center justify-center rounded text-content-muted transition-colors duration-150 hover:text-content"
+              @click.stop="toggleExpand(item.id)"
+            >
+              <Icon
+                name="chevron-down"
+                :size="14"
+                class="transition-transform duration-300 ease-in-out"
+                :class="{ 'rotate-180': isExpanded(item.id) }"
+              />
+            </button>
           </div>
-
-          <!-- Collapsed description preview -->
-          <p
-            v-if="item.description && !isExpanded(item.id)"
-            class="truncate px-6 pt-1 text-xs text-content-muted"
-          >
-            {{ item.description }}
-          </p>
 
           <!-- Description panel -->
           <div

@@ -172,6 +172,45 @@ describe('ItemList (form)', () => {
     })
   })
 
+  describe('展開/收合', () => {
+    const itemRow = (wrapper: ReturnType<typeof mountList>) => wrapper.findAll('ul > li')[1]! // index 0 為新增按鈕列
+    const chevron = (wrapper: ReturnType<typeof mountList>) =>
+      wrapper.findAll('button').find((b) => b.attributes('aria-expanded') !== undefined)
+
+    it('有 description：點整列展開、再點 chevron 收合（chevron @click.stop 不重複 toggle）', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: '一把鋒利的劍' })],
+      })
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+
+      await itemRow(wrapper).trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('true')
+
+      await chevron(wrapper)!.trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+    })
+
+    it('無 description：不渲染 chevron，點整列不展開', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: null })],
+      })
+      expect(chevron(wrapper)).toBeUndefined()
+      await itemRow(wrapper).trigger('click')
+      expect(chevron(wrapper)).toBeUndefined()
+    })
+
+    it('點 action 按鈕不會冒泡觸發展開', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: '一把鋒利的劍' })],
+      })
+      const edit = wrapper
+        .findAll('button')
+        .find((b) => b.attributes('aria-label') === '編輯 長劍')!
+      await edit.trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+    })
+  })
+
   describe('Modal 開合', () => {
     it('預設關閉', () => {
       const wrapper = mountList()

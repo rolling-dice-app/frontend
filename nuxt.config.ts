@@ -16,6 +16,7 @@ export default defineNuxtConfig({
   app: {
     baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
     head: {
+      htmlAttrs: { lang: 'zh-TW' },
       link: [
         {
           rel: 'icon',
@@ -23,8 +24,6 @@ export default defineNuxtConfig({
           href: `${process.env.NUXT_APP_BASE_URL ?? '/'}dice-20.png`,
         },
       ],
-      title: 'Rolling Dice',
-      titleTemplate: '%s | Rolling Dice',
     },
   },
 

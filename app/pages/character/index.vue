@@ -292,7 +292,7 @@ import { Icon, Modal, Select } from '@ui'
 import type { SelectOption } from '@ui'
 import type { CharacterListItem } from '~/types/business/character-list'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'auth', noindex: true })
 
 const { t } = useI18n()
 const toast = useToast()

@@ -77,6 +77,7 @@ const mountList = (
     totalItemCount?: number
     section?: 'backpack' | 'dimensionalBag'
     title?: string
+    pendingItemIds?: Set<string>
   } = {},
 ) =>
   mount(ItemList, {
@@ -85,6 +86,7 @@ const mountList = (
       totalItemCount: params.totalItemCount ?? params.items?.length ?? 0,
       section: params.section ?? 'backpack',
       title: params.title ?? '背包',
+      pendingItemIds: params.pendingItemIds ?? new Set<string>(),
     },
     global: {
       stubs: {
@@ -169,6 +171,80 @@ describe('ItemList (form)', () => {
         .find((b) => b.attributes('aria-label') === '移至另一袋：長劍')!
       await moveBtn.trigger('click')
       expect(wrapper.emitted('move-item')).toEqual([['a']])
+    })
+  })
+
+  describe('展開/收合', () => {
+    const itemRow = (wrapper: ReturnType<typeof mountList>) => wrapper.findAll('ul > li')[1]! // index 0 為新增按鈕列
+    const chevron = (wrapper: ReturnType<typeof mountList>) =>
+      wrapper.findAll('button').find((b) => b.attributes('aria-expanded') !== undefined)
+
+    it('有 description：點整列展開、再點 chevron 收合（chevron @click.stop 不重複 toggle）', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: '一把鋒利的劍' })],
+      })
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+
+      await itemRow(wrapper).trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('true')
+
+      await chevron(wrapper)!.trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+    })
+
+    it('無 description：不渲染 chevron，點整列不展開', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: null })],
+      })
+      expect(chevron(wrapper)).toBeUndefined()
+      await itemRow(wrapper).trigger('click')
+      expect(chevron(wrapper)).toBeUndefined()
+    })
+
+    it('點 action 按鈕不會冒泡觸發展開', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍', description: '一把鋒利的劍' })],
+      })
+      const edit = wrapper
+        .findAll('button')
+        .find((b) => b.attributes('aria-label') === '編輯 長劍')!
+      await edit.trigger('click')
+      expect(chevron(wrapper)!.attributes('aria-expanded')).toBe('false')
+    })
+  })
+
+  describe('pending 守衛', () => {
+    const btnByLabel = (wrapper: ReturnType<typeof mountList>, label: string) =>
+      wrapper.findAll('button').find((b) => b.attributes('aria-label') === label)!
+
+    it('pendingItemIds 含 item.id：move / edit 按鈕 disabled、<li> 不可拖曳', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['a']),
+      })
+      expect(btnByLabel(wrapper, '移至另一袋：長劍').attributes('disabled')).toBeDefined()
+      expect(btnByLabel(wrapper, '編輯 長劍').attributes('disabled')).toBeDefined()
+      // 刪除不鎖（removeItem 不走 patchItem）
+      expect(btnByLabel(wrapper, '刪除 長劍').attributes('disabled')).toBeUndefined()
+      expect(wrapper.findAll('ul > li')[1]!.attributes('draggable')).toBe('false')
+    })
+
+    it('disabled move 按鈕點擊不 emit move-item', async () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['a']),
+      })
+      await btnByLabel(wrapper, '移至另一袋：長劍').trigger('click')
+      expect(wrapper.emitted('move-item')).toBeUndefined()
+    })
+
+    it('pendingItemIds 不含該 id：按鈕正常可用、可拖曳', () => {
+      const wrapper = mountList({
+        items: [makeItem({ id: 'a', name: '長劍' })],
+        pendingItemIds: new Set(['other']),
+      })
+      expect(btnByLabel(wrapper, '移至另一袋：長劍').attributes('disabled')).toBeUndefined()
+      expect(wrapper.findAll('ul > li')[1]!.attributes('draggable')).toBe('true')
     })
   })
 

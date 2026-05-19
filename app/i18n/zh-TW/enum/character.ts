@@ -163,6 +163,25 @@ export default {
   enterDeleteMode: '進入刪除模式',
   leaveDeleteMode: '離開刪除模式',
 
+  // 分享
+  share: {
+    pageTitle: '角色卡分享',
+    sharedBy: '分享者',
+    totalLevel: '總等級',
+    menuLabel: '分享選項',
+    copyLink: '複製連結',
+    openPage: '開啟分享頁',
+    enablePublic: '公開角色卡連結',
+    disablePublic: '關閉角色卡連結',
+    enabledToast: '已公開連結',
+    disabledToast: '已關閉連結',
+    linkCopied: '已複製連結',
+    copyFailed: '連結複製失敗，請手動複製網址',
+    requirePublic: '請先公開角色卡連結',
+    unavailable: '找不到這張角色卡',
+    unavailableHint: '連結可能已失效，或擁有者尚未公開分享',
+  },
+
   // 戰役紀錄
   emptyCampaignHint: '一場偉大的冒險，往往從踏出第一步開始',
   addCampaignRecord: '新增戰役紀錄',

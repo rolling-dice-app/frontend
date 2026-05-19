@@ -52,6 +52,16 @@
       </div>
     </NuxtLink>
 
+    <!-- Share menu：與刪除模式互斥，刪除模式時隱藏 -->
+    <BusinessCharacterListShareMenu
+      v-if="!isDeleteMode"
+      class="shrink-0"
+      :character="character"
+      @copy-link="$emit('copy-link', $event)"
+      @open-page="$emit('open-page', $event)"
+      @toggle-share="$emit('toggle-share', $event)"
+    />
+
     <!-- Delete button -->
     <button
       v-if="isDeleteMode"
@@ -79,6 +89,9 @@ const props = defineProps<{
 
 defineEmits<{
   delete: [CharacterListItem]
+  'copy-link': [CharacterListItem]
+  'open-page': [CharacterListItem]
+  'toggle-share': [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

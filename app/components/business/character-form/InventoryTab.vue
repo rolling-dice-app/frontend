@@ -10,6 +10,7 @@
         :all-items="allItems"
         :attuned-items="attunedItems"
         :cap="attunedCap"
+        :pending-item-ids="pendingItemIds"
         @update="(slotIndex, itemId) => $emit('update-attunement', slotIndex, itemId)"
       />
     </div>
@@ -21,6 +22,7 @@
         :total-item-count="allItems.length"
         section="backpack"
         :title="t('inventory.backpack')"
+        :pending-item-ids="pendingItemIds"
         @add="$emit('add-item', $event)"
         @remove="$emit('remove-item', $event)"
         @update="(id, draft) => $emit('update-item', id, draft)"
@@ -31,6 +33,7 @@
         :total-item-count="allItems.length"
         section="dimensionalBag"
         :title="t('inventory.dimensionalBag')"
+        :pending-item-ids="pendingItemIds"
         @add="$emit('add-item', $event)"
         @remove="$emit('remove-item', $event)"
         @update="(id, draft) => $emit('update-item', id, draft)"
@@ -55,12 +58,15 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { Icon } from '@ui'
 import { formatWeight } from '~/helpers/inventory'
 import type { CharacterCurrencyDTO, InventoryItemDTO } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
 const { t } = useI18n()
+
+const { pendingItemIds } = storeToRefs(useCharacterInventoryStore())
 
 const props = defineProps<{
   backpackItems: InventoryItemDTO[]

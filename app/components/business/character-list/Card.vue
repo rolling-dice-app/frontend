@@ -65,15 +65,24 @@
             </span>
           </div>
         </div>
-        <button
-          v-if="isDeleteMode"
-          type="button"
-          :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-          class="size-11 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-content-inverse"
-          @click.prevent="$emit('delete', character)"
-        >
-          <Icon name="close" :size="20" />
-        </button>
+        <div class="flex shrink-0 items-center gap-2">
+          <BusinessCharacterListShareMenu
+            v-if="!isDeleteMode"
+            :character="character"
+            @copy-link="$emit('copy-link', $event)"
+            @open-page="$emit('open-page', $event)"
+            @toggle-share="$emit('toggle-share', $event)"
+          />
+          <button
+            v-if="isDeleteMode"
+            type="button"
+            :aria-label="`${t('character.deleteLabel')} ${character.name}`"
+            class="size-11 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-content-inverse"
+            @click.prevent.stop="$emit('delete', character)"
+          >
+            <Icon name="close" :size="20" />
+          </button>
+        </div>
       </div>
     </Card>
   </NuxtLink>
@@ -94,6 +103,9 @@ const props = defineProps<{
 
 defineEmits<{
   delete: [CharacterListItem]
+  'copy-link': [CharacterListItem]
+  'open-page': [CharacterListItem]
+  'toggle-share': [CharacterListItem]
 }>()
 
 const TIER_CONFIG: Record<

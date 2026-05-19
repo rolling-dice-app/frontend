@@ -38,6 +38,8 @@ const characterToListItem = (character: CharacterDTO): CharacterListItem => ({
   avatar: character.avatar,
   updatedAt: character.updatedAt,
   race: character.race,
+  shareable: character.shareable,
+  shareId: character.shareId,
 })
 
 export const useCharacterStore = defineStore('character', () => {
@@ -140,6 +142,21 @@ export const useCharacterStore = defineStore('character', () => {
     }
   }
 
+  /** 切換公開分享；樂觀更新列表與 detailCache，失敗回滾。 */
+  const setCharacterShareable = async (id: string, shareable: boolean): Promise<void> => {
+    const item = list.value.find((c) => c.id === id)
+    const prev = item?.shareable
+    if (item) item.shareable = shareable
+    try {
+      await characters().share(id, shareable)
+      const cached = detailCache.value.get(id)
+      if (cached) cached.shareable = shareable
+    } catch (error) {
+      if (item && prev !== undefined) item.shareable = prev
+      throw error
+    }
+  }
+
   const removeCharacter = async (id: string): Promise<void> => {
     await characters().remove(id)
     detailCache.value.delete(id)
@@ -163,6 +180,7 @@ export const useCharacterStore = defineStore('character', () => {
     getById,
     updateCharacter,
     refreshCharacterAfterAvatar,
+    setCharacterShareable,
     removeCharacter,
   }
 })

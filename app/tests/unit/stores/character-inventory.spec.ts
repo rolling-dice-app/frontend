@@ -157,6 +157,183 @@ describe('character-inventory store — patchItem', () => {
   })
 })
 
+describe('character-inventory store — patchItem in-flight 守衛', () => {
+  const deferredPatch = (): { resolve: () => void } => {
+    const ref: { resolve: () => void } = { resolve: () => {} }
+    mockInventoryPatch.mockImplementation(
+      () =>
+        new Promise<void>((res) => {
+          ref.resolve = () => res()
+        }),
+    )
+    return ref
+  }
+
+  it('patch 進行中 pendingItemIds 含該 id，resolve（含 refetch）後移除', async () => {
+    const item = makeItem({ id: 'i-1' })
+    mockInventoryList.mockResolvedValue([item])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    const gate = deferredPatch()
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    const p = store.patchItem('i-1', { updatedAt: item.updatedAt, quantity: 9 })
+    await Promise.resolve()
+    expect(store.pendingItemIds.has('i-1')).toBe(true)
+
+    gate.resolve()
+    await p
+    expect(store.pendingItemIds.has('i-1')).toBe(false)
+  })
+
+  it('in-flight 期間對同 id 再呼叫 patchItem → 底層 patch 只呼叫一次（重入 no-op，不 throw）', async () => {
+    const item = makeItem({ id: 'i-1' })
+    mockInventoryList.mockResolvedValue([item])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    const gate = deferredPatch()
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    const p1 = store.patchItem('i-1', { updatedAt: item.updatedAt, quantity: 9 })
+    await Promise.resolve()
+    // 重入：應 no-op resolve，不 throw、不再打 API
+    await expect(
+      store.patchItem('i-1', { updatedAt: item.updatedAt, quantity: 8 }),
+    ).resolves.toBeUndefined()
+    expect(mockInventoryPatch).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await p1
+  })
+
+  it('moveItem in-flight 期間再次 moveItem 同 id 被守衛擋下（只送一次 patch）', async () => {
+    const item = makeItem({ id: 'i-1', location: 'backpack' })
+    mockInventoryList.mockResolvedValue([item])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    const gate = deferredPatch()
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    const p1 = store.moveItem('i-1')
+    await Promise.resolve()
+    await store.moveItem('i-1') // 第二次連點：store 尚未 refetch，被 pending 守衛 no-op
+    expect(mockInventoryPatch).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await p1
+    expect(store.pendingItemIds.has('i-1')).toBe(false)
+  })
+
+  it('setAttunement 兩段 patch 完成後 pendingItemIds 清空', async () => {
+    seedCharacterInStore(createMockCharacter({ id: 'char-1' }))
+    const current = makeItem({ id: 'i-current', isAttuned: true })
+    const target = makeItem({ id: 'i-new', isAttuned: false })
+    mockInventoryList.mockResolvedValueOnce([current, target])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+    mockInventoryList.mockResolvedValue([
+      { ...current, isAttuned: false },
+      { ...target, isAttuned: true },
+    ])
+    mockInventoryPatch.mockResolvedValue()
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    await store.setAttunement(0, 'i-new')
+
+    expect(mockInventoryPatch).toHaveBeenCalledTimes(2)
+    expect(store.pendingItemIds.size).toBe(0)
+  })
+})
+
+describe('character-inventory store — refetchItems 序列化（防倒流）', () => {
+  it('飛行中再次 refetch 合併成尾隨一次；最後套用最新回應，舊回應不覆蓋', async () => {
+    mockInventoryList.mockResolvedValueOnce([makeItem({ id: 'i-1', quantity: 1 })])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    // 第一次 run → 舊快照；尾隨 run → 最新快照
+    mockInventoryList
+      .mockResolvedValueOnce([makeItem({ id: 'i-1', quantity: 1 })])
+      .mockResolvedValueOnce([
+        makeItem({ id: 'i-1', quantity: 9, updatedAt: '2026-05-09T00:00:00.000Z' }),
+      ])
+
+    const p1 = store.refetchItems()
+    const p2 = store.refetchItems() // 飛行中 → 合併、不並行
+    await Promise.all([p1, p2])
+
+    expect(store.items[0]?.quantity).toBe(9) // 最新；未被先發後到的舊回應覆蓋
+    // load(1) + 第一次 run(1) + 尾隨 run(1)；p2 未觸發第 4 次
+    expect(mockInventoryList).toHaveBeenCalledTimes(3)
+  })
+
+  it('refetch 飛行期間發生 optimistic patch → 該 GET 回應不覆蓋；尾隨 refetch 對齊 server', async () => {
+    const initial = makeItem({ id: 'i-1', quantity: 1 })
+    mockInventoryList.mockResolvedValueOnce([initial]) // load
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    // GET#1（手動 refetch）卡住，回來時帶舊快照 q=1
+    let releaseGet1: () => void = () => {}
+    mockInventoryList.mockImplementationOnce(
+      () =>
+        new Promise((res) => {
+          releaseGet1 = () => res([makeItem({ id: 'i-1', quantity: 1 })])
+        }),
+    )
+    // 尾隨 GET#2：server truth 已含 patch
+    mockInventoryList.mockResolvedValueOnce([
+      makeItem({ id: 'i-1', quantity: 7, updatedAt: '2026-05-09T00:00:00.000Z' }),
+    ])
+    mockInventoryPatch.mockResolvedValue()
+
+    const pRefetch = store.refetchItems() // GET#1 飛行中，gen 已擷取
+    await Promise.resolve()
+    const pPatch = store.patchItem('i-1', { updatedAt: initial.updatedAt, quantity: 7 })
+    await Promise.resolve()
+    expect(store.items[0]?.quantity).toBe(7) // optimistic 立即生效
+
+    releaseGet1() // 舊 GET#1 回來（q=1）
+    await Promise.all([pRefetch, pPatch])
+
+    expect(store.items[0]?.quantity).toBe(7) // 從未被舊快照蓋回 1
+  })
+
+  it('burst 多次觸發只收斂為一次尾隨 GET', async () => {
+    mockInventoryList.mockResolvedValueOnce([makeItem({ id: 'i-1' })])
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency())
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+    await store.load('char-1')
+
+    mockInventoryList.mockResolvedValue([makeItem({ id: 'i-1', quantity: 2 })])
+    await Promise.all([
+      store.refetchItems(),
+      store.refetchItems(),
+      store.refetchItems(),
+      store.refetchItems(),
+    ])
+
+    // load(1) + 第一次 run(1) + 合併後尾隨(1)；其餘並發呼叫被合併
+    expect(mockInventoryList).toHaveBeenCalledTimes(3)
+  })
+})
+
 describe('character-inventory store — removeItem', () => {
   it('失敗時 refetch server truth 並 rethrow（不能用進入時 snapshot 蓋掉並行 mutation 結果）', async () => {
     const item = makeItem({ id: 'i-1' })

@@ -32,5 +32,7 @@ if (hasError) {
 
 const errorMessage = computed(() => (hasError ? t('ui.message.systemError') : null))
 
+definePageMeta({ noindex: true })
+
 useHead({ title: t('ui.auth.authResult') })
 </script>

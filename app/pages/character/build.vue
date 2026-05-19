@@ -74,7 +74,7 @@ import { Tab, Tabs } from '@ui'
 import { ABILITY_KEYS } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 
-definePageMeta({ middleware: ['auth', 'character-limit'] })
+definePageMeta({ middleware: ['auth', 'character-limit'], noindex: true })
 
 const { t } = useI18n()
 

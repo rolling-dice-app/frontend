@@ -58,8 +58,6 @@ import type { ClassKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
-useHead({ titleTemplate: '%s' })
-
 // ─── Class ring data ──────────────────────────────────────────────────────
 const OUTER_RING_CLASSES: ClassKey[] = [
   'artificer',

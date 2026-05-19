@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'auth', noindex: true })
 
 const maxNicknameLength = VALIDATION_LIMITS.maxNicknameLength
 

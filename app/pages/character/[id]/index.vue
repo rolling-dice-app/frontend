@@ -136,7 +136,7 @@
 import { storeToRefs } from 'pinia'
 import { Tab, Tabs } from '@ui'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'auth', noindex: true })
 
 const { t } = useI18n()
 

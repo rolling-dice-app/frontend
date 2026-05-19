@@ -49,7 +49,15 @@
             :key="item.id"
             class="rounded-lg border border-border-soft bg-surface px-3 py-2"
           >
-            <div class="flex items-center gap-2">
+            <component
+              :is="item.description ? 'button' : 'div'"
+              :type="item.description ? 'button' : undefined"
+              class="flex w-full items-center gap-2 text-left"
+              :class="item.description ? 'cursor-pointer' : ''"
+              :aria-expanded="item.description ? isExpanded(item.id) : undefined"
+              :aria-controls="item.description ? `share-inv-desc-${item.id}` : undefined"
+              @click="item.description && toggleExpand(item.id)"
+            >
               <div class="min-w-0 flex-1">
                 <div class="flex min-w-0 items-center gap-1.5">
                   <p class="min-w-0 flex-1 truncate text-sm font-semibold text-content">
@@ -72,24 +80,13 @@
                       {{ t(`inventory.itemType.${item.type}`) }}
                     </span>
                   </CommonAppBadge>
-                  <button
+                  <Icon
                     v-if="item.description"
-                    type="button"
-                    :aria-expanded="isExpanded(item.id)"
-                    :aria-controls="`share-inv-desc-${item.id}`"
-                    :aria-label="`${
-                      isExpanded(item.id) ? t('ui.action.collapse') : t('ui.action.expand')
-                    } ${item.name}`"
-                    class="flex size-5 shrink-0 items-center justify-center rounded text-content-muted transition-colors duration-150 hover:text-content"
-                    @click="toggleExpand(item.id)"
-                  >
-                    <Icon
-                      name="chevron-down"
-                      :size="12"
-                      class="transition-transform duration-300 ease-in-out"
-                      :class="{ 'rotate-180': isExpanded(item.id) }"
-                    />
-                  </button>
+                    name="chevron-down"
+                    :size="12"
+                    class="shrink-0 text-content-muted transition-transform duration-300 ease-in-out"
+                    :class="{ 'rotate-180': isExpanded(item.id) }"
+                  />
                 </div>
               </div>
 
@@ -102,15 +99,7 @@
                   {{ formatWeight(item.weight * item.quantity) }} {{ t('inventory.unitWeight') }}
                 </span>
               </div>
-            </div>
-
-            <!-- Collapsed description preview -->
-            <p
-              v-if="item.description && !isExpanded(item.id)"
-              class="truncate px-1 pt-1 text-xs text-content-muted"
-            >
-              {{ item.description }}
-            </p>
+            </component>
 
             <!-- Description panel -->
             <div
@@ -120,7 +109,7 @@
               :class="isExpanded(item.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
             >
               <div class="overflow-hidden">
-                <p class="whitespace-pre-wrap px-1 pb-1 pt-1 text-xs text-content-muted">
+                <p class="whitespace-pre-wrap py-1 text-xs text-content-muted">
                   {{ item.description }}
                 </p>
               </div>

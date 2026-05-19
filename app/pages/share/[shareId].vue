@@ -36,7 +36,7 @@
         :proficiency-bonus="proficiencyBonus"
       />
 
-      <BusinessCharacterShareSpellList :spells="joinedSpells" />
+      <BusinessCharacterShareSpellList :entries="shared.spells" />
 
       <BusinessCharacterShareInventoryView
         :character="character"
@@ -48,12 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  CharacterCurrencyDTO,
-  CharacterDTO,
-  InventoryItemDTO,
-  SpellDTO,
-} from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO, CharacterDTO, InventoryItemDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -63,6 +58,12 @@ const { data: shared, status } = await useAsyncData(
   () => `shared-character-${shareId.value}`,
   () => share().getCharacter(shareId.value),
 )
+
+// 公開頁不可用（無效 / 已關閉分享）回 404
+if (status.value === 'error' || !shared.value) {
+  const event = useRequestEvent()
+  if (event) setResponseStatus(event, 404)
+}
 
 useHead({ title: t('character.share.pageTitle') })
 
@@ -86,18 +87,11 @@ const inventoryItems = computed<InventoryItemDTO[]>(() =>
   })),
 )
 
+const emptyCurrency: Omit<CharacterCurrencyDTO, 'updatedAt'> = { cp: 0, sp: 0, gp: 0, pp: 0 }
 const currency = computed<CharacterCurrencyDTO>(() => ({
-  ...shared.value!.currency,
+  ...(shared.value?.currency ?? emptyCurrency),
   updatedAt: '',
 }))
-
-// 法術以 spellId join 公開法術圖鑑；圖鑑未就緒或查無則略過該筆。
-const { getSpell } = useSpells()
-const joinedSpells = computed<SpellDTO[]>(() =>
-  (shared.value?.spells ?? [])
-    .map((entry) => getSpell(entry.spellId))
-    .filter((spell): spell is SpellDTO => spell !== undefined),
-)
 
 const characterRef = computed(() => character.value)
 const { totalAbilityScores, proficiencyBonus } = useCharacterDerivedStatsFromCharacter(characterRef)

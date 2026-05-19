@@ -28,7 +28,7 @@
         <button
           v-for="(item, index) in menuItems"
           :key="item.key"
-          ref="itemRefs"
+          :ref="(el) => setItemRef(el, index)"
           type="button"
           role="menuitem"
           tabindex="-1"
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import { Icon } from '@ui'
 import type { CharacterListItem } from '~/types/business/character-list'
 
@@ -69,6 +70,11 @@ const menuRef = ref<HTMLElement | null>(null)
 const itemRefs = ref<HTMLButtonElement[]>([])
 const menuStyle = ref<Record<string, string>>({})
 const activeIndex = ref(0)
+
+// v-for 函式 ref：以 index 定位寫入，順序與 menuItems 對齊（string ref 不保證順序）。
+const setItemRef = (el: Element | ComponentPublicInstance | null, index: number): void => {
+  if (el instanceof HTMLButtonElement) itemRefs.value[index] = el
+}
 
 const menuItems = computed<{ key: MenuKey; label: string }[]>(() => [
   {

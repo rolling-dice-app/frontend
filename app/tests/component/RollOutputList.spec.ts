@@ -3,9 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import RollOutputList from '~/components/business/character-detail/quickview/RollOutputList.vue'
 import { formatModifier } from '~/helpers/ability'
 import type {
+  D100RollEntry,
   D20RollEntry,
   DamageRollEntry,
   HitDieRollEntry,
+  RawRollEntry,
   RollEntry,
 } from '~/types/business/dice'
 
@@ -147,6 +149,52 @@ describe('RollOutputList', () => {
       expect(text).toContain('1d8')
       expect(text).toContain('1d6')
       expect(text).toContain('+')
+    })
+
+    it('raw entry 顯示 dX 與骰值', () => {
+      const entry: RawRollEntry = {
+        id: 'r-raw-1',
+        rolledAt: 0,
+        kind: 'raw',
+        label: 'd8',
+        sides: 8,
+        roll: 5,
+      }
+      const wrapper = mountList([entry])
+      const text = wrapper.text()
+      expect(text).toContain('d8')
+      expect(text).toContain('5')
+    })
+
+    it('d100 entry 顯示骰陣列與 total', () => {
+      const entry: D100RollEntry = {
+        id: 'd100-1',
+        rolledAt: 0,
+        kind: 'd100',
+        label: 'd100',
+        tens: 7,
+        ones: 3,
+        total: 73,
+      }
+      const wrapper = mountList([entry])
+      const text = wrapper.text().replace(/\s+/g, '')
+      expect(text).toContain('d100')
+      expect(text).toContain('[7,3]')
+      expect(text).toContain('73')
+    })
+
+    it('d100 雙 0 顯示 total=100', () => {
+      const entry: D100RollEntry = {
+        id: 'd100-2',
+        rolledAt: 0,
+        kind: 'd100',
+        label: 'd100',
+        tens: 0,
+        ones: 0,
+        total: 100,
+      }
+      const wrapper = mountList([entry])
+      expect(wrapper.text()).toContain('100')
     })
 
     it('hit-die entry 顯示骰面 / 骰值 / 加值 / 回復值', () => {

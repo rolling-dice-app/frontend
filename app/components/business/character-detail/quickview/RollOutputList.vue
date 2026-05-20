@@ -32,6 +32,8 @@
               v-if="
                 entry.kind !== 'attack-damage' &&
                 entry.kind !== 'hit-die' &&
+                entry.kind !== 'raw' &&
+                entry.kind !== 'd100' &&
                 entry.mode !== 'normal'
               "
               class="rounded px-1.5 py-0.5 text-[10px] tracking-wide"
@@ -55,8 +57,27 @@
             </span>
           </div>
 
+          <!-- 排逊骰 d4/d6/d8/d10/d12/d20 -->
+          <template v-if="entry.kind === 'raw'">
+            <div class="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-content-soft">
+              <span>d{{ entry.sides }}</span>
+              <span class="text-content-muted">=</span>
+              <span class="font-bold text-content">{{ entry.roll }}</span>
+            </div>
+          </template>
+
+          <!-- 百分骰 d100 -->
+          <template v-else-if="entry.kind === 'd100'">
+            <div class="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-content-soft">
+              <span>d100</span>
+              <span>[{{ entry.tens }}, {{ entry.ones }}]</span>
+              <span class="text-content-muted">=</span>
+              <span class="font-bold text-content">{{ entry.total }}</span>
+            </div>
+          </template>
+
           <!-- 生命骰 -->
-          <template v-if="entry.kind === 'hit-die'">
+          <template v-else-if="entry.kind === 'hit-die'">
             <div
               class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-content-soft"
             >

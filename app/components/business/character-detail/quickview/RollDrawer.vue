@@ -125,9 +125,12 @@
         </section>
       </div>
 
-      <!-- 下 1/3：output -->
-      <div class="min-h-0 grow basis-1/3">
-        <BusinessCharacterDetailQuickviewRollOutputList :entries="entries" @clear="clear" />
+      <!-- 下 1/3：單骰 bar + output -->
+      <div class="flex min-h-0 grow basis-1/3 flex-col gap-2">
+        <BusinessCharacterDetailQuickviewRollAdHocBar @roll="handleAdHocRoll" />
+        <div class="min-h-0 flex-1">
+          <BusinessCharacterDetailQuickviewRollOutputList :entries="entries" @clear="clear" />
+        </div>
       </div>
     </div>
   </Drawer>
@@ -146,12 +149,15 @@ import {
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type {
+  D100RollEntry,
   D20RollEntry,
   DamageRollEntry,
   DamageRollLine,
   HitDieRollEntry,
+  RawRollEntry,
   RollMode,
 } from '~/types/business/dice'
+import type { AdHocRollRequest } from './RollAdHocBar.vue'
 
 const { t } = useI18n()
 
@@ -264,6 +270,30 @@ const handleHitDieRoll = (row: HitDieRow): void => {
     modifier,
     healed,
   } satisfies Omit<HitDieRollEntry, 'id' | 'rolledAt'>)
+}
+
+const handleAdHocRoll = (request: AdHocRollRequest): void => {
+  if (request.kind === 'raw') {
+    const roll = rollDie(request.sides)
+    push({
+      kind: 'raw',
+      label: `d${request.sides}`,
+      sides: request.sides,
+      roll,
+    } satisfies Omit<RawRollEntry, 'id' | 'rolledAt'>)
+    return
+  }
+  // d100: 兩顆 d10（rollDie 回 1~10，10 視為 0）；雙 0 = 100
+  const tens = rollDie(10) % 10
+  const ones = rollDie(10) % 10
+  const total = tens === 0 && ones === 0 ? 100 : tens * 10 + ones
+  push({
+    kind: 'd100',
+    label: 'd100',
+    tens,
+    ones,
+    total,
+  } satisfies Omit<D100RollEntry, 'id' | 'rolledAt'>)
 }
 
 const handleAttackHit = (attack: AttackEntry, mode: RollMode): void => {

@@ -83,6 +83,12 @@ const OutputListStub = {
   template: `<div data-output-list />`,
 }
 
+const AdHocBarStub = {
+  name: 'BusinessCharacterDetailQuickviewRollAdHocBar',
+  emits: ['roll'],
+  template: `<div data-adhoc-bar />`,
+}
+
 const makeAttack = (overrides: Partial<AttackEntry> = {}): AttackEntry => ({
   id: overrides.id ?? `atk-${Math.random()}`,
   name: '長劍',
@@ -136,6 +142,7 @@ const mountDrawer = (
         BusinessCharacterDetailQuickviewRollTriggerRow: TriggerRowStub,
         BusinessCharacterDetailQuickviewRollAttackRow: AttackRowStub,
         BusinessCharacterDetailQuickviewRollOutputList: OutputListStub,
+        BusinessCharacterDetailQuickviewRollAdHocBar: AdHocBarStub,
       },
     },
   })
@@ -467,6 +474,59 @@ describe('RollDrawer', () => {
       expect(onHeal).not.toHaveBeenCalled()
       expect(push).toHaveBeenCalledWith(
         expect.objectContaining({ kind: 'hit-die', roll: 1, modifier: -2, healed: 0 }),
+      )
+    })
+  })
+
+  describe('排逊骰 AdHocBar', () => {
+    it('raw 請求：rollDie 以 sides 呼叫、push kind=raw entry', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(5)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      const bar = wrapper.findComponent(AdHocBarStub)
+      bar.vm.$emit('roll', { kind: 'raw', sides: 8 })
+      expect(rollDie).toHaveBeenCalledWith(8)
+      expect(push).toHaveBeenCalledWith({
+        kind: 'raw',
+        label: 'd8',
+        sides: 8,
+        roll: 5,
+      })
+    })
+
+    it('d100 請求：兩顆 d10 雙 0 → total=100', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(10).mockReturnValueOnce(10)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(rollDie).toHaveBeenNthCalledWith(1, 10)
+      expect(rollDie).toHaveBeenNthCalledWith(2, 10)
+      expect(push).toHaveBeenCalledWith({
+        kind: 'd100',
+        label: 'd100',
+        tens: 0,
+        ones: 0,
+        total: 100,
+      })
+    })
+
+    it('d100 請求：tens=7, ones=3 → total=73', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(7).mockReturnValueOnce(3)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'd100', tens: 7, ones: 3, total: 73 }),
+      )
+    })
+
+    it('d100 請求：tens=0, ones=7 → total=7（非雙 0 不轉 100）', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(10).mockReturnValueOnce(7)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'd100', tens: 0, ones: 7, total: 7 }),
       )
     })
   })

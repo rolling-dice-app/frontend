@@ -12,6 +12,11 @@ export type RollKind =
   | 'attack-damage'
   | 'hit-die'
   | 'initiative'
+  | 'raw'
+  | 'd100'
+
+/** 排逊骰可選骰面 */
+export type RawDieSides = 4 | 6 | 8 | 10 | 12 | 20
 
 interface BaseRollEntry {
   id: string
@@ -72,10 +77,36 @@ export interface HitDieRollEntry extends BaseRollEntry {
   healed: number
 }
 
-export type RollEntry = D20RollEntry | DamageRollEntry | HitDieRollEntry
+/** 排逊單顆骰擲骰結果（d4 / d6 / d8 / d10 / d12 / d20） */
+export interface RawRollEntry extends BaseRollEntry {
+  kind: 'raw'
+  sides: RawDieSides
+  /** 骰值 1~sides */
+  roll: number
+}
+
+/** d100（百分骰）擲骰結果：兩顆 d10 組合，雙 0 視為 100 */
+export interface D100RollEntry extends BaseRollEntry {
+  kind: 'd100'
+  /** 十位 d10，0~9 */
+  tens: number
+  /** 個位 d10，0~9 */
+  ones: number
+  /** 1~100 */
+  total: number
+}
+
+export type RollEntry =
+  | D20RollEntry
+  | DamageRollEntry
+  | HitDieRollEntry
+  | RawRollEntry
+  | D100RollEntry
 
 /** push 用的草稿型別：對 union 分配套用 Omit，避免共同欄位被合併 */
 export type RollEntryDraft =
   | Omit<D20RollEntry, 'id' | 'rolledAt'>
   | Omit<DamageRollEntry, 'id' | 'rolledAt'>
   | Omit<HitDieRollEntry, 'id' | 'rolledAt'>
+  | Omit<RawRollEntry, 'id' | 'rolledAt'>
+  | Omit<D100RollEntry, 'id' | 'rolledAt'>

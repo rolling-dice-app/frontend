@@ -1,6 +1,11 @@
 <template>
-  <div class="space-y-4 px-2">
-    <img src="~/assets/images/dnd.png" alt="" loading="lazy" aria-hidden="true" />
+  <div class="px-2">
+    <img
+      src="~/assets/images/rolling-dice.png"
+      alt="Rolling Dice"
+      loading="lazy"
+      aria-hidden="true"
+    />
 
     <!-- Ability table -->
     <div>

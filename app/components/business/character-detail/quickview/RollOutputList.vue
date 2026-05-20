@@ -29,7 +29,11 @@
           <div class="flex items-baseline justify-between gap-2">
             <span class="font-semibold text-content">{{ entry.label }}</span>
             <span
-              v-if="entry.kind !== 'attack-damage' && entry.mode !== 'normal'"
+              v-if="
+                entry.kind !== 'attack-damage' &&
+                entry.kind !== 'hit-die' &&
+                entry.mode !== 'normal'
+              "
               class="rounded px-1.5 py-0.5 text-[10px] tracking-wide"
               :class="
                 entry.mode === 'advantage'
@@ -51,8 +55,24 @@
             </span>
           </div>
 
+          <!-- 生命骰 -->
+          <template v-if="entry.kind === 'hit-die'">
+            <div
+              class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-content-soft"
+            >
+              <span>d{{ entry.sides }}</span>
+              <span class="text-content-muted">=</span>
+              <span class="text-content">{{ entry.roll }}</span>
+              <span v-if="entry.modifier !== 0">{{ formatModifier(entry.modifier) }}</span>
+              <span class="text-content-muted">→</span>
+              <span class="font-bold text-success">
+                {{ t('combat.heal') }} {{ entry.healed }}
+              </span>
+            </div>
+          </template>
+
           <!-- d20 類 -->
-          <template v-if="entry.kind !== 'attack-damage'">
+          <template v-else-if="entry.kind !== 'attack-damage'">
             <div
               class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-content-soft"
             >

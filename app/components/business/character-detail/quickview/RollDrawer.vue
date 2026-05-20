@@ -24,6 +24,25 @@
     <div class="flex h-full min-h-0 flex-col gap-3">
       <!-- 上 2/3：觸發區（單一大滾動容器） -->
       <div class="min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
+        <section aria-labelledby="roll-section-initiative">
+          <h3
+            id="roll-section-initiative"
+            class="mb-1.5 font-display text-sm font-bold text-content"
+          >
+            {{ t('combat.initiative') }}
+          </h3>
+          <ul class="grid grid-cols-2 gap-1.5">
+            <BusinessCharacterDetailQuickviewRollTriggerRow
+              :label="t('combat.initiative')"
+              :modifier="totalInitiative"
+              @roll="
+                (mode: RollMode) =>
+                  handleD20Roll('initiative', t('combat.initiative'), totalInitiative, mode)
+              "
+            />
+          </ul>
+        </section>
+
         <section aria-labelledby="roll-section-ability">
           <h3 id="roll-section-ability" class="mb-1.5 font-display text-sm font-bold text-content">
             {{ t('combat.abilityCheck') }}
@@ -71,6 +90,23 @@
           </ul>
         </section>
 
+        <section v-if="hitDieRows.length > 0" aria-labelledby="roll-section-hit-die">
+          <h3 id="roll-section-hit-die" class="mb-1.5 font-display text-sm font-bold text-content">
+            {{ t('class.hitDie') }}
+          </h3>
+          <ul class="grid grid-cols-2 gap-1.5">
+            <BusinessCharacterDetailQuickviewRollTriggerRow
+              v-for="row in hitDieRows"
+              :key="row.classKey"
+              :label="row.label"
+              :modifier="conModifier"
+              :disabled="row.isExhausted"
+              :modes="['normal']"
+              @roll="() => handleHitDieRoll(row)"
+            />
+          </ul>
+        </section>
+
         <section v-if="character.attacks.length > 0" aria-labelledby="roll-section-attack">
           <h3 id="roll-section-attack" class="mb-1.5 font-display text-sm font-bold text-content">
             {{ t('combat.attack') }}
@@ -99,15 +135,23 @@
 
 <script setup lang="ts">
 import { Drawer, Icon } from '@ui'
-import { rollD20, rollDice } from '~/helpers/dice'
+import { rollD20, rollDice, rollDie } from '~/helpers/dice'
+import { CLASS_CONFIG } from '~/constants/dnd'
 import {
   ABILITY_KEYS,
   type AttackEntry,
   type CharacterDTO,
   type AbilityKey,
+  type ClassKey,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import type { D20RollEntry, DamageRollEntry, DamageRollLine, RollMode } from '~/types/business/dice'
+import type {
+  D20RollEntry,
+  DamageRollEntry,
+  DamageRollLine,
+  HitDieRollEntry,
+  RollMode,
+} from '~/types/business/dice'
 
 const { t } = useI18n()
 
@@ -117,6 +161,10 @@ const props = defineProps<{
   proficiencyBonus: number
   savingThrowProficiencies: AbilityKey[]
   savingThrowAdjustments: Partial<Record<AbilityKey, number>>
+  hitDiceUsed: Partial<Record<ClassKey, number>>
+  totalInitiative: number
+  onHealFromHitDie: (amount: number) => void
+  onConsumeHitDie: (classKey: ClassKey, level: number) => void
 }>()
 
 const isOpen = ref(false)
@@ -147,6 +195,22 @@ const savingThrowRows = computed(() => {
   return ABILITY_KEYS.map((key) => ({ key, label: t(`ability.${key}`), modifier: bonuses[key] }))
 })
 
+const conModifier = computed(() => getAbilityModifier(props.abilityScores.constitution))
+
+const hitDieRows = computed(() =>
+  props.character.classes.map((entry) => {
+    const sides = CLASS_CONFIG[entry.classKey].hitDie
+    const used = props.hitDiceUsed[entry.classKey] ?? 0
+    return {
+      classKey: entry.classKey,
+      sides,
+      level: entry.level,
+      label: `${t(`class.label.${entry.classKey}`)} / d${sides}`,
+      isExhausted: used >= entry.level,
+    }
+  }),
+)
+
 const skillRows = computed(() =>
   calculateSkillBonuses({
     abilityScores: props.abilityScores,
@@ -174,6 +238,32 @@ const handleD20Roll = (
     isCritical: chosen === 20,
     isFumble: chosen === 1,
   } satisfies Omit<D20RollEntry, 'id' | 'rolledAt'>)
+}
+
+type HitDieRow = {
+  classKey: ClassKey
+  sides: number
+  level: number
+  label: string
+  isExhausted: boolean
+}
+
+const handleHitDieRoll = (row: HitDieRow): void => {
+  if (row.isExhausted) return
+  const modifier = conModifier.value
+  const roll = rollDie(row.sides)
+  const healed = Math.max(0, roll + modifier)
+  props.onConsumeHitDie(row.classKey, row.level)
+  if (healed > 0) props.onHealFromHitDie(healed)
+  push({
+    kind: 'hit-die',
+    label: row.label,
+    classKey: row.classKey,
+    sides: row.sides,
+    roll,
+    modifier,
+    healed,
+  } satisfies Omit<HitDieRollEntry, 'id' | 'rolledAt'>)
 }
 
 const handleAttackHit = (attack: AttackEntry, mode: RollMode): void => {

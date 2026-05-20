@@ -2,7 +2,12 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import RollOutputList from '~/components/business/character-detail/quickview/RollOutputList.vue'
 import { formatModifier } from '~/helpers/ability'
-import type { D20RollEntry, DamageRollEntry, RollEntry } from '~/types/business/dice'
+import type {
+  D20RollEntry,
+  DamageRollEntry,
+  HitDieRollEntry,
+  RollEntry,
+} from '~/types/business/dice'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
@@ -142,6 +147,46 @@ describe('RollOutputList', () => {
       expect(text).toContain('1d8')
       expect(text).toContain('1d6')
       expect(text).toContain('+')
+    })
+
+    it('hit-die entry 顯示骰面 / 骰值 / 加值 / 回復值', () => {
+      const entry: HitDieRollEntry = {
+        id: 'h-1',
+        rolledAt: 0,
+        kind: 'hit-die',
+        label: '戰士 / d10',
+        classKey: 'fighter',
+        sides: 10,
+        roll: 7,
+        modifier: 1,
+        healed: 8,
+      }
+      const wrapper = mountList([entry])
+      const text = wrapper.text()
+      expect(text).toContain('戰士 / d10')
+      expect(text).toContain('d10')
+      expect(text).toContain('7')
+      expect(text).toContain('+1')
+      expect(text).toContain('治療')
+      expect(text).toContain('8')
+    })
+
+    it('hit-die healed=0 仍顯示「治療 0」', () => {
+      const entry: HitDieRollEntry = {
+        id: 'h-2',
+        rolledAt: 0,
+        kind: 'hit-die',
+        label: '戰士 / d10',
+        classKey: 'fighter',
+        sides: 10,
+        roll: 1,
+        modifier: -2,
+        healed: 0,
+      }
+      const wrapper = mountList([entry])
+      const text = wrapper.text()
+      expect(text).toContain('治療')
+      expect(text).toContain('0')
     })
 
     it('純加值行（sides = null）以 bonus + 類型顯示', () => {

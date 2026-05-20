@@ -1,10 +1,17 @@
-import type { DamageTypeKey } from '@rolling-dice-app/core'
+import type { ClassKey, DamageTypeKey } from '@rolling-dice-app/core'
 
 /** 擲骰模式 */
 export type RollMode = 'normal' | 'advantage' | 'disadvantage'
 
 /** 擲骰類別 */
-export type RollKind = 'ability' | 'saving-throw' | 'skill' | 'attack-hit' | 'attack-damage'
+export type RollKind =
+  | 'ability'
+  | 'saving-throw'
+  | 'skill'
+  | 'attack-hit'
+  | 'attack-damage'
+  | 'hit-die'
+  | 'initiative'
 
 interface BaseRollEntry {
   id: string
@@ -12,9 +19,9 @@ interface BaseRollEntry {
   label: string
 }
 
-/** d20 類擲骰結果（屬性 / 豁免 / 技能 / 攻擊命中） */
+/** d20 類擲骰結果（屬性 / 豁免 / 技能 / 攻擊命中 / 先攻） */
 export interface D20RollEntry extends BaseRollEntry {
-  kind: 'ability' | 'saving-throw' | 'skill' | 'attack-hit'
+  kind: 'ability' | 'saving-throw' | 'skill' | 'attack-hit' | 'initiative'
   mode: RollMode
   /** 原始 d20 骰值；normal 為單顆，advantage / disadvantage 為兩顆 */
   rolls: number[]
@@ -50,9 +57,25 @@ export interface DamageRollEntry extends BaseRollEntry {
   isCritical: boolean
 }
 
-export type RollEntry = D20RollEntry | DamageRollEntry
+/** 生命骰擲骰結果（短休消耗 + 加 HP） */
+export interface HitDieRollEntry extends BaseRollEntry {
+  kind: 'hit-die'
+  /** 對應職業 */
+  classKey: ClassKey
+  /** 骰面，例：12 表 d12 */
+  sides: number
+  /** 單顆原始骰值 */
+  roll: number
+  /** CON modifier */
+  modifier: number
+  /** 套用 RAW minimum 0 後實際回復生命；= max(0, roll + modifier) */
+  healed: number
+}
+
+export type RollEntry = D20RollEntry | DamageRollEntry | HitDieRollEntry
 
 /** push 用的草稿型別：對 union 分配套用 Omit，避免共同欄位被合併 */
 export type RollEntryDraft =
   | Omit<D20RollEntry, 'id' | 'rolledAt'>
   | Omit<DamageRollEntry, 'id' | 'rolledAt'>
+  | Omit<HitDieRollEntry, 'id' | 'rolledAt'>

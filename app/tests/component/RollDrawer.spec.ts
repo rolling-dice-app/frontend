@@ -20,7 +20,7 @@ vi.mock('~/helpers/dice', () => ({
   rollDie: vi.fn(),
 }))
 
-const { rollD20, rollDice } = await import('~/helpers/dice')
+const { rollD20, rollDice, rollDie } = await import('~/helpers/dice')
 
 const push = vi.fn()
 const clear = vi.fn()
@@ -39,6 +39,7 @@ beforeEach(() => {
   vi.stubGlobal('getAttackHit', getAttackHit)
   vi.mocked(rollD20).mockReset()
   vi.mocked(rollDice).mockReset()
+  vi.mocked(rollDie).mockReset()
 })
 
 afterEach(() => {
@@ -63,7 +64,7 @@ const DrawerStub = {
 
 const TriggerRowStub = {
   name: 'BusinessCharacterDetailQuickviewRollTriggerRow',
-  props: ['label', 'modifier'],
+  props: ['label', 'modifier', 'disabled', 'modes'],
   emits: ['roll'],
   template: `<li data-trigger-row :data-label="label" :data-modifier="modifier" />`,
 }
@@ -80,6 +81,12 @@ const OutputListStub = {
   props: ['entries'],
   emits: ['clear'],
   template: `<div data-output-list />`,
+}
+
+const AdHocBarStub = {
+  name: 'BusinessCharacterDetailQuickviewRollAdHocBar',
+  emits: ['roll'],
+  template: `<div data-adhoc-bar />`,
 }
 
 const makeAttack = (overrides: Partial<AttackEntry> = {}): AttackEntry => ({
@@ -110,6 +117,10 @@ const mountDrawer = (
       | 'charisma'
     )[]
     savingThrowAdjustments?: Partial<Record<string, number>>
+    hitDiceUsed?: Partial<Record<string, number>>
+    totalInitiative?: number
+    onHealFromHitDie?: (amount: number) => void
+    onConsumeHitDie?: (classKey: string, level: number) => void
   } = {},
 ) =>
   mount(RollDrawer, {
@@ -119,6 +130,10 @@ const mountDrawer = (
       proficiencyBonus: params.proficiencyBonus ?? 2,
       savingThrowProficiencies: params.savingThrowProficiencies ?? [],
       savingThrowAdjustments: params.savingThrowAdjustments ?? {},
+      hitDiceUsed: params.hitDiceUsed ?? {},
+      totalInitiative: params.totalInitiative ?? 2,
+      onHealFromHitDie: params.onHealFromHitDie ?? vi.fn(),
+      onConsumeHitDie: params.onConsumeHitDie ?? vi.fn(),
     },
     global: {
       stubs: {
@@ -127,6 +142,7 @@ const mountDrawer = (
         BusinessCharacterDetailQuickviewRollTriggerRow: TriggerRowStub,
         BusinessCharacterDetailQuickviewRollAttackRow: AttackRowStub,
         BusinessCharacterDetailQuickviewRollOutputList: OutputListStub,
+        BusinessCharacterDetailQuickviewRollAdHocBar: AdHocBarStub,
       },
     },
   })
@@ -160,11 +176,11 @@ describe('RollDrawer', () => {
   })
 
   describe('行數與計算', () => {
-    it('開啟後渲染 6 個 ability row、6 個 saving-throw row、18 個 skill row', async () => {
+    it('開啟後渲染 1 個 initiative row、6 個 ability row、6 個 saving-throw row、18 個 skill row、1 個生命骰 row（單 class）', async () => {
       const wrapper = mountDrawer()
       await openDrawer(wrapper)
-      // 6 ability + 6 saving + 18 skill = 30
-      expect(triggerRows(wrapper)).toHaveLength(6 + 6 + 18)
+      // 1 initiative + 6 ability + 6 saving + 18 skill + 1 hit-die（戰士 / d10） = 32
+      expect(triggerRows(wrapper)).toHaveLength(1 + 6 + 6 + 18 + 1)
     })
 
     it('ability row 的 modifier 對應 abilityScores 的 mod', async () => {
@@ -333,6 +349,185 @@ describe('RollDrawer', () => {
       const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
       attackRow.vm.$emit('rollDamage', false)
       expect(push).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('先攻', () => {
+    it('先攻列位於第一個 section、label = 先攻、modifier = totalInitiative prop', async () => {
+      const wrapper = mountDrawer({ totalInitiative: 4 })
+      await openDrawer(wrapper)
+      const rows = triggerRows(wrapper)
+      expect(rows[0]!.props('label')).toBe('先攻')
+      expect(rows[0]!.props('modifier')).toBe(4)
+    })
+
+    it('normal：push kind=initiative、total = chosen + totalInitiative', async () => {
+      vi.mocked(rollD20).mockReturnValueOnce({ rolls: [15], chosen: 15 })
+      const wrapper = mountDrawer({ totalInitiative: 3 })
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '先攻')!
+      row.vm.$emit('roll', 'normal')
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'initiative',
+          label: '先攻',
+          mode: 'normal',
+          chosen: 15,
+          modifier: 3,
+          total: 18,
+        }),
+      )
+    })
+
+    it('advantage / disadvantage 也會帶 mode 與正確 total', async () => {
+      vi.mocked(rollD20).mockReturnValueOnce({ rolls: [8, 17], chosen: 17 })
+      const wrapper = mountDrawer({ totalInitiative: 2 })
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '先攻')!
+      row.vm.$emit('roll', 'advantage')
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'initiative',
+          mode: 'advantage',
+          chosen: 17,
+          total: 19,
+        }),
+      )
+    })
+  })
+
+  describe('生命骰', () => {
+    it('每個 class 對應一列、label = 職業名 / d{hitDie}、modifier = CON mod', async () => {
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          classes: [
+            { classKey: 'fighter', level: 3, subclass: null },
+            { classKey: 'wizard', level: 2, subclass: null },
+          ],
+        }),
+      })
+      await openDrawer(wrapper)
+      const fighterRow = findRowByLabel(wrapper, '戰士 / d10')
+      const wizardRow = findRowByLabel(wrapper, '法師 / d6')
+      expect(fighterRow).toBeTruthy()
+      expect(wizardRow).toBeTruthy()
+      // CON 12 → mod +1
+      expect(fighterRow?.props('modifier')).toBe(1)
+      expect(wizardRow?.props('modifier')).toBe(1)
+    })
+
+    it('hitDiceUsed 已達 level 時對應列 disabled=true', async () => {
+      const wrapper = mountDrawer({
+        character: makeCharacter({
+          classes: [
+            { classKey: 'fighter', level: 3, subclass: null },
+            { classKey: 'wizard', level: 2, subclass: null },
+          ],
+        }),
+        hitDiceUsed: { fighter: 3, wizard: 1 },
+      })
+      await openDrawer(wrapper)
+      expect(findRowByLabel(wrapper, '戰士 / d10')?.props('disabled')).toBe(true)
+      expect(findRowByLabel(wrapper, '法師 / d6')?.props('disabled')).toBe(false)
+    })
+
+    it('擲一次：onConsumeHitDie(+1)、onHealFromHitDie(roll+CON)、push hit-die entry', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(7)
+      const onHeal = vi.fn()
+      const onConsume = vi.fn()
+      const wrapper = mountDrawer({
+        onHealFromHitDie: onHeal,
+        onConsumeHitDie: onConsume,
+      })
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '戰士 / d10')!
+      row.vm.$emit('roll', 'normal')
+      expect(rollDie).toHaveBeenCalledWith(10)
+      // CON 12 → mod +1，healed = max(0, 7 + 1) = 8
+      expect(onConsume).toHaveBeenCalledWith('fighter', 5)
+      expect(onHeal).toHaveBeenCalledWith(8)
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'hit-die',
+          classKey: 'fighter',
+          sides: 10,
+          roll: 7,
+          modifier: 1,
+          healed: 8,
+        }),
+      )
+    })
+
+    it('低 CON：roll 1 + mod -2 healed = 0、不呼叫 onHealFromHitDie 但仍消耗', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(1)
+      const onHeal = vi.fn()
+      const onConsume = vi.fn()
+      const wrapper = mountDrawer({
+        abilityScores: { ...ABILITY_SCORES, constitution: 7 }, // mod -2
+        onHealFromHitDie: onHeal,
+        onConsumeHitDie: onConsume,
+      })
+      await openDrawer(wrapper)
+      const row = findRowByLabel(wrapper, '戰士 / d10')!
+      row.vm.$emit('roll', 'normal')
+      expect(onConsume).toHaveBeenCalledTimes(1)
+      expect(onHeal).not.toHaveBeenCalled()
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'hit-die', roll: 1, modifier: -2, healed: 0 }),
+      )
+    })
+  })
+
+  describe('排逊骰 AdHocBar', () => {
+    it('raw 請求：rollDie 以 sides 呼叫、push kind=raw entry', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(5)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      const bar = wrapper.findComponent(AdHocBarStub)
+      bar.vm.$emit('roll', { kind: 'raw', sides: 8 })
+      expect(rollDie).toHaveBeenCalledWith(8)
+      expect(push).toHaveBeenCalledWith({
+        kind: 'raw',
+        label: 'd8',
+        sides: 8,
+        roll: 5,
+      })
+    })
+
+    it('d100 請求：兩顆 d10 雙 0 → total=100', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(10).mockReturnValueOnce(10)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(rollDie).toHaveBeenNthCalledWith(1, 10)
+      expect(rollDie).toHaveBeenNthCalledWith(2, 10)
+      expect(push).toHaveBeenCalledWith({
+        kind: 'd100',
+        label: 'd100',
+        tens: 0,
+        ones: 0,
+        total: 100,
+      })
+    })
+
+    it('d100 請求：tens=7, ones=3 → total=73', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(7).mockReturnValueOnce(3)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'd100', tens: 7, ones: 3, total: 73 }),
+      )
+    })
+
+    it('d100 請求：tens=0, ones=7 → total=7（非雙 0 不轉 100）', async () => {
+      vi.mocked(rollDie).mockReturnValueOnce(10).mockReturnValueOnce(7)
+      const wrapper = mountDrawer()
+      await openDrawer(wrapper)
+      wrapper.findComponent(AdHocBarStub).vm.$emit('roll', { kind: 'd100' })
+      expect(push).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'd100', tens: 0, ones: 7, total: 7 }),
+      )
     })
   })
 

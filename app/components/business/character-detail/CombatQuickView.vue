@@ -122,6 +122,10 @@
         :proficiency-bonus="proficiencyBonus"
         :saving-throw-proficiencies="savingThrowProficiencies"
         :saving-throw-adjustments="state.savingThrowAdjustments"
+        :hit-dice-used="state.hitDiceUsed"
+        :total-initiative="totalInitiative"
+        :on-heal-from-hit-die="healHp"
+        :on-consume-hit-die="onConsumeHitDie"
       />
     </template>
 
@@ -172,6 +176,7 @@ import {
   getSuggestedRegularSpellSlots,
   mergeSlots,
   type CharacterDTO,
+  type ClassKey,
 } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
@@ -251,6 +256,10 @@ const onShortRest = async (): Promise<void> => {
 
 const onLongRest = async (): Promise<void> => {
   if (await longRest()) useToast().success(t('combat.longRestDone'), { kind: 'hint' })
+}
+
+const onConsumeHitDie = (classKey: ClassKey, level: number): void => {
+  adjustHitDiceUsed(classKey, 1, level)
 }
 
 const onConfirmReset = async (): Promise<void> => {

@@ -60,4 +60,38 @@ describe('RollTriggerRow', () => {
       expect(wrapper.emitted('roll')).toEqual([['disadvantage']])
     })
   })
+
+  describe('disabled', () => {
+    it('disabled=true 時三顆按鈕都 disabled、外觀降透明度', () => {
+      const wrapper = mount(RollTriggerRow, {
+        props: { label: '力量', modifier: 3, disabled: true },
+        global: { stubs: { Icon: true }, mocks: { formatModifier } },
+      })
+      const buttons = wrapper.findAll('button')
+      expect(buttons.length).toBe(3)
+      for (const btn of buttons) expect(btn.attributes('disabled')).toBeDefined()
+      expect(wrapper.find('li').classes()).toContain('opacity-50')
+    })
+
+    it('disabled=true 時點擊不 emit roll', async () => {
+      const wrapper = mount(RollTriggerRow, {
+        props: { label: '力量', modifier: 3, disabled: true },
+        global: { stubs: { Icon: true }, mocks: { formatModifier } },
+      })
+      await wrapper.find('button[aria-label="力量 一般擲骰"]').trigger('click')
+      expect(wrapper.emitted('roll')).toBeUndefined()
+    })
+  })
+
+  describe('modes 過濾', () => {
+    it("modes=['normal'] 只渲染一般擲骰按鈕", () => {
+      const wrapper = mount(RollTriggerRow, {
+        props: { label: '戰士 / d10', modifier: 1, modes: ['normal'] },
+        global: { stubs: { Icon: true }, mocks: { formatModifier } },
+      })
+      expect(wrapper.find('button[aria-label="戰士 / d10 一般擲骰"]').exists()).toBe(true)
+      expect(wrapper.find('button[aria-label="戰士 / d10 優勢擲骰"]').exists()).toBe(false)
+      expect(wrapper.find('button[aria-label="戰士 / d10 劣勢擲骰"]').exists()).toBe(false)
+    })
+  })
 })

@@ -29,7 +29,13 @@
           <div class="flex items-baseline justify-between gap-2">
             <span class="font-semibold text-content">{{ entry.label }}</span>
             <span
-              v-if="entry.kind !== 'attack-damage' && entry.mode !== 'normal'"
+              v-if="
+                entry.kind !== 'attack-damage' &&
+                entry.kind !== 'hit-die' &&
+                entry.kind !== 'raw' &&
+                entry.kind !== 'd100' &&
+                entry.mode !== 'normal'
+              "
               class="rounded px-1.5 py-0.5 text-[10px] tracking-wide"
               :class="
                 entry.mode === 'advantage'
@@ -51,8 +57,43 @@
             </span>
           </div>
 
+          <!-- 排逊骰 d4/d6/d8/d10/d12/d20 -->
+          <template v-if="entry.kind === 'raw'">
+            <div class="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-content-soft">
+              <span>d{{ entry.sides }}</span>
+              <span class="text-content-muted">=</span>
+              <span class="font-bold text-content">{{ entry.roll }}</span>
+            </div>
+          </template>
+
+          <!-- 百分骰 d100 -->
+          <template v-else-if="entry.kind === 'd100'">
+            <div class="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-content-soft">
+              <span>d100</span>
+              <span>[{{ entry.tens }}, {{ entry.ones }}]</span>
+              <span class="text-content-muted">=</span>
+              <span class="font-bold text-content">{{ entry.total }}</span>
+            </div>
+          </template>
+
+          <!-- 生命骰 -->
+          <template v-else-if="entry.kind === 'hit-die'">
+            <div
+              class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-content-soft"
+            >
+              <span>d{{ entry.sides }}</span>
+              <span class="text-content-muted">=</span>
+              <span class="text-content">{{ entry.roll }}</span>
+              <span v-if="entry.modifier !== 0">{{ formatModifier(entry.modifier) }}</span>
+              <span class="text-content-muted">→</span>
+              <span class="font-bold text-success">
+                {{ t('combat.heal') }} {{ entry.healed }}
+              </span>
+            </div>
+          </template>
+
           <!-- d20 類 -->
-          <template v-if="entry.kind !== 'attack-damage'">
+          <template v-else-if="entry.kind !== 'attack-damage'">
             <div
               class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-content-soft"
             >

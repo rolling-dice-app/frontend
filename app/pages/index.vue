@@ -43,10 +43,10 @@
 
         <!-- Center content -->
         <div class="ring-center">
-          <h1 class="font-display text-4xl font-bold tracking-widest text-content sm:text-5xl">
-            Rolling Dice
+          <h1>
+            <img src="~assets/images/rolling-dice.png" alt="Rolling Dice" class="w-full" />
           </h1>
-          <p class="mt-2 text-sm tracking-wider text-content-muted font-display">Roll Your Life</p>
+          <!-- <p class="mt-2 text-sm tracking-wider text-content-muted font-display">Roll Your Life</p> -->
         </div>
       </div>
     </section>
@@ -172,6 +172,7 @@ const INNER_RING_CLASSES: ClassKey[] = [
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 450px;
   transform: translate(-50%, -50%);
   text-align: center;
   z-index: 10;

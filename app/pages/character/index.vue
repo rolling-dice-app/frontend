@@ -12,6 +12,7 @@
             border-color="var(--color-border)"
             color="var(--color-content)"
             dropdown-bg="var(--color-canvas-elevated)"
+            option-selected-color="var(--color-canvas-muted)"
             option-hover-color="var(--color-canvas-inset)"
             class="sort-select w-21 xs:w-28"
             :aria-label="t('character.sortBy')"

@@ -60,12 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import type { CharacterDTO } from '@rolling-dice-app/core'
+import type { SharedCharacterProfileDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  character: CharacterDTO
+  character: SharedCharacterProfileDTO
   ownerDisplayName: string
 }>()
 

@@ -319,14 +319,18 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_KEYS, type CharacterDTO, type ProficiencyLevel } from '@rolling-dice-app/core'
+import {
+  ABILITY_KEYS,
+  type ProficiencyLevel,
+  type SharedCharacterProfileDTO,
+} from '@rolling-dice-app/core'
 import { useCharacterDerivedStatsFromCharacter } from '~/composables/domain/useCharacterDerivedStats'
 import { CLASS_CONFIG } from '~/constants/dnd'
 
 const { t, messages } = useI18n()
 
 const props = defineProps<{
-  character: CharacterDTO
+  character: SharedCharacterProfileDTO
 }>()
 
 const raceDisplay = computed(() => {

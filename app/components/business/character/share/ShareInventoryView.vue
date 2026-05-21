@@ -135,20 +135,16 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import {
-  computeAttunedLimit,
-  type CharacterCurrencyDTO,
-  type CharacterDTO,
-  type CurrencyKey,
-  type InventoryItemDTO,
-} from '@rolling-dice-app/core'
+import type { CurrencyAmount, CurrencyKey, SharedCharacterProfileDTO } from '@rolling-dice-app/core'
+import type { SharedInventoryItemViewModel } from '~/types/business/share'
 
 const { t } = useI18n()
 
 const props = defineProps<{
-  character: CharacterDTO
-  items: InventoryItemDTO[]
-  currency: CharacterCurrencyDTO
+  character: SharedCharacterProfileDTO
+  items: SharedInventoryItemViewModel[]
+  currency: CurrencyAmount
+  attunedCap: number
 }>()
 
 const expandedIds = ref<Set<string>>(new Set())
@@ -174,9 +170,8 @@ const bags = computed(() => [
   },
 ])
 
-const attunedCap = computed(() => computeAttunedLimit(props.character))
 const attunedItems = computed(() =>
-  props.items.filter((item) => item.isAttuned).slice(0, attunedCap.value),
+  props.items.filter((item) => item.isAttuned).slice(0, props.attunedCap),
 )
 
 const backpackLoad = computed(() => calculateBackpackLoad(backpackBagItems.value, props.currency))

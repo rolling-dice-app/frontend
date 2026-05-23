@@ -50,6 +50,8 @@ const charToSummary = (c: CharacterDTO): CharacterSummaryDTO => ({
   race: c.race,
   shareable: c.shareable,
   shareId: c.shareId,
+  deletedAt: c.deletedAt,
+  restoredAt: c.restoredAt,
 })
 
 describe('character store — loadList', () => {
@@ -142,6 +144,8 @@ describe('character store — isAtCharacterLimit', () => {
       race: 'human',
       shareable: false,
       shareId: `chs_c-${i}`,
+      deletedAt: null,
+      restoredAt: null,
     }))
 
   beforeEach(() => {
@@ -256,10 +260,14 @@ describe('character store — createCharacter', () => {
 })
 
 describe('character store — removeCharacter', () => {
-  it('成功時呼叫 API、清掉 list 與 detailCache 對應 entry', async () => {
+  it('成功時呼叫 soft-delete API、reload 後該角色從 active 移到 trashed、清掉 detailCache', async () => {
     const a = createMockCharacter({ id: 'rm-a', name: 'A' })
     const b = createMockCharacter({ id: 'rm-b', name: 'B' })
-    mockListCharacters.mockResolvedValue([charToSummary(a), charToSummary(b)])
+    const aActive = charToSummary(a)
+    const aTrashed = { ...aActive, deletedAt: '2026-05-23T00:00:00.000Z' }
+    mockListCharacters
+      .mockResolvedValueOnce([aActive, charToSummary(b)])
+      .mockResolvedValueOnce([aTrashed, charToSummary(b)])
     mockGetCharacter.mockResolvedValue(a)
     mockDeleteCharacter.mockResolvedValue(undefined)
 
@@ -271,7 +279,8 @@ describe('character store — removeCharacter', () => {
     await store.removeCharacter('rm-a')
 
     expect(mockDeleteCharacter).toHaveBeenCalledWith('rm-a')
-    expect(store.list.map((c) => c.id)).toEqual(['rm-b'])
+    expect(store.characters.map((c) => c.id)).toEqual(['rm-b'])
+    expect(store.trashedCharacters.map((c) => c.id)).toEqual(['rm-a'])
     expect(store.detailCache.has('rm-a')).toBe(false)
   })
 
@@ -395,6 +404,8 @@ describe('character store — updateCharacter', () => {
         race: before.race,
         shareable: before.shareable,
         shareId: before.shareId,
+        deletedAt: before.deletedAt,
+        restoredAt: before.restoredAt,
       },
     ])
     mockGetCharacter.mockResolvedValueOnce(before).mockResolvedValueOnce(after)

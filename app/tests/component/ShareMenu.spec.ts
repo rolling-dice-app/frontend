@@ -14,6 +14,8 @@ const makeCharacter = (overrides: Partial<CharacterListItem> = {}): CharacterLis
   race: 'human',
   shareable: false,
   shareId: 'share-1',
+  deletedAt: null,
+  restoredAt: null,
   ...overrides,
 })
 

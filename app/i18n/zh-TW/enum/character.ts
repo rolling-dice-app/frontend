@@ -157,7 +157,7 @@ export default {
   addCharacter: '新增角色卡',
   createCharacter: '建立角色卡',
   editCharacter: '編輯角色卡',
-  deleteConfirm: '刪除後無法復原，確定要刪除這張角色卡嗎？',
+  deleteConfirm: '刪除後的角色卡會在 7 天後永久刪除，確定要刪除以下角色？',
   toggleViewMode: '切換顯示模式',
   sortBy: '排序方式',
   enterDeleteMode: '進入刪除模式',
@@ -188,4 +188,14 @@ export default {
   editCampaignRecord: '編輯戰役紀錄',
   campaignRecordLimitReached: '戰役紀錄數量已達上限，請先刪除舊紀錄',
   characterLimitReached: '角色卡數量已達方案上限',
+
+  // 垃圾桶 / 還原
+  trash: {
+    activeTab: '可用角色',
+    trashTab: '已刪除角色',
+    empty: '沒有已刪除的角色',
+    restoreLabel: '還原角色卡',
+    restoreConfirm: '還原後 7 天內無法再次刪除，確定要還原嗎？',
+    restoreSuccess: '已還原角色卡',
+  },
 }

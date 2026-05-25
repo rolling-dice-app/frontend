@@ -301,27 +301,32 @@
             <p class="font-display text-xl">{{ t('character.trash.empty') }}</p>
           </div>
 
-          <!-- Trash list（Task #3 過渡 UI：純列表 + 還原鈕。Task #4 會換成 mode='trashed' 卡片） -->
-          <ul v-else class="flex flex-col gap-2">
-            <li
-              v-for="character in trashedCharacters"
+          <!-- Trash grid -->
+          <div
+            v-else-if="!isListMode"
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
+          >
+            <BusinessCharacterListCard
+              v-for="character in sortedCharacters"
               :key="character.id"
-              class="flex items-center justify-between gap-3 rounded-lg border border-border bg-canvas-elevated px-4 py-3"
-            >
-              <div class="flex min-w-0 flex-col">
-                <span class="truncate font-display text-content">{{ character.name }}</span>
-                <span class="text-sm text-content-muted">Lv.{{ character.level }}</span>
-              </div>
-              <button
-                type="button"
-                :aria-label="`${t('character.trash.restoreLabel')} ${character.name}`"
-                class="size-11 flex items-center justify-center bg-canvas-elevated border border-border rounded-md cursor-pointer hover:bg-surface transition-colors duration-150 text-content"
-                @click="onRestoreRequest(character)"
-              >
-                <Icon name="restore" :size="20" />
-              </button>
-            </li>
-          </ul>
+              :character="character"
+              :is-delete-mode="false"
+              mode="trashed"
+              @restore="onRestoreRequest"
+            />
+          </div>
+
+          <!-- Trash list -->
+          <div v-else class="flex flex-col gap-2">
+            <BusinessCharacterListItem
+              v-for="character in sortedCharacters"
+              :key="character.id"
+              :character="character"
+              :is-delete-mode="false"
+              mode="trashed"
+              @restore="onRestoreRequest"
+            />
+          </div>
         </div>
       </Tab>
     </Tabs>

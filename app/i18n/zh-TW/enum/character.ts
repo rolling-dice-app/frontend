@@ -197,5 +197,6 @@ export default {
     restoreLabel: '還原角色卡',
     restoreConfirm: '還原後 7 天內無法再次刪除，確定要還原嗎？',
     restoreSuccess: '已還原角色卡',
+    deleteCooldownTooltip: '還原後 7 天內無法刪除',
   },
 }

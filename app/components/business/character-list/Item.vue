@@ -2,9 +2,14 @@
   <div class="flex items-center gap-2">
     <NuxtLink
       :to="`/character/${character.id}`"
-      class="tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      :class="[
+        'tier-glow group flex flex-1 items-center gap-3 rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 transition-colors duration-200 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+        mode === 'trashed' && 'opacity-60 grayscale',
+      ]"
       :style="tierGlowStyle"
       :aria-label="`${t('character.viewLabel')} ${character.name}`"
+      :aria-disabled="mode === 'trashed' || undefined"
+      @click="onCardClick"
     >
       <!-- Thumbnail -->
       <div class="relative size-14 shrink-0 overflow-hidden rounded-md">
@@ -52,9 +57,9 @@
       </div>
     </NuxtLink>
 
-    <!-- Share menu：與刪除模式互斥，刪除模式時隱藏 -->
+    <!-- Share menu：與刪除模式互斥，刪除模式 / trash mode 時隱藏 -->
     <BusinessCharacterListShareMenu
-      v-if="!isDeleteMode"
+      v-if="mode === 'active' && !isDeleteMode"
       class="shrink-0"
       :character="character"
       @copy-link="$emit('copy-link', $event)"
@@ -62,37 +67,76 @@
       @toggle-share="$emit('toggle-share', $event)"
     />
 
-    <!-- Delete button -->
+    <!-- Delete button（cooldown 期內 disable） -->
     <button
-      v-if="isDeleteMode"
+      v-if="mode === 'active' && isDeleteMode"
       type="button"
+      :disabled="isInDeleteCooldown"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-danger rounded-md cursor-pointer hover:bg-danger-hover transition-colors duration-150 text-content-inverse"
+      :title="isInDeleteCooldown ? t('character.trash.deleteCooldownTooltip') : undefined"
+      :class="[
+        'ml-2 size-11 shrink-0 flex items-center justify-center rounded-md transition-colors duration-150',
+        isInDeleteCooldown
+          ? 'bg-canvas-elevated border border-border text-content-muted cursor-not-allowed opacity-60'
+          : 'bg-danger text-content-inverse cursor-pointer hover:bg-danger-hover',
+      ]"
       @click.prevent="$emit('delete', character)"
     >
       <Icon name="close" :size="20" />
+    </button>
+
+    <!-- Restore button（trash mode） -->
+    <button
+      v-if="mode === 'trashed'"
+      type="button"
+      :aria-label="`${t('character.trash.restoreLabel')} ${character.name}`"
+      class="ml-2 size-11 shrink-0 flex items-center justify-center bg-canvas-elevated border border-border rounded-md cursor-pointer hover:bg-surface transition-colors duration-150 text-content"
+      @click.prevent="$emit('restore', character)"
+    >
+      <Icon name="restore" :size="20" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { RESTORE_COOLDOWN_DAYS } from '@rolling-dice-app/core'
 import { Icon } from '@ui'
 import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 const { t } = useI18n()
 
-const props = defineProps<{
-  character: CharacterListItem
-  isDeleteMode: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    character: CharacterListItem
+    isDeleteMode: boolean
+    mode?: 'active' | 'trashed'
+  }>(),
+  { mode: 'active' },
+)
 
 defineEmits<{
   delete: [CharacterListItem]
+  restore: [CharacterListItem]
   'copy-link': [CharacterListItem]
   'open-page': [CharacterListItem]
   'toggle-share': [CharacterListItem]
 }>()
+
+const onCardClick = (e: MouseEvent) => {
+  if (props.mode === 'trashed') e.preventDefault()
+}
+
+// 還原冷卻 pre-check；now 為 client-derived 避免 hydration mismatch（與 Card.vue 同模式）。
+const COOLDOWN_MS = RESTORE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
+const now = ref<number | null>(null)
+onMounted(() => {
+  now.value = Date.now()
+})
+const isInDeleteCooldown = computed(() => {
+  if (now.value === null || !props.character.restoredAt) return false
+  return new Date(props.character.restoredAt).getTime() + COOLDOWN_MS > now.value
+})
 
 const TIER_CONFIG: Record<
   CharacterTier,

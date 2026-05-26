@@ -111,7 +111,6 @@ export default {
   campaignField: {
     title: '標題',
     subtitle: '副標題',
-    subtitlePlaceholder: '（選填）',
     date: '日期',
     content: '內容',
     contentPlaceholder: '記錄這場團務的事件、戰利品、重要決策…',

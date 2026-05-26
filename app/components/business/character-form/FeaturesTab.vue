@@ -99,6 +99,7 @@
           <div class="flex-1">
             <label for="feature-modal-name" class="mb-1 block text-xs text-content">
               {{ t('inventory.itemName') }}
+              <span class="text-danger">*</span>
             </label>
             <CommonAppInput
               id="feature-modal-name"

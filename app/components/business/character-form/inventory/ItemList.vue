@@ -170,6 +170,7 @@
         <div class="flex-1">
           <label for="item-modal-name" class="mb-1 block text-xs text-content">
             {{ t('inventory.itemName') }}
+            <span class="text-danger">*</span>
           </label>
           <CommonAppInput
             id="item-modal-name"

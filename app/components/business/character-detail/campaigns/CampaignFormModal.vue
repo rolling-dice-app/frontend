@@ -51,7 +51,6 @@
             size="sm"
             outline
             :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
-            :placeholder="t('character.campaignField.subtitlePlaceholder')"
             class="w-full"
             @update:model-value="draft.subtitle = $event"
           />

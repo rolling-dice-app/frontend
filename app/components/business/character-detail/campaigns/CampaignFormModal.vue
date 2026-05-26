@@ -70,7 +70,7 @@
               :model-value="draft.content"
               :rows="4"
               max-height="10rem"
-              :maxlength="VALIDATION_LIMITS.maxCampaignRecordContentLength"
+              :maxlength="CHARACTER_TEXT_LIMITS.HUGE"
               show-count
               :placeholder="t('character.campaignField.contentPlaceholder')"
               @update:model-value="draft.content = $event"

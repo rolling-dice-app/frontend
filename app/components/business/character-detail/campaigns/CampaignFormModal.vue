@@ -13,7 +13,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div class="flex-1">
             <label for="campaign-title" class="mb-1 block text-xs text-content">
-              {{ t('character.campaignField.name') }}
+              {{ t('character.campaignField.title') }}
               <span class="text-danger">*</span>
             </label>
             <CommonAppInput
@@ -38,6 +38,23 @@
               class="h-8 rounded-md border border-primary bg-canvas-inset px-2 text-sm text-content transition-colors focus:outline-none focus-within:ring-1 focus-within:ring-primary"
             />
           </div>
+        </div>
+
+        <div>
+          <label for="campaign-subtitle" class="mb-1 block text-xs text-content">
+            {{ t('character.campaignField.subtitle') }}
+          </label>
+          <CommonAppInput
+            id="campaign-subtitle"
+            :radius="0"
+            :model-value="draft.subtitle ?? ''"
+            size="sm"
+            outline
+            :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
+            :placeholder="t('character.campaignField.subtitlePlaceholder')"
+            class="w-full"
+            @update:model-value="draft.subtitle = $event"
+          />
         </div>
 
         <div>
@@ -99,6 +116,11 @@
             @update:model-value="draft.expEarning = sanitizeNumber($event)"
           />
         </div>
+
+        <BusinessCharacterDetailCampaignsTeammateInput
+          v-model="draft.teammates"
+          :max="VALIDATION_LIMITS.maxTeammatesPerCampaignRecord"
+        />
       </div>
 
       <template #footer>
@@ -116,7 +138,12 @@
 
 <script setup lang="ts">
 import { Modal, TextArea } from '@ui'
-import { CHARACTER_INT_LIMITS, DEFAULT_CURRENCY, VALIDATION_LIMITS } from '@rolling-dice-app/core'
+import {
+  CHARACTER_INT_LIMITS,
+  CHARACTER_TEXT_LIMITS,
+  DEFAULT_CURRENCY,
+  VALIDATION_LIMITS,
+} from '@rolling-dice-app/core'
 import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
@@ -153,8 +180,10 @@ const todayISO = (): string => {
 const emptyDraft = (): CampaignDraft => {
   return {
     title: '',
+    subtitle: null,
     date: todayISO(),
     content: '',
+    teammates: [],
     moneyEarning: { ...DEFAULT_CURRENCY },
     expEarning: 0,
   }
@@ -173,8 +202,10 @@ watch(
       draft.value = props.editing
         ? {
             title: props.editing.title,
+            subtitle: props.editing.subtitle,
             date: props.editing.date,
             content: props.editing.content,
+            teammates: [...props.editing.teammates],
             moneyEarning: { ...props.editing.moneyEarning },
             expEarning: props.editing.expEarning,
           }
@@ -184,9 +215,12 @@ watch(
 )
 
 const onSave = (): void => {
+  const subtitleTrimmed = draft.value.subtitle?.trim() ?? ''
   const payload: CampaignDraft = {
     ...draft.value,
     title: draft.value.title.trim(),
+    subtitle: subtitleTrimmed === '' ? null : subtitleTrimmed,
+    teammates: [...draft.value.teammates],
     moneyEarning: { ...draft.value.moneyEarning },
   }
   emit('save', payload, props.editing?.id ?? null)

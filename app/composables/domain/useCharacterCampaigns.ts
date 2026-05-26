@@ -18,11 +18,10 @@ const isStaleVersionError = (err: unknown): boolean => {
 
 const draftToCreateBody = (draft: CampaignDraft): CampaignRecordCreateBody => ({
   title: draft.title,
-  // TODO(campaign): 之後補 subtitle / teammates UI 時改帶實際值
-  subtitle: null,
+  subtitle: draft.subtitle,
   content: draft.content,
   date: draft.date,
-  teammates: [],
+  teammates: draft.teammates.map((t) => t.shareId),
   moneyEarning: { ...draft.moneyEarning },
   expEarning: draft.expEarning,
 })
@@ -30,8 +29,10 @@ const draftToCreateBody = (draft: CampaignDraft): CampaignRecordCreateBody => ({
 const draftToUpdateBody = (draft: CampaignDraft, updatedAt: string): CampaignRecordUpdateBody => ({
   updatedAt,
   title: draft.title,
+  subtitle: draft.subtitle,
   content: draft.content,
   date: draft.date,
+  teammates: draft.teammates.map((t) => t.shareId),
   moneyEarning: { ...draft.moneyEarning },
   expEarning: draft.expEarning,
 })

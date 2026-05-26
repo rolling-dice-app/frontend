@@ -1,4 +1,8 @@
-import type { CampaignRecordDTO, CharacterCurrencyDTO } from '@rolling-dice-app/core'
+import type {
+  CampaignRecordDTO,
+  CharacterCurrencyDTO,
+  SharedCharacterPreviewDTO,
+} from '@rolling-dice-app/core'
 
 /** 金幣面額快照（不含樂觀鎖 token，純記錄四幣種數量） */
 export type CurrencyAmount = Omit<CharacterCurrencyDTO, 'updatedAt'>
@@ -7,14 +11,15 @@ export type CurrencyAmount = Omit<CharacterCurrencyDTO, 'updatedAt'>
 export type CampaignEntry = CampaignRecordDTO
 
 /**
- * 表單草稿：前端 UI 僅綁五個欄位；composable 在送往 backend 時補
- * subtitle / teammates / applyMoneyToCurrency。
- * TODO(campaign): 之後補 subtitle / teammates UI 時，把對應欄位加進這裡。
+ * 表單草稿。teammates 在 draft 階段以 hydrated SharedCharacterPreviewDTO 存放（chip 需要 avatar/name），
+ * composable 送往 backend 時轉成 shareId[]。
  */
 export interface CampaignDraft {
   title: string
+  subtitle: string | null
   date: string
   content: string
+  teammates: SharedCharacterPreviewDTO[]
   moneyEarning: CurrencyAmount
   expEarning: number
 }

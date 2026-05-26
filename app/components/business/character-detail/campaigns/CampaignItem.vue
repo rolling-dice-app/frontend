@@ -5,9 +5,14 @@
   >
     <template #title>
       <div class="flex min-w-0 flex-1 items-start justify-between gap-3 pr-3">
-        <h4 class="min-w-0 flex-1 truncate text-base font-bold text-content">
-          {{ entry.title }}
-        </h4>
+        <div class="min-w-0 flex-1">
+          <h4 class="truncate text-base font-bold text-content">
+            {{ entry.title }}
+          </h4>
+          <p v-if="entry.subtitle" class="truncate text-xs text-content-muted">
+            {{ entry.subtitle }}
+          </p>
+        </div>
 
         <div class="flex shrink-0 flex-col items-end gap-1.5">
           <div class="flex items-center gap-1">
@@ -43,6 +48,12 @@
       {{ entry.content }}
     </p>
     <p v-else class="text-xs text-content-muted">{{ t('inventory.emptyContent') }}</p>
+
+    <BusinessCharacterDetailCampaignsTeammateChipList
+      v-if="entry.teammates.length > 0"
+      class="mt-3"
+      :teammates="entry.teammates"
+    />
 
     <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
       <span v-if="moneyParts.length === 0" class="text-content-muted">

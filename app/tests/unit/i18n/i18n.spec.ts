@@ -60,7 +60,9 @@ describe('t() — character namespace 擴張（基本資料 / tab / 列表）', 
 
   it('列表 / 互動', () => {
     expect(t('character.createCharacter')).toBe('建立角色卡')
-    expect(t('character.deleteConfirm')).toBe('刪除後無法復原，確定要刪除這張角色卡嗎？')
+    expect(t('character.deleteConfirm')).toBe(
+      '刪除後的角色卡會在 7 天後永久刪除，確定要刪除以下角色？',
+    )
     expect(t('character.empty')).toBe('尚無角色卡')
   })
 })

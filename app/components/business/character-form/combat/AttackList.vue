@@ -77,7 +77,8 @@
       <div class="flex items-end gap-3">
         <div class="flex-1">
           <label for="attack-modal-name" class="mb-1 block text-xs text-content">
-            {{ t('character.campaignField.name') }}
+            {{ t('combat.attackName') }}
+            <span class="text-danger">*</span>
           </label>
           <CommonAppInput
             id="attack-modal-name"

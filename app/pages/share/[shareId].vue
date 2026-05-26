@@ -24,14 +24,14 @@
 
     <div v-else class="space-y-4">
       <BusinessCharacterShareSummaryHeader
-        :character="character"
+        :character="shared.character"
         :owner-display-name="shared.ownerDisplayName"
       />
 
-      <BusinessCharacterDetailProfileTab :character="character" />
+      <BusinessCharacterDetailProfileTab :character="shared.character" />
 
       <BusinessCharacterShareAttackList
-        :attacks="character.attacks"
+        :attacks="shared.character.attacks"
         :ability-scores="totalAbilityScores"
         :proficiency-bonus="proficiencyBonus"
       />
@@ -39,16 +39,18 @@
       <BusinessCharacterShareSpellList :entries="shared.spells" />
 
       <BusinessCharacterShareInventoryView
-        :character="character"
+        :character="shared.character"
         :items="inventoryItems"
-        :currency="currency"
+        :currency="shared.currency"
+        :attuned-cap="attunedCap"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CharacterCurrencyDTO, CharacterDTO, InventoryItemDTO } from '@rolling-dice-app/core'
+import { computeAttunedLimit, type SharedCharacterProfileDTO } from '@rolling-dice-app/core'
+import type { SharedInventoryItemViewModel } from '~/types/business/share'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -67,32 +69,15 @@ if (status.value === 'error' || !shared.value) {
 
 useHead({ title: t('character.share.pageTitle') })
 
-// 公開投影缺 id / 時間戳 / 擁有者旗標；這些唯讀元件不渲染這些欄位，
-// 以中性值補足型別即可（純前端 view-model，不持久化）。
-const character = computed<CharacterDTO>(() => ({
-  ...shared.value!.character,
-  id: '',
-  createdAt: '',
-  updatedAt: '',
-  shareable: true,
-  shareId: shareId.value,
-}))
-
-const inventoryItems = computed<InventoryItemDTO[]>(() =>
+// 公開投影 item 無 id；為 :key 與展開狀態合成穩定鍵。
+const inventoryItems = computed<SharedInventoryItemViewModel[]>(() =>
   (shared.value?.inventory ?? []).map((item, index) => ({
     ...item,
     id: `shared-${index}`,
-    createdAt: '',
-    updatedAt: '',
   })),
 )
 
-const emptyCurrency: Omit<CharacterCurrencyDTO, 'updatedAt'> = { cp: 0, sp: 0, gp: 0, pp: 0 }
-const currency = computed<CharacterCurrencyDTO>(() => ({
-  ...(shared.value?.currency ?? emptyCurrency),
-  updatedAt: '',
-}))
-
-const characterRef = computed(() => character.value)
+const characterRef = computed<SharedCharacterProfileDTO>(() => shared.value!.character)
+const attunedCap = computed(() => computeAttunedLimit(characterRef.value))
 const { totalAbilityScores, proficiencyBonus } = useCharacterDerivedStatsFromCharacter(characterRef)
 </script>

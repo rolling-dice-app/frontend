@@ -47,6 +47,11 @@ export const characters = () => {
       await apiFetch(`/characters/${id}`, { method: 'DELETE' })
     },
 
+    /** 將軟刪角色還原；冪等，並發第二次自動 no-op */
+    restore: async (id: string): Promise<void> => {
+      await apiFetch(`/characters/${id}/restore`, { method: 'POST' })
+    },
+
     /** 切換是否允許未登入者透過 shareId 公開讀取 */
     share: async (id: string, shareable: boolean): Promise<void> => {
       const body: Pick<CharacterDTO, 'shareable'> = { shareable }

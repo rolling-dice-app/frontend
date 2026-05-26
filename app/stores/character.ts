@@ -30,16 +30,29 @@ const buildCreateInput = (formState: CharacterFormState): CharacterCreateDTO => 
   return { ...patch, abilities }
 }
 
-const characterToListItem = (character: CharacterDTO): CharacterListItem => ({
-  id: character.id,
-  name: character.name,
-  classes: character.classes,
-  level: calculateTotalLevel(character.classes),
-  avatar: character.avatar,
-  updatedAt: character.updatedAt,
-  race: character.race,
-  shareable: character.shareable,
-  shareId: character.shareId,
+const characterToListItem = ({
+  id,
+  name,
+  classes,
+  avatar,
+  updatedAt,
+  race,
+  shareable,
+  shareId,
+  deletedAt,
+  restoredAt,
+}: CharacterDTO): CharacterListItem => ({
+  id,
+  name,
+  classes,
+  level: calculateTotalLevel(classes),
+  avatar,
+  updatedAt,
+  race,
+  shareable,
+  shareId,
+  deletedAt,
+  restoredAt,
 })
 
 export const useCharacterStore = defineStore('character', () => {
@@ -53,12 +66,18 @@ export const useCharacterStore = defineStore('character', () => {
   const detailLoading = ref(false)
   const detailError = ref<unknown>(null)
 
-  const characterList = computed<CharacterListItem[]>(() => list.value)
+  // active / trashed 分流依 deletedAt 單一欄位（後端權威）。restoredAt 不參與分流。
+  const activeList = computed<CharacterListItem[]>(() =>
+    list.value.filter((c) => c.deletedAt === null),
+  )
+  const trashedList = computed<CharacterListItem[]>(() =>
+    list.value.filter((c) => c.deletedAt !== null),
+  )
 
-  // 角色數是否達方案上限；limits 來自 /auth/me，未就緒時不視為達上限（交由 build 送出時 backend backstop）。
+  // 角色數是否達方案上限；只計 active（trash 不計入 cap），limits 來自 /auth/me 未就緒時不視為達上限。
   const isAtCharacterLimit = computed(() => {
     const limits = useAuthStore().limits
-    return limits != null && list.value.length >= limits.maxActiveCharacters
+    return limits != null && activeList.value.length >= limits.maxActiveCharacters
   })
 
   const loadList = async (): Promise<CharacterListItem[]> => {
@@ -157,14 +176,23 @@ export const useCharacterStore = defineStore('character', () => {
     }
   }
 
+  // soft-delete：呼叫成功後刷列表，由後端回的 deletedAt 把該筆推進 trashedList。
   const removeCharacter = async (id: string): Promise<void> => {
     await characters().remove(id)
     detailCache.value.delete(id)
-    list.value = list.value.filter((c) => c.id !== id)
+    await loadList()
+  }
+
+  // 還原 trash 內角色為 active；錯誤往上拋給呼叫端做 toast 分流（plan-limit 滿等）。
+  const restoreCharacter = async (id: string): Promise<void> => {
+    await characters().restore(id)
+    detailCache.value.delete(id)
+    await loadList()
   }
 
   return {
-    characters: characterList,
+    characters: activeList,
+    trashedCharacters: trashedList,
     isAtCharacterLimit,
     list,
     detailCache,
@@ -182,5 +210,6 @@ export const useCharacterStore = defineStore('character', () => {
     refreshCharacterAfterAvatar,
     setCharacterShareable,
     removeCharacter,
+    restoreCharacter,
   }
 })

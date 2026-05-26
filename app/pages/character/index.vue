@@ -2,7 +2,7 @@
   <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
     <!-- Page header -->
     <CommonPageHeader :title="t('character.characterListTitle')" show-back>
-      <template v-if="status === 'success' && characters.length > 0" #actions>
+      <template v-if="status === 'success' && hasAnyCharacter" #actions>
         <div class="flex justify-end gap-2 w-full">
           <!-- 排序模式 -->
           <Select
@@ -12,6 +12,7 @@
             border-color="var(--color-border)"
             color="var(--color-content)"
             dropdown-bg="var(--color-canvas-elevated)"
+            option-selected-color="var(--color-canvas-muted)"
             option-hover-color="var(--color-canvas-inset)"
             class="sort-select w-21 xs:w-28"
             :aria-label="t('character.sortBy')"
@@ -46,8 +47,9 @@
               <Icon name="list" :size="24" />
             </span>
           </button>
-          <!-- 刪除模式 -->
+          <!-- 刪除模式（trash tab 不顯示） -->
           <button
+            v-if="activeTab === 'active'"
             type="button"
             :aria-pressed="isDeleteMode"
             :aria-label="
@@ -163,56 +165,9 @@
       </CommonAppButton>
     </div>
 
-    <!-- Character grid -->
-    <div
-      v-else-if="characters.length > 0 && !isListMode"
-      class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
-    >
-      <BusinessCharacterListCard
-        v-for="character in sortedCharacters"
-        :key="character.id"
-        :character="character"
-        :is-delete-mode="isDeleteMode"
-        @delete="onDeleteRequest"
-        @copy-link="onCopyLink"
-        @open-page="onOpenSharePage"
-        @toggle-share="onToggleShare"
-      />
-      <button
-        type="button"
-        class="flex min-h-84 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        :aria-label="t('character.addCharacter')"
-        @click="onAddCharacter"
-      >
-        <Icon name="plus" :size="48" />
-      </button>
-    </div>
-
-    <!-- Character list -->
-    <div v-else-if="characters.length > 0 && isListMode" class="flex flex-col gap-2">
-      <BusinessCharacterListItem
-        v-for="character in sortedCharacters"
-        :key="character.id"
-        :character="character"
-        :is-delete-mode="isDeleteMode"
-        @delete="onDeleteRequest"
-        @copy-link="onCopyLink"
-        @open-page="onOpenSharePage"
-        @toggle-share="onToggleShare"
-      />
-      <button
-        type="button"
-        class="flex min-h-19 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
-        :aria-label="t('character.addCharacter')"
-        @click="onAddCharacter"
-      >
-        <Icon name="plus" :size="28" />
-      </button>
-    </div>
-
-    <!-- Empty state -->
+    <!-- Empty state（active 與 trash 都沒有時的首次 CTA） -->
     <NuxtLink
-      v-else
+      v-else-if="!hasAnyCharacter"
       to="/character/build"
       class="group relative flex min-h-[60dvh] cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-lg border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('character.createCharacter')"
@@ -251,6 +206,131 @@
       </div>
     </NuxtLink>
 
+    <!-- Active / Trash tabs（hasAnyCharacter 時才出現）
+         --rui-color-surface 覆寫成 canvas-elevated 對齊角色詳情頁 tab 面板色 -->
+    <Tabs
+      v-else
+      v-model="activeTab"
+      type="border"
+      active-color="var(--color-canvas-elevated)"
+      inactive-color="var(--color-canvas)"
+      :label="t('character.characterListTitle')"
+      :style="{ '--rui-color-surface': 'var(--color-canvas-elevated)' }"
+    >
+      <Tab value="active">
+        <template #label>
+          <span class="text-content">
+            {{ t('character.trash.activeTab') }} ({{ activeCharacters.length }})
+          </span>
+        </template>
+
+        <div class="p-4">
+          <!-- Active 空（如：全部移到 trash） -->
+          <div
+            v-if="activeCharacters.length === 0"
+            class="flex min-h-[40dvh] flex-col items-center justify-center gap-4 px-4 py-12 text-center text-content-muted"
+          >
+            <p class="font-display text-xl text-content">{{ t('character.empty') }}</p>
+            <CommonAppButton variant="primary" @click="onAddCharacter">
+              {{ t('character.addCharacter') }}
+            </CommonAppButton>
+          </div>
+
+          <!-- Active grid -->
+          <div
+            v-else-if="!isListMode"
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
+          >
+            <BusinessCharacterListCard
+              v-for="character in sortedCharacters"
+              :key="character.id"
+              :character="character"
+              :is-delete-mode="isDeleteMode"
+              @delete="onDeleteRequest"
+              @copy-link="onCopyLink"
+              @open-page="onOpenSharePage"
+              @toggle-share="onToggleShare"
+            />
+            <button
+              type="button"
+              class="flex min-h-84 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              :aria-label="t('character.addCharacter')"
+              @click="onAddCharacter"
+            >
+              <Icon name="plus" :size="48" />
+            </button>
+          </div>
+
+          <!-- Active list -->
+          <div v-else class="flex flex-col gap-2">
+            <BusinessCharacterListItem
+              v-for="character in sortedCharacters"
+              :key="character.id"
+              :character="character"
+              :is-delete-mode="isDeleteMode"
+              @delete="onDeleteRequest"
+              @copy-link="onCopyLink"
+              @open-page="onOpenSharePage"
+              @toggle-share="onToggleShare"
+            />
+            <button
+              type="button"
+              class="flex min-h-19 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated px-3 py-2.5 text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              :aria-label="t('character.addCharacter')"
+              @click="onAddCharacter"
+            >
+              <Icon name="plus" :size="28" />
+            </button>
+          </div>
+        </div>
+      </Tab>
+
+      <Tab value="trashed">
+        <template #label>
+          <span class="text-content">
+            {{ t('character.trash.trashTab') }} ({{ trashedCharacters.length }})
+          </span>
+        </template>
+
+        <div class="p-4">
+          <!-- Trash 空 -->
+          <div
+            v-if="trashedCharacters.length === 0"
+            class="flex min-h-[40dvh] items-center justify-center px-4 py-12 text-center text-content-muted"
+          >
+            <p class="font-display text-xl">{{ t('character.trash.empty') }}</p>
+          </div>
+
+          <!-- Trash grid -->
+          <div
+            v-else-if="!isListMode"
+            class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
+          >
+            <BusinessCharacterListCard
+              v-for="character in sortedCharacters"
+              :key="character.id"
+              :character="character"
+              :is-delete-mode="false"
+              mode="trashed"
+              @restore="onRestoreRequest"
+            />
+          </div>
+
+          <!-- Trash list -->
+          <div v-else class="flex flex-col gap-2">
+            <BusinessCharacterListItem
+              v-for="character in sortedCharacters"
+              :key="character.id"
+              :character="character"
+              :is-delete-mode="false"
+              mode="trashed"
+              @restore="onRestoreRequest"
+            />
+          </div>
+        </div>
+      </Tab>
+    </Tabs>
+
     <!-- Delete confirmation -->
     <Modal
       v-model="confirmOpen"
@@ -284,11 +364,45 @@
         </div>
       </template>
     </Modal>
+
+    <!-- Restore confirmation -->
+    <Modal
+      v-model="restoreOpen"
+      :title="t('character.trash.restoreLabel')"
+      bg-color="var(--color-canvas-elevated)"
+      text-color="var(--color-content)"
+      border-color="var(--color-border)"
+    >
+      <p class="text-content">{{ t('character.trash.restoreConfirm') }}</p>
+      <p v-if="pendingRestore" class="mt-2 font-bold text-content">
+        {{ pendingRestore.name }}
+      </p>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <CommonAppButton
+            type="button"
+            variant="ghost"
+            :disabled="restoring"
+            @click="onRestoreCancel"
+          >
+            {{ t('ui.action.cancel') }}
+          </CommonAppButton>
+          <CommonAppButton
+            type="button"
+            variant="primary"
+            :disabled="restoring"
+            @click="onRestoreConfirm"
+          >
+            {{ t('character.trash.restoreLabel') }}
+          </CommonAppButton>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon, Modal, Select } from '@ui'
+import { Icon, Modal, Select, Tab, Tabs } from '@ui'
 import type { SelectOption } from '@ui'
 import type { CharacterListItem } from '~/types/business/character-list'
 
@@ -309,7 +423,16 @@ const { status, refresh } = useAsyncData('characters', () => characterStore.load
   lazy: true,
 })
 
-const characters = computed<CharacterListItem[]>(() => characterStore.characters)
+// active / trashed 分流由 store 處理；本頁的 `characters` 隨 activeTab 切換來源，sortedCharacters 自動跟著。
+const activeTab = ref<'active' | 'trashed'>('active')
+const activeCharacters = computed<CharacterListItem[]>(() => characterStore.characters)
+const trashedCharacters = computed<CharacterListItem[]>(() => characterStore.trashedCharacters)
+const characters = computed<CharacterListItem[]>(() =>
+  activeTab.value === 'trashed' ? trashedCharacters.value : activeCharacters.value,
+)
+const hasAnyCharacter = computed(
+  () => activeCharacters.value.length > 0 || trashedCharacters.value.length > 0,
+)
 
 // 達上限時列表入口前置攔截；build 頁另有 character-limit guard，判斷統一由 store 提供。
 const onAddCharacter = () => {
@@ -404,6 +527,42 @@ const onDeleteConfirm = async () => {
     toast.error(t('ui.message.deleteFailed'))
   } finally {
     deleting.value = false
+  }
+}
+
+// ── Restore ───────────────────────────────────────────────────────────────────
+
+const pendingRestore = ref<CharacterListItem | null>(null)
+const restoreOpen = ref(false)
+const restoring = ref(false)
+
+const onRestoreRequest = (character: CharacterListItem) => {
+  pendingRestore.value = character
+  restoreOpen.value = true
+}
+
+const onRestoreCancel = () => {
+  restoreOpen.value = false
+  pendingRestore.value = null
+}
+
+// pre-empt plan-limit 與 onAddCharacter 同步 UX；其他錯誤透過 apiErrorToast 通用處理。
+const onRestoreConfirm = async () => {
+  if (!pendingRestore.value || restoring.value) return
+  if (characterStore.isAtCharacterLimit) {
+    toast.error(t('character.characterLimitReached'))
+    return
+  }
+  restoring.value = true
+  try {
+    await characterStore.restoreCharacter(pendingRestore.value.id)
+    toast.success(t('character.trash.restoreSuccess'))
+    restoreOpen.value = false
+    pendingRestore.value = null
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    restoring.value = false
   }
 }
 

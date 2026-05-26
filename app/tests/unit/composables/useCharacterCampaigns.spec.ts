@@ -3,10 +3,23 @@ import type {
   CampaignRecordCreateBody,
   CampaignRecordDTO,
   CampaignRecordUpdateBody,
+  SharedCharacterPreviewDTO,
 } from '@rolling-dice-app/core'
+import type { CampaignDraft } from '~/types/business/campaign'
 import { useCharacterCampaigns } from '~/composables/domain/useCharacterCampaigns'
 
 const CHAR_ID = 'char-001'
+
+const buildPreview = (
+  shareId: string,
+  overrides: Partial<SharedCharacterPreviewDTO> = {},
+): SharedCharacterPreviewDTO => ({
+  shareId,
+  available: overrides.available ?? true,
+  name: overrides.name ?? `角色 ${shareId}`,
+  avatar: overrides.avatar ?? null,
+  ownerDisplayName: overrides.ownerDisplayName ?? 'OwnerName',
+})
 
 const mockList = vi.fn<(id: string) => Promise<CampaignRecordDTO[]>>()
 const mockCreate =
@@ -126,10 +139,12 @@ describe('useCharacterCampaigns — load', () => {
 })
 
 describe('useCharacterCampaigns — addCampaign', () => {
-  const draft = {
+  const draft: CampaignDraft = {
     title: '新場次',
+    subtitle: null,
     date: '2026-04-30',
     content: 'demo',
+    teammates: [],
     moneyEarning: { cp: 0, sp: 0, gp: 50, pp: 0 },
     expEarning: 100,
   }
@@ -186,13 +201,35 @@ describe('useCharacterCampaigns — addCampaign', () => {
     await cmp.addCampaign(draft)
     expect(mockRefetchCurrency).not.toHaveBeenCalled()
   })
+
+  it('subtitle 與 teammates preview 會帶到 create body（teammates 攤平成 shareId[]）', async () => {
+    const draftWithExtras: CampaignDraft = {
+      ...draft,
+      subtitle: '失蹤的礦工',
+      teammates: [
+        buildPreview('chs_AbCdEfGhIjKlMnOpQrStUv'),
+        buildPreview('chs_ZzZzZzZzZzZzZzZzZzZzZz', {
+          available: false,
+          name: null,
+          ownerDisplayName: null,
+        }),
+      ],
+    }
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    await cmp.addCampaign(draftWithExtras)
+    const body = mockCreate.mock.calls[0]![1]
+    expect(body.subtitle).toBe('失蹤的礦工')
+    expect(body.teammates).toEqual(['chs_AbCdEfGhIjKlMnOpQrStUv', 'chs_ZzZzZzZzZzZzZzZzZzZzZz'])
+  })
 })
 
 describe('useCharacterCampaigns — updateCampaign', () => {
-  const draft = {
+  const draft: CampaignDraft = {
     title: '改名',
+    subtitle: null,
     date: '2026-04-30',
     content: '',
+    teammates: [],
     moneyEarning: { cp: 0, sp: 0, gp: 0, pp: 0 },
     expEarning: 250,
   }
@@ -248,6 +285,21 @@ describe('useCharacterCampaigns — updateCampaign', () => {
     await cmp.updateCampaign('rec-1', draft)
     expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
     expect(cmp.conflictSignal.value).toBe(before)
+  })
+
+  it('subtitle 與 teammates preview 會帶到 PATCH body（teammates 攤平成 shareId[]）', async () => {
+    mockList.mockResolvedValue([buildDto({ id: 'rec-1' })])
+    const cmp = useCharacterCampaigns(CHAR_ID)
+    await cmp.load()
+    const draftWithExtras: CampaignDraft = {
+      ...draft,
+      subtitle: '副標',
+      teammates: [buildPreview('chs_AbCdEfGhIjKlMnOpQrStUv')],
+    }
+    await cmp.updateCampaign('rec-1', draftWithExtras)
+    const body = mockPatch.mock.calls[0]![2]
+    expect(body.subtitle).toBe('副標')
+    expect(body.teammates).toEqual(['chs_AbCdEfGhIjKlMnOpQrStUv'])
   })
 })
 

@@ -86,10 +86,10 @@
             class="w-full"
             :border="false"
             :model-value="formState.story ?? ''"
-            :placeholder="`${t('character.storyPlaceholder')}${CHARACTER_TEXT_LIMITS.LONG} ${t('character.storyPlaceholderUnit')}`"
+            :placeholder="`${t('character.storyPlaceholder')}${CHARACTER_TEXT_LIMITS.HUGE} ${t('character.storyPlaceholderUnit')}`"
             :rows="10"
             max-height="20rem"
-            :maxlength="CHARACTER_TEXT_LIMITS.LONG"
+            :maxlength="CHARACTER_TEXT_LIMITS.HUGE"
             show-count
             @update:model-value="formState.story = $event || null"
           />

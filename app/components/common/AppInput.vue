@@ -50,3 +50,15 @@ const onInput = (value: string) => {
   emit('update:modelValue', value.replace(/^\s+/, ''))
 }
 </script>
+
+<style scoped>
+/* @ui Input 對 disabled / readonly 套 bg-(--rui-color-disabled-bg) + 對 disabled 額外
+   opacity-60，會把內容糊掉。覆寫成透明背景 + 不降透明度；disabled 改以文字色暗示。 */
+:deep(.bg-\(--rui-color-disabled-bg\)) {
+  background-color: transparent;
+  opacity: 1;
+}
+:deep(input:disabled) {
+  color: var(--color-content-muted);
+}
+</style>

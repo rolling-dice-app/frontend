@@ -23,6 +23,8 @@ export function seedCharacterInStore(character: CharacterDTO): void {
     race: character.race,
     shareable: character.shareable,
     shareId: character.shareId,
+    deletedAt: character.deletedAt,
+    restoredAt: character.restoredAt,
   })
 }
 
@@ -63,6 +65,8 @@ export function createMockCharacter(overrides: Partial<CharacterDTO> = {}): Char
     avatar: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
+    deletedAt: null,
+    restoredAt: null,
     customHpBonus: 0,
     speedBonus: 0,
     initiativeBonus: 0,

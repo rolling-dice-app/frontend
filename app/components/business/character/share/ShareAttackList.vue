@@ -18,7 +18,7 @@
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
           <p class="text-sm font-semibold text-content">
-            {{ attack.name || t('combat.unnamed') }}
+            {{ attack.name }}
           </p>
           <p class="text-xs text-content">
             {{ t('combat.hitBonus') }}

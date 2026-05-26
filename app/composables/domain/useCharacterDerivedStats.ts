@@ -4,9 +4,9 @@ import type {
   AbilityKey,
   ArmorClassConfig,
   CharacterAbilityScores,
-  CharacterDTO,
   ClassEntry,
   ProficiencyLevel,
+  SharedCharacterProfileDTO,
 } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 import {
@@ -76,7 +76,7 @@ const fromFormState = (form: CharacterUpdateFormState): DerivedInputs => ({
   passiveInsightBonus: computed(() => form.passiveInsightBonus),
 })
 
-const fromCharacter = (character: Ref<CharacterDTO>): DerivedInputs => ({
+const fromCharacter = (character: Ref<SharedCharacterProfileDTO>): DerivedInputs => ({
   abilities: computed(() => character.value.abilities),
   classesForLevel: computed(() => character.value.classes),
   validClasses: computed(() => character.value.classes),
@@ -172,9 +172,13 @@ export function useCharacterDerivedStats(
   return computeDerived(fromFormState(formState))
 }
 
-/** 從已建立的 CharacterDTO 派生戰鬥 / 屬性數值，給速查（read-only）情境使用。 */
+/**
+ * 從 read-only 的角色投影派生戰鬥 / 屬性數值。
+ * 參數型別取 `SharedCharacterProfileDTO`（公開投影），完整 `CharacterDTO` 仍可結構相容傳入；
+ * 這讓 owner 詳細頁與公開分享頁共用同一條派生路徑，且不依賴 owner-only 欄位（id / 時間戳 / 旗標）。
+ */
 export function useCharacterDerivedStatsFromCharacter(
-  character: Ref<CharacterDTO>,
+  character: Ref<SharedCharacterProfileDTO>,
 ): CharacterDerivedStats {
   return computeDerived(fromCharacter(character))
 }

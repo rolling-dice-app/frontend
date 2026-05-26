@@ -59,9 +59,10 @@ describe('RollAttackRow', () => {
       expect(wrapper.text()).toContain('+5')
     })
 
-    it('未命名顯示「（未命名）」', () => {
+    it('未命名不渲染 fallback 文字，但其他欄位仍顯示', () => {
       const wrapper = mountRow({ attack: makeAttack({ name: '' }) })
-      expect(wrapper.text()).toContain('（未命名）')
+      expect(wrapper.text()).not.toContain('（未命名）')
+      expect(wrapper.text()).toContain('命中')
     })
 
     it('hit bonus 計算反映正 / 負 / 零分支', () => {

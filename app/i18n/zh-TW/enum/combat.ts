@@ -90,11 +90,11 @@ export default {
 
   // 攻擊
   attack: '攻擊',
+  attackName: '名稱',
   attackModule: '攻擊模組',
   addAttack: '新增攻擊',
-  attackLimitReached: '攻擊數量已達上限，請先刪除舊項目',
-  emptyAttack: '尚未設定任何攻擊',
-  unnamed: '（未命名）',
+  attackLimitReached: '模組數量已達上限，請先刪除舊項目',
+  emptyAttack: '尚未設定攻擊模組',
   hitBonus: '命中',
   extraBonus: '額外加值',
   extraHpShort: '額外',

@@ -57,9 +57,9 @@ const mountList = (attacks: AttackEntry[] = [], proficiencyBonus = 2) =>
   })
 
 describe('QuickviewAttackList', () => {
-  it('attacks = [] 顯示「尚未設定任何攻擊」、無 li', () => {
+  it('attacks = [] 顯示「尚未設定攻擊模組」、無 li', () => {
     const wrapper = mountList()
-    expect(wrapper.text()).toContain('尚未設定任何攻擊')
+    expect(wrapper.text()).toContain('尚未設定攻擊模組')
     expect(wrapper.findAll('li')).toHaveLength(0)
   })
 
@@ -73,9 +73,11 @@ describe('QuickviewAttackList', () => {
     expect(wrapper.text()).toContain('匕首')
   })
 
-  it('未命名攻擊顯示「（未命名）」', () => {
+  it('未命名攻擊不渲染 fallback 文字，但其他欄位仍顯示', () => {
     const wrapper = mountList([makeAttack({ name: '' })])
-    expect(wrapper.text()).toContain('（未命名）')
+    expect(wrapper.text()).not.toContain('（未命名）')
+    expect(wrapper.text()).toContain('命中')
+    expect(wrapper.text()).toContain('1d8+3')
   })
 
   it('有 comment 顯示 comment 文字', () => {

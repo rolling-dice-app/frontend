@@ -122,7 +122,7 @@ export default {
     teammatesInputPlaceholder: '貼上隊友的分享連結',
     teammatesAdd: '加入',
     teammatesLabelOwner: '擁有者',
-    teammateUnavailable: '已不再分享',
+    teammateUnavailable: '該角色卡未開放分享',
     teammatesLimitReached: '隊友數量已達上限',
     teammatesDuplicate: '此隊友已在清單中',
     teammatesInvalidLink: '無法從連結解析 shareId',

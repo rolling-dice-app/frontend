@@ -19,15 +19,19 @@
           @keydown.enter.prevent="onAdd"
         />
       </div>
-      <CommonAppButton
+      <Button
         type="button"
-        variant="primary"
         size="sm"
+        :radius="RADIUS.sm"
+        bg-color="var(--color-primary)"
+        text-color="var(--color-content-inverse)"
+        border-color="var(--color-primary)"
+        class="h-8"
         :disabled="!canAdd || submitting"
         @click="onAdd"
       >
         {{ t('character.campaignField.teammatesAdd') }}
-      </CommonAppButton>
+      </Button>
     </div>
 
     <ul v-if="modelValue.length > 0" role="list" class="flex flex-wrap items-center gap-1.5">
@@ -82,7 +86,8 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@ui'
+import { Button, Icon } from '@ui'
+import { RADIUS } from '~/constants/style'
 import type { SharedCharacterPreviewDTO } from '@rolling-dice-app/core'
 import { parseShareIdFromLink } from '~/utils/parseShareId'
 

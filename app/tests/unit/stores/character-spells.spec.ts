@@ -372,6 +372,70 @@ describe('character-spells store — race conditions', () => {
 
     expect(store.entries[0]?.updatedAt).toBe('v2')
   })
+
+  // R4：persistFlight 飛行中 learn 新 spell；mergeRefresh 的 server list 還沒含到 → 不可洗掉 optimistic
+  it('R4: persistFlight 飛行中 learn 新 spell → mergeRefresh 不洗掉本地剛 append 的 entry', async () => {
+    const a0 = makeEntry({ id: 'e-a', spellId: 'A', isPrepared: false, updatedAt: 'va0' })
+    mockSpellsList.mockResolvedValueOnce([a0])
+    const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+    const store = useCharacterSpellsStore()
+    await store.load('char-1')
+
+    const patchA = makeDeferred<undefined>()
+    const listAfterA = makeDeferred<SpellEntryDTO[]>()
+    mockSpellsPatch.mockReturnValueOnce(patchA.promise)
+    mockSpellsList.mockReturnValueOnce(listAfterA.promise)
+
+    store.togglePrepared('A')
+    await vi.advanceTimersByTimeAsync(FLAG_DEBOUNCE_MS)
+    expect(mockSpellsPatch).toHaveBeenCalledTimes(1)
+
+    const newEntry = makeEntry({ id: 'e-c', spellId: 'C', isPrepared: false, updatedAt: 'vc0' })
+    mockSpellsLearn.mockResolvedValueOnce(newEntry)
+    await store.learn('C')
+    expect(store.entries.map((e) => e.spellId)).toEqual(['A', 'C'])
+
+    patchA.resolve(undefined)
+    // server list 還沒含 C（GET 在 POST C 落地前送出）
+    listAfterA.resolve([{ ...a0, isPrepared: true, updatedAt: 'va1' }])
+    await vi.runAllTimersAsync()
+
+    expect(store.entries.map((e) => e.spellId).sort()).toEqual(['A', 'C'])
+    expect(store.entries.find((e) => e.spellId === 'A')?.updatedAt).toBe('va1')
+  })
+
+  // R5：persistFlight 飛行中 forget；server list 還含被刪 spell → 不可把刪掉的 entry 再 push 回來
+  it('R5: persistFlight 飛行中 forget → mergeRefresh 不把已 optimistic 移除的 entry 還原', async () => {
+    const a0 = makeEntry({ id: 'e-a', spellId: 'A', isPrepared: false, updatedAt: 'va0' })
+    const d0 = makeEntry({ id: 'e-d', spellId: 'D', isPrepared: false, updatedAt: 'vd0' })
+    mockSpellsList.mockResolvedValueOnce([a0, d0])
+    const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+    const store = useCharacterSpellsStore()
+    await store.load('char-1')
+
+    const patchA = makeDeferred<undefined>()
+    const listAfterA = makeDeferred<SpellEntryDTO[]>()
+    mockSpellsPatch.mockReturnValueOnce(patchA.promise)
+    mockSpellsList.mockReturnValueOnce(listAfterA.promise)
+
+    store.togglePrepared('A')
+    await vi.advanceTimersByTimeAsync(FLAG_DEBOUNCE_MS)
+    expect(mockSpellsPatch).toHaveBeenCalledTimes(1)
+
+    const forgetD = makeDeferred<undefined>()
+    mockSpellsForget.mockReturnValueOnce(forgetD.promise.then(() => undefined))
+    const forgetPromise = store.forget('D')
+    expect(store.entries.map((e) => e.spellId)).toEqual(['A'])
+
+    patchA.resolve(undefined)
+    // server list 還含 D（GET 在 DELETE D 落地前送出）
+    listAfterA.resolve([{ ...a0, isPrepared: true, updatedAt: 'va1' }, d0])
+    await vi.runAllTimersAsync()
+
+    expect(store.entries.map((e) => e.spellId)).toEqual(['A'])
+    forgetD.resolve(undefined)
+    await forgetPromise
+  })
 })
 
 describe('character-spells store — flushPending / reset', () => {
@@ -387,9 +451,7 @@ describe('character-spells store — flushPending / reset', () => {
     store.togglePrepared('fireball')
     expect(mockSpellsPatch).not.toHaveBeenCalled()
 
-    store.flushPending()
-
-    // flush 是同步觸發 persistFlag，但 patch 是 async；等 microtask
+    await store.flushPending()
     await vi.runAllTimersAsync()
 
     expect(mockSpellsPatch).toHaveBeenCalledOnce()

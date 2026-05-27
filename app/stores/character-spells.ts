@@ -54,7 +54,8 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
    * 拉 list 並逐 entry 合併到 entries.value：
    * - 剛 PATCH 的那筆：飛行期間被改過則只接 updatedAt；否則接完整 server entry
    * - 其他 spell：若也在 PATCH 飛行中或自 snap 以來 dirty → 保留 optimistic local
-   * - server 多出來的 entry → append；local 多出來的（已被 server 刪掉）→ 移除
+   * - server 有但 local 沒（且 dirty）→ 視為本地 forget 飛行中，不把 server 版接回來
+   * - local 有但 server 沒（且 dirty / in-flight）→ 視為本地 learn / 仍在 patch，保留 optimistic
    */
   const mergeRefresh = async (
     justPatchedSpellId: string,
@@ -67,11 +68,16 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
       logger.error('refreshFlight failed:', err)
       return
     }
+    // reset 期間或跨角色切換可能讓 characterId 在 await 後變 null；別把空 list 寫回去
+    if (!characterId.value) return
     const localById = new Map(entries.value.map((e) => [e.spellId, e]))
+    const seen = new Set<string>()
     const merged: SpellEntryDTO[] = []
     for (const fresh of list) {
+      seen.add(fresh.spellId)
       const local = localById.get(fresh.spellId)
       if (!local) {
+        if (dirty.changedSince(fresh.spellId, snap)) continue
         merged.push(fresh)
         continue
       }
@@ -88,6 +94,12 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
         continue
       }
       merged.push(fresh)
+    }
+    for (const [spellId, local] of localById) {
+      if (seen.has(spellId)) continue
+      if (persistFlight.isInFlight(spellId) || dirty.changedSince(spellId, snap)) {
+        merged.push(local)
+      }
     }
     entries.value = merged
   }
@@ -119,6 +131,7 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     if (!characterId.value) throw new Error('learn: store not loaded')
     const created = await characters().spells.learn(characterId.value, { spellId })
     entries.value = [...entries.value, created]
+    dirty.bump(spellId)
     return created
   }
 
@@ -127,6 +140,7 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     if (!characterId.value) throw new Error('forget: store not loaded')
     const snapshot = entries.value
     entries.value = snapshot.filter((entry) => entry.spellId !== spellId)
+    dirty.bump(spellId)
     try {
       await characters().spells.forget(characterId.value, spellId)
     } catch (err) {

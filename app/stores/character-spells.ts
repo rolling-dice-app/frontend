@@ -1,5 +1,7 @@
 import type { SpellEntryDTO, SpellEntryUpdateBody } from '@rolling-dice-app/core'
 import { debounce, type DebouncedFn } from '~/utils/timing'
+import { createKeyedSingleFlight, createSingleFlight } from '~/utils/single-flight'
+import { createKeyedDirtyGuard, type KeyedDirtySnapshot } from '~/utils/dirty-guard'
 import { createLogger } from '~/utils/log'
 
 const logger = createLogger('[CharacterSpellsStore]')
@@ -16,8 +18,79 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
   /** 最近一次背景持久化失敗的錯誤；由 consumer watch 並交給 useApiErrorToast 處理。 */
   const mutationError = ref<unknown>(null)
 
-  /** 每 spellId 一支 debounce；同 spell 的 prepared / favorite 合併 PATCH，避免兩個獨立 PATCH 帶同一 stale updatedAt 競態。 */
+  /** 每 spellId 一支 debounce；同 spell 的 prepared / favorite 合併 PATCH。 */
   const persistDebounces = new Map<string, DebouncedFn<[]>>()
+
+  /** 每 spellId optimistic mutation 計數；用於 refresh 期間判斷某筆是否「飛行中又被改過」 */
+  const dirty = createKeyedDirtyGuard<string>()
+
+  // 同 spellId 的 PATCH+merge pipeline 不並行；飛行中再 run 會排成 trailing 一輪
+  const persistFlight = createKeyedSingleFlight(async (spellId: string) => {
+    if (!characterId.value) return
+    const entry = entries.value.find((e) => e.spellId === spellId)
+    if (!entry) return
+    const snap = dirty.snapshot()
+    const body: SpellEntryUpdateBody = {
+      updatedAt: entry.updatedAt,
+      isPrepared: entry.isPrepared,
+      isFavorite: entry.isFavorite,
+    }
+    try {
+      await characters().spells.patch(characterId.value, spellId, body)
+    } catch (err) {
+      mutationError.value = err
+      logger.error(`persistFlight(${spellId}) PATCH failed:`, err)
+    }
+    await mergeRefresh(spellId, snap)
+  })
+
+  // 整個 list GET 不並行；多 spell PATCH 完成後共享同一輪 trailing refresh
+  const refreshFlight = createSingleFlight<SpellEntryDTO[]>(async () => {
+    if (!characterId.value) return []
+    return await characters().spells.list(characterId.value)
+  })
+
+  /**
+   * 拉 list 並逐 entry 合併到 entries.value：
+   * - 剛 PATCH 的那筆：飛行期間被改過則只接 updatedAt；否則接完整 server entry
+   * - 其他 spell：若也在 PATCH 飛行中或自 snap 以來 dirty → 保留 optimistic local
+   * - server 多出來的 entry → append；local 多出來的（已被 server 刪掉）→ 移除
+   */
+  const mergeRefresh = async (
+    justPatchedSpellId: string,
+    snap: KeyedDirtySnapshot<string>,
+  ): Promise<void> => {
+    let list: SpellEntryDTO[]
+    try {
+      list = await refreshFlight.run()
+    } catch (err) {
+      logger.error('refreshFlight failed:', err)
+      return
+    }
+    const localById = new Map(entries.value.map((e) => [e.spellId, e]))
+    const merged: SpellEntryDTO[] = []
+    for (const fresh of list) {
+      const local = localById.get(fresh.spellId)
+      if (!local) {
+        merged.push(fresh)
+        continue
+      }
+      if (fresh.spellId === justPatchedSpellId) {
+        merged.push(
+          dirty.changedSince(fresh.spellId, snap)
+            ? { ...local, updatedAt: fresh.updatedAt }
+            : fresh,
+        )
+        continue
+      }
+      if (persistFlight.isInFlight(fresh.spellId) || dirty.changedSince(fresh.spellId, snap)) {
+        merged.push(local)
+        continue
+      }
+      merged.push(fresh)
+    }
+    entries.value = merged
+  }
 
   const load = async (id: string): Promise<SpellEntryDTO[]> => {
     characterId.value = id
@@ -41,16 +114,6 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     return load(characterId.value)
   }
 
-  /** 背景同步：不動 loading，避免 consumer 的 v-if 把整段 unmount 造成跳回頂部 */
-  const silentRefetch = async (): Promise<void> => {
-    if (!characterId.value) return
-    try {
-      entries.value = await characters().spells.list(characterId.value)
-    } catch (err) {
-      logger.error('silentRefetch failed:', err)
-    }
-  }
-
   /** 學新法術；成功時 server 回傳完整 entry 並 append 到本地。 */
   const learn = async (spellId: string): Promise<SpellEntryDTO> => {
     if (!characterId.value) throw new Error('learn: store not loaded')
@@ -72,27 +135,6 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     }
   }
 
-  /** 將指定 spell 當前的 prepared / favorite 一次送出；失敗時 refetch 取回 server truth。 */
-  const persistMergedFlags = async (spellId: string): Promise<void> => {
-    if (!characterId.value) return
-    const entry = entries.value.find((e) => e.spellId === spellId)
-    if (!entry) return
-    try {
-      const body: SpellEntryUpdateBody = {
-        updatedAt: entry.updatedAt,
-        isPrepared: entry.isPrepared,
-        isFavorite: entry.isFavorite,
-      }
-      await characters().spells.patch(characterId.value, spellId, body)
-      await silentRefetch()
-    } catch (err) {
-      mutationError.value = err
-      logger.error(`persistMergedFlags(${spellId}) failed:`, err)
-      // 不丟出：debounce 把 promise 丟掉了；錯誤由 mutationError ref 傳給 consumer
-      await silentRefetch()
-    }
-  }
-
   /** 立刻翻 flag（視覺 optimistic）；trailing debounce 後以 spellId 為單位合併送出當前兩個 flag。 */
   const toggleFlag = (spellId: string, flag: ToggleFlag): void => {
     const index = entries.value.findIndex((entry) => entry.spellId === spellId)
@@ -101,9 +143,10 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     entries.value = entries.value.map((entry, i) =>
       i === index ? { ...entry, [flag]: !current[flag] } : entry,
     )
+    dirty.bump(spellId)
     let d = persistDebounces.get(spellId)
     if (!d) {
-      d = debounce(() => void persistMergedFlags(spellId), FLAG_DEBOUNCE_MS)
+      d = debounce(() => void persistFlight.run(spellId), FLAG_DEBOUNCE_MS)
       persistDebounces.set(spellId, d)
     }
     d()
@@ -116,9 +159,10 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     mutationError.value = null
   }
 
-  /** 立即觸發所有 pending 的 toggle PATCH；unmount 前呼叫以保留最後一次寫入 */
-  const flushPending = (): void => {
+  /** 立即觸發所有 pending 的 toggle PATCH 並等其完成；route-leave 前用以保留最後一次寫入 */
+  const flushPending = async (): Promise<void> => {
     for (const d of persistDebounces.values()) d.flush()
+    await persistFlight.drain()
   }
 
   const reset = (): void => {

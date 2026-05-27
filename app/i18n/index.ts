@@ -46,6 +46,18 @@ const resolve = (path: string): string => {
   return value
 }
 
+/** `{key}` placeholder 的允許參數型別 */
+export type InterpolationParams = Record<string, string | number>
+
+const PLACEHOLDER_PATTERN = /\{(\w+)\}/g
+
+const interpolate = (template: string, params: InterpolationParams): string =>
+  template.replace(PLACEHOLDER_PATTERN, (match, key: string) => {
+    if (key in params) return String(params[key])
+    logger.warn(`missing interpolation key "${key}" in template "${template}"`)
+    return match
+  })
+
 /**
  * 取對應 locale 的字串。path 是 messages tree 的 dot-path，TS 會檢查是否為合法 leaf。動態值可用 template literal：
  *
@@ -53,9 +65,16 @@ const resolve = (path: string): string => {
  *   t(`character.alignment.${align}`) // align: AlignmentKey
  *   t(`spell.school.${key}`)           // key: SpellSchool
  *
- * 找不到 leaf 時 fallback 為 path 字串本身（dev 時容易看出哪裡寫錯）。
+ * 訊息含 `{name}` placeholder 時可帶第二個參數內插：
+ *
+ *   t('ui.error.attunedLimit', { max: 6 }) // '已達同調上限 6 件'
+ *
+ * 找不到 leaf 時 fallback 為 path 字串本身；缺 interpolation key 時保留 `{key}` 並 logger.warn（dev 一眼看出）。
  */
-export const t = (path: MessagePath): string => resolve(path)
+export const t = (path: MessagePath, params?: InterpolationParams): string => {
+  const resolved = resolve(path)
+  return params ? interpolate(resolved, params) : resolved
+}
 
 /**
  * 完整 i18n API：t / messages（樹根 access）/ locale / setLocale。

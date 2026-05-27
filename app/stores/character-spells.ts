@@ -41,6 +41,16 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     return load(characterId.value)
   }
 
+  /** 背景同步：不動 loading，避免 consumer 的 v-if 把整段 unmount 造成跳回頂部 */
+  const silentRefetch = async (): Promise<void> => {
+    if (!characterId.value) return
+    try {
+      entries.value = await characters().spells.list(characterId.value)
+    } catch (err) {
+      logger.error('silentRefetch failed:', err)
+    }
+  }
+
   /** 學新法術；成功時 server 回傳完整 entry 並 append 到本地。 */
   const learn = async (spellId: string): Promise<SpellEntryDTO> => {
     if (!characterId.value) throw new Error('learn: store not loaded')
@@ -74,12 +84,12 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
         isFavorite: entry.isFavorite,
       }
       await characters().spells.patch(characterId.value, spellId, body)
-      await refetch()
+      await silentRefetch()
     } catch (err) {
       mutationError.value = err
       logger.error(`persistMergedFlags(${spellId}) failed:`, err)
       // 不丟出：debounce 把 promise 丟掉了；錯誤由 mutationError ref 傳給 consumer
-      await refetch().catch(() => {})
+      await silentRefetch()
     }
   }
 

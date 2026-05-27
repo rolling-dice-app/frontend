@@ -48,6 +48,18 @@ export default {
     persistFailedDataMayLost: '更新失敗，重整後資料可能遺失',
     staleRecord: '資料已被更新，請重新整理',
   },
+  /**
+   * 後端錯誤 code → toast 訊息。只 cover「無法在前端 preempt」的 race / 環境 / cooldown 類；
+   * 其他 code 走 ui.message.systemError generic。
+   * 新增 race code → 同步 backend error-handling-conventions skill 內的「Frontend toast 同步」段。
+   */
+  error: {
+    staleVersion: '資料已被其他來源更新，請重新整理',
+    restoreCooldown: '角色剛還原不久，{minutes} 分鐘後才能再刪除',
+    rateLimited: '操作過於頻繁，請稍後再試',
+    serverError: '伺服器暫時無法回應，請稍後再試',
+    network: '網路連線出問題，請檢查連線',
+  },
   /** 三態 UI（loading / error / empty / retry） */
   state: {
     loading: '載入中...',

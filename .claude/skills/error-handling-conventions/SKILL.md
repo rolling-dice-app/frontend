@@ -59,23 +59,46 @@ Apply these rules when implementing, reviewing, or refactoring error-handling sc
 
 ## Mutation Error Routing
 
-This project deliberately **decouples user-facing error messages from backend error codes**.
+This project biases user-facing messages toward **frontend preemption**, with a narrow carve-out for backend codes the frontend genuinely cannot anticipate (race / cooldown / rate-limit / environment).
 
 ### Principle
 
-- **Frontend-preemptable** — input limits and UI-state limits that the frontend can reliably check before the request leaves (already-learned, attune cap, carry cap, file size / MIME, etc.). Block the action at the UI layer with a specific, localized message; **do not** send the request.
-- **Backend-only** — anything that requires server-side authority (auth, schema, concurrency, system anomalies, bypass attempts). The user gets a single generic system message; the engineer gets a structured log.
+- **Frontend-preemptable (default for limits / input / UI-state)** — already-learned, attune cap, carry cap, plan limits, file size / MIME, form validation. Block the action at the UI layer with a specific, localized message; **do not** send the request.
+- **Non-preemptable (narrow carve-out)** — race conditions (optimistic-lock conflicts), backend-tracked cooldowns, rate-limit, environmental failures. These cannot be checked before sending; they go through `useApiErrorToast` and get a specific message via a tightly-scoped mapping table.
+- **Anything else from the backend** — auth / schema / system anomalies / bypass attempts. Generic system message + structured log.
 
-If you find yourself maintaining a backend `code → message` dictionary on the frontend, you are probably substituting server feedback for frontend preemption. Push the check upstream.
+If you find yourself reaching for the mapping table to fix a problem the frontend could have prevented, push the check upstream instead.
 
-### useApiErrorToast — what it does, what it doesn't
+### useApiErrorToast — dispatch order
 
-`useApiErrorToast` (`app/composables/ui/useApiErrorToast.ts`) is a single-purpose dispatcher: every backend `FetchError` (or any unknown error) yields
+`useApiErrorToast` (`app/composables/ui/useApiErrorToast.ts`) resolves the toast message in this fixed order:
 
-- toast: `t('ui.message.systemError')`
-- log: `logger.error('[unhandled API error]', { code, status, url, err })`
+1. **`options.toastMessage`** — caller-level override (action-specific framing such as `'儲存失敗，請稍後再試'`).
+2. **`ERROR_MESSAGE_MAP[code]`** — narrow mapping for non-preemptable codes (race / cooldown / rate-limit). Optional `getParams(details)` enables interpolation (e.g. `RESTORE_COOLDOWN_ACTIVE` → minutes remaining).
+3. **`status >= 500`** → `t('ui.error.serverError')`.
+4. **`FetchError` with no status** (network failure) → `t('ui.error.network')`.
+5. **Default** (non-FetchError, or unmapped 4xx) → `t('ui.message.systemError')`.
 
-It does **not** parse backend codes, dispatch recovery callbacks, branch by HTTP status, or accept a namespace / fallback / recovery option. The signature is `handle(err: unknown): void`.
+Every path also runs `logger.error('[unhandled API error]', { code, status, url, err })`. Signature: `handle(err: unknown, options?: { toastMessage?: string }): void`.
+
+### Adding a code to ERROR_MESSAGE_MAP
+
+Only **non-preemptable** codes qualify:
+
+- Race (`STALE_<RESOURCE>_VERSION` — optimistic lock failed under concurrent edit)
+- Backend-tracked cooldown carrying `details.cooldownEndsAt` (`<ACTION>_COOLDOWN_ACTIVE`)
+- Rate-limit
+- Environmental (network / 5xx — already covered by fallback branches)
+
+When adding an entry:
+
+1. Add the entry to `ERROR_MESSAGE_MAP` in `app/composables/ui/useApiErrorToast.ts`.
+2. Add the i18n message under `ui.error.*` in `app/i18n/zh-TW/ui.ts`.
+3. Sync the **backend** `error-handling-conventions` skill — its "Frontend toast sync" section lists the codes the frontend recognises, and the contract for `details` payload.
+
+If the code is in fact preemptable, do **not** add it. Push the check to the UI block (see "Preemption placement" below).
+
+### Example
 
 ```ts
 const apiErrorToast = useApiErrorToast()
@@ -117,8 +140,9 @@ if (results.some((r) => r.status === 'rejected')) {
 ### Adding a new failure scenario
 
 1. Can the frontend reliably know the answer before sending the request? If yes → add preemption logic in the relevant composable / component; add the user-facing string under the matching domain namespace (`spell.*`, `inventory.*`, `character.*`, …) — **not** under `ui.message.*`.
-2. Is recovery (refetch / re-sync) appropriate after this failure? → trigger it in the caller, unconditionally, in parallel with `apiErrorToast.handle()`. Do **not** add a backend-code branch to the dispatcher.
-3. Anything else → no change; it falls through to `systemError` + log.
+2. Is the failure a non-preemptable race / cooldown / rate-limit? → add the code to `ERROR_MESSAGE_MAP` and an i18n key under `ui.error.*` (see "Adding a code to ERROR_MESSAGE_MAP" above).
+3. Is recovery (refetch / re-sync) appropriate after this failure? → trigger it in the caller, unconditionally, in parallel with `apiErrorToast.handle()`. Do **not** branch on backend code to decide whether to refetch.
+4. Anything else → no change; it falls through to `systemError` + log.
 
 ### Preemption placement — hoist to the earliest gate
 
@@ -146,7 +170,7 @@ client-knowable preconditions.
 
 ### Anti-patterns
 
-- Adding a backend `code → message` lookup dictionary to the frontend instead of preempting the rule.
+- Adding entries to `ERROR_MESSAGE_MAP` for codes the frontend could have preempted (plan limit / file size / already-learned / etc.). The mapping is for race / cooldown / rate-limit only.
 - Parsing HTTP status in callers to branch UI behavior (treats transport-layer signal as application semantics).
 - Showing a backend error code or its server-side message verbatim to the user.
 - Catching a `FetchError` to swap it for a friendlier `throw` (`useApiErrorToast` already does the friendly UX; rethrowing only loses the FetchError shape).

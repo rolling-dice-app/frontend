@@ -9,7 +9,9 @@ import {
 import { getTotalScore } from '~/helpers/ability'
 import { calculateBackpackLoad, calculateMaxCarryWeight } from '~/helpers/inventory'
 import type { InventoryItemDraft } from '~/types/business/character-form'
+import { createDirtyGuard } from '~/utils/dirty-guard'
 import { createLogger } from '~/utils/log'
+import { createSingleFlight } from '~/utils/single-flight'
 
 const logger = createLogger('[CharacterInventoryStore]')
 
@@ -27,49 +29,27 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const characterStore = useCharacterStore()
 
-  // 參考 useCharacterCombatState 的單一 in-flight + 尾隨合併：GET 永不並行，
-  // 避免先發後到的舊 list 回應覆蓋較新結果（不同 item 並行 patch 各自 refetch 的倒流）
-  let refetchInFlight: Promise<InventoryItemDTO[]> | null = null
-  let refetchQueued = false
-  // 對應 combat 的 dirtyDuringPatch：本地 items 每次變動（optimistic patch / add / remove）即 bump；
-  // refetch 回應若期間 generation 改變，代表有並行本地變更，該 list 已過期 → 不覆蓋
-  let mutationGeneration = 0
-
-  const refetchItems = async (): Promise<InventoryItemDTO[]> => {
+  // GET 單飛 + trailing-merge：避免先發後到的舊 list 蓋掉較新結果
+  // dirty 用於飛行中本地若有並行 mutation，則 server list 視為過期、不覆蓋 optimistic
+  const itemsDirty = createDirtyGuard()
+  const itemsFlight = createSingleFlight(async (): Promise<InventoryItemDTO[]> => {
     if (!characterId.value) return []
-    if (refetchInFlight) {
-      refetchQueued = true
-      return refetchInFlight
-    }
-    const id = characterId.value
-    const run = async (): Promise<InventoryItemDTO[]> => {
-      itemsLoading.value = true
-      itemsError.value = null
-      const gen = mutationGeneration
-      try {
-        const list = await characters().inventory.list(id)
-        // 飛行期間有並行本地變更 → 此回應已過期，不覆蓋 optimistic；交由該變更後續的 refetch 對齊
-        if (gen === mutationGeneration) items.value = list
-        return list
-      } catch (err) {
-        itemsError.value = err
-        logger.error('refetchItems failed:', err)
-        throw err
-      } finally {
-        itemsLoading.value = false
-      }
-    }
+    itemsLoading.value = true
+    itemsError.value = null
+    const snap = itemsDirty.snapshot()
     try {
-      let result = await (refetchInFlight = run())
-      while (refetchQueued) {
-        refetchQueued = false
-        result = await (refetchInFlight = run())
-      }
-      return result
+      const list = await characters().inventory.list(characterId.value)
+      if (!itemsDirty.changedSince(snap)) items.value = list
+      return list
+    } catch (err) {
+      itemsError.value = err
+      logger.error('refetchItems failed:', err)
+      throw err
     } finally {
-      refetchInFlight = null
+      itemsLoading.value = false
     }
-  }
+  })
+  const refetchItems = (): Promise<InventoryItemDTO[]> => itemsFlight.run()
 
   const refetchCurrency = async (): Promise<CharacterCurrencyDTO | null> => {
     if (!characterId.value) return null
@@ -109,7 +89,7 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     if (!characterId.value) throw new Error('addItem: store not loaded')
     const created = await characters().inventory.add(characterId.value, draftToCreateBody(draft))
     items.value = [...items.value, created]
-    mutationGeneration++
+    itemsDirty.bump()
     return created
   }
 
@@ -123,7 +103,7 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     pendingItemIds.value = new Set(pendingItemIds.value).add(itemId)
     const { updatedAt: _omit, ...optimistic } = body
     items.value = items.value.map((item, i) => (i === idx ? { ...item, ...optimistic } : item))
-    mutationGeneration++
+    itemsDirty.bump()
     try {
       await characters().inventory.patch(characterId.value, itemId, body)
       await refetchItems()
@@ -154,7 +134,7 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
   const removeItem = async (itemId: string): Promise<void> => {
     if (!characterId.value) throw new Error('removeItem: store not loaded')
     items.value = items.value.filter((i) => i.id !== itemId)
-    mutationGeneration++
+    itemsDirty.bump()
     try {
       await characters().inventory.remove(characterId.value, itemId)
     } catch (err) {

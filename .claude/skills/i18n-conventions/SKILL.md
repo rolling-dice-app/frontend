@@ -116,12 +116,11 @@ Move the label through i18n. The constant exports a key (union member); the comp
 ```ts
 // constants/dnd.ts
 export const ABILITY_METHODS = ['custom', 'pointBuy', 'diceRoll'] as const
-// component
-{
-  {
-    t(`character.allocationMethod.${method}`)
-  }
-}
+```
+
+```vue
+<!-- component -->
+<span>{{ t(`character.allocationMethod.${method}`) }}</span>
 ```
 
 ### Client-side form validation

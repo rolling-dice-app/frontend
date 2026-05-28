@@ -47,8 +47,8 @@ describe('getSuggestedRegularSpellSlots', () => {
       expect(getSuggestedRegularSpellSlots([entry('paladin', 2)])).toEqual({ 1: 2 })
     })
 
-    it('遊俠 5 級 → effective 2 → 1:3', () => {
-      expect(getSuggestedRegularSpellSlots([entry('ranger', 5)])).toEqual({ 1: 3 })
+    it('遊俠 5 級 → PHB p.110 半施法者表 → 1:4, 2:2', () => {
+      expect(getSuggestedRegularSpellSlots([entry('ranger', 5)])).toEqual({ 1: 4, 2: 2 })
     })
   })
 
@@ -65,8 +65,8 @@ describe('getSuggestedRegularSpellSlots', () => {
       expect(getSuggestedRegularSpellSlots([entry('artificer', 4)])).toEqual({ 1: 3 })
     })
 
-    it('奇械師 7 級 → effective 3 → 1:4, 2:2', () => {
-      expect(getSuggestedRegularSpellSlots([entry('artificer', 7)])).toEqual({ 1: 4, 2: 2 })
+    it('奇械師 7 級 → ceil(7/2)=4 effective → 1:4, 2:3', () => {
+      expect(getSuggestedRegularSpellSlots([entry('artificer', 7)])).toEqual({ 1: 4, 2: 3 })
     })
   })
 

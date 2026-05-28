@@ -85,7 +85,6 @@
 
 <script setup lang="ts">
 import { Accordion, Toggle } from '@ui'
-import { VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { CampaignDraft, CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
@@ -112,11 +111,9 @@ defineEmits<{
 const applyMoneyToCurrency = computed(() => authStore.user?.preference.applyMoneyToCurrency ?? true)
 
 // plan-aware：以 backend /auth/me 回的 limits 為主；
-// 未登入或 limits 尚未就緒時 fallback 到 VALIDATION_LIMITS（DB-blast ceiling）。
+// limits 尚未載入時用 Infinity 放行（backend 仍會擋過量），避免 UI 在 hydration 期誤鎖 create button。
 const campaignRecordLimit = computed(
-  () =>
-    authStore.limits?.maxCampaignRecordsPerCharacter ??
-    VALIDATION_LIMITS.maxCampaignRecordsPerCharacter,
+  () => authStore.limits?.maxCampaignRecordsPerCharacter ?? Number.POSITIVE_INFINITY,
 )
 
 const onToggleApplyMoney = async (next: boolean): Promise<void> => {

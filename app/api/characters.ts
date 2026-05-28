@@ -8,6 +8,7 @@ import type {
   CharacterDTO,
   CharacterSummaryDTO,
   CharacterUpdateDTO,
+  CombatResetBody,
   CombatStateDTO,
   CombatStateUpdateDTO,
   InventoryItemCreateBody,
@@ -118,16 +119,16 @@ export const characters = () => {
         await apiFetch(`/characters/${id}/combat-state`, { method: 'PATCH', body })
       },
 
-      shortRest: async (id: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/short-rest`, { method: 'POST' })
+      shortRest: async (id: string, body: CombatResetBody): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/short-rest`, { method: 'POST', body })
       },
 
-      longRest: async (id: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST' })
+      longRest: async (id: string, body: CombatResetBody): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST', body })
       },
 
-      reset: async (id: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/reset`, { method: 'POST' })
+      reset: async (id: string, body: CombatResetBody): Promise<void> => {
+        await apiFetch(`/characters/${id}/combat-state/reset`, { method: 'POST', body })
       },
     },
 

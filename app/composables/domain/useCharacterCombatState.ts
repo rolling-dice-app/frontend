@@ -262,7 +262,9 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     // POST→GET 飛行期間 user 改 state 也會被 GET 結果覆蓋；isReady=false 攔截 persist watch 避免送出無效 PATCH
     isReady.value = false
     try {
-      await characters().combatState.shortRest(characterId)
+      await characters().combatState.shortRest(characterId, {
+        expectedUpdatedAt: state.updatedAt,
+      })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true
@@ -283,7 +285,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     isResting.value = true
     isReady.value = false
     try {
-      await characters().combatState.longRest(characterId)
+      await characters().combatState.longRest(characterId, { expectedUpdatedAt: state.updatedAt })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true
@@ -309,7 +311,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     isResetting.value = true
     isReady.value = false
     try {
-      await characters().combatState.reset(characterId)
+      await characters().combatState.reset(characterId, { expectedUpdatedAt: state.updatedAt })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true

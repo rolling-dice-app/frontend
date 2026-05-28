@@ -12,7 +12,7 @@ export const SUBCLASSES_BY_CLASS: Readonly<Record<ClassKey, readonly SubclassKey
     'battlerager',
     'wildMagic',
     'giant',
-    'Juggernaut',
+    'juggernaut',
   ],
   bard: [
     'lore',

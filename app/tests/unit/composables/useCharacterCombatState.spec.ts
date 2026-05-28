@@ -2,6 +2,7 @@ import { effectScope, ref, nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   buildCombatStateBodyDefaults,
+  type CombatResetBody,
   type CombatStateDTO,
   type CombatStateUpdateDTO,
 } from '@rolling-dice-app/core'
@@ -15,9 +16,9 @@ const mockToastSuccess = vi.fn()
 const mockToastError = vi.fn()
 const mockGet = vi.fn<(id: string) => Promise<CombatStateDTO>>()
 const mockPatch = vi.fn<(id: string, body: CombatStateUpdateDTO) => Promise<void>>()
-const mockShortRest = vi.fn<(id: string) => Promise<void>>()
-const mockLongRest = vi.fn<(id: string) => Promise<void>>()
-const mockResetEndpoint = vi.fn<(id: string) => Promise<void>>()
+const mockShortRest = vi.fn<(id: string, body: CombatResetBody) => Promise<void>>()
+const mockLongRest = vi.fn<(id: string, body: CombatResetBody) => Promise<void>>()
+const mockResetEndpoint = vi.fn<(id: string, body: CombatResetBody) => Promise<void>>()
 const mockApiErrorHandle = vi.fn()
 
 const buildDto = (overrides: Partial<CombatStateDTO> = {}): CombatStateDTO => ({
@@ -729,7 +730,9 @@ describe('useCharacterCombatState — 短長休', () => {
     const ok = await cs.shortRest()
 
     expect(ok).toBe(true)
-    expect(mockShortRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockShortRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID, {
+      expectedUpdatedAt: INITIAL_UPDATED_AT,
+    })
     expect(mockGet).toHaveBeenCalledTimes(1)
     expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })
@@ -750,7 +753,9 @@ describe('useCharacterCombatState — 短長休', () => {
     const ok = await cs.longRest()
 
     expect(ok).toBe(true)
-    expect(mockLongRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockLongRest).toHaveBeenCalledExactlyOnceWith(CHAR_ID, {
+      expectedUpdatedAt: INITIAL_UPDATED_AT,
+    })
     expect(mockGet).toHaveBeenCalledTimes(1)
     expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })
@@ -889,7 +894,9 @@ describe('useCharacterCombatState — combatReset', () => {
     const ok = await cs.combatReset()
 
     expect(ok).toBe(true)
-    expect(mockResetEndpoint).toHaveBeenCalledExactlyOnceWith(CHAR_ID)
+    expect(mockResetEndpoint).toHaveBeenCalledExactlyOnceWith(CHAR_ID, {
+      expectedUpdatedAt: INITIAL_UPDATED_AT,
+    })
     expect(mockGet).toHaveBeenCalledTimes(1)
     expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
   })

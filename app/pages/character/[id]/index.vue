@@ -176,7 +176,7 @@ onMounted(() => {
 // route-leave 相對下一頁 setup 有明確先後，能保證「先 reset 再由下一頁 load」。
 onBeforeRouteLeave(async () => {
   await combatQuickViewRef.value?.flushPersist()
-  spellsStore.flushPending()
+  await spellsStore.flushPending()
   inventoryStore.reset()
   spellsStore.reset()
 })

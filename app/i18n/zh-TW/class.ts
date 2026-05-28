@@ -31,7 +31,7 @@ const subclass: Readonly<Record<ClassKey, Readonly<Partial<Record<SubclassKey, s
     battlerager: '戰狂道途',
     wildMagic: '狂野魔法道途',
     giant: '巨人道途',
-    Juggernaut: '撼山者道途',
+    juggernaut: '撼山者道途',
   },
   bard: {
     lore: '知識學院',

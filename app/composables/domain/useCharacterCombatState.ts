@@ -8,6 +8,7 @@ import {
   type AbilityKey,
   type ClassKey,
 } from '@rolling-dice-app/core'
+import { createDirtyGuard } from '~/utils/dirty-guard'
 
 const PERSIST_DEBOUNCE_MS = 300
 const PERSIST_RETRY_MS = 2000
@@ -261,7 +262,9 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     // POST→GET 飛行期間 user 改 state 也會被 GET 結果覆蓋；isReady=false 攔截 persist watch 避免送出無效 PATCH
     isReady.value = false
     try {
-      await characters().combatState.shortRest(characterId)
+      await characters().combatState.shortRest(characterId, {
+        expectedUpdatedAt: state.updatedAt,
+      })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true
@@ -282,7 +285,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     isResting.value = true
     isReady.value = false
     try {
-      await characters().combatState.longRest(characterId)
+      await characters().combatState.longRest(characterId, { expectedUpdatedAt: state.updatedAt })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true
@@ -308,7 +311,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     isResetting.value = true
     isReady.value = false
     try {
-      await characters().combatState.reset(characterId)
+      await characters().combatState.reset(characterId, { expectedUpdatedAt: state.updatedAt })
       const dto = await characters().combatState.get(characterId)
       await applyServerDto(dto)
       return true
@@ -326,7 +329,8 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   /** 當前飛行中的 PATCH+GET pipeline；同步指派以確保 flush 路徑能立刻 await */
   let inFlightPromise: Promise<void> | null = null
   /** 在 PATCH 飛行期間是否又被 user 動過；用來避免 GET response 覆蓋掉同時間的新改動 */
-  let dirtyDuringPatch = false
+  const dirty = createDirtyGuard()
+  let patchSnapshot = dirty.snapshot()
   /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
   let retryScheduled = false
   let retryTimer: ReturnType<typeof setTimeout> | null = null
@@ -354,9 +358,9 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   }
 
   // Contract 假設：backend PATCH /combat-state 為純 setter — 不做 server-side clamp / normalize / 衍生欄位。
-  // 否則 dirtyDuringPatch 分支只接 updatedAt 的策略會讓 local 與 server 在 user 飛行中又動的欄位上偏離。
+  // 否則 dirty.changedSince 分支只接 updatedAt 的策略會讓 local 與 server 在 user 飛行中又動的欄位上偏離。
   async function doPersist(): Promise<void> {
-    dirtyDuringPatch = false
+    patchSnapshot = dirty.snapshot()
     try {
       const body: CombatStateUpdateDTO = {
         updatedAt: state.updatedAt,
@@ -372,7 +376,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       }
       await characters().combatState.patch(characterId, body)
       const fresh = await characters().combatState.get(characterId)
-      if (dirtyDuringPatch) {
+      if (dirty.changedSince(patchSnapshot)) {
         // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
         state.updatedAt = fresh.updatedAt
       } else {
@@ -431,7 +435,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     }),
     () => {
       if (!isReady.value) return
-      dirtyDuringPatch = true
+      dirty.bump()
       persist()
     },
     { deep: true },

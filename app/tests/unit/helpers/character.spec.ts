@@ -5,7 +5,6 @@ import {
   calculateSavingThrowBonuses,
   calculateSavingThrowProficiencies,
   calculateTotalAbilityScores,
-  calculateTotalHp,
   calculateTotalInitiative,
   calculateTotalSpeed,
   formStateToCharacterPatch,
@@ -522,67 +521,6 @@ describe('calculateTotalAbilityScores', () => {
       wisdom: 10,
       charisma: 8,
     })
-  })
-})
-
-describe('calculateTotalHp', () => {
-  it('單職業：主職業第 1 級滿骰 + 每等 CON', () => {
-    // fighter hitDie=10, level 3, conMod +2
-    // class HP: 10 + avg(6) × 2 = 22；CON 加值：2 × 3 = 6；total = 28
-    expect(
-      calculateTotalHp({
-        classes: [{ classKey: 'fighter', level: 3, subclass: null }],
-        conModifier: 2,
-        isTough: false,
-        customHpBonus: 0,
-      }),
-    ).toBe(28)
-  })
-
-  it('多職業：僅第一個職業第 1 級滿骰，後續職業全走平均值', () => {
-    // fighter (primary) lv2: 10 + avg(6)×1 = 16；CON 2×2=4
-    // wizard lv1: avg(4)×1 = 4；CON 2×1=2
-    // total = 16 + 4 + 4 + 2 = 26
-    expect(
-      calculateTotalHp({
-        classes: [
-          { classKey: 'fighter', level: 2, subclass: null },
-          { classKey: 'wizard', level: 1, subclass: null },
-        ],
-        conModifier: 2,
-        isTough: false,
-        customHpBonus: 0,
-      }),
-    ).toBe(26)
-  })
-
-  it('健壯時每等加 2 HP', () => {
-    // fighter lv3 = 22 class HP + 6 CON = 28；tough: 3×2=6 → 34
-    expect(
-      calculateTotalHp({
-        classes: [{ classKey: 'fighter', level: 3, subclass: null }],
-        conModifier: 2,
-        isTough: true,
-        customHpBonus: 0,
-      }),
-    ).toBe(34)
-  })
-
-  it('customHpBonus 加值應直接疊加', () => {
-    expect(
-      calculateTotalHp({
-        classes: [{ classKey: 'fighter', level: 1, subclass: null }],
-        conModifier: 1,
-        isTough: false,
-        customHpBonus: 5,
-      }),
-    ).toBe(10 + 1 + 5)
-  })
-
-  it('classes 為空時，僅回傳 customHpBonus（無健壯加值）', () => {
-    expect(calculateTotalHp({ classes: [], conModifier: 3, isTough: true, customHpBonus: 7 })).toBe(
-      7,
-    )
   })
 })
 

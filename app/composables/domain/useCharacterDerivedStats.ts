@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
+import { computeHpMax } from '@rolling-dice-app/core'
 import type {
   AbilityKey,
   ArmorClassConfig,
@@ -13,7 +14,6 @@ import {
   calculatePassiveScore,
   calculateSavingThrowProficiencies,
   calculateTotalAbilityScores,
-  calculateTotalHp,
   calculateTotalInitiative,
   calculateTotalLevel,
   calculateTotalSpeed,
@@ -106,9 +106,9 @@ const computeDerived = (src: DerivedInputs): CharacterDerivedStats => {
   ])
 
   const totalHp = computed(() =>
-    calculateTotalHp({
+    computeHpMax({
       classes: src.validClasses.value,
-      conModifier: getAbilityModifier(totalAbilityScores.value.constitution),
+      abilities: src.abilities.value,
       isTough: src.isTough.value,
       customHpBonus: src.customHpBonus.value,
     }),

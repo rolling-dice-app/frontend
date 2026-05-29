@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.11.3",
-    "@rolling-dice-app/core": "^10.0.0",
+    "@rolling-dice-app/core": "^10.2.0",
     "@tailwindcss/vite": "^4.3.0",
     "nuxt": "^4.4.5",
     "pinia": "^3.0.4",

@@ -321,6 +321,7 @@
 <script setup lang="ts">
 import {
   ABILITY_KEYS,
+  getClassHitPoints,
   type ProficiencyLevel,
   type SharedCharacterProfileDTO,
 } from '@rolling-dice-app/core'

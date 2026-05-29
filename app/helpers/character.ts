@@ -106,19 +106,6 @@ export function getSkillBonus(
 }
 
 /**
- * 計算單一職業的生命值
- * - 主職業（isPrimary）第 1 級取滿生命骰，其餘等級使用平均值
- * - 非主職業全部使用平均值：(hitDie / 2 + 1) × level
- */
-export function getClassHitPoints(hitDie: number, level: number, isPrimary: boolean): number {
-  const avg = Math.floor(hitDie / 2) + 1
-  if (isPrimary && level >= 1) {
-    return hitDie + avg * (level - 1)
-  }
-  return avg * level
-}
-
-/**
  * 計算護甲基礎值（AC base + DEX 調整）：
  * - 重甲：baseValue（不加 DEX）
  * - 中甲：baseValue + min(DEX, +2)
@@ -178,26 +165,6 @@ export function calculateTotalAbilityScores(abilities: CharacterAbilityScores): 
   return Object.fromEntries(
     ABILITY_KEYS.map((key) => [key, getTotalScore(abilities[key])]),
   ) as TotalAbilityScores
-}
-
-/**
- * 計算總生命值：依序累加各職業 HP（第一個為主職業，第 1 級滿骰）、
- * 每等 CON 調整值、健壯加值（totalLevel × 2）、額外加值。
- */
-export function calculateTotalHp(input: {
-  classes: ClassEntry[]
-  conModifier: number
-  isTough: boolean
-  customHpBonus: number
-}): number {
-  const classHp = input.classes.reduce((sum, entry, index) => {
-    const config = CLASS_CONFIG[entry.classKey]
-    const hp = getClassHitPoints(config.hitDie, entry.level, index === 0)
-    return sum + hp + input.conModifier * entry.level
-  }, 0)
-  const totalLevel = calculateTotalLevel(input.classes)
-  const toughBonus = input.isTough ? totalLevel * 2 : 0
-  return classHp + toughBonus + input.customHpBonus
 }
 
 /**

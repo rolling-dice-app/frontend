@@ -26,7 +26,8 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
 
   // 同 spellId 的 PATCH+merge pipeline 不並行；飛行中再 run 會排成 trailing 一輪
   const persistFlight = createKeyedSingleFlight(async (spellId: string) => {
-    if (!characterId.value) return
+    const cid = characterId.value
+    if (!cid) return
     const entry = entries.value.find((e) => e.spellId === spellId)
     if (!entry) return
     const snap = dirty.snapshot()
@@ -36,18 +37,21 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
       isFavorite: entry.isFavorite,
     }
     try {
-      await characters().spells.patch(characterId.value, spellId, body)
+      await characters().spells.patch(cid, spellId, body)
     } catch (err) {
-      mutationError.value = err
+      if (characterId.value === cid) mutationError.value = err
       logger.error(`persistFlight(${spellId}) PATCH failed:`, err)
     }
+    // await 期間若已切角色，停手；別用舊角色的結果污染新角色
+    if (characterId.value !== cid) return
     await mergeRefresh(spellId, snap)
   })
 
   // 整個 list GET 不並行；多 spell PATCH 完成後共享同一輪 trailing refresh
   const refreshFlight = createSingleFlight<SpellEntryDTO[]>(async () => {
-    if (!characterId.value) return []
-    return await characters().spells.list(characterId.value)
+    const cid = characterId.value
+    if (!cid) return []
+    return await characters().spells.list(cid)
   })
 
   /**
@@ -61,6 +65,7 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     justPatchedSpellId: string,
     snap: KeyedDirtySnapshot<string>,
   ): Promise<void> => {
+    const cid = characterId.value
     let list: SpellEntryDTO[]
     try {
       list = await refreshFlight.run()
@@ -68,8 +73,8 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
       logger.error('refreshFlight failed:', err)
       return
     }
-    // reset 期間或跨角色切換可能讓 characterId 在 await 後變 null；別把空 list 寫回去
-    if (!characterId.value) return
+    // reset 期間或跨角色切換可能讓 characterId 在 await 後改變；別把舊角色的 list 寫進新角色
+    if (characterId.value !== cid) return
     const localById = new Map(entries.value.map((e) => [e.spellId, e]))
     const seen = new Set<string>()
     const merged: SpellEntryDTO[] = []
@@ -110,14 +115,15 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
     error.value = null
     try {
       const list = await characters().spells.list(id)
-      entries.value = list
+      // await 期間若已切角色，丟棄 stale 結果
+      if (characterId.value === id) entries.value = list
       return list
     } catch (err) {
-      error.value = err
+      if (characterId.value === id) error.value = err
       logger.error('load failed:', err)
       throw err
     } finally {
-      loading.value = false
+      if (characterId.value === id) loading.value = false
     }
   }
 
@@ -138,13 +144,14 @@ export const useCharacterSpellsStore = defineStore('character-spells', () => {
   /** 忘記法術；以 catalog spellId 對應後端 DELETE。 */
   const forget = async (spellId: string): Promise<void> => {
     if (!characterId.value) throw new Error('forget: store not loaded')
-    const snapshot = entries.value
-    entries.value = snapshot.filter((entry) => entry.spellId !== spellId)
+    entries.value = entries.value.filter((entry) => entry.spellId !== spellId)
     dirty.bump(spellId)
     try {
       await characters().spells.forget(characterId.value, spellId)
     } catch (err) {
-      entries.value = snapshot
+      // 失敗改重抓對齊 server（不還原 snapshot，以免蓋掉並行 mutation 成果）；
+      // snapshot 取於 bump 之後 → 該 spell 視為未 dirty，mergeRefresh 會把 server 仍有的它接回來。
+      await mergeRefresh(spellId, dirty.snapshot()).catch(() => {})
       throw err
     }
   }

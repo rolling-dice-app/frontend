@@ -64,10 +64,11 @@ describe('character-spells store — learn / forget', () => {
     expect(store.entries.map((e) => e.spellId)).toEqual(['magicMissile'])
   })
 
-  it('forget 失敗時還原本地 entries 並 rethrow', async () => {
+  it('forget 失敗時重抓對齊 server（被忘記的法術回到列表）並 rethrow', async () => {
     const a = makeEntry({ id: 'e-a', spellId: 'fireball' })
     const b = makeEntry({ id: 'e-b', spellId: 'shield' })
-    mockSpellsList.mockResolvedValueOnce([a, b])
+    // server 持續回 [a, b]：DELETE 失敗代表 server 仍持有 fireball，refresh 應把它接回來
+    mockSpellsList.mockResolvedValue([a, b])
     mockSpellsForget.mockRejectedValue(new Error('forget boom'))
 
     const { useCharacterSpellsStore } = await import('~/stores/character-spells')

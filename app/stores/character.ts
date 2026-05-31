@@ -1,3 +1,4 @@
+import { toRaw } from 'vue'
 import {
   ABILITY_KEYS,
   type CharacterDTO,
@@ -11,9 +12,10 @@ import {
   calculateTotalLevel,
   formStateToCharacterPatch,
 } from '~/helpers/character'
+import { createSingleFlight } from '~/utils/single-flight'
 
-const cloneCharacter = (c: CharacterDTO): CharacterDTO =>
-  JSON.parse(JSON.stringify(c)) as CharacterDTO
+// toRaw 先解開 reactive proxy：structuredClone 無法 clone Vue 的 reactive Proxy（detailCache 內物件讀出即為 proxy）
+const cloneCharacter = (c: CharacterDTO): CharacterDTO => structuredClone(toRaw(c))
 
 const buildCreateInput = (formState: CharacterFormState): CharacterCreateDTO => {
   const patch = formStateToCharacterPatch(formState)
@@ -80,7 +82,9 @@ export const useCharacterStore = defineStore('character', () => {
     return limits != null && activeList.value.length >= limits.maxActiveCharacters
   })
 
-  const loadList = async (): Promise<CharacterListItem[]> => {
+  // 單飛：並發的 loadList（如多個 middleware / 頁面同時觸發）共享同一輪 GET，
+  // 避免先發後到的舊結果覆蓋較新結果。
+  const listFlight = createSingleFlight(async (): Promise<CharacterListItem[]> => {
     listLoading.value = true
     listError.value = null
     try {
@@ -94,7 +98,8 @@ export const useCharacterStore = defineStore('character', () => {
     } finally {
       listLoading.value = false
     }
-  }
+  })
+  const loadList = (): Promise<CharacterListItem[]> => listFlight.run()
 
   /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
   const ensureListLoaded = async (): Promise<void> => {
@@ -125,10 +130,14 @@ export const useCharacterStore = defineStore('character', () => {
     return cloneCharacter(created)
   }
 
+  /** 對外讀取：回傳防禦性 clone，呼叫端可安全改寫。 */
   const getById = (id: string): CharacterDTO | undefined => {
     const cached = detailCache.value.get(id)
     return cached ? cloneCharacter(cached) : undefined
   }
+
+  /** 內部 / 跨 store 讀取：回傳 detailCache 內的引用，不 clone（避免高頻 computed 重複深拷貝）。呼叫端不得改寫。 */
+  const peekById = (id: string): CharacterDTO | undefined => detailCache.value.get(id)
 
   const updateCharacter = async (
     id: string,
@@ -161,7 +170,7 @@ export const useCharacterStore = defineStore('character', () => {
     }
   }
 
-  /** 切換公開分享；樂觀更新列表與 detailCache，失敗回滾。 */
+  /** 切換公開分享；樂觀更新列表（失敗回滾），detailCache 於成功後同步。 */
   const setCharacterShareable = async (id: string, shareable: boolean): Promise<void> => {
     const item = list.value.find((c) => c.id === id)
     const prev = item?.shareable
@@ -190,6 +199,17 @@ export const useCharacterStore = defineStore('character', () => {
     await loadList()
   }
 
+  /** 清空所有 session-bound state；登出 / 換帳號 / 401 時由 auth store 統一呼叫，避免 A 帳號資料殘留給 B。 */
+  const reset = (): void => {
+    list.value = []
+    detailCache.value = new Map()
+    listLoaded.value = false
+    listLoading.value = false
+    listError.value = null
+    detailLoading.value = false
+    detailError.value = null
+  }
+
   return {
     characters: activeList,
     trashedCharacters: trashedList,
@@ -206,10 +226,12 @@ export const useCharacterStore = defineStore('character', () => {
     loadDetail,
     createCharacter,
     getById,
+    peekById,
     updateCharacter,
     refreshCharacterAfterAvatar,
     setCharacterShareable,
     removeCharacter,
     restoreCharacter,
+    reset,
   }
 })

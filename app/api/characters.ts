@@ -35,109 +35,141 @@ export const characters = () => {
   return {
     list: (): Promise<CharacterSummaryDTO[]> => apiFetch<CharacterSummaryDTO[]>('/characters'),
 
-    get: (id: string): Promise<CharacterDTO> => apiFetch<CharacterDTO>(`/characters/${id}`),
+    get: (id: string): Promise<CharacterDTO> =>
+      apiFetch<CharacterDTO>(`/characters/${encodeURIComponent(id)}`),
 
     create: (input: CharacterCreateDTO): Promise<CharacterDTO> =>
       apiFetch<CharacterDTO>('/characters', { method: 'POST', body: input }),
 
     update: async (id: string, input: CharacterUpdateDTO): Promise<void> => {
-      await apiFetch(`/characters/${id}`, { method: 'PATCH', body: input })
+      await apiFetch(`/characters/${encodeURIComponent(id)}`, { method: 'PATCH', body: input })
     },
 
     remove: async (id: string): Promise<void> => {
-      await apiFetch(`/characters/${id}`, { method: 'DELETE' })
+      await apiFetch(`/characters/${encodeURIComponent(id)}`, { method: 'DELETE' })
     },
 
     /** 將軟刪角色還原；冪等，並發第二次自動 no-op */
     restore: async (id: string): Promise<void> => {
-      await apiFetch(`/characters/${id}/restore`, { method: 'POST' })
+      await apiFetch(`/characters/${encodeURIComponent(id)}/restore`, { method: 'POST' })
     },
 
     /** 切換是否允許未登入者透過 shareId 公開讀取 */
     share: async (id: string, shareable: boolean): Promise<void> => {
       const body: Pick<CharacterDTO, 'shareable'> = { shareable }
-      await apiFetch(`/characters/${id}/share`, { method: 'PATCH', body })
+      await apiFetch(`/characters/${encodeURIComponent(id)}/share`, { method: 'PATCH', body })
     },
 
     /** 上傳已裁剪的 WebP avatar blob，原子套用至該角色，回傳 R2 public URL */
     uploadAvatar: (id: string, webpBlob: Blob): Promise<{ url: string }> => {
       const fd = new FormData()
       fd.append('file', webpBlob, 'avatar.webp')
-      return apiFetch<{ url: string }>(`/characters/${id}/avatar`, { method: 'POST', body: fd })
+      return apiFetch<{ url: string }>(`/characters/${encodeURIComponent(id)}/avatar`, {
+        method: 'POST',
+        body: fd,
+      })
     },
 
     deleteAvatar: async (id: string): Promise<void> => {
-      await apiFetch(`/characters/${id}/avatar`, { method: 'DELETE' })
+      await apiFetch(`/characters/${encodeURIComponent(id)}/avatar`, { method: 'DELETE' })
     },
 
     spells: {
       list: (id: string): Promise<SpellEntryDTO[]> =>
-        apiFetch<SpellEntryDTO[]>(`/characters/${id}/spells`),
+        apiFetch<SpellEntryDTO[]>(`/characters/${encodeURIComponent(id)}/spells`),
 
       learn: (id: string, body: SpellEntryCreateBody): Promise<SpellEntryDTO> =>
-        apiFetch<SpellEntryDTO>(`/characters/${id}/spells`, { method: 'POST', body }),
+        apiFetch<SpellEntryDTO>(`/characters/${encodeURIComponent(id)}/spells`, {
+          method: 'POST',
+          body,
+        }),
 
       forget: async (id: string, spellId: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/spells/${spellId}`, { method: 'DELETE' })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/spells/${spellId}`, {
+          method: 'DELETE',
+        })
       },
 
       patch: async (id: string, spellId: string, body: SpellEntryUpdateBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/spells/${spellId}`, { method: 'PATCH', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/spells/${spellId}`, {
+          method: 'PATCH',
+          body,
+        })
       },
     },
 
     inventory: {
       list: (id: string): Promise<InventoryItemDTO[]> =>
-        apiFetch<InventoryItemDTO[]>(`/characters/${id}/inventory`),
+        apiFetch<InventoryItemDTO[]>(`/characters/${encodeURIComponent(id)}/inventory`),
 
       add: (id: string, body: InventoryItemCreateBody): Promise<InventoryItemDTO> =>
-        apiFetch<InventoryItemDTO>(`/characters/${id}/inventory/items`, { method: 'POST', body }),
+        apiFetch<InventoryItemDTO>(`/characters/${encodeURIComponent(id)}/inventory/items`, {
+          method: 'POST',
+          body,
+        }),
 
       patch: async (id: string, itemId: string, body: InventoryItemUpdateBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/inventory/items/${itemId}`, { method: 'PATCH', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/inventory/items/${itemId}`, {
+          method: 'PATCH',
+          body,
+        })
       },
 
       remove: async (id: string, itemId: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/inventory/items/${itemId}`, { method: 'DELETE' })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/inventory/items/${itemId}`, {
+          method: 'DELETE',
+        })
       },
     },
 
     currency: {
       get: (id: string): Promise<CharacterCurrencyDTO> =>
-        apiFetch<CharacterCurrencyDTO>(`/characters/${id}/currency`),
+        apiFetch<CharacterCurrencyDTO>(`/characters/${encodeURIComponent(id)}/currency`),
 
       patch: async (id: string, body: CharacterCurrencyUpdateBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/currency`, { method: 'PATCH', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/currency`, { method: 'PATCH', body })
       },
     },
 
     combatState: {
       get: (id: string): Promise<CombatStateDTO> =>
-        apiFetch<CombatStateDTO>(`/characters/${id}/combat-state`),
+        apiFetch<CombatStateDTO>(`/characters/${encodeURIComponent(id)}/combat-state`),
 
       patch: async (id: string, body: CombatStateUpdateDTO): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state`, { method: 'PATCH', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/combat-state`, {
+          method: 'PATCH',
+          body,
+        })
       },
 
       shortRest: async (id: string, body: CombatResetBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/short-rest`, { method: 'POST', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/combat-state/short-rest`, {
+          method: 'POST',
+          body,
+        })
       },
 
       longRest: async (id: string, body: CombatResetBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/long-rest`, { method: 'POST', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/combat-state/long-rest`, {
+          method: 'POST',
+          body,
+        })
       },
 
       reset: async (id: string, body: CombatResetBody): Promise<void> => {
-        await apiFetch(`/characters/${id}/combat-state/reset`, { method: 'POST', body })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/combat-state/reset`, {
+          method: 'POST',
+          body,
+        })
       },
     },
 
     campaignRecords: {
       list: (id: string): Promise<CampaignRecordDTO[]> =>
-        apiFetch<CampaignRecordDTO[]>(`/characters/${id}/campaign-records`),
+        apiFetch<CampaignRecordDTO[]>(`/characters/${encodeURIComponent(id)}/campaign-records`),
 
       create: (id: string, body: CampaignRecordCreateBody): Promise<CampaignRecordDTO> =>
-        apiFetch<CampaignRecordDTO>(`/characters/${id}/campaign-records`, {
+        apiFetch<CampaignRecordDTO>(`/characters/${encodeURIComponent(id)}/campaign-records`, {
           method: 'POST',
           body,
         }),
@@ -147,14 +179,16 @@ export const characters = () => {
         recordId: string,
         body: CampaignRecordUpdateBody,
       ): Promise<void> => {
-        await apiFetch(`/characters/${id}/campaign-records/${recordId}`, {
+        await apiFetch(`/characters/${encodeURIComponent(id)}/campaign-records/${recordId}`, {
           method: 'PATCH',
           body,
         })
       },
 
       remove: async (id: string, recordId: string): Promise<void> => {
-        await apiFetch(`/characters/${id}/campaign-records/${recordId}`, { method: 'DELETE' })
+        await apiFetch(`/characters/${encodeURIComponent(id)}/campaign-records/${recordId}`, {
+          method: 'DELETE',
+        })
       },
     },
   }

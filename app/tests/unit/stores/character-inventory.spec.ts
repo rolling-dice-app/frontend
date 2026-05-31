@@ -334,6 +334,66 @@ describe('character-inventory store — refetchItems 序列化（防倒流）', 
   })
 })
 
+describe('character-inventory store — 跨角色切換 stale GET 不寫回（A2）', () => {
+  it('refetchItems 飛行中切到別的角色 → 舊角色回應丟棄，不污染新角色 items', async () => {
+    // char-1 初次 load 的 items GET 卡住
+    let releaseChar1: () => void = () => {}
+    mockInventoryList.mockImplementationOnce(
+      () =>
+        new Promise<InventoryItemDTO[]>((res) => {
+          releaseChar1 = () => res([makeItem({ id: 'old-1' })])
+        }),
+    )
+    mockCurrencyGet.mockResolvedValue(makeCurrency())
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+
+    const pLoad1 = store.load('char-1') // items GET 飛行中
+    await Promise.resolve()
+
+    // 切到 char-2，items GET 立即回新角色資料
+    mockInventoryList.mockResolvedValueOnce([makeItem({ id: 'new-2' })])
+    await store.load('char-2')
+    expect(store.items.map((i) => i.id)).toEqual(['new-2'])
+
+    // char-1 的舊 GET 此刻才回來 → 因 characterId 已是 char-2，不得覆蓋
+    releaseChar1()
+    await pLoad1
+
+    expect(store.characterId).toBe('char-2')
+    expect(store.items.map((i) => i.id)).toEqual(['new-2'])
+  })
+
+  it('refetchCurrency 飛行中切角色 → 舊角色 currency 不寫回', async () => {
+    mockInventoryList.mockResolvedValue([])
+    // char-1 的 currency GET 卡住
+    let releaseChar1: () => void = () => {}
+    mockCurrencyGet.mockImplementationOnce(
+      () =>
+        new Promise<CharacterCurrencyDTO>((res) => {
+          releaseChar1 = () => res(makeCurrency({ gp: 111 }))
+        }),
+    )
+
+    const { useCharacterInventoryStore } = await import('~/stores/character-inventory')
+    const store = useCharacterInventoryStore()
+
+    const pLoad1 = store.load('char-1')
+    await Promise.resolve()
+
+    mockCurrencyGet.mockResolvedValueOnce(makeCurrency({ gp: 222 }))
+    await store.load('char-2')
+    expect(store.currency?.gp).toBe(222)
+
+    releaseChar1()
+    await pLoad1
+
+    expect(store.characterId).toBe('char-2')
+    expect(store.currency?.gp).toBe(222)
+  })
+})
+
 describe('character-inventory store — removeItem', () => {
   it('失敗時 refetch server truth 並 rethrow（不能用進入時 snapshot 蓋掉並行 mutation 結果）', async () => {
     const item = makeItem({ id: 'i-1' })

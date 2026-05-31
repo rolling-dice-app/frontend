@@ -100,6 +100,47 @@ describe('character store — loadList', () => {
     expect(store.listError).toBe(err)
     expect(store.listLoading).toBe(false)
   })
+
+  it('並發 loadList 單飛：飛行中不平行打 API', async () => {
+    let resolveFn: (v: CharacterSummaryDTO[]) => void = () => {}
+    mockListCharacters.mockReturnValue(
+      new Promise<CharacterSummaryDTO[]>((resolve) => {
+        resolveFn = resolve
+      }),
+    )
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    const p1 = store.loadList()
+    const p2 = store.loadList() // 飛行中 → 合併，不另起平行 GET
+    expect(mockListCharacters).toHaveBeenCalledTimes(1)
+    resolveFn([])
+    await Promise.all([p1, p2])
+  })
+})
+
+describe('character store — reset', () => {
+  it('清空 list / detailCache / listLoaded 等 session-bound state', async () => {
+    const c = createMockCharacter({ id: 'r-1' })
+    mockListCharacters.mockResolvedValue([charToSummary(c)])
+    mockGetCharacter.mockResolvedValue(c)
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+    await store.loadDetail('r-1')
+    expect(store.list.length).toBeGreaterThan(0)
+    expect(store.listLoaded).toBe(true)
+    expect(store.detailCache.size).toBeGreaterThan(0)
+
+    store.reset()
+
+    expect(store.list).toEqual([])
+    expect(store.detailCache.size).toBe(0)
+    expect(store.listLoaded).toBe(false)
+    expect(store.listError).toBeNull()
+    expect(store.detailError).toBeNull()
+  })
 })
 
 describe('character store — ensureListLoaded', () => {

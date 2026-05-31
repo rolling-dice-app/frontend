@@ -121,9 +121,15 @@ describe('useAuthStore — login()', () => {
 })
 
 describe('useAuthStore — logout()', () => {
-  it('POST /auth/logout 並把 user / limits 清為 null', async () => {
+  it('POST /auth/logout 並透過 clearSessionBoundState 清 auth + 各私有 store', async () => {
     const apiFetch = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('useApiFetch', () => apiFetch)
+    const characterReset = vi.fn()
+    const inventoryReset = vi.fn()
+    const spellsReset = vi.fn()
+    vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
+    vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
+    vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -133,6 +139,34 @@ describe('useAuthStore — logout()', () => {
     expect(apiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' })
     expect(store.user).toBe(null)
     expect(store.limits).toBe(null)
+    // 換帳號污染防線：登出時連同各角色私有 store 一併清空
+    expect(characterReset).toHaveBeenCalledOnce()
+    expect(inventoryReset).toHaveBeenCalledOnce()
+    expect(spellsReset).toHaveBeenCalledOnce()
+  })
+})
+
+describe('useAuthStore — clearSessionBoundState()', () => {
+  it('清 auth 自身 user/limits 並呼叫各私有 store 的 reset', () => {
+    vi.stubGlobal('useApiFetch', () => () => Promise.resolve(null))
+    const characterReset = vi.fn()
+    const inventoryReset = vi.fn()
+    const spellsReset = vi.fn()
+    vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
+    vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
+    vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
+
+    const store = useAuthStore()
+    store.user = sampleUser
+    store.limits = sampleLimits
+
+    store.clearSessionBoundState()
+
+    expect(store.user).toBe(null)
+    expect(store.limits).toBe(null)
+    expect(characterReset).toHaveBeenCalledOnce()
+    expect(inventoryReset).toHaveBeenCalledOnce()
+    expect(spellsReset).toHaveBeenCalledOnce()
   })
 })
 
@@ -151,32 +185,29 @@ describe('useAuthStore — clearSession()', () => {
 })
 
 describe('useAuthStore — updatePreference()', () => {
-  it('PATCH /users/me 帶 merged preference + 當前 updatedAt，回傳寫回 user', async () => {
+  it('委派 updateProfile：帶 merged preference + 當前 updatedAt，回傳寫回 user', async () => {
     const updated: User = {
       ...sampleUser,
       preference: { characterListLayout: 'grid', applyMoneyToCurrency: false },
       updatedAt: '2026-02-01T00:00:00Z',
     }
-    const apiFetch = vi.fn().mockResolvedValue(updated)
-    vi.stubGlobal('useApiFetch', () => apiFetch)
+    const mockUpdateProfile = vi.fn().mockResolvedValue(updated)
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
 
     const store = useAuthStore()
     store.user = sampleUser
     await store.updatePreference({ applyMoneyToCurrency: false })
 
-    expect(apiFetch).toHaveBeenCalledWith('/users/me', {
-      method: 'PATCH',
-      body: {
-        preference: { characterListLayout: 'grid', applyMoneyToCurrency: false },
-        updatedAt: '2026-01-01T00:00:00Z',
-      },
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      preference: { characterListLayout: 'grid', applyMoneyToCurrency: false },
+      updatedAt: '2026-01-01T00:00:00Z',
     })
     expect(store.user).toEqual(updated)
   })
 
-  it('PATCH 失敗時保留原 user 不動，把錯誤往外拋（caller 自行處理 toast / rollback）', async () => {
-    const apiFetch = vi.fn().mockRejectedValue(fetchErrorWith(409))
-    vi.stubGlobal('useApiFetch', () => apiFetch)
+  it('失敗時保留原 user 不動，把錯誤往外拋（caller 自行處理 toast / rollback）', async () => {
+    const mockUpdateProfile = vi.fn().mockRejectedValue(fetchErrorWith(409))
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -186,13 +217,13 @@ describe('useAuthStore — updatePreference()', () => {
     expect(store.user).toEqual(sampleUser)
   })
 
-  it('user 未登入時直接拋錯，不發 PATCH', async () => {
-    const apiFetch = vi.fn()
-    vi.stubGlobal('useApiFetch', () => apiFetch)
+  it('user 未登入時直接拋錯，不發請求', async () => {
+    const mockUpdateProfile = vi.fn()
+    vi.stubGlobal('users', () => ({ updateProfile: mockUpdateProfile }))
 
     const store = useAuthStore()
     await expect(store.updatePreference({ applyMoneyToCurrency: false })).rejects.toThrow()
-    expect(apiFetch).not.toHaveBeenCalled()
+    expect(mockUpdateProfile).not.toHaveBeenCalled()
   })
 })
 

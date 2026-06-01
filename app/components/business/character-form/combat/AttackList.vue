@@ -267,6 +267,8 @@ import {
   ABILITY_KEYS,
   CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
+  DAMAGE_DIE_TYPES,
+  DAMAGE_TYPE_KEYS,
   VALIDATION_LIMITS,
   type AttackEntry,
   type DamageDieEntry,
@@ -279,7 +281,6 @@ import type {
   CharacterUpdateFormState,
   TotalAbilityScores,
 } from '~/types/business/character-form'
-import { DAMAGE_DIE_TYPES, DAMAGE_TYPE_KEYS } from '~/constants/dnd'
 
 const { t } = useI18n()
 const toast = useToast()

@@ -64,6 +64,10 @@ const skillList = computed(() =>
     skills: formState.value.skills,
     proficiencyBonus: props.proficiencyBonus,
     isJackOfAllTrades: formState.value.isJackOfAllTrades,
-  }).map(({ key, bonus }) => ({ key, name: t(`skill.${key}`), bonusText: formatModifier(bonus) })),
+  }).map(({ key, bonus }) => ({
+    key,
+    name: t(`skill.label.${key}`),
+    bonusText: formatModifier(bonus),
+  })),
 )
 </script>

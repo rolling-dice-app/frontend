@@ -83,7 +83,11 @@
             type="button"
             :disabled="isInDeleteCooldown"
             :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-            :title="isInDeleteCooldown ? t('character.trash.deleteCooldownTooltip') : undefined"
+            :title="
+              isInDeleteCooldown
+                ? t('character.trash.deleteCooldownTooltip', { days: RESTORE_COOLDOWN_DAYS })
+                : undefined
+            "
             :class="[
               'size-11 flex items-center justify-center rounded-md transition-colors duration-150',
               isInDeleteCooldown

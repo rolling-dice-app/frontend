@@ -33,6 +33,7 @@ const proficiency: Readonly<Record<ProficiencyLevel, string>> = {
 }
 
 export default {
-  ...labels,
+  // 具名子物件，避免技能 label 與 proficiency 等同層 key 混雜（查詢：t(`skill.label.${key}`)）
+  label: labels,
   proficiency,
 }

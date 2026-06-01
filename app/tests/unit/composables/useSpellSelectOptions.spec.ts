@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useSpellSelectOptions } from '~/composables/ui/useSpellSelectOptions'
-import { CLASS_KEYS } from '@rolling-dice-app/core'
-import { SPELL_SCHOOLS } from '~/constants/dnd'
+import { CLASS_KEYS, SPELL_SCHOOLS } from '@rolling-dice-app/core'
 
 describe('useSpellSelectOptions — levelOptions', () => {
   it('第一項為戲法（value=0）', () => {

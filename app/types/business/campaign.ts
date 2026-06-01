@@ -1,11 +1,8 @@
 import type {
   CampaignRecordDTO,
-  CharacterCurrencyDTO,
+  CurrencyAmount,
   SharedCharacterPreviewDTO,
 } from '@rolling-dice-app/core'
-
-/** 金幣面額快照（不含樂觀鎖 token，純記錄四幣種數量） */
-export type CurrencyAmount = Omit<CharacterCurrencyDTO, 'updatedAt'>
 
 /** 後端持久化的戰役紀錄；對齊 core DTO，前端不再 re-declare */
 export type CampaignEntry = CampaignRecordDTO

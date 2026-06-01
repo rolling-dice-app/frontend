@@ -146,6 +146,7 @@ import {
   type CharacterDTO,
   type AbilityKey,
   type ClassKey,
+  type DieType,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type {
@@ -223,7 +224,7 @@ const skillRows = computed(() =>
     skills: props.character.skills,
     proficiencyBonus: props.proficiencyBonus,
     isJackOfAllTrades: props.character.isJackOfAllTrades,
-  }).map(({ key, bonus }) => ({ key, label: t(`skill.${key}`), modifier: bonus })),
+  }).map(({ key, bonus }) => ({ key, label: t(`skill.label.${key}`), modifier: bonus })),
 )
 
 const handleD20Roll = (
@@ -248,7 +249,7 @@ const handleD20Roll = (
 
 type HitDieRow = {
   classKey: ClassKey
-  sides: number
+  sides: DieType
   level: number
   label: string
   isExhausted: boolean

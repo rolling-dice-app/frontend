@@ -12,6 +12,7 @@
           class="w-full"
           :radius="0"
           :model-value="formState.name"
+          :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
           size="sm"
           outline
           @update:model-value="formState.name = $event"
@@ -44,6 +45,7 @@
           class="w-full"
           :radius="0"
           :model-value="formState.race ?? ''"
+          :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
           size="sm"
           outline
           @update:model-value="formState.race = $event || null"
@@ -59,6 +61,7 @@
           class="w-full"
           :radius="0"
           :model-value="formState.subrace ?? ''"
+          :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
           size="sm"
           outline
           @update:model-value="formState.subrace = $event || null"
@@ -257,6 +260,7 @@ import { SUBCLASSES_BY_CLASS } from '~/constants/subclass'
 import type { CharacterFormStateBase } from '~/types/business/character-form'
 import {
   ALIGNMENT_KEYS,
+  CHARACTER_TEXT_LIMITS,
   CLASS_KEYS,
   GENDER_KEYS,
   MAX_CHARACTER_LEVEL,

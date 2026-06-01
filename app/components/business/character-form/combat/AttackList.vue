@@ -84,6 +84,7 @@
             id="attack-modal-name"
             :radius="0"
             :model-value="draft.name"
+            :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
             size="sm"
             outline
             class="w-full"
@@ -341,7 +342,14 @@ const createDamageEntry = (): DamageDieEntry => {
   return { id: crypto.randomUUID(), dieType: null, count: 0, bonus: null, damageType: null }
 }
 
+// 後端對單一攻擊的傷害骰列數上限（core 未導出對應常數，此處以註解標記其來源）
+const MAX_DAMAGE_DICE_PER_ATTACK = 99
+
 const addDamageEntry = (): void => {
+  if (draft.value.damageDice.length >= MAX_DAMAGE_DICE_PER_ATTACK) {
+    toast.info(t('combat.damageRowLimitReached'), { kind: 'hint' })
+    return
+  }
   draft.value.damageDice.push(createDamageEntry())
 }
 

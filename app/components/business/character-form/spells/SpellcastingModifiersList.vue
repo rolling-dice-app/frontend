@@ -83,4 +83,20 @@ const onCustomChange = (key: AbilityKey, value: string): void => {
   const { [key]: _omit, ...rest } = customBonuses.value
   customBonuses.value = parsed === 0 ? rest : { ...rest, [key]: parsed }
 }
+
+// 施法屬性變更時，剔除不再選取屬性殘留的 custom bonus，避免幽靈加值送出
+watch(
+  () => props.selectedAbilities,
+  (abilities) => {
+    const allowed = new Set(abilities)
+    const next: Partial<Record<AbilityKey, number>> = {}
+    let changed = false
+    for (const [key, value] of Object.entries(customBonuses.value) as [AbilityKey, number][]) {
+      if (allowed.has(key)) next[key] = value
+      else changed = true
+    }
+    if (changed) customBonuses.value = next
+  },
+  { deep: true },
+)
 </script>

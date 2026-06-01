@@ -20,7 +20,7 @@
       </button>
     </header>
 
-    <div class="flex-1 min-h-0 overflow-y-auto">
+    <div class="scrollbar-hidden flex-1 min-h-0 overflow-y-auto">
       <p v-if="entries.length === 0" class="px-3 py-6 text-center text-xs text-content-muted">
         {{ t('combat.rollEmpty') }}
       </p>

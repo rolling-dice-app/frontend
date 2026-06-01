@@ -22,8 +22,8 @@
     border-color="var(--color-border)"
   >
     <div class="flex h-full min-h-0 flex-col gap-3">
-      <!-- 上 2/3：觸發區（單一大滾動容器） -->
-      <div class="min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
+      <!-- 上 2/3：觸發區（單一大滾動容器，隱藏 scrollbar） -->
+      <div class="scrollbar-hidden min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
         <section aria-labelledby="roll-section-initiative">
           <h3
             id="roll-section-initiative"

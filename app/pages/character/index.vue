@@ -463,8 +463,10 @@ const isListMode = computed({
 
 // ── Share ─────────────────────────────────────────────────────────────────────
 
+// baseURL 結尾帶 '/'，故 share 段不另加前導 '/'，確保 baseURL 非 '/' 時連結正確。
+const baseURL = useRuntimeConfig().app.baseURL
 const shareUrl = (character: CharacterListItem): string =>
-  `${window.location.origin}/share/${character.shareId}`
+  `${window.location.origin}${baseURL}share/${character.shareId}`
 
 // 未公開時連結無法存取，先擋下並提示。
 const ensureShareable = (character: CharacterListItem): boolean => {

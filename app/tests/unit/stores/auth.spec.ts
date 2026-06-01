@@ -96,6 +96,29 @@ describe('useAuthStore — refresh()', () => {
   })
 })
 
+describe('useAuthStore — ensureReady()', () => {
+  it('首次呼叫觸發 refresh 並寫回 user', async () => {
+    const apiFetch = vi.fn().mockResolvedValue(sampleMe)
+    vi.stubGlobal('useApiFetch', () => apiFetch)
+
+    const store = useAuthStore()
+    await store.ensureReady()
+
+    expect(apiFetch).toHaveBeenCalledOnce()
+    expect(store.user).toEqual(sampleUser)
+  })
+
+  it('重入共用同一輪 refresh，只打一次 /auth/me（plugin fire-and-forget 與 middleware await 共用）', async () => {
+    const apiFetch = vi.fn().mockResolvedValue(sampleMe)
+    vi.stubGlobal('useApiFetch', () => apiFetch)
+
+    const store = useAuthStore()
+    await Promise.all([store.ensureReady(), store.ensureReady(), store.ensureReady()])
+
+    expect(apiFetch).toHaveBeenCalledOnce()
+  })
+})
+
 describe('useAuthStore — login()', () => {
   it('未傳 next 時用 window.location.pathname，URL encode 後接到 OAuth start', () => {
     vi.stubGlobal('useRuntimeConfig', () => ({ public: { apiBase: 'http://api' } }))

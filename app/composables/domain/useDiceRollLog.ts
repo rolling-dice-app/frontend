@@ -3,6 +3,8 @@ import type { RollEntry, RollEntryDraft } from '~/types/business/dice'
 
 const MAX_ENTRIES = 50
 
+// client-only 契約：module-scoped singleton，push() 用 crypto.randomUUID 補 id；
+// 僅供瀏覽器端擲骰互動使用，勿在 SSR 期間呼叫，否則狀態會跨請求共享。
 const entries = ref<RollEntry[]>([])
 
 /**

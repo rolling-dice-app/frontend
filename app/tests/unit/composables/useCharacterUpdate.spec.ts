@@ -248,4 +248,50 @@ describe('useCharacterUpdate — submit', () => {
     expect(spy).not.toHaveBeenCalled()
     expect(mockToastSuccess).not.toHaveBeenCalled()
   })
+
+  it('主幹失敗時保留主表單草稿（不重設回 baseline）', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'updateCharacter').mockRejectedValue({ response: { status: 409 } })
+
+    const { submit, formState } = await getComposable(MOCK_CHARACTER)
+    formState.name = '草稿名'
+    formState.faith = '草稿信仰'
+    await submit()
+
+    // baseline 仍是 MOCK_CHARACTER（store 未更新），但使用者的編輯不應被清掉
+    expect(formState.name).toBe('草稿名')
+    expect(formState.faith).toBe('草稿信仰')
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  it('spell 失敗但主幹成功時保留 spell 草稿讓使用者重試', async () => {
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    vi.spyOn(store, 'updateCharacter').mockImplementation(async () => {
+      const next = { ...MOCK_CHARACTER, name: '已改名' }
+      store.detailCache.set(next.id, next)
+      return next
+    })
+
+    const { submit, formState } = await getComposable(MOCK_CHARACTER)
+    const { useCharacterSpellsStore } = await import('~/stores/character-spells')
+    const spellsStore = useCharacterSpellsStore()
+    vi.spyOn(spellsStore, 'learn').mockRejectedValue(new Error('learn fail'))
+    const refetchSpy = vi.spyOn(spellsStore, 'refetch').mockResolvedValue([])
+
+    formState.name = '已改名'
+    formState.spells.push({
+      spellId: 'fireball',
+      isPrepared: false,
+      isFavorite: false,
+      sourceClass: 'wizard',
+    })
+    await submit()
+
+    // 主幹成功 → 主表單以 server 重種；spell 失敗 → refetch 對齊但保留 spell 草稿
+    expect(refetchSpy).toHaveBeenCalled()
+    expect(formState.spells.some((s) => s.spellId === 'fireball')).toBe(true)
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
 })

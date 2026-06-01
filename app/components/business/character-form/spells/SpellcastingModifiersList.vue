@@ -21,7 +21,7 @@
         <span class="w-10 shrink-0 text-sm font-semibold text-content">{{ row.name }}</span>
         <span
           class="w-12 shrink-0 text-right text-sm font-bold"
-          :class="modifierTextColor(row.bonus)"
+          :class="getModifierColorClass(row.bonus)"
         >
           {{ formatModifier(row.bonus) }}
         </span>
@@ -82,11 +82,5 @@ const onCustomChange = (key: AbilityKey, value: string): void => {
   const parsed = parseIntegerInput(value, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
   const { [key]: _omit, ...rest } = customBonuses.value
   customBonuses.value = parsed === 0 ? rest : { ...rest, [key]: parsed }
-}
-
-const modifierTextColor = (value: number): string => {
-  if (value > 0) return 'text-success'
-  if (value < 0) return 'text-danger'
-  return 'text-content-muted'
 }
 </script>

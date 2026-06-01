@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import {
   buildCombatStateBodyDefaults,
+  COMBAT_STATE_LIMITS,
   DEATH_SAVE_THRESHOLD,
   type CombatStateDTO,
   type CombatStateUpdateDTO,
@@ -21,6 +22,10 @@ const createDefaultState = (characterId: string): CombatStateDTO => ({
 
 const clampDeathSave = (value: number): number =>
   Math.min(DEATH_SAVE_THRESHOLD, Math.max(0, Math.floor(value)))
+
+/** 夾在 ±absMax（防 JSONB 塞爆，對齊 core COMBAT_STATE_LIMITS 的 _ABS_MAX 上限） */
+const clampAbs = (value: number, absMax: number): number =>
+  Math.min(absMax, Math.max(-absMax, value))
 
 /** 將 record[key] 設為 value，等於 defaultValue 時從 record 移除該 key 以保持稀疏 */
 function setSparseRecord<K extends string | number, T>(
@@ -161,21 +166,23 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   // ─── Adjustments ──────────────────────────────────────────────────────
 
   function adjustAc(delta: number): void {
-    state.acAdjustment += delta
+    state.acAdjustment = clampAbs(
+      state.acAdjustment + delta,
+      COMBAT_STATE_LIMITS.AC_ADJUSTMENT_ABS_MAX,
+    )
   }
 
   function adjustSpeed(delta: number): void {
-    state.speedAdjustment += delta
+    state.speedAdjustment = clampAbs(
+      state.speedAdjustment + delta,
+      COMBAT_STATE_LIMITS.SPEED_ADJUSTMENT_ABS_MAX,
+    )
   }
 
   function adjustSavingThrow(key: AbilityKey, delta: number): void {
     const current = state.savingThrowAdjustments[key] ?? 0
-    state.savingThrowAdjustments = setSparseRecord(
-      state.savingThrowAdjustments,
-      key,
-      current + delta,
-      0,
-    )
+    const next = clampAbs(current + delta, COMBAT_STATE_LIMITS.SAVING_THROW_ADJUSTMENT_ABS_MAX)
+    state.savingThrowAdjustments = setSparseRecord(state.savingThrowAdjustments, key, next, 0)
   }
 
   // ─── Feature uses ─────────────────────────────────────────────────────
@@ -301,12 +308,21 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   /** 重置戰況追蹤資料：呼叫 backend 清空後 re-GET 套用 server state；回傳是否成功 */
   const combatReset = async (): Promise<boolean> => {
     if (!isReady.value || isResetting.value) return false
+    // reset 會清空全部，故丟棄尚未發射的 pending 編輯（cancel 而非 flush）；
+    // 但仍需等任何飛行中的 PATCH 結束，否則其 commit 會推進 server updatedAt 使 reset 樂觀鎖 409。
     persist.cancel()
     if (retryTimer) {
       clearTimeout(retryTimer)
       retryTimer = null
     }
     retryScheduled = false
+    if (inFlightPromise) {
+      try {
+        await inFlightPromise
+      } catch {
+        // 失敗已由 doPersist 內處理（排重試 / mutationError + toast），這裡只取最新 updatedAt
+      }
+    }
     mutationError.value = null
     isResetting.value = true
     isReady.value = false

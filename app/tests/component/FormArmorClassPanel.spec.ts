@@ -4,8 +4,9 @@ import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import ArmorClassPanel from '~/components/business/character-form/combat/ArmorClassPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
-import { getTotalArmorClass } from '~/helpers/character'
+import { getArmorDexModifier, getTotalArmorClass } from '~/helpers/character'
 import { createDefaultArmorClass } from '@rolling-dice-app/core'
+import { getModifierColorClass } from '~/utils/color'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -13,6 +14,8 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getTotalArmorClass', getTotalArmorClass)
+  vi.stubGlobal('getArmorDexModifier', getArmorDexModifier)
+  vi.stubGlobal('getModifierColorClass', getModifierColorClass)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
 })
 
@@ -50,7 +53,14 @@ const mountPanel = (
     },
     global: {
       components: { CommonAppInput: AppInput, CommonAppSelect: AppSelect },
-      mocks: { formatModifier, getAbilityModifier, getTotalArmorClass, parseIntegerInput },
+      mocks: {
+        formatModifier,
+        getAbilityModifier,
+        getTotalArmorClass,
+        getArmorDexModifier,
+        getModifierColorClass,
+        parseIntegerInput,
+      },
     },
   })
 }

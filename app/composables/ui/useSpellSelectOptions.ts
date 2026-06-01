@@ -1,7 +1,6 @@
 import { computed, type ComputedRef } from 'vue'
 import type { SelectOption } from '@ui'
-import { CLASS_KEYS, type SourceKey } from '@rolling-dice-app/core'
-import { SPELL_SCHOOLS } from '~/constants/dnd'
+import { CLASS_KEYS, SPELL_SCHOOLS, type SourceKey } from '@rolling-dice-app/core'
 
 /** 法術資源（sourcebook）順序 */
 const SOURCE_KEYS: readonly SourceKey[] = [

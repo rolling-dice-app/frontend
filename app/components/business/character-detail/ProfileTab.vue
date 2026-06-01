@@ -396,7 +396,7 @@ const skillList = computed(() =>
     isJackOfAllTrades: props.character.isJackOfAllTrades,
   }).map(({ key, abilityKey, proficiency, bonus }) => ({
     key,
-    name: t(`skill.${key}`),
+    name: t(`skill.label.${key}`),
     proficiency,
     bonus,
     abilityName: t(`ability.${abilityKey}`),

@@ -40,7 +40,12 @@ const skillList = computed(() =>
     skills: props.skills,
     proficiencyBonus: props.proficiencyBonus,
     isJackOfAllTrades: props.isJackOfAllTrades,
-  }).map(({ key, proficiency, bonus }) => ({ key, name: t(`skill.${key}`), proficiency, bonus })),
+  }).map(({ key, proficiency, bonus }) => ({
+    key,
+    name: t(`skill.label.${key}`),
+    proficiency,
+    bonus,
+  })),
 )
 
 const dotClass = (level: ProficiencyLevel): string => {

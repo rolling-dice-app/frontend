@@ -16,7 +16,9 @@
 
           <div class="border-t border-border-soft pt-6">
             <label for="settings-display-name" class="mb-1 block text-xs text-content-muted">
-              {{ t('settings.displayName') }}（{{ t('settings.displayNameLimit') }}）
+              {{ t('settings.displayName') }}（{{
+                t('settings.displayNameLimit', { max: maxNicknameLength })
+              }}）
             </label>
             <div class="flex items-center gap-2">
               <CommonAppInput

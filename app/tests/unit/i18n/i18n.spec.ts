@@ -13,7 +13,7 @@ describe('useI18n — 預設狀態', () => {
 describe('t() — leaf 取值', () => {
   it('ability / skill 直接 leaf', () => {
     expect(t('ability.strength')).toBe('力量')
-    expect(t('skill.athletics')).toBe('運動')
+    expect(t('skill.label.athletics')).toBe('運動')
   })
 
   it('character namespace（alignment / gender / size）', () => {
@@ -60,7 +60,7 @@ describe('t() — character namespace 擴張（基本資料 / tab / 列表）', 
 
   it('列表 / 互動', () => {
     expect(t('character.createCharacter')).toBe('建立角色卡')
-    expect(t('character.deleteConfirm')).toBe(
+    expect(t('character.deleteConfirm', { days: 7 })).toBe(
       '刪除後的角色卡會在 7 天後永久刪除，確定要刪除以下角色？',
     )
     expect(t('character.empty')).toBe('尚無角色卡')

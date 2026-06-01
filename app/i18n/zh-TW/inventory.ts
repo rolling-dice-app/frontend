@@ -1,10 +1,16 @@
-import type { ArmorType, ItemType } from '@rolling-dice-app/core'
+import type { ArmorType, InventoryLocation, ItemType } from '@rolling-dice-app/core'
 
 const armorType: Readonly<Record<ArmorType, string>> = {
   none: '無甲',
   light: '輕甲',
   medium: '中甲',
   heavy: '重甲',
+}
+
+/** 存放位置 label；綁定 core InventoryLocation 以確保涵蓋全 enum（spread 回 default 保留 t('inventory.backpack') 存取） */
+const location: Readonly<Record<InventoryLocation, string>> = {
+  backpack: '背包',
+  dimensionalBag: '次元袋',
 }
 
 const itemType: Readonly<Record<ItemType, string>> = {
@@ -19,6 +25,8 @@ export default {
   // T1 enum
   armorType,
   itemType,
+  // 存放位置（flat 存取：t('inventory.backpack') / t('inventory.dimensionalBag')）
+  ...location,
 
   // 物品
   item: '物品',
@@ -39,10 +47,6 @@ export default {
   unitCount: '件',
   coinWeight: '硬幣重量',
   load: '負重',
-
-  // 存放位置
-  backpack: '背包',
-  dimensionalBag: '次元袋',
 
   // 同調 (attunement)
   attunement: '同調',

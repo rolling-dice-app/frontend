@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SavingThrowPanel from '~/components/business/character-form/combat/SavingThrowPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
 import { getSavingThrowBonus } from '~/helpers/character'
+import { getModifierColorClass } from '~/utils/color'
 import type { ClassEntry } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -10,6 +11,7 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getSavingThrowBonus', getSavingThrowBonus)
+  vi.stubGlobal('getModifierColorClass', getModifierColorClass)
 })
 
 afterEach(() => {
@@ -66,7 +68,7 @@ const mountPanel = (
     },
     global: {
       stubs: { Checkbox: CheckboxStub },
-      mocks: { formatModifier, getAbilityModifier, getSavingThrowBonus },
+      mocks: { formatModifier, getAbilityModifier, getSavingThrowBonus, getModifierColorClass },
     },
   })
 }

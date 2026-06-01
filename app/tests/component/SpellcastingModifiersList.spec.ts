@@ -4,6 +4,7 @@ import { useId } from 'vue'
 import AppInput from '~/components/common/AppInput.vue'
 import SpellcastingModifiersList from '~/components/business/character-form/spells/SpellcastingModifiersList.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
+import { getModifierColorClass } from '~/utils/color'
 import { parseIntegerInput } from '~/utils/parse'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type { AbilityKey } from '@rolling-dice-app/core'
@@ -22,6 +23,7 @@ beforeEach(() => {
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
+  vi.stubGlobal('getModifierColorClass', getModifierColorClass)
 })
 
 afterEach(() => {
@@ -43,7 +45,7 @@ const mountList = (
     },
     global: {
       components: { CommonAppInput: AppInput },
-      mocks: { formatModifier, getAbilityModifier, parseIntegerInput },
+      mocks: { formatModifier, getAbilityModifier, parseIntegerInput, getModifierColorClass },
     },
   })
 

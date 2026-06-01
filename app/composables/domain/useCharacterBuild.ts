@@ -84,6 +84,8 @@ export function useCharacterBuild() {
 
     const target = formState.dicePool.find((slot) => slot.id === slotId)
     if (!target) return
+    // 已被其他屬性佔用的 slot 不可改派，避免一顆骰同時掛兩個屬性
+    if (target.assignedTo !== null && target.assignedTo !== key) return
     target.assignedTo = key
     formState.abilities[key].origin = target.value
   }

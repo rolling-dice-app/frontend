@@ -111,11 +111,12 @@ export const useApiErrorToast = () => {
   const handle = (err: unknown, options: { toastMessage?: string } = {}): void => {
     const normalized = extractError(err)
     toast.error(options.toastMessage ?? resolveMessage(normalized))
+    // production 只印 sanitized 欄位；原始 err 可能含 request/response headers 等敏感資料，僅 dev 印出
     logger.error('[unhandled API error]', {
       code: normalized.code,
       status: normalized.status,
       url: normalized.url,
-      err,
+      ...(import.meta.dev ? { err } : {}),
     })
   }
 

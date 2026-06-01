@@ -1,6 +1,6 @@
 import { computed, type ComputedRef } from 'vue'
 import type { SelectOption } from '@ui'
-import { CLASS_KEYS, SPELL_SCHOOLS, type SourceKey } from '@rolling-dice-app/core'
+import { CLASS_KEYS, SPELL_SCHOOLS, SPELL_SOURCES } from '@rolling-dice-app/core'
 
 interface SpellSelectOptions {
   /** 環數下拉選項：戲法(0) ~ 9 環 */

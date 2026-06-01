@@ -27,9 +27,9 @@
 
 <script setup lang="ts">
 import type { SelectItem, SelectOptionGroup } from '@ui'
-import type { InventoryItemDTO, ItemType } from '@rolling-dice-app/core'
+import { ITEM_TYPES, type InventoryItemDTO } from '@rolling-dice-app/core'
 
-const { t, messages } = useI18n()
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -62,10 +62,7 @@ const optionsForSlot = (slotIndex: number): SelectItem[] => {
   )
 
   const result: SelectItem[] = [{ value: 'none', label: t('inventory.detachAttunement') }]
-  for (const [type, label] of Object.entries(messages.value.inventory.itemType) as [
-    ItemType,
-    string,
-  ][]) {
+  for (const type of ITEM_TYPES) {
     const options = props.allItems
       .filter((item) => item.type === type)
       .map((item) => ({
@@ -74,7 +71,7 @@ const optionsForSlot = (slotIndex: number): SelectItem[] => {
         disabled: occupiedByOthers.has(item.id),
       }))
     if (options.length === 0) continue
-    result.push({ group: label, options } satisfies SelectOptionGroup)
+    result.push({ group: t(`inventory.itemType.${type}`), options } satisfies SelectOptionGroup)
   }
   return result
 }

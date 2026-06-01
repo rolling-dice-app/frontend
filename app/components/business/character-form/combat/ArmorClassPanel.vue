@@ -61,17 +61,27 @@
         <label for="armor-ability" class="mb-1 block text-xs text-content">
           {{ t('combat.unarmored') }}
         </label>
-        <CommonAppSelect
-          id="armor-ability"
-          :model-value="formState.armorClass.abilityKey ?? ''"
-          :options="abilityOptions"
-          size="sm"
-          :placeholder="t('combat.none')"
-          class="min-w-18"
-          @update:model-value="
-            formState.armorClass.abilityKey = ($event || null) as AbilityKey | null
-          "
-        />
+        <div class="flex items-center gap-1.5">
+          <CommonAppSelect
+            id="armor-ability"
+            :model-value="formState.armorClass.abilityKey ?? ''"
+            :options="abilityOptions"
+            size="sm"
+            :placeholder="t('combat.none')"
+            :disabled="isArmored"
+            class="min-w-18"
+            @update:model-value="
+              formState.armorClass.abilityKey = ($event || null) as AbilityKey | null
+            "
+          />
+          <span
+            v-if="!isArmored && formState.armorClass.abilityKey"
+            class="text-sm font-bold"
+            :class="getModifierColorClass(unarmoredAbilityModifier)"
+          >
+            {{ formatModifier(unarmoredAbilityModifier) }}
+          </span>
+        </div>
       </div>
 
       <div>
@@ -88,10 +98,9 @@
           outline
           placeholder="0"
           @update:model-value="
-            formState.armorClass.shieldValue = parseIntegerInput(
-              $event,
+            formState.armorClass.shieldValue = Math.max(
               0,
-              CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+              parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
             )
           "
         />
@@ -149,4 +158,18 @@ const effectiveDexModifier = computed(() =>
 )
 
 const dexModifierTextColor = computed(() => getModifierColorClass(effectiveDexModifier.value))
+
+// 著甲時無甲防禦不適用：停用屬性選擇並清空已選 key
+const isArmored = computed(() => formState.value.armorClass.type !== null)
+
+const unarmoredAbilityModifier = computed(() => {
+  const key = formState.value.armorClass.abilityKey
+  return key ? getAbilityModifier(props.abilityScores[key]) : 0
+})
+
+watch(isArmored, (armored) => {
+  if (armored && formState.value.armorClass.abilityKey !== null) {
+    formState.value.armorClass.abilityKey = null
+  }
+})
 </script>

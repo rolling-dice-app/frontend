@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { Modal } from '@ui'
-import { CHARACTER_INT_LIMITS } from '@rolling-dice-app/core'
+import { CHARACTER_INT_LIMITS, CURRENCY_KEYS } from '@rolling-dice-app/core'
 import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
@@ -52,21 +52,20 @@ const emit = defineEmits<{
   confirm: [value: CharacterCurrencyDTO]
 }>()
 
-const COIN_FIELDS = computed<{ key: CurrencyKey; label: string }[]>(() => [
-  { key: 'pp', label: t('inventory.pp') },
-  { key: 'gp', label: t('inventory.gp') },
-  { key: 'sp', label: t('inventory.sp') },
-  { key: 'cp', label: t('inventory.cp') },
-])
+const COIN_FIELDS = useCoinFields()
 
-const draft = reactive<Record<CurrencyKey, number>>({ pp: 0, gp: 0, sp: 0, cp: 0 })
-const initialSnapshot = reactive<Record<CurrencyKey, number>>({ pp: 0, gp: 0, sp: 0, cp: 0 })
+const draft = reactive<Record<CurrencyKey, number>>({ cp: 0, sp: 0, gp: 0, pp: 0 })
+const initialSnapshot = reactive<Record<CurrencyKey, number>>({ cp: 0, sp: 0, gp: 0, pp: 0 })
+// open 當下的 currency 快照（含樂觀鎖 updatedAt）。confirm 以此快照送出，
+// 避免 modal 開啟期間 props.currency 被旁路刷新而以新 updatedAt 蓋過衝突偵測。
+let openedCurrency: CharacterCurrencyDTO | null = null
 
 watch(
   () => props.open,
   (next) => {
     if (!next) return
-    for (const key of ['pp', 'gp', 'sp', 'cp'] as const) {
+    openedCurrency = { ...props.currency }
+    for (const key of CURRENCY_KEYS) {
       initialSnapshot[key] = props.currency[key]
       draft[key] = props.currency[key]
     }
@@ -78,12 +77,15 @@ const onUpdate = (key: CurrencyKey, value: string): void => {
   draft[key] = Math.max(0, parseIntegerInput(value, 0, CHARACTER_INT_LIMITS.LARGE_INT_MAX))
 }
 
-const isDirty = (): boolean =>
-  (['pp', 'gp', 'sp', 'cp'] as const).some((k) => draft[k] !== initialSnapshot[k])
+const isDirty = (): boolean => CURRENCY_KEYS.some((k) => draft[k] !== initialSnapshot[k])
 
 const onConfirm = (): void => {
-  if (isDirty()) {
-    emit('confirm', { ...props.currency, pp: draft.pp, gp: draft.gp, sp: draft.sp, cp: draft.cp })
+  if (isDirty() && openedCurrency) {
+    const amounts = Object.fromEntries(CURRENCY_KEYS.map((k) => [k, draft[k]])) as Record<
+      CurrencyKey,
+      number
+    >
+    emit('confirm', { ...openedCurrency, ...amounts })
   }
   emit('update:open', false)
 }

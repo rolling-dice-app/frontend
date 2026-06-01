@@ -17,13 +17,7 @@
             :model-value="formState.age !== null ? String(formState.age) : ''"
             size="sm"
             outline
-            @update:model-value="
-              formState.age = parseIntegerInput(
-                $event,
-                undefined,
-                CHARACTER_INT_LIMITS.GENERAL_INT_MAX,
-              )
-            "
+            @update:model-value="onAgeInput"
           />
         </div>
         <div>
@@ -35,6 +29,7 @@
             class="w-full"
             :radius="0"
             :model-value="formState.height ?? ''"
+            :maxlength="CHARACTER_TEXT_LIMITS.TINY"
             size="sm"
             outline
             @update:model-value="formState.height = $event || null"
@@ -49,6 +44,7 @@
             class="w-full"
             :radius="0"
             :model-value="formState.weight ?? ''"
+            :maxlength="CHARACTER_TEXT_LIMITS.TINY"
             size="sm"
             outline
             @update:model-value="formState.weight = $event || null"
@@ -124,4 +120,10 @@ defineProps<{
 
 const formState = defineModel<CharacterFormStateBase>('formState', { required: true })
 const pendingAvatar = defineModel<Blob | null>('pendingAvatar', { default: null })
+
+// 年齡保留 null（未填）語意，僅在有值時夾為非負
+const onAgeInput = (value: string): void => {
+  const parsed = parseIntegerInput(value, undefined, CHARACTER_INT_LIMITS.GENERAL_INT_MAX)
+  formState.value.age = parsed === null ? null : Math.max(0, parsed)
+}
 </script>

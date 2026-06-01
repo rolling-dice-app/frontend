@@ -107,7 +107,8 @@
                   <button
                     type="button"
                     :aria-label="`${t('ui.action.delete')} ${item.name}`"
-                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
+                    :disabled="props.pendingItemIds.has(item.id)"
+                    class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-content-muted"
                     @click.stop="$emit('remove', item.id)"
                   >
                     <Icon name="trash" :size="14" />
@@ -176,6 +177,7 @@
             id="item-modal-name"
             :radius="0"
             :model-value="draft.name"
+            :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
             size="sm"
             outline
             class="w-full"
@@ -275,6 +277,7 @@ import { calculateItemsWeight, formatWeight } from '~/helpers/inventory'
 import {
   CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
+  ITEM_TYPES,
   MAX_DECIMAL_PRECISION,
   VALIDATION_LIMITS,
   type InventoryItemDTO,
@@ -283,7 +286,7 @@ import {
 } from '@rolling-dice-app/core'
 import type { InventoryItemDraft } from '~/types/business/character-form'
 
-const { t, messages } = useI18n()
+const { t } = useI18n()
 const toast = useToast()
 
 const props = withDefaults(
@@ -376,9 +379,7 @@ const onDrop = (event: DragEvent): void => {
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 const typeOptions = computed<SelectOption[]>(() =>
-  (Object.entries(messages.value.inventory.itemType) as [ItemType, string][]).map(
-    ([value, label]) => ({ value, label }),
-  ),
+  ITEM_TYPES.map((value) => ({ value, label: t(`inventory.itemType.${value}`) })),
 )
 
 const modalOpen = ref(false)

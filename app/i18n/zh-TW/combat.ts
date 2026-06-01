@@ -84,7 +84,7 @@ export default {
   armorBase: '基礎值',
   shield: '盾牌',
   abilityBonus: '屬性加值',
-  abilityAdjustment: '調整值',
+  abilityAdjustment: '敏捷調整',
   unarmored: '無甲防禦',
   selectArmor: '選擇護甲',
 
@@ -102,6 +102,7 @@ export default {
   damage: '傷害',
   damageRoll: '傷害骰',
   addDamageRow: '新增傷害骰',
+  damageRowLimitReached: '傷害骰列數已達上限，請先刪除舊項目',
   applyAbilityToDamage: '套用屬性調整到傷害',
   applyAbility: '套用屬性調整',
   attackCommentPlaceholder: '觸發條件、附加效果、備註等（選填）',

@@ -66,10 +66,11 @@ describe('CurrencyPanel (form)', () => {
       const wrapper = mountPanel(baseCurrency({ pp: 1, gp: 2, sp: 3, cp: 4 }))
       const cells = wrapper.findAll('.grid > div')
       expect(cells).toHaveLength(4)
-      expect(cells[0]?.text()).toContain('1')
-      expect(cells[1]?.text()).toContain('2')
-      expect(cells[2]?.text()).toContain('3')
-      expect(cells[3]?.text()).toContain('4')
+      // 幣序統一為 core CURRENCY_KEYS：cp → sp → gp → pp（決策 D1）
+      expect(cells[0]?.text()).toContain('4') // cp
+      expect(cells[1]?.text()).toContain('3') // sp
+      expect(cells[2]?.text()).toContain('2') // gp
+      expect(cells[3]?.text()).toContain('1') // pp
     })
 
     it('總重以 calculateCurrencyWeight 結果顯示', () => {

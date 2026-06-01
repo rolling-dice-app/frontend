@@ -69,4 +69,12 @@ const onToggle = (key: AbilityKey, checked: boolean): void => {
   else next.delete(key)
   formState.value.savingThrowExtras = Array.from(next)
 }
+
+// 主職業變動使某豁免改為 locked 時，剔除 extras 中重複的 key，避免幽靈 / 解鎖後殘留
+watch(lockedKeys, (locked) => {
+  const pruned = formState.value.savingThrowExtras.filter((key) => !locked.has(key))
+  if (pruned.length !== formState.value.savingThrowExtras.length) {
+    formState.value.savingThrowExtras = pruned
+  }
+})
 </script>

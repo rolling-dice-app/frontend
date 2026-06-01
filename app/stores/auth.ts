@@ -9,7 +9,8 @@ import type {
 /**
  * 使用者登入狀態 store。
  *
- * - `refresh()` 同步 backend session：200 回 MeResponseDTO 解出 user / limits 寫入；401 由 apiFetch 攔截器經 clearSession 清空 user/limits，store 不重複處理；其他錯誤往外拋
+ * - `refresh()` 同步 backend session：200 回 MeResponseDTO 解出 user / limits 寫入；401 由 apiFetch 攔截器經 clearSessionBoundState 清空 session-bound state，store 不重複處理；其他錯誤往外拋
+ * - `ensureReady()` memoize 首輪 refresh：plugin fire-and-forget 啟動、auth middleware await 它確保判登入前狀態已就緒
  * - `login(next)` 觸發 OAuth redirect dance（不能用 fetch，會被 CORS preflight擋住）
  * - `logout()` 呼 backend 並 clearSessionBoundState
  * - `clearSession()` 清空 auth 自身 state（user/limits）
@@ -43,6 +44,14 @@ export const useAuthStore = defineStore('auth', () => {
       if (isFetchError(err) && err.statusCode === 401) return
       throw err
     }
+  }
+
+  // app boot 的 /auth/me 同步：memoize 首輪 refresh，讓 auth-init plugin 可 fire-and-forget
+  // 而 auth middleware 仍能 await「狀態已就緒」再判登入，避免 refresh 未完成前誤導回首頁。
+  let readyPromise: Promise<void> | null = null
+  const ensureReady = (): Promise<void> => {
+    readyPromise ??= refresh()
+    return readyPromise
   }
 
   const login = (next?: string) => {
@@ -84,6 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearSession,
     clearSessionBoundState,
     refresh,
+    ensureReady,
     login,
     logout,
     updatePreference,

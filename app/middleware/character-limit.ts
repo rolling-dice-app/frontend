@@ -8,7 +8,13 @@ export default defineNuxtRouteMiddleware(async () => {
   // await 前取值：ensureListLoaded 期間 hydration 可能完成翻 false，事後判斷會失準。
   const wasHydrating = useNuxtApp().isHydrating
   const characterStore = useCharacterStore()
-  await characterStore.ensureListLoaded()
+  // fail-open：列表載入失敗時放行，後端為達上限的最終 backstop；
+  // 否則暫時性錯誤會把使用者鎖在 build 頁外。
+  try {
+    await characterStore.ensureListLoaded()
+  } catch {
+    return
+  }
   if (!characterStore.isAtCharacterLimit) return
   // 初次 hydration 走整頁重載避免 node mismatch（toast 隨重載丟失故略過）；
   // SPA 導航無 SSR，軟導航 + toast 即可。

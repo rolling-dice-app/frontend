@@ -77,6 +77,9 @@ const inventoryItems = computed<SharedInventoryItemViewModel[]>(() =>
   })),
 )
 
+// shared.value! 安全：以下 computed 與 derived-stats 皆 lazy，僅在 template `v-else`
+// （shared 已確定存在）分支被存取；useCharacterDerivedStatsFromCharacter 要求 non-null
+// Ref，改 nullable 會外溢其簽章，故此處保留 assertion。
 const characterRef = computed<SharedCharacterProfileDTO>(() => shared.value!.character)
 const attunedCap = computed(() => computeAttunedLimit(characterRef.value))
 const { totalAbilityScores, proficiencyBonus } = useCharacterDerivedStatsFromCharacter(characterRef)

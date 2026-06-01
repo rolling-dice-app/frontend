@@ -85,6 +85,14 @@ export default {
     resource: '找不到此資源',
     backToHome: '返回首頁',
   },
+  /** 全域 error.vue 文案（4xx / 5xx fallback 頁） */
+  errorPage: {
+    notFoundTitle: '星界放逐！',
+    notFoundMessage: '你誤入在浩瀚的星界，儘速返回！',
+    defaultTitle: '紅龍襲擊！',
+    defaultMessage: '未知錯誤，請儘速撤離！',
+    leave: '撤離',
+  },
   /** SEO meta 文案（全站預設，於 app.vue 使用） */
   seo: {
     siteDescription: 'Rolling Dice — 線上 D&D 角色卡管理與擲骰工具，建立、編輯並分享你的角色卡。',

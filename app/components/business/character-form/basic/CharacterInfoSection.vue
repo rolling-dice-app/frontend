@@ -321,6 +321,7 @@ const updateClassKey = (index: number, value: string): void => {
 
 const updateClassLevel = (index: number, value: string): void => {
   const level = parseIntegerInput(value, 1)
+  // 只守住單一職業等級 ≤ MAX_CHARACTER_LEVEL；總等級超模（多職業相加 > 20）不阻擋
   formState.value.classes[index]!.level = Math.max(1, Math.min(MAX_CHARACTER_LEVEL, level))
 }
 

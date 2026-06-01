@@ -160,6 +160,22 @@ describe('CharacterInfoSection (form)', () => {
       expect(formState.classes[0]!.level).toBe(1)
     })
 
+    it('多職業總等級超過 20（超模角色）刻意放行，僅各職業自身夾 ≤ 20', async () => {
+      const formState = baseFormState({
+        classes: [
+          baseClass({ classKey: 'fighter', level: 15 }),
+          baseClass({ classKey: 'wizard', level: 10 }),
+        ],
+      })
+      const wrapper = mountSection({ formState })
+      // 其餘職業已佔 15 級也不影響本職業；輸入 18 → 仍維持 18（總和 33 不擋）
+      await wrapper.find('input#prof-level-1').setValue('18')
+      expect(formState.classes[1]!.level).toBe(18)
+      // 但單一職業仍夾在 20
+      await wrapper.find('input#prof-level-1').setValue('25')
+      expect(formState.classes[1]!.level).toBe(20)
+    })
+
     it('新增職業按鈕：點擊 push 新 entry', async () => {
       const formState = baseFormState({
         classes: [baseClass({ classKey: 'fighter', level: 5 })],

@@ -48,7 +48,9 @@ const SYSTEM_ICON: Record<ToastVariant, IconName> = {
   info: 'info',
 }
 
-// 模組層級 singleton：跨 component 呼叫 useToast() 時共享同一份佇列
+// 模組層級 singleton：跨 component 呼叫 useToast() 時共享同一份佇列。
+// client-only 契約：此 singleton 與 push() 內的 crypto.randomUUID 僅供瀏覽器端互動觸發；
+// 勿在 SSR 期間呼叫，否則 module-scoped 狀態會跨請求共享。
 const items = reactive<ToastItem[]>([])
 
 const push = (variant: ToastVariant, message: string, options?: ToastOptions): string => {

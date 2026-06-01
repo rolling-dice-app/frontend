@@ -226,6 +226,19 @@ describe('useCharacterCombatState — 臨時調整', () => {
     adjustSavingThrow('strength', -1)
     expect(state.savingThrowAdjustments.strength).toBeUndefined()
   })
+
+  it('adjustAc / adjustSpeed / adjustSavingThrow 超出 ±99 時夾在上下限', () => {
+    const { adjustAc, adjustSpeed, adjustSavingThrow, state } = useCharacterCombatState(
+      CHAR_ID,
+      ref(30),
+    )
+    adjustAc(500)
+    expect(state.acAdjustment).toBe(99)
+    adjustSpeed(-500)
+    expect(state.speedAdjustment).toBe(-99)
+    adjustSavingThrow('dexterity', 500)
+    expect(state.savingThrowAdjustments.dexterity).toBe(99)
+  })
 })
 
 describe('useCharacterCombatState — 生命骰', () => {
@@ -923,6 +936,41 @@ describe('useCharacterCombatState — combatReset', () => {
     await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
     await nextTick()
     expect(mockPatch).not.toHaveBeenCalled()
+  })
+
+  it('reset 應等待飛行中的 PATCH 結束、改用刷新後的 updatedAt（避免樂觀鎖 409）', async () => {
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockResetEndpoint.mockClear()
+
+    // 用 deferred 把一筆 PATCH 卡在飛行中
+    let resolvePatch!: () => void
+    mockPatch.mockReturnValueOnce(
+      new Promise<void>((res) => {
+        resolvePatch = () => res()
+      }),
+    )
+    // PATCH 完成後 doPersist 的刷新 GET → 較新 updatedAt；之後 reset 的 re-GET
+    mockGet.mockResolvedValueOnce(buildDto({ updatedAt: REFRESH_UPDATED_AT }))
+    mockGet.mockResolvedValueOnce(buildDto({ updatedAt: '2026-05-13T00:00:01.000Z' }))
+
+    cs.damageHp(5)
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(PERSIST_DEBOUNCE_MS) // 觸發 debounce → runPersist 開始，PATCH 卡住
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    // PATCH 仍飛行中呼叫 reset → 應先 await inFlightPromise，尚未打 reset endpoint
+    const resetPromise = cs.combatReset()
+    await Promise.resolve()
+    expect(mockResetEndpoint).not.toHaveBeenCalled()
+
+    resolvePatch()
+    await resetPromise
+
+    // reset 應用刷新後的 token，而非 stale INITIAL_UPDATED_AT
+    expect(mockResetEndpoint).toHaveBeenCalledExactlyOnceWith(CHAR_ID, {
+      expectedUpdatedAt: REFRESH_UPDATED_AT,
+    })
   })
 
   it('reset 後 mutationError 應被清空', async () => {

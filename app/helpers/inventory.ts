@@ -27,7 +27,7 @@ export function calculateMaxCarryWeight(strScore: number): number {
   return strScore * CARRY_WEIGHT_PER_STR
 }
 
-/** 格式化重量數值：整數直接顯示，小數取至最多兩位有效小數 */
+/** 格式化重量數值：整數直接顯示，小數四捨五入至最多兩位小數位（去除尾零） */
 export function formatWeight(value: number): string {
   return value % 1 === 0 ? value.toString() : parseFloat(value.toFixed(2)).toString()
 }

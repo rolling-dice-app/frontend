@@ -4,12 +4,14 @@ import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import OtherAttributesPanel from '~/components/business/character-form/combat/OtherAttributesPanel.vue'
 import { formatModifier } from '~/helpers/ability'
+import { getModifierColorClass } from '~/utils/color'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterUpdateFormState } from '~/types/business/character-form'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
+  vi.stubGlobal('getModifierColorClass', getModifierColorClass)
 })
 
 afterEach(() => {
@@ -69,7 +71,7 @@ const mountPanel = (
     global: {
       stubs: { Toggle: ToggleStub },
       components: { CommonAppInput: AppInput, CommonAppSelect: AppSelect },
-      mocks: { formatModifier, parseIntegerInput },
+      mocks: { formatModifier, parseIntegerInput, getModifierColorClass },
     },
   })
 }

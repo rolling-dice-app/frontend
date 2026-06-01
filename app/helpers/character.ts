@@ -106,19 +106,26 @@ export function getSkillBonus(
 }
 
 /**
- * 計算護甲基礎值（AC base + DEX 調整）：
- * - 重甲：baseValue（不加 DEX）
- * - 中甲：baseValue + min(DEX, +2)
- * - 輕甲 / 無甲 / 未選：baseValue + 完整 DEX
+ * 依護甲類型計算實際生效的 DEX 加值：
+ * - 重甲：0（不加 DEX）
+ * - 中甲：min(DEX, +2)
+ * - 輕甲 / 無甲 / 未選：完整 DEX
+ */
+export function getArmorDexModifier(dexModifier: number, type: ArmorType | null): number {
+  if (type === 'heavy') return 0
+  if (type === 'medium') return Math.min(dexModifier, 2)
+  return dexModifier
+}
+
+/**
+ * 計算護甲基礎值：AC base + 依護甲類型處理過的 DEX 加值。
  */
 export function getBaseArmorClass(
   baseValue: number,
   dexModifier: number,
   type: ArmorType | null,
 ): number {
-  if (type === 'heavy') return baseValue
-  if (type === 'medium') return baseValue + Math.min(dexModifier, 2)
-  return baseValue + dexModifier
+  return baseValue + getArmorDexModifier(dexModifier, type)
 }
 
 /**

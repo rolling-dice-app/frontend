@@ -180,10 +180,19 @@ export function useCharacterUpdate(character: CharacterDTO) {
         await spellsStore.refetch().catch(() => {})
       }
 
-      // Re-seed：以伺服器當前狀態為基準
-      const next = store.getById(id)
-      if (next) Object.assign(formState, characterToFormState(next))
-      seedSpells()
+      // Re-seed：只有成功的 section 才以伺服器當前狀態為基準重種；失敗的 section 保留草稿，
+      // 讓使用者可直接重試而不丟編輯（partial failure 時尤其重要）。
+      if (mainResult!.status === 'fulfilled') {
+        const next = store.getById(id)
+        if (next) {
+          // characterToFormState 會把 spells 重設為 []；先留住 spell 草稿，是否覆寫交由下方 seedSpells 決定。
+          const spellDraft = formState.spells
+          Object.assign(formState, characterToFormState(next))
+          formState.spells = spellDraft
+        }
+      }
+      // spell 任一失敗時保留 spell 草稿（上方已 refetch 對齊 baseline，重試時 diff 只會處理未完成項）。
+      if (!anySpellFailed) seedSpells()
     } catch (err) {
       apiErrorToast.handle(err)
     } finally {

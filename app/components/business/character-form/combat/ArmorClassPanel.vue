@@ -141,18 +141,12 @@ const abilityOptions = computed<SelectOption[]>(() => [
 
 const totalAC = computed(() => getTotalArmorClass(formState.value.armorClass, props.abilityScores))
 
-const effectiveDexModifier = computed(() => {
-  const dexMod = getAbilityModifier(props.abilityScores.dexterity)
-  const type = formState.value.armorClass.type
-  if (type === 'heavy') return 0
-  if (type === 'medium') return Math.min(dexMod, 2)
-  return dexMod
-})
+const effectiveDexModifier = computed(() =>
+  getArmorDexModifier(
+    getAbilityModifier(props.abilityScores.dexterity),
+    formState.value.armorClass.type,
+  ),
+)
 
-const dexModifierTextColor = computed(() => {
-  const v = effectiveDexModifier.value
-  if (v > 0) return 'text-success'
-  if (v < 0) return 'text-danger'
-  return 'text-content-muted'
-})
+const dexModifierTextColor = computed(() => getModifierColorClass(effectiveDexModifier.value))
 </script>

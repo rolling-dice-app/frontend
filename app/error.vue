@@ -2,20 +2,21 @@
 import error404 from '~/assets/images/error/404.png'
 import errorDefault from '~/assets/images/error/default.png'
 
+const { t } = useI18n()
 const error = useError()
 
 const errorStatus = computed(() => {
   switch (error.value?.status) {
     case 404:
       return {
-        title: '星界放逐！',
-        message: '你誤入在浩瀚的星界，儘速返回！',
+        title: t('ui.errorPage.notFoundTitle'),
+        message: t('ui.errorPage.notFoundMessage'),
         url: error404,
       }
     default:
       return {
-        title: '紅龍襲擊！',
-        message: '未知錯誤，請儘速撤離！',
+        title: t('ui.errorPage.defaultTitle'),
+        message: t('ui.errorPage.defaultMessage'),
         url: errorDefault,
       }
   }
@@ -38,7 +39,7 @@ function handleClear() {
       class="mt-2 rounded-md bg-info px-4 py-2 text-sm text-content hover:bg-info-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800"
       @click="handleClear"
     >
-      撤離
+      {{ t('ui.errorPage.leave') }}
     </button>
   </main>
 </template>

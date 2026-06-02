@@ -131,6 +131,14 @@ describe('SavingThrowList', () => {
       await incBtn(wrapper, '魅力').trigger('click')
       expect(wrapper.emitted('adjust')).toEqual([['charisma', 1]])
     })
+
+    it('adjustment 達上限時停用 +，下限時停用 -', () => {
+      const wrapper = mountList({ adjustments: { strength: 99, dexterity: -99 } })
+      expect(incBtn(wrapper, '力量').attributes('disabled')).toBeDefined()
+      expect(decBtn(wrapper, '力量').attributes('disabled')).toBeUndefined()
+      expect(decBtn(wrapper, '敏捷').attributes('disabled')).toBeDefined()
+      expect(incBtn(wrapper, '敏捷').attributes('disabled')).toBeUndefined()
+    })
   })
 
   describe('法術豁免 DC', () => {

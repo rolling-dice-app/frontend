@@ -73,7 +73,11 @@
       type="button"
       :disabled="isInDeleteCooldown"
       :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-      :title="isInDeleteCooldown ? t('character.trash.deleteCooldownTooltip') : undefined"
+      :title="
+        isInDeleteCooldown
+          ? t('character.trash.deleteCooldownTooltip', { days: RESTORE_COOLDOWN_DAYS })
+          : undefined
+      "
       :class="[
         'ml-2 size-11 shrink-0 flex items-center justify-center rounded-md transition-colors duration-150',
         isInDeleteCooldown
@@ -101,7 +105,6 @@
 <script setup lang="ts">
 import { RESTORE_COOLDOWN_DAYS } from '@rolling-dice-app/core'
 import { Icon } from '@ui'
-import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 const { t } = useI18n()
@@ -123,75 +126,20 @@ defineEmits<{
   'toggle-share': [CharacterListItem]
 }>()
 
-const onCardClick = (e: MouseEvent) => {
-  if (props.mode === 'trashed') e.preventDefault()
-}
-
-// 還原冷卻 pre-check；now 為 client-derived 避免 hydration mismatch（與 Card.vue 同模式）。
-const COOLDOWN_MS = RESTORE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
-const now = ref<number | null>(null)
-onMounted(() => {
-  now.value = Date.now()
-})
-const isInDeleteCooldown = computed(() => {
-  if (now.value === null || !props.character.restoredAt) return false
-  return new Date(props.character.restoredAt).getTime() + COOLDOWN_MS > now.value
-})
-
-const TIER_CONFIG: Record<
-  CharacterTier,
-  { textColor: string; badgeBg: string; shadowRgb: string }
-> = {
-  common: {
-    textColor: 'var(--rd--color-text-muted)',
-    badgeBg: 'var(--rd--tier-common-soft)',
-    shadowRgb: '160, 150, 140',
-  },
-  elite: {
-    textColor: 'var(--rd--tier-elite)',
-    badgeBg: 'var(--rd--tier-elite-soft)',
-    shadowRgb: '74, 158, 108',
-  },
-  master: {
-    textColor: 'var(--rd--tier-master)',
-    badgeBg: 'var(--rd--tier-master-soft)',
-    shadowRgb: '74, 122, 207',
-  },
-  legendary: {
-    textColor: 'var(--rd--color-primary)',
-    badgeBg: 'var(--rd--color-primary-soft)',
-    shadowRgb: '184, 134, 14',
-  },
-}
-
-const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
-const tier = computed(() => getCharacterTier(totalLevel.value))
-const tierConfig = computed(() => TIER_CONFIG[tier.value])
-const isMaxLevel = computed(() => totalLevel.value === 20)
-
-// tier-glow 強度/顏色由 .tier-glow class 用 token calc() 算（design-language §9）；
-// 此處只餵 tier 色 RGB、總等級、列表卡半徑 16px。
-const tierGlowStyle = computed(() => ({
-  '--tier-glow-rgb': tierConfig.value.shadowRgb,
-  '--tier-glow-level': totalLevel.value,
-  '--tier-glow-radius': '16px',
-}))
-
-const coverError = ref(false)
-
-watch(
-  () => props.character.avatar,
-  () => {
-    coverError.value = false
-  },
+// list 版型不畫職業 icon，故 firstClassKey 不取用（封面 null-safety 由 composable 內處理）。
+const {
+  onCardClick,
+  isInDeleteCooldown,
+  totalLevel,
+  tierConfig,
+  isMaxLevel,
+  tierGlowStyle,
+  hasAvatar,
+  coverSrc,
+  onCoverError,
+} = useCharacterListCardView(
+  () => props.character,
+  () => props.mode,
+  '16px',
 )
-
-const hasAvatar = computed(() => !!props.character.avatar && !coverError.value)
-const coverSrc = computed(() =>
-  hasAvatar.value ? props.character.avatar! : CLASS_IMAGES[props.character.classes[0]!.classKey],
-)
-
-const onCoverError = () => {
-  coverError.value = true
-}
 </script>

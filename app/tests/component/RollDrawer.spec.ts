@@ -476,9 +476,25 @@ describe('RollDrawer', () => {
         expect.objectContaining({ kind: 'hit-die', roll: 1, modifier: -2, healed: 0 }),
       )
     })
+
+    it('已達 level 時收到 roll 事件仍不消耗/回血/記錄（連點重判）', async () => {
+      const onHeal = vi.fn()
+      const onConsume = vi.fn()
+      const wrapper = mountDrawer({
+        hitDiceUsed: { fighter: 5 }, // 預設 fighter level 5，已耗盡
+        onHealFromHitDie: onHeal,
+        onConsumeHitDie: onConsume,
+      })
+      await openDrawer(wrapper)
+      // 模擬連點：在 re-render 前子列以 stale isExhausted 再次 emit roll
+      findRowByLabel(wrapper, '戰士 / d10')!.vm.$emit('roll', 'normal')
+      expect(onConsume).not.toHaveBeenCalled()
+      expect(onHeal).not.toHaveBeenCalled()
+      expect(rollDie).not.toHaveBeenCalled()
+    })
   })
 
-  describe('排逊骰 AdHocBar', () => {
+  describe('單骰 AdHocBar', () => {
     it('raw 請求：rollDie 以 sides 呼叫、push kind=raw entry', async () => {
       vi.mocked(rollDie).mockReturnValueOnce(5)
       const wrapper = mountDrawer()

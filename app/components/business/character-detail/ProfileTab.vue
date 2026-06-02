@@ -250,8 +250,8 @@
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
               <span class="text-xs text-content-muted">{{ t('combat.speed') }}</span>
-              <span class="mt-1 text-2xl font-bold text-content"
-                >30
+              <span class="mt-1 text-2xl font-bold text-content">
+                {{ totalSpeed }}
                 <span class="text-xs font-normal text-content-muted">
                   {{ t('combat.unitFeet') }}
                 </span>
@@ -311,7 +311,7 @@
       <h2 id="section-background" class="mb-4 font-display text-lg font-bold text-content">
         {{ t('character.backgroundStory') }}
       </h2>
-      <div class="whitespace-pre-line break-words text-sm text-content-soft">
+      <div class="whitespace-pre-line wrap-break-word text-sm text-content-soft">
         {{ character.story || t('character.emptyParenthesized') }}
       </div>
     </section>
@@ -356,6 +356,7 @@ const {
   totalHp,
   totalArmorClass: baseAC,
   totalInitiative,
+  totalSpeed,
   totalPassivePerception: passivePerception,
   totalPassiveInsight: passiveInsight,
 } = useCharacterDerivedStatsFromCharacter(characterRef)
@@ -396,7 +397,7 @@ const skillList = computed(() =>
     isJackOfAllTrades: props.character.isJackOfAllTrades,
   }).map(({ key, abilityKey, proficiency, bonus }) => ({
     key,
-    name: t(`skill.${key}`),
+    name: t(`skill.label.${key}`),
     proficiency,
     bonus,
     abilityName: t(`ability.${abilityKey}`),

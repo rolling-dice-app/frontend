@@ -22,8 +22,8 @@
     border-color="var(--color-border)"
   >
     <div class="flex h-full min-h-0 flex-col gap-3">
-      <!-- 上 2/3：觸發區（單一大滾動容器） -->
-      <div class="min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
+      <!-- 上 2/3：觸發區（單一大滾動容器，隱藏 scrollbar） -->
+      <div class="scrollbar-hidden min-h-0 grow basis-2/3 space-y-4 overflow-y-auto pr-1">
         <section aria-labelledby="roll-section-initiative">
           <h3
             id="roll-section-initiative"
@@ -146,6 +146,7 @@ import {
   type CharacterDTO,
   type AbilityKey,
   type ClassKey,
+  type DieType,
 } from '@rolling-dice-app/core'
 import type { TotalAbilityScores } from '~/types/business/character-form'
 import type {
@@ -223,7 +224,7 @@ const skillRows = computed(() =>
     skills: props.character.skills,
     proficiencyBonus: props.proficiencyBonus,
     isJackOfAllTrades: props.character.isJackOfAllTrades,
-  }).map(({ key, bonus }) => ({ key, label: t(`skill.${key}`), modifier: bonus })),
+  }).map(({ key, bonus }) => ({ key, label: t(`skill.label.${key}`), modifier: bonus })),
 )
 
 const handleD20Roll = (
@@ -248,14 +249,15 @@ const handleD20Roll = (
 
 type HitDieRow = {
   classKey: ClassKey
-  sides: number
+  sides: DieType
   level: number
   label: string
   isExhausted: boolean
 }
 
 const handleHitDieRoll = (row: HitDieRow): void => {
-  if (row.isExhausted) return
+  // 以最新 hitDiceUsed 重判，避免連點在 re-render 前用到 stale isExhausted 而重複回血/記錄
+  if ((props.hitDiceUsed[row.classKey] ?? 0) >= row.level) return
   const modifier = conModifier.value
   const roll = rollDie(row.sides)
   const healed = Math.max(0, roll + modifier)

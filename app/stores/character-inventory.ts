@@ -11,7 +11,7 @@ import { calculateBackpackLoad, calculateMaxCarryWeight } from '~/helpers/invent
 import type { InventoryItemDraft } from '~/types/business/character-form'
 import { createDirtyGuard } from '~/utils/dirty-guard'
 import { createLogger } from '~/utils/log'
-import { createSingleFlight } from '~/utils/single-flight'
+import { createKeyedSingleFlight } from '~/utils/single-flight'
 
 const logger = createLogger('[CharacterInventoryStore]')
 
@@ -29,42 +29,49 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const characterStore = useCharacterStore()
 
-  // GET 單飛 + trailing-merge：避免先發後到的舊 list 蓋掉較新結果
-  // dirty 用於飛行中本地若有並行 mutation，則 server list 視為過期、不覆蓋 optimistic
+  // GET 單飛 + trailing-merge：避免先發後到的舊 list 蓋掉較新結果。
+  // 以 characterId 為 key：跨角色切換時不同 key 互不 coalesce，stale 角色的回應不會寫進新角色。
+  // dirty 用於飛行中本地若有並行 mutation，則 server list 視為過期、不覆蓋 optimistic。
   const itemsDirty = createDirtyGuard()
-  const itemsFlight = createSingleFlight(async (): Promise<InventoryItemDTO[]> => {
-    if (!characterId.value) return []
+  const itemsFlight = createKeyedSingleFlight(async (id: string): Promise<InventoryItemDTO[]> => {
     itemsLoading.value = true
     itemsError.value = null
     const snap = itemsDirty.snapshot()
     try {
-      const list = await characters().inventory.list(characterId.value)
-      if (!itemsDirty.changedSince(snap)) items.value = list
+      const list = await characters().inventory.list(id)
+      // 進場 id 與當前 characterId 不符（await 期間已切角色）→ 丟棄，不寫回
+      if (characterId.value === id && !itemsDirty.changedSince(snap)) items.value = list
       return list
     } catch (err) {
-      itemsError.value = err
+      if (characterId.value === id) itemsError.value = err
       logger.error('refetchItems failed:', err)
       throw err
     } finally {
-      itemsLoading.value = false
+      if (characterId.value === id) itemsLoading.value = false
     }
   })
-  const refetchItems = (): Promise<InventoryItemDTO[]> => itemsFlight.run()
+  const refetchItems = (): Promise<InventoryItemDTO[]> => {
+    const id = characterId.value
+    if (!id) return Promise.resolve([])
+    return itemsFlight.run(id)
+  }
 
   const refetchCurrency = async (): Promise<CharacterCurrencyDTO | null> => {
-    if (!characterId.value) return null
+    const id = characterId.value
+    if (!id) return null
     currencyLoading.value = true
     currencyError.value = null
     try {
-      const next = await characters().currency.get(characterId.value)
-      currency.value = next
+      const next = await characters().currency.get(id)
+      // await 期間若已切角色，丟棄 stale 結果
+      if (characterId.value === id) currency.value = next
       return next
     } catch (err) {
-      currencyError.value = err
+      if (characterId.value === id) currencyError.value = err
       logger.error('refetchCurrency failed:', err)
       throw err
     } finally {
-      currencyLoading.value = false
+      if (characterId.value === id) currencyLoading.value = false
     }
   }
 
@@ -133,6 +140,10 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
 
   const removeItem = async (itemId: string): Promise<void> => {
     if (!characterId.value) throw new Error('removeItem: store not loaded')
+    // 重入 safety net：UI disabled 為主要閘門，這層僅防 disabled 失效或非 UI 路徑的並發；
+    // no-op 而非 throw，避免 caller 誤報錯誤 toast（對齊 patchItem）
+    if (pendingItemIds.value.has(itemId)) return
+    pendingItemIds.value = new Set(pendingItemIds.value).add(itemId)
     items.value = items.value.filter((i) => i.id !== itemId)
     itemsDirty.bump()
     try {
@@ -141,6 +152,10 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
       // 失敗對齊 server truth，避免 snapshot rollback 蓋掉並行 mutation 的成功結果
       await refetchItems().catch(() => {})
       throw err
+    } finally {
+      const next = new Set(pendingItemIds.value)
+      next.delete(itemId)
+      pendingItemIds.value = next
     }
   }
 
@@ -151,13 +166,15 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
     const current = attunedItems.value[slotIndex] ?? null
     if (current?.id === newItemId) return
 
-    // patchItem 失敗時自身會 refetch 對齊 server truth，這裡不再額外 catch
+    // 先驗證 newItemId 確實存在，再 detach 舊的；否則「清掉舊同調卻找不到新的」會留下空 slot（部分成功）
+    const target = newItemId ? (items.value.find((i) => i.id === newItemId) ?? null) : null
+    if (newItemId && !target) return
+
+    // 兩步 detach→attach 無法在前端做到真原子；patchItem 失敗時自身會 refetch 對齊 server truth，這裡不再額外 catch
     if (current) {
       await patchItem(current.id, { updatedAt: current.updatedAt, isAttuned: false })
     }
-    if (newItemId) {
-      const target = items.value.find((i) => i.id === newItemId)
-      if (!target) return
+    if (target) {
       await patchItem(target.id, { updatedAt: target.updatedAt, isAttuned: true })
     }
   }
@@ -188,7 +205,8 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
   )
   const attunedCap = computed(() => {
     if (!characterId.value) return 0
-    const character = characterStore.getById(characterId.value)
+    // peekById：唯讀計算不需防禦性 clone，避免每次重算深拷貝整張角色卡
+    const character = characterStore.peekById(characterId.value)
     return character ? computeAttunedLimit(character) : 0
   })
   const attunedItems = computed(() =>
@@ -206,7 +224,7 @@ export const useCharacterInventoryStore = defineStore('character-inventory', () 
   })
   const maxCarryWeight = computed(() => {
     if (!characterId.value) return 0
-    const character = characterStore.getById(characterId.value)
+    const character = characterStore.peekById(characterId.value)
     const str = character?.abilities.strength
     return str ? calculateMaxCarryWeight(getTotalScore(str)) : 0
   })

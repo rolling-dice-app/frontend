@@ -339,7 +339,9 @@
       text-color="var(--color-content)"
       border-color="var(--color-border)"
     >
-      <p class="text-content">{{ t('character.deleteConfirm') }}</p>
+      <p class="text-content">
+        {{ t('character.deleteConfirm', { days: TRASH_RETENTION_DAYS }) }}
+      </p>
       <p v-if="pendingDelete" class="mt-2 font-bold text-content">
         {{ pendingDelete.name }}
       </p>
@@ -373,7 +375,9 @@
       text-color="var(--color-content)"
       border-color="var(--color-border)"
     >
-      <p class="text-content">{{ t('character.trash.restoreConfirm') }}</p>
+      <p class="text-content">
+        {{ t('character.trash.restoreConfirm', { days: RESTORE_COOLDOWN_DAYS }) }}
+      </p>
       <p v-if="pendingRestore" class="mt-2 font-bold text-content">
         {{ pendingRestore.name }}
       </p>
@@ -404,6 +408,7 @@
 <script setup lang="ts">
 import { Icon, Modal, Select, Tab, Tabs } from '@ui'
 import type { SelectOption } from '@ui'
+import { RESTORE_COOLDOWN_DAYS, TRASH_RETENTION_DAYS } from '@rolling-dice-app/core'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 definePageMeta({ middleware: 'auth', noindex: true })
@@ -463,8 +468,10 @@ const isListMode = computed({
 
 // ── Share ─────────────────────────────────────────────────────────────────────
 
+// baseURL 結尾帶 '/'，故 share 段不另加前導 '/'，確保 baseURL 非 '/' 時連結正確。
+const baseURL = useRuntimeConfig().app.baseURL
 const shareUrl = (character: CharacterListItem): string =>
-  `${window.location.origin}/share/${character.shareId}`
+  `${window.location.origin}${baseURL}share/${character.shareId}`
 
 // 未公開時連結無法存取，先擋下並提示。
 const ensureShareable = (character: CharacterListItem): boolean => {

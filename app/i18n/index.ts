@@ -32,7 +32,7 @@ const resolve = (path: string): string => {
   const parts = path.split('.')
   let value: unknown = LOCALES[locale.value]
   for (const part of parts) {
-    if (value && typeof value === 'object' && part in (value as object)) {
+    if (value && typeof value === 'object' && Object.hasOwn(value, part)) {
       value = (value as Record<string, unknown>)[part]
     } else {
       logger.warn(`missing leaf at path "${path}" (locale: ${locale.value})`)
@@ -65,9 +65,9 @@ const interpolate = (template: string, params: InterpolationParams): string =>
  *   t(`character.alignment.${align}`) // align: AlignmentKey
  *   t(`spell.school.${key}`)           // key: SpellSchool
  *
- * 訊息含 `{name}` placeholder 時可帶第二個參數內插：
+ * 訊息含 `{key}` placeholder 時可帶第二個參數內插：
  *
- *   t('ui.error.attunedLimit', { max: 6 }) // '已達同調上限 6 件'
+ *   t('character.deleteConfirm', { days: 7 }) // '刪除後的角色卡會在 7 天後永久刪除…'
  *
  * 找不到 leaf 時 fallback 為 path 字串本身；缺 interpolation key 時保留 `{key}` 並 logger.warn（dev 一眼看出）。
  */

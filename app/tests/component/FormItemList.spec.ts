@@ -217,15 +217,15 @@ describe('ItemList (form)', () => {
     const btnByLabel = (wrapper: ReturnType<typeof mountList>, label: string) =>
       wrapper.findAll('button').find((b) => b.attributes('aria-label') === label)!
 
-    it('pendingItemIds 含 item.id：move / edit 按鈕 disabled、<li> 不可拖曳', async () => {
+    it('pendingItemIds 含 item.id：move / edit / 刪除 按鈕 disabled、<li> 不可拖曳', async () => {
       const wrapper = mountList({
         items: [makeItem({ id: 'a', name: '長劍' })],
         pendingItemIds: new Set(['a']),
       })
       expect(btnByLabel(wrapper, '移至另一袋：長劍').attributes('disabled')).toBeDefined()
       expect(btnByLabel(wrapper, '編輯 長劍').attributes('disabled')).toBeDefined()
-      // 刪除不鎖（removeItem 不走 patchItem）
-      expect(btnByLabel(wrapper, '刪除 長劍').attributes('disabled')).toBeUndefined()
+      // 刪除亦封鎖：A5 store removeItem 已加 in-flight guard（C3）
+      expect(btnByLabel(wrapper, '刪除 長劍').attributes('disabled')).toBeDefined()
       expect(wrapper.findAll('ul > li')[1]!.attributes('draggable')).toBe('false')
     })
 

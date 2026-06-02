@@ -191,6 +191,11 @@ const onFileChange = (event: Event) => {
 }
 
 const onModalToggle = (open: boolean) => {
+  // 上傳中禁止關閉：escape / 點擊外部會繞過 cropCancel 的 guard，避免裁切狀態被中途清掉
+  if (!open && uploading.value) {
+    cropOpen.value = true
+    return
+  }
   cropOpen.value = open
   if (!open) {
     releaseImageSrc()

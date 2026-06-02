@@ -71,6 +71,15 @@ describe('BattleCard', () => {
       await btn(wrapper, 'AC +1').trigger('click')
       expect(wrapper.emitted('adjustAc')).toEqual([[-1], [1]])
     })
+
+    it('acAdjustment 達上限時停用 AC +1，下限時停用 AC -1', () => {
+      const atMax = mountCard({ acAdjustment: 99 })
+      expect(btn(atMax, 'AC +1').attributes('disabled')).toBeDefined()
+      expect(btn(atMax, 'AC -1').attributes('disabled')).toBeUndefined()
+      const atMin = mountCard({ acAdjustment: -99 })
+      expect(btn(atMin, 'AC -1').attributes('disabled')).toBeDefined()
+      expect(btn(atMin, 'AC +1').attributes('disabled')).toBeUndefined()
+    })
   })
 
   describe('速度顯示與調整', () => {

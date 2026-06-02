@@ -18,14 +18,24 @@ const props = withDefaults(
   defineProps<{
     modelValue?: string
     borderColor?: string
+    /**
+     * 僅去除「前導」空白（`/^\s+/`），不裁切尾端 —— 讓使用者仍能在字詞間、暫時的尾端打空白。
+     * 命名沿用 `trim` 以相容既有 caller；語意非完整 `String.prototype.trim`。
+     */
     trim?: boolean
     selectOnFocus?: boolean
+    /**
+     * 最大字元數。底層 @ui Input 不轉送原生 maxlength（fallthrough 落在外層 div），
+     * 故在此於 emit 前截斷，連帶涵蓋貼上超長字串的情形。
+     */
+    maxlength?: number
   }>(),
   {
     modelValue: '',
     borderColor: 'var(--color-primary)',
     trim: true,
     selectOnFocus: true,
+    maxlength: undefined,
   },
 )
 
@@ -43,11 +53,9 @@ const onFocus = (event: FocusEvent) => {
 }
 
 const onInput = (value: string) => {
-  if (!props.trim) {
-    emit('update:modelValue', value)
-    return
-  }
-  emit('update:modelValue', value.replace(/^\s+/, ''))
+  const trimmed = props.trim ? value.replace(/^\s+/, '') : value
+  const capped = props.maxlength !== undefined ? trimmed.slice(0, props.maxlength) : trimmed
+  emit('update:modelValue', capped)
 }
 </script>
 

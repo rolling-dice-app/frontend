@@ -45,8 +45,8 @@
         <div>
           <div class="flex items-center gap-2">
             <img
-              v-show="!classIconError"
-              :src="CLASS_IMAGES[character.classes[0]!.classKey]"
+              v-if="firstClassKey && !classIconError"
+              :src="CLASS_IMAGES[firstClassKey]"
               alt=""
               class="size-4"
               loading="lazy"
@@ -83,7 +83,11 @@
             type="button"
             :disabled="isInDeleteCooldown"
             :aria-label="`${t('character.deleteLabel')} ${character.name}`"
-            :title="isInDeleteCooldown ? t('character.trash.deleteCooldownTooltip') : undefined"
+            :title="
+              isInDeleteCooldown
+                ? t('character.trash.deleteCooldownTooltip', { days: RESTORE_COOLDOWN_DAYS })
+                : undefined
+            "
             :class="[
               'size-11 flex items-center justify-center rounded-md transition-colors duration-150',
               isInDeleteCooldown
@@ -113,7 +117,6 @@
 import { RESTORE_COOLDOWN_DAYS } from '@rolling-dice-app/core'
 import { Card, Icon } from '@ui'
 import { RADIUS } from '~/constants/style'
-import type { CharacterTier } from '~/helpers/character'
 import type { CharacterListItem } from '~/types/business/character-list'
 
 const { t } = useI18n()
@@ -135,85 +138,24 @@ defineEmits<{
   'toggle-share': [CharacterListItem]
 }>()
 
-// 卡片背景區塊在 trash mode 不導頁；restore 鈕 @click.prevent.stop 保證不冒泡到此。
-const onCardClick = (e: MouseEvent) => {
-  if (props.mode === 'trashed') e.preventDefault()
-}
+const {
+  onCardClick,
+  isInDeleteCooldown,
+  totalLevel,
+  tierConfig,
+  isMaxLevel,
+  tierGlowStyle,
+  firstClassKey,
+  hasAvatar,
+  coverSrc,
+  onCoverError,
+} = useCharacterListCardView(
+  () => props.character,
+  () => props.mode,
+  '24px',
+)
 
-// 剛還原的角色 7 天內擋 DELETE（後端權威；前端 pre-empt 把刪除鈕 disable）。
-// now 為 client-derived，避免 SSR 首幀與 client 首幀不一致造成 hydration mismatch。
-const COOLDOWN_MS = RESTORE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
-const now = ref<number | null>(null)
-onMounted(() => {
-  now.value = Date.now()
-})
-const isInDeleteCooldown = computed(() => {
-  if (now.value === null || !props.character.restoredAt) return false
-  return new Date(props.character.restoredAt).getTime() + COOLDOWN_MS > now.value
-})
-
-const TIER_CONFIG: Record<
-  CharacterTier,
-  { textColor: string; badgeBg: string; gradientEnd: string; shadowRgb: string }
-> = {
-  common: {
-    textColor: 'var(--rd--color-text-muted)',
-    badgeBg: 'var(--rd--tier-common-soft)',
-    gradientEnd: 'var(--rd--color-bg-elevated)',
-    shadowRgb: '160, 150, 140',
-  },
-  elite: {
-    textColor: 'var(--rd--tier-elite)',
-    badgeBg: 'var(--rd--tier-elite-soft)',
-    gradientEnd: 'var(--rd--tier-elite-gradient)',
-    shadowRgb: '74, 158, 108',
-  },
-  master: {
-    textColor: 'var(--rd--tier-master)',
-    badgeBg: 'var(--rd--tier-master-soft)',
-    gradientEnd: 'var(--rd--tier-master-gradient)',
-    shadowRgb: '74, 122, 207',
-  },
-  legendary: {
-    textColor: 'var(--rd--color-primary)',
-    badgeBg: 'var(--rd--color-primary-soft)',
-    gradientEnd: 'var(--rd--color-primary-soft)',
-    shadowRgb: '184, 134, 14',
-  },
-}
-
-const totalLevel = computed(() => calculateTotalLevel(props.character.classes))
-const tier = computed(() => getCharacterTier(totalLevel.value))
-const tierConfig = computed(() => TIER_CONFIG[tier.value])
-const isMaxLevel = computed(() => totalLevel.value === 20)
-
-// tier-glow 強度/顏色由 .tier-glow class 用 token calc() 算（design-language §9）；
-// 此處只餵 tier 色 RGB、總等級、清單卡半徑 24px。
-const tierGlowStyle = computed(() => ({
-  '--tier-glow-rgb': tierConfig.value.shadowRgb,
-  '--tier-glow-level': totalLevel.value,
-  '--tier-glow-radius': '24px',
-}))
-
-const coverError = ref(false)
 const classIconError = ref(false)
-
-watch(
-  () => props.character.avatar,
-  () => {
-    coverError.value = false
-  },
-)
-
-const hasAvatar = computed(() => !!props.character.avatar && !coverError.value)
-const coverSrc = computed(() =>
-  hasAvatar.value ? props.character.avatar! : CLASS_IMAGES[props.character.classes[0]!.classKey],
-)
-
-const onCoverError = () => {
-  coverError.value = true
-}
-
 const onClassIconError = () => {
   classIconError.value = true
 }

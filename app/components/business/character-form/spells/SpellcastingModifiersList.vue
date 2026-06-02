@@ -21,7 +21,7 @@
         <span class="w-10 shrink-0 text-sm font-semibold text-content">{{ row.name }}</span>
         <span
           class="w-12 shrink-0 text-right text-sm font-bold"
-          :class="modifierTextColor(row.bonus)"
+          :class="getModifierColorClass(row.bonus)"
         >
           {{ formatModifier(row.bonus) }}
         </span>
@@ -84,9 +84,19 @@ const onCustomChange = (key: AbilityKey, value: string): void => {
   customBonuses.value = parsed === 0 ? rest : { ...rest, [key]: parsed }
 }
 
-const modifierTextColor = (value: number): string => {
-  if (value > 0) return 'text-success'
-  if (value < 0) return 'text-danger'
-  return 'text-content-muted'
-}
+// 施法屬性變更時，剔除不再選取屬性殘留的 custom bonus，避免幽靈加值送出
+watch(
+  () => props.selectedAbilities,
+  (abilities) => {
+    const allowed = new Set(abilities)
+    const next: Partial<Record<AbilityKey, number>> = {}
+    let changed = false
+    for (const [key, value] of Object.entries(customBonuses.value) as [AbilityKey, number][]) {
+      if (allowed.has(key)) next[key] = value
+      else changed = true
+    }
+    if (changed) customBonuses.value = next
+  },
+  { deep: true },
+)
 </script>

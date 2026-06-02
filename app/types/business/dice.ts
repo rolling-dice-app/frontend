@@ -1,4 +1,4 @@
-import type { ClassKey, DamageTypeKey } from '@rolling-dice-app/core'
+import type { ClassKey, DamageDieType, DamageTypeKey, DieType } from '@rolling-dice-app/core'
 
 /** 擲骰模式 */
 export type RollMode = 'normal' | 'advantage' | 'disadvantage'
@@ -15,7 +15,7 @@ export type RollKind =
   | 'raw'
   | 'd100'
 
-/** 排逊骰可選骰面 */
+/** 單骰可選骰面 */
 export type RawDieSides = 4 | 6 | 8 | 10 | 12 | 20
 
 interface BaseRollEntry {
@@ -43,7 +43,7 @@ export interface DamageRollLine {
   /** 該行原始骰值；純加值行為空陣列 */
   rolls: number[]
   /** 骰面（null 表純加值行） */
-  sides: number | null
+  sides: DamageDieType | null
   /** 骰數 */
   count: number
   /** 該行加值（含已套入的主屬性 mod） */
@@ -68,7 +68,7 @@ export interface HitDieRollEntry extends BaseRollEntry {
   /** 對應職業 */
   classKey: ClassKey
   /** 骰面，例：12 表 d12 */
-  sides: number
+  sides: DieType
   /** 單顆原始骰值 */
   roll: number
   /** CON modifier */

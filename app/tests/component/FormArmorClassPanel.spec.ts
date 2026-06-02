@@ -1,11 +1,13 @@
 import { mount } from '@vue/test-utils'
+import { reactive, nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
 import ArmorClassPanel from '~/components/business/character-form/combat/ArmorClassPanel.vue'
 import { formatModifier, getAbilityModifier } from '~/helpers/ability'
-import { getTotalArmorClass } from '~/helpers/character'
+import { getArmorDexModifier, getTotalArmorClass } from '~/helpers/character'
 import { createDefaultArmorClass } from '@rolling-dice-app/core'
+import { getModifierColorClass } from '~/utils/color'
 import { parseIntegerInput } from '~/utils/parse'
 import type { CharacterUpdateFormState, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -13,6 +15,8 @@ beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('getAbilityModifier', getAbilityModifier)
   vi.stubGlobal('getTotalArmorClass', getTotalArmorClass)
+  vi.stubGlobal('getArmorDexModifier', getArmorDexModifier)
+  vi.stubGlobal('getModifierColorClass', getModifierColorClass)
   vi.stubGlobal('parseIntegerInput', parseIntegerInput)
 })
 
@@ -50,7 +54,14 @@ const mountPanel = (
     },
     global: {
       components: { CommonAppInput: AppInput, CommonAppSelect: AppSelect },
-      mocks: { formatModifier, getAbilityModifier, getTotalArmorClass, parseIntegerInput },
+      mocks: {
+        formatModifier,
+        getAbilityModifier,
+        getTotalArmorClass,
+        getArmorDexModifier,
+        getModifierColorClass,
+        parseIntegerInput,
+      },
     },
   })
 }
@@ -134,6 +145,30 @@ describe('ArmorClassPanel (form)', () => {
       const valueInput = wrapper.find('input#armor-value')
       await valueInput.setValue('')
       expect(formState.armorClass.value).toBe(null)
+    })
+  })
+
+  describe('無甲防禦（isArmored）', () => {
+    it("無甲為 'none'：保留已選無甲屬性，不視為著甲清空", async () => {
+      const formState = reactive(baseFormState({ type: 'none', abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe('dexterity')
+    })
+
+    it('未選甲（null）同樣不視為著甲清空', async () => {
+      const formState = reactive(baseFormState({ type: null, abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe('dexterity')
+    })
+
+    it('由無甲切換為實際甲（light）時清空無甲屬性 abilityKey', async () => {
+      const formState = reactive(baseFormState({ type: 'none', abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      formState.armorClass.type = 'light'
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe(null)
     })
   })
 })

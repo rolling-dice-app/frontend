@@ -22,15 +22,27 @@
       {{ t('ui.state.loading') }}
     </div>
 
-    <!-- Tier 1: 主幹載入失敗 / 找不到 -->
+    <!-- Tier 1: 真 404 / 載入後查無角色 -->
     <CommonNotFound
-      v-else-if="status === 'error' || !character"
+      v-else-if="isNotFound"
       :message="t('character.notFound')"
       back-to="/character"
       :back-label="t('character.backToList')"
     />
 
-    <div v-else>
+    <!-- Tier 1: 暫時性錯誤，可重試 -->
+    <div
+      v-else-if="isTransientError"
+      class="flex min-h-[60dvh] flex-col items-center justify-center gap-3 text-center"
+      role="alert"
+    >
+      <p class="text-danger">{{ t('ui.state.loadFailed') }}</p>
+      <CommonAppButton variant="warning" @click="retryDetail">
+        {{ t('ui.state.retry') }}
+      </CommonAppButton>
+    </div>
+
+    <div v-else-if="character">
       <Tabs
         v-model="activeTab"
         type="border"
@@ -136,7 +148,13 @@
 import { storeToRefs } from 'pinia'
 import { Tab, Tabs } from '@ui'
 
-definePageMeta({ middleware: 'auth', noindex: true })
+// key 綁 route.params.id：直接切換 /character/a → /character/b（同 route record）時整頁 remount，
+// 讓以常數捕獲 id 的子 composable（campaigns / combat state）都以新 id 重跑 setup。
+definePageMeta({
+  middleware: 'auth',
+  noindex: true,
+  key: (route) => route.params.id as string,
+})
 
 const { t } = useI18n()
 
@@ -157,18 +175,37 @@ const combatQuickViewRef = useTemplateRef<{ flushPersist: () => Promise<void> }>
 // Tier 1：主幹 client-only fetch
 // 與 list 頁同步：私有資料不進 SSR HTML / payload，避免 Vercel edge cache
 // 把某使用者的角色細節共享給其他人。
-const { status } = useAsyncData(
+// id 在本次 mount 內恆定（route 變動走 page key remount），故不需 watch。
+const { status, error, refresh } = useAsyncData(
   () => `character-${id}`,
   () => characterStore.loadDetail(id),
-  { server: false, lazy: true, watch: [() => id] },
+  { server: false, lazy: true },
 )
 
 const character = computed(() => characterStore.getById(id))
 
-// Tier 2：四個 sub-resource onMounted 平行載入
-onMounted(() => {
-  void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id), campaigns.load()])
-})
+// 真 404（角色不存在）走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !character.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
+const retryDetail = (): void => {
+  void refresh()
+}
+
+// Tier 2：主角色載入成功且存在後，才平行載四個 sub-resource，
+// 避免角色不存在 / 載入失敗時仍對子資源發出注定無意義的 GET。
+watch(
+  () => status.value === 'success' && !!character.value,
+  (ready) => {
+    if (ready) {
+      void Promise.allSettled([inventoryStore.load(id), spellsStore.load(id), campaigns.load()])
+    }
+  },
+  { immediate: true },
+)
 
 // 路由離開時 await 戰況 quickview 的 flushPersist 保存最後一次寫入；
 // 此 hook 在 unmount 前 fire 且支援 await，比 onBeforeUnmount 的 fire-and-forget 更可靠。

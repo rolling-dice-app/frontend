@@ -25,7 +25,7 @@
           />
           <span class="text-sm font-semibold text-content">{{ row.name }}</span>
         </label>
-        <span class="text-sm font-bold" :class="modifierTextColor(row.bonus)">
+        <span class="text-sm font-bold" :class="getModifierColorClass(row.bonus)">
           {{ formatModifier(row.bonus) }}
         </span>
       </li>
@@ -70,9 +70,11 @@ const onToggle = (key: AbilityKey, checked: boolean): void => {
   formState.value.savingThrowExtras = Array.from(next)
 }
 
-const modifierTextColor = (value: number): string => {
-  if (value > 0) return 'text-success'
-  if (value < 0) return 'text-danger'
-  return 'text-content-muted'
-}
+// 主職業變動使某豁免改為 locked 時，剔除 extras 中重複的 key，避免幽靈 / 解鎖後殘留
+watch(lockedKeys, (locked) => {
+  const pruned = formState.value.savingThrowExtras.filter((key) => !locked.has(key))
+  if (pruned.length !== formState.value.savingThrowExtras.length) {
+    formState.value.savingThrowExtras = pruned
+  }
+})
 </script>

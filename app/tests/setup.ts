@@ -63,6 +63,8 @@ const { t, useI18n } = await import('~/i18n')
 
 const { useToast } = await import('~/composables/ui/useToast')
 
+const { useCoinFields } = await import('~/composables/ui/useCoinFields')
+
 // Step 5: 掛上所有 Nuxt auto-imports
 Object.assign(globalThis, {
   ref,
@@ -82,6 +84,7 @@ Object.assign(globalThis, {
   t,
   useI18n,
   useToast,
+  useCoinFields,
   // 預設 useRoute mock，個別 spec 可用 vi.stubGlobal('useRoute', ...) 覆寫
   useRoute: () => reactive({ fullPath: '/' }),
   // 預設 Nuxt composable stubs — 個別 spec 可用 vi.stubGlobal(...) 覆寫

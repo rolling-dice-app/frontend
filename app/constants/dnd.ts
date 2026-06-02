@@ -1,15 +1,13 @@
 import {
+  ARMOR_TYPES as CORE_ARMOR_TYPES,
   CLASS_HIT_DICE,
   CLASS_SAVING_THROW_PROFICIENCIES,
   type AbilityKey,
   type ArmorType,
-  type DamageDieType,
-  type DamageTypeKey,
   type DieType,
   type ClassKey,
   type SizeKey,
   type SkillKey,
-  type SpellSchool,
 } from '@rolling-dice-app/core'
 
 // ─── Class ────────────────────────────────────────────────────────────────────
@@ -57,29 +55,6 @@ export const SKILL_TO_ABILITY_MAP: Readonly<Record<SkillKey, AbilityKey>> = {
   persuasion: 'charisma',
 }
 
-// ─── Damage Dice ──────────────────────────────────────────────────────────────
-
-/** 傷害骰面數，用於攻擊模組的傷害計算 */
-export const DAMAGE_DIE_TYPES = [4, 6, 8, 10, 12] as const satisfies readonly DamageDieType[]
-
-// ─── Damage Type ──────────────────────────────────────────────────────────────
-
-export const DAMAGE_TYPE_KEYS = [
-  'bludgeoning',
-  'piercing',
-  'slashing',
-  'acid',
-  'cold',
-  'fire',
-  'lightning',
-  'thunder',
-  'poison',
-  'force',
-  'necrotic',
-  'radiant',
-  'psychic',
-] as const satisfies readonly DamageTypeKey[]
-
 // ─── Point Buy ────────────────────────────────────────────────────────────────
 
 /** 購點制總預算（D&D 5e 標準）*/
@@ -126,15 +101,19 @@ export const UNASSIGNED_ABILITY_SCORE = 8
 // AbilityKey / SkillKey / ClassKey / AlignmentKey 的迭代陣列（ABILITY_KEYS / SKILL_KEYS /
 // CLASS_KEYS / ALIGNMENT_KEYS）由 `@rolling-dice-app/core` 提供，請直接從 core import。
 
-/** 所有 ArmorType，用於迭代 */
+/**
+ * 所有 ArmorType，用於迭代。core 的 ARMOR_TYPES 將 `none` 殿後，但 UI 慣例 `none`（無甲）排首，
+ * 故以 core 為來源衍生顯示序（成員若 drift，type-check 會在 satisfies 抓到）。
+ */
 export const ARMOR_TYPES = [
   'none',
-  'light',
-  'medium',
-  'heavy',
+  ...CORE_ARMOR_TYPES.filter((type) => type !== 'none'),
 ] as const satisfies readonly ArmorType[]
 
-/** 所有 SizeKey，用於迭代 */
+/**
+ * 所有 SizeKey，用於迭代。core 僅導出 `SizeKey` 型別、無對應 runtime 陣列，
+ * 故此處本地維護迭代序（satisfies 確保與 core 型別不漂移）。
+ */
 export const SIZE_KEYS = [
   'tiny',
   'small',
@@ -143,15 +122,3 @@ export const SIZE_KEYS = [
   'huge',
   'gargantuan',
 ] as const satisfies readonly SizeKey[]
-
-/** 所有 SpellSchool，用於迭代 */
-export const SPELL_SCHOOLS = [
-  'abjuration',
-  'conjuration',
-  'divination',
-  'enchantment',
-  'evocation',
-  'illusion',
-  'necromancy',
-  'transmutation',
-] as const satisfies readonly SpellSchool[]

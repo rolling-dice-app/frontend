@@ -23,7 +23,7 @@
             'before:absolute before:inset-x-0 before:-top-1 before:h-0.5 before:rounded-full before:bg-primary':
               overId === feature.id && draggingId !== feature.id,
           }"
-          @dragstart="onDragStart($event, feature.id, index)"
+          @dragstart="onDragStart($event, feature.id)"
           @dragenter="onDragEnter(feature.id)"
           @dragover.prevent="onDragOver($event)"
           @drop.prevent="onDrop($event, index)"
@@ -105,6 +105,7 @@
               id="feature-modal-name"
               :radius="0"
               :model-value="draft.name"
+              :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
               size="sm"
               outline
               class="w-full"
@@ -223,6 +224,8 @@ import { FEATURE_SOURCE_BADGE_STYLES } from '~/constants/style'
 import {
   CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
+  FEATURE_SOURCES,
+  FEATURE_USAGE_RECOVERIES,
   VALIDATION_LIMITS,
   type CharacterFeature,
   type FeatureSource,
@@ -230,19 +233,15 @@ import {
 } from '@rolling-dice-app/core'
 import type { CharacterUpdateFormState, FeatureDraft } from '~/types/business/character-form'
 
-const { t, messages } = useI18n()
+const { t } = useI18n()
 const toast = useToast()
 
 const sourceOptions = computed<SelectOption[]>(() =>
-  (Object.entries(messages.value.combat.featureSource) as [FeatureSource, string][]).map(
-    ([value, label]) => ({ value, label }),
-  ),
+  FEATURE_SOURCES.map((value) => ({ value, label: t(`combat.featureSource.${value}`) })),
 )
 
 const recoveryOptions = computed<{ value: FeatureUsageRecovery; label: string }[]>(() =>
-  (Object.entries(messages.value.combat.featureRecovery) as [FeatureUsageRecovery, string][]).map(
-    ([value, label]) => ({ value, label }),
-  ),
+  FEATURE_USAGE_RECOVERIES.map((value) => ({ value, label: t(`combat.featureRecovery.${value}`) })),
 )
 
 const formState = defineModel<CharacterUpdateFormState>('formState', { required: true })
@@ -276,9 +275,9 @@ const moveFeature = (fromIndex: number, toIndex: number): void => {
 const draggingId = ref<string | null>(null)
 const overId = ref<string | null>(null)
 
-const onDragStart = (event: DragEvent, id: string, index: number): void => {
+const onDragStart = (event: DragEvent, id: string): void => {
   draggingId.value = id
-  event.dataTransfer?.setData('application/json', JSON.stringify({ id, index }))
+  event.dataTransfer?.setData('application/json', JSON.stringify({ id }))
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
 
@@ -295,15 +294,17 @@ const onDrop = (event: DragEvent, targetIndex: number): void => {
   draggingId.value = null
   overId.value = null
   if (!raw) return
-  let payload: { id: string; index: number }
+  let payload: { id: string }
   try {
-    payload = JSON.parse(raw) as { id: string; index: number }
+    payload = JSON.parse(raw) as { id: string }
   } catch {
     return
   }
-  if (typeof payload?.index !== 'number') return
-  if (payload.index === targetIndex) return
-  moveFeature(payload.index, targetIndex)
+  if (typeof payload?.id !== 'string') return
+  // 以 id 即時重查來源 index，不信任 dragstart 當下夾帶的 index（清單可能已變動）
+  const fromIndex = formState.value.features.findIndex((f) => f.id === payload.id)
+  if (fromIndex === -1 || fromIndex === targetIndex) return
+  moveFeature(fromIndex, targetIndex)
 }
 
 const onDragEnd = (): void => {

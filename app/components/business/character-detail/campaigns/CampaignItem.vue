@@ -73,7 +73,6 @@
 
 <script setup lang="ts">
 import { AccordionItem, Icon } from '@ui'
-import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { CampaignEntry } from '~/types/business/campaign'
 
 const { t } = useI18n()
@@ -87,17 +86,6 @@ defineEmits<{
   remove: [id: string]
 }>()
 
-const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
-  cp: t('inventory.cpShort'),
-  sp: t('inventory.spShort'),
-  gp: t('inventory.gpShort'),
-  pp: t('inventory.ppShort'),
-}))
-
-const moneyParts = computed(() => {
-  const keys: CurrencyKey[] = ['pp', 'gp', 'sp', 'cp']
-  return keys
-    .filter((k) => props.entry.moneyEarning[k] > 0)
-    .map((k) => ({ key: k, label: currencyLabels.value[k], value: props.entry.moneyEarning[k] }))
-})
+const toMoneyParts = useMoneyEarningParts()
+const moneyParts = computed(() => toMoneyParts(props.entry.moneyEarning))
 </script>

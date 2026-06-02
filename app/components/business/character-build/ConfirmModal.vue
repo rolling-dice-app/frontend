@@ -35,7 +35,7 @@
             <span class="text-xs text-content-muted">{{ row.name }}</span>
             <div class="flex items-baseline gap-1.5">
               <span class="text-base font-bold text-content">{{ row.score }}</span>
-              <span class="text-xs font-bold" :class="modifierTextColor(row.modifier)">
+              <span class="text-xs font-bold" :class="getModifierColorClass(row.modifier)">
                 {{ formatModifier(row.modifier) }}
               </span>
             </div>
@@ -92,10 +92,4 @@ const abilityRows = computed(() =>
     }
   }),
 )
-
-const modifierTextColor = (value: number): string => {
-  if (value > 0) return 'text-success'
-  if (value < 0) return 'text-danger'
-  return 'text-content-muted'
-}
 </script>

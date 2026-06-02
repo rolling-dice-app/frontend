@@ -20,6 +20,7 @@ export function createLogger(namespace: string = '[App]'): NamespacedLogger {
       if (!import.meta.dev) return
       console.warn(`${namespace}[WARN]`, ...args)
     },
+    // error 在 production 也會輸出（保留錯誤可見性）；呼叫端須自行只傳 sanitized 欄位，勿夾帶敏感原始物件
     error(...args: unknown[]) {
       console.error(`${namespace}[ERROR]`, ...args)
     },

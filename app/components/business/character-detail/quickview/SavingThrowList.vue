@@ -26,7 +26,8 @@
           <button
             type="button"
             :aria-label="`${row.name} ${t('combat.savingThrow')} -1`"
-            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+            :disabled="row.adjustment <= -COMBAT_STATE_LIMITS.SAVING_THROW_ADJUSTMENT_ABS_MAX"
+            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="emit('adjust', row.key, -1)"
           >
             <Icon name="minus" :size="12" />
@@ -41,7 +42,8 @@
           <button
             type="button"
             :aria-label="`${row.name} ${t('combat.savingThrow')} +1`"
-            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+            :disabled="row.adjustment >= COMBAT_STATE_LIMITS.SAVING_THROW_ADJUSTMENT_ABS_MAX"
+            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="emit('adjust', row.key, 1)"
           >
             <Icon name="plus" :size="12" />
@@ -69,7 +71,7 @@
 import { Icon } from '@ui'
 import { getSpellSaveDc } from '~/helpers/character'
 import type { TotalAbilityScores } from '~/types/business/character-form'
-import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, COMBAT_STATE_LIMITS, type AbilityKey } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

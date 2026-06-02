@@ -35,17 +35,12 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { CharacterCurrencyDTO, CurrencyKey } from '@rolling-dice-app/core'
+import type { CharacterCurrencyDTO } from '@rolling-dice-app/core'
 import { calculateCurrencyWeight } from '~/helpers/inventory'
 
 const { t } = useI18n()
 
-const COIN_FIELDS = computed<{ key: CurrencyKey; label: string }[]>(() => [
-  { key: 'pp', label: t('inventory.pp') },
-  { key: 'gp', label: t('inventory.gp') },
-  { key: 'sp', label: t('inventory.sp') },
-  { key: 'cp', label: t('inventory.cp') },
-])
+const COIN_FIELDS = useCoinFields()
 
 const props = defineProps<{
   currency: CharacterCurrencyDTO

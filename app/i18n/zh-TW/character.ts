@@ -62,10 +62,9 @@ export default {
   height: '身高',
   weight: '體重',
   appearance: '外貌',
-  appearancePlaceholder: '簡述角色的外貌特，上限 ',
+  appearancePlaceholder: '簡述角色的外貌特徵，上限 {max} 字',
   story: '故事',
-  storyPlaceholder: '角色背景故事設定，上限 ',
-  storyPlaceholderUnit: '字',
+  storyPlaceholder: '角色背景故事設定，上限 {max} 字',
   backgroundStory: '背景故事',
   // 肖像上傳
   portrait: {
@@ -125,6 +124,7 @@ export default {
     teammatesLimitReached: '隊友數量已達上限',
     teammatesDuplicate: '此隊友已在清單中',
     teammatesInvalidLink: '無法從連結解析 shareId',
+    teammatesNotFound: '找不到對應的角色卡，或對方未開放分享',
     teammatesEmpty: '尚未加入隊友',
   },
   // dash placeholder
@@ -168,7 +168,7 @@ export default {
   addCharacter: '新增角色卡',
   createCharacter: '建立角色卡',
   editCharacter: '編輯角色卡',
-  deleteConfirm: '刪除後的角色卡會在 7 天後永久刪除，確定要刪除以下角色？',
+  deleteConfirm: '刪除後的角色卡會在 {days} 天後永久刪除，確定要刪除以下角色？',
   toggleViewMode: '切換顯示模式',
   sortBy: '排序方式',
   enterDeleteMode: '進入刪除模式',
@@ -206,8 +206,8 @@ export default {
     trashTab: '已刪除角色',
     empty: '沒有已刪除的角色',
     restoreLabel: '還原角色卡',
-    restoreConfirm: '還原後 7 天內無法再次刪除，確定要還原嗎？',
+    restoreConfirm: '還原後 {days} 天內無法再次刪除，確定要還原嗎？',
     restoreSuccess: '已還原角色卡',
-    deleteCooldownTooltip: '還原後 7 天內無法刪除',
+    deleteCooldownTooltip: '還原後 {days} 天內無法刪除',
   },
 }

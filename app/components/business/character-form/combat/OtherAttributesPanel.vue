@@ -230,10 +230,5 @@ const abilityOptions = computed<SelectOption[]>(() => [
   })),
 ])
 
-const initiativeTextColor = computed(() => {
-  const v = props.totalInitiative
-  if (v > 0) return 'text-success'
-  if (v < 0) return 'text-danger'
-  return 'text-content-muted'
-})
+const initiativeTextColor = computed(() => getModifierColorClass(props.totalInitiative))
 </script>

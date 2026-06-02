@@ -1,22 +1,6 @@
 import { computed, type ComputedRef } from 'vue'
 import type { SelectOption } from '@ui'
-import { CLASS_KEYS, type SourceKey } from '@rolling-dice-app/core'
-import { SPELL_SCHOOLS } from '~/constants/dnd'
-
-/** 法術資源（sourcebook）順序 */
-const SOURCE_KEYS: readonly SourceKey[] = [
-  'AAG',
-  'AI',
-  'BMT',
-  'EGW',
-  'FTD',
-  'GGR',
-  'PHB',
-  'SCC',
-  'TCE',
-  'TDCSR',
-  'XGE',
-]
+import { CLASS_KEYS, SPELL_SCHOOLS, SPELL_SOURCES } from '@rolling-dice-app/core'
 
 interface SpellSelectOptions {
   /** 環數下拉選項：戲法(0) ~ 9 環 */
@@ -50,7 +34,7 @@ export function useSpellSelectOptions(): SpellSelectOptions {
   )
 
   const sourceOptions = computed<SelectOption[]>(() =>
-    SOURCE_KEYS.map((key) => ({ value: key, label: key })),
+    SPELL_SOURCES.map((key) => ({ value: key, label: key })),
   )
 
   return { levelOptions, schoolOptions, classOptions, sourceOptions }

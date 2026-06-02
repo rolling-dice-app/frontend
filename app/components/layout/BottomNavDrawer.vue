@@ -95,8 +95,9 @@ const isLocked = computed(() =>
   ),
 )
 
+// 完全相等或落在該路徑的子段（/character → /character/123），避免 sibling 前綴誤判（/characters）
 const isActive = (to: string): boolean => {
-  return route.path.startsWith(to)
+  return route.path === to || route.path.startsWith(`${to}/`)
 }
 </script>
 

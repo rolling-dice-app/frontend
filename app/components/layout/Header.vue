@@ -56,7 +56,11 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
 
-const initials = computed(() => (auth.user?.displayName ?? '?').trim().charAt(0).toUpperCase())
+// 以 code point 取首字（避免 emoji / 星體字元被 charAt 切半），空白或空名退回 '?'。
+const initials = computed(() => {
+  const name = (auth.user?.displayName ?? '').trim()
+  return ([...name][0] ?? '?').toUpperCase()
+})
 
 /** avatar URL 載入失敗（尚未傳播 / 404）時退回 initials 而非破圖。 */
 const avatarError = ref(false)

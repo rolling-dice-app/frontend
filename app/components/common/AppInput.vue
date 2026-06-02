@@ -18,6 +18,10 @@ const props = withDefaults(
   defineProps<{
     modelValue?: string
     borderColor?: string
+    /**
+     * 僅去除「前導」空白（`/^\s+/`），不裁切尾端 —— 讓使用者仍能在字詞間、暫時的尾端打空白。
+     * 命名沿用 `trim` 以相容既有 caller；語意非完整 `String.prototype.trim`。
+     */
     trim?: boolean
     selectOnFocus?: boolean
     /**

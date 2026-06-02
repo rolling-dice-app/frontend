@@ -22,6 +22,7 @@
               :model-value="draft.title"
               size="sm"
               outline
+              :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
               class="w-full"
               @update:model-value="draft.title = $event"
             />

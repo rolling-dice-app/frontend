@@ -34,11 +34,11 @@ const remainingAt = (wrapper: ReturnType<typeof mountCard>, level: SpellLevel): 
 }
 
 const decAt = (wrapper: ReturnType<typeof mountCard>, level: SpellLevel) => {
-  return cellAt(wrapper, level).findAll('span[role="button"]')[0]!
+  return cellAt(wrapper, level).findAll('button')[0]!
 }
 
 const incAt = (wrapper: ReturnType<typeof mountCard>, level: SpellLevel) => {
-  return cellAt(wrapper, level).findAll('span[role="button"]')[1]!
+  return cellAt(wrapper, level).findAll('button')[1]!
 }
 
 describe('SpellSlotsCard', () => {
@@ -60,8 +60,8 @@ describe('SpellSlotsCard', () => {
     it('max = 0 的環顯示 0/0 並使按鈕 disabled', () => {
       const wrapper = mountCard({ spellSlotsBase: { 1: 4 } })
       expect(remainingAt(wrapper, 5)).toBe('0 /0')
-      expect(decAt(wrapper, 5).attributes('aria-disabled')).toBe('true')
-      expect(incAt(wrapper, 5).attributes('aria-disabled')).toBe('true')
+      expect(decAt(wrapper, 5).attributes('disabled')).toBeDefined()
+      expect(incAt(wrapper, 5).attributes('disabled')).toBeDefined()
     })
 
     it('使用數溢出時剩餘 clamp 為 0', () => {
@@ -99,14 +99,14 @@ describe('SpellSlotsCard', () => {
         spellSlotsBase: { 1: 2 },
         spellSlotsUsed: { 1: 2 },
       })
-      expect(decAt(wrapper, 1).attributes('aria-disabled')).toBe('true')
+      expect(decAt(wrapper, 1).attributes('disabled')).toBeDefined()
       await decAt(wrapper, 1).trigger('click')
       expect(wrapper.emitted('adjustSpell')).toBeUndefined()
     })
 
     it('剩餘 = max 時 + 按鈕為 disabled 不 emit', async () => {
       const wrapper = mountCard({ spellSlotsBase: { 1: 4 } })
-      expect(incAt(wrapper, 1).attributes('aria-disabled')).toBe('true')
+      expect(incAt(wrapper, 1).attributes('disabled')).toBeDefined()
       await incAt(wrapper, 1).trigger('click')
       expect(wrapper.emitted('adjustSpell')).toBeUndefined()
     })

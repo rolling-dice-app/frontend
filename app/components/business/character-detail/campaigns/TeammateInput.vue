@@ -132,7 +132,10 @@ const onAdd = async (): Promise<void> => {
   try {
     const { previews } = await share().resolveSharedCharacters([shareId])
     const preview = previews[0]
-    if (!preview) return
+    if (!preview) {
+      toast.error(t('character.campaignField.teammatesNotFound'), { kind: 'hint' })
+      return
+    }
     emit('update:modelValue', [...props.modelValue, preview])
     linkInput.value = ''
   } catch (err) {

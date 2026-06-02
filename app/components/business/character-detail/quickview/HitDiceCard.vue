@@ -27,34 +27,28 @@
         </div>
 
         <div class="flex shrink-0 items-center">
-          <span
-            role="button"
-            :tabindex="canDecrement(entry) ? 0 : -1"
+          <button
+            type="button"
+            :disabled="!canDecrement(entry)"
             :aria-label="`${t(`class.label.${entry.classKey}`)} ${t('class.hitDie')} -1`"
-            :aria-disabled="!canDecrement(entry)"
-            class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
+            class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="onDecrement(entry)"
-            @keydown.enter.prevent="onDecrement(entry)"
-            @keydown.space.prevent="onDecrement(entry)"
           >
             <Icon name="minus" :size="14" />
-          </span>
+          </button>
           <span class="min-w-12 text-center text-base font-bold text-content">
             {{ getRemaining(entry) }}
             <span class="text-xs text-content-muted">/{{ entry.level }}</span>
           </span>
-          <span
-            role="button"
-            :tabindex="canIncrement(entry) ? 0 : -1"
+          <button
+            type="button"
+            :disabled="!canIncrement(entry)"
             :aria-label="`${t(`class.label.${entry.classKey}`)} ${t('class.hitDie')} +1`"
-            :aria-disabled="!canIncrement(entry)"
-            class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
+            class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="onIncrement(entry)"
-            @keydown.enter.prevent="onIncrement(entry)"
-            @keydown.space.prevent="onIncrement(entry)"
           >
             <Icon name="plus" :size="14" />
-          </span>
+          </button>
         </div>
       </li>
     </ul>

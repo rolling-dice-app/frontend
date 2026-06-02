@@ -60,6 +60,14 @@
       <div>
         <label for="armor-ability" class="mb-1 block text-xs text-content">
           {{ t('combat.unarmored') }}
+
+          <span
+            v-if="!isArmored && formState.armorClass.abilityKey"
+            class="font-bold"
+            :class="getModifierColorClass(unarmoredAbilityModifier)"
+          >
+            {{ formatModifier(unarmoredAbilityModifier) }}
+          </span>
         </label>
         <div class="flex items-center gap-1.5">
           <CommonAppSelect
@@ -74,13 +82,6 @@
               formState.armorClass.abilityKey = ($event || null) as AbilityKey | null
             "
           />
-          <span
-            v-if="!isArmored && formState.armorClass.abilityKey"
-            class="text-sm font-bold"
-            :class="getModifierColorClass(unarmoredAbilityModifier)"
-          >
-            {{ formatModifier(unarmoredAbilityModifier) }}
-          </span>
         </div>
       </div>
 
@@ -159,8 +160,12 @@ const effectiveDexModifier = computed(() =>
 
 const dexModifierTextColor = computed(() => getModifierColorClass(effectiveDexModifier.value))
 
-// 著甲時無甲防禦不適用：停用屬性選擇並清空已選 key
-const isArmored = computed(() => formState.value.armorClass.type !== null)
+// 著甲時無甲防禦不適用：停用屬性選擇並清空已選 key。
+// 無甲為 ArmorType 'none'（UI 排首），未選時為 null —— 兩者皆視為未著甲。
+const isArmored = computed(() => {
+  const type = formState.value.armorClass.type
+  return type !== null && type !== 'none'
+})
 
 const unarmoredAbilityModifier = computed(() => {
   const key = formState.value.armorClass.abilityKey

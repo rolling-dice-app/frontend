@@ -57,7 +57,7 @@
             </span>
           </div>
 
-          <!-- 排逊骰 d4/d6/d8/d10/d12/d20 -->
+          <!-- 單骰 d4/d6/d8/d10/d12/d20 -->
           <template v-if="entry.kind === 'raw'">
             <div class="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-content-soft">
               <span>d{{ entry.sides }}</span>

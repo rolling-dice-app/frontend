@@ -23,7 +23,7 @@
         <h3 class="mb-2 text-sm font-semibold text-content">
           {{ t('inventory.attunement') }}
           <span class="ml-1 text-xs font-normal text-content-muted">
-            {{ attunedItems.length }} / {{ attunedCap }}
+            {{ attunedCount }} / {{ attunedCap }}
           </span>
         </h3>
         <ul v-if="attunedItems.length > 0" class="space-y-1 text-sm text-content-soft">
@@ -170,9 +170,10 @@ const bags = computed(() => [
   },
 ])
 
-const attunedItems = computed(() =>
-  props.items.filter((item) => item.isAttuned).slice(0, props.attunedCap),
-)
+const attunedItemsAll = computed(() => props.items.filter((item) => item.isAttuned))
+// 計數用未裁切數量，超量同調才能如實顯示（例 5 / 3）；列表本身仍裁切至 cap
+const attunedCount = computed(() => attunedItemsAll.value.length)
+const attunedItems = computed(() => attunedItemsAll.value.slice(0, props.attunedCap))
 
 const backpackLoad = computed(() => calculateBackpackLoad(backpackBagItems.value, props.currency))
 const maxCarryWeight = computed(() =>

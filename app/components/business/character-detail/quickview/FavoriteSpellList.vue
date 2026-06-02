@@ -62,6 +62,8 @@ const groupedSpells = computed(() => {
   for (const entry of spellsStore.entries) {
     if (!entry.isFavorite) continue
     const spell = getSpell(entry.spellId)
+    // 查無對應 catalog 條目（spellId 已從 catalog 移除/未載入）時靜默略過：
+    // favorite 僅為 quickview 的便捷檢視，缺漏不阻斷其餘收藏，毋須額外 UI 警示
     if (spell) spellList.push(spell)
   }
   return groupSpellsByLevel(spellList)

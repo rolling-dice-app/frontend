@@ -30,7 +30,7 @@
       class="share-campaigns-accordion flex flex-col gap-2"
     >
       <AccordionItem
-        v-for="entry in entries"
+        v-for="{ entry, moneyParts } in campaignViews"
         :key="entry.id"
         :value="entry.id"
         class="overflow-hidden rounded-lg border border-border-soft bg-canvas-elevated"
@@ -61,10 +61,10 @@
         />
 
         <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs tabular">
-          <span v-if="moneyPartsOf(entry).length === 0" class="text-content-muted">
+          <span v-if="moneyParts.length === 0" class="text-content-muted">
             {{ t('inventory.noMoneyEarned') }}
           </span>
-          <span v-for="part in moneyPartsOf(entry)" :key="part.key">
+          <span v-for="part in moneyParts" :key="part.key">
             <span class="text-content-muted">{{ part.label }}</span>
             <span class="ml-1 font-medium text-content">{{ part.value }}</span>
           </span>
@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
 import { Accordion, AccordionItem } from '@ui'
-import type { CampaignRecordDTO, CurrencyKey } from '@rolling-dice-app/core'
+import type { CampaignRecordDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
@@ -94,19 +94,11 @@ const totalExpEarned = computed(() =>
   props.entries.reduce((sum, entry) => sum + entry.expEarning, 0),
 )
 
-const currencyLabels = computed<Record<CurrencyKey, string>>(() => ({
-  cp: t('inventory.cpShort'),
-  sp: t('inventory.spShort'),
-  gp: t('inventory.gpShort'),
-  pp: t('inventory.ppShort'),
-}))
-
-const moneyPartsOf = (entry: CampaignRecordDTO) => {
-  const keys: CurrencyKey[] = ['pp', 'gp', 'sp', 'cp']
-  return keys
-    .filter((key) => entry.moneyEarning[key] > 0)
-    .map((key) => ({ key, label: currencyLabels.value[key], value: entry.moneyEarning[key] }))
-}
+const toMoneyParts = useMoneyEarningParts()
+// 連同 money parts 一起算成 view model，避免在 template 對每筆 entry 重複呼叫（原本一筆算兩次）。
+const campaignViews = computed(() =>
+  props.entries.map((entry) => ({ entry, moneyParts: toMoneyParts(entry.moneyEarning) })),
+)
 </script>
 
 <style scoped>

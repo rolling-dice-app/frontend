@@ -21,7 +21,8 @@
             <button
               type="button"
               aria-label="AC -1"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+              :disabled="acAdjustment <= -COMBAT_STATE_LIMITS.AC_ADJUSTMENT_ABS_MAX"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
               @click="emit('adjustAc', -1)"
             >
               <Icon name="minus" :size="14" />
@@ -29,7 +30,8 @@
             <button
               type="button"
               aria-label="AC +1"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+              :disabled="acAdjustment >= COMBAT_STATE_LIMITS.AC_ADJUSTMENT_ABS_MAX"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
               @click="emit('adjustAc', 1)"
             >
               <Icon name="plus" :size="14" />
@@ -59,7 +61,8 @@
             <button
               type="button"
               :aria-label="`${t('combat.speed')} -5`"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+              :disabled="speedAdjustment <= -COMBAT_STATE_LIMITS.SPEED_ADJUSTMENT_ABS_MAX"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
               @click="emit('adjustSpeed', -5)"
             >
               <Icon name="minus" :size="14" />
@@ -67,7 +70,8 @@
             <button
               type="button"
               :aria-label="`${t('combat.speed')} +5`"
-              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
+              :disabled="speedAdjustment >= COMBAT_STATE_LIMITS.SPEED_ADJUSTMENT_ABS_MAX"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
               @click="emit('adjustSpeed', 5)"
             >
               <Icon name="plus" :size="14" />
@@ -117,6 +121,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
+import { COMBAT_STATE_LIMITS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

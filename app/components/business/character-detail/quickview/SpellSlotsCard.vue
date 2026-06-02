@@ -50,34 +50,28 @@
       >
         <span class="text-xs text-content-muted">{{ level }} {{ t('spell.level') }}</span>
         <div class="flex items-center gap-1">
-          <span
-            role="button"
-            :tabindex="canDecrement(level) ? 0 : -1"
+          <button
+            type="button"
+            :disabled="!canDecrement(level)"
             :aria-label="`${activeTabLabel} ${level} ${t('spell.level')} -1`"
-            :aria-disabled="!canDecrement(level)"
-            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
+            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="onDecrement(level)"
-            @keydown.enter.prevent="onDecrement(level)"
-            @keydown.space.prevent="onDecrement(level)"
           >
             <Icon name="minus" :size="14" />
-          </span>
+          </button>
           <span class="min-w-10 text-center text-sm font-bold text-content">
             {{ getRemaining(level) }}
             <span class="text-xs text-content-muted">/{{ getMax(level) }}</span>
           </span>
-          <span
-            role="button"
-            :tabindex="canIncrement(level) ? 0 : -1"
+          <button
+            type="button"
+            :disabled="!canIncrement(level)"
             :aria-label="`${activeTabLabel} ${level} ${t('spell.level')} +1`"
-            :aria-disabled="!canIncrement(level)"
-            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-content-muted"
+            class="flex size-6 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-content-muted"
             @click="onIncrement(level)"
-            @keydown.enter.prevent="onIncrement(level)"
-            @keydown.space.prevent="onIncrement(level)"
           >
             <Icon name="plus" :size="14" />
-          </span>
+          </button>
         </div>
       </div>
     </div>

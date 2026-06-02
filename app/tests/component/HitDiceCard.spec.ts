@@ -26,9 +26,9 @@ const mountCard = (
   })
 
 const decBtn = (wrapper: ReturnType<typeof mountCard>, label: string) =>
-  wrapper.find(`span[role="button"][aria-label="${label} 生命骰 -1"]`)
+  wrapper.find(`button[aria-label="${label} 生命骰 -1"]`)
 const incBtn = (wrapper: ReturnType<typeof mountCard>, label: string) =>
-  wrapper.find(`span[role="button"][aria-label="${label} 生命骰 +1"]`)
+  wrapper.find(`button[aria-label="${label} 生命骰 +1"]`)
 
 describe('HitDiceCard', () => {
   describe('空狀態', () => {
@@ -93,7 +93,7 @@ describe('HitDiceCard', () => {
         classes: [{ classKey: 'fighter', level: 3, subclass: null }],
         hitDiceUsed: { fighter: 3 },
       })
-      expect(decBtn(wrapper, '戰士').attributes('aria-disabled')).toBe('true')
+      expect(decBtn(wrapper, '戰士').attributes('disabled')).toBeDefined()
       await decBtn(wrapper, '戰士').trigger('click')
       expect(wrapper.emitted('adjust')).toBeUndefined()
     })
@@ -113,28 +113,19 @@ describe('HitDiceCard', () => {
       const wrapper = mountCard({
         classes: [{ classKey: 'fighter', level: 5, subclass: null }],
       })
-      expect(incBtn(wrapper, '戰士').attributes('aria-disabled')).toBe('true')
+      expect(incBtn(wrapper, '戰士').attributes('disabled')).toBeDefined()
       await incBtn(wrapper, '戰士').trigger('click')
       expect(wrapper.emitted('adjust')).toBeUndefined()
     })
   })
 
-  describe('鍵盤操作', () => {
-    it('Enter 觸發 decrement 同 click', async () => {
+  describe('鍵盤可操作性', () => {
+    it('調整控制項為原生 button（鍵盤操作由原生語意提供）', () => {
       const wrapper = mountCard({
         classes: [{ classKey: 'fighter', level: 5, subclass: null }],
       })
-      await decBtn(wrapper, '戰士').trigger('keydown.enter')
-      expect(wrapper.emitted('adjust')).toEqual([['fighter', 1, 5]])
-    })
-
-    it('Space 觸發 increment 同 click', async () => {
-      const wrapper = mountCard({
-        classes: [{ classKey: 'wizard', level: 3, subclass: null }],
-        hitDiceUsed: { wizard: 1 },
-      })
-      await incBtn(wrapper, '法師').trigger('keydown.space')
-      expect(wrapper.emitted('adjust')).toEqual([['wizard', -1, 3]])
+      expect(decBtn(wrapper, '戰士').element.tagName).toBe('BUTTON')
+      expect(incBtn(wrapper, '戰士').element.tagName).toBe('BUTTON')
     })
   })
 })

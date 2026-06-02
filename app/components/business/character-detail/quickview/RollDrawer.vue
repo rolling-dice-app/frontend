@@ -256,7 +256,8 @@ type HitDieRow = {
 }
 
 const handleHitDieRoll = (row: HitDieRow): void => {
-  if (row.isExhausted) return
+  // 以最新 hitDiceUsed 重判，避免連點在 re-render 前用到 stale isExhausted 而重複回血/記錄
+  if ((props.hitDiceUsed[row.classKey] ?? 0) >= row.level) return
   const modifier = conModifier.value
   const roll = rollDie(row.sides)
   const healed = Math.max(0, roll + modifier)

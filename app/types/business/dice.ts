@@ -15,7 +15,7 @@ export type RollKind =
   | 'raw'
   | 'd100'
 
-/** 排逊骰可選骰面 */
+/** 單骰可選骰面 */
 export type RawDieSides = 4 | 6 | 8 | 10 | 12 | 20
 
 interface BaseRollEntry {

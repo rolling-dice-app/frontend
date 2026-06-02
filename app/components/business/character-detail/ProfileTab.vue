@@ -250,8 +250,8 @@
               class="flex flex-col items-center rounded-lg border border-border-soft bg-surface p-3"
             >
               <span class="text-xs text-content-muted">{{ t('combat.speed') }}</span>
-              <span class="mt-1 text-2xl font-bold text-content"
-                >30
+              <span class="mt-1 text-2xl font-bold text-content">
+                {{ totalSpeed }}
                 <span class="text-xs font-normal text-content-muted">
                   {{ t('combat.unitFeet') }}
                 </span>
@@ -356,6 +356,7 @@ const {
   totalHp,
   totalArmorClass: baseAC,
   totalInitiative,
+  totalSpeed,
   totalPassivePerception: passivePerception,
   totalPassiveInsight: passiveInsight,
 } = useCharacterDerivedStatsFromCharacter(characterRef)

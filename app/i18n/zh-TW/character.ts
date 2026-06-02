@@ -124,6 +124,7 @@ export default {
     teammatesLimitReached: '隊友數量已達上限',
     teammatesDuplicate: '此隊友已在清單中',
     teammatesInvalidLink: '無法從連結解析 shareId',
+    teammatesNotFound: '找不到對應的角色卡，或對方未開放分享',
     teammatesEmpty: '尚未加入隊友',
   },
   // dash placeholder

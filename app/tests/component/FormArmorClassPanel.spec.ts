@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { reactive, nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AppInput from '~/components/common/AppInput.vue'
 import AppSelect from '~/components/common/AppSelect.vue'
@@ -144,6 +145,30 @@ describe('ArmorClassPanel (form)', () => {
       const valueInput = wrapper.find('input#armor-value')
       await valueInput.setValue('')
       expect(formState.armorClass.value).toBe(null)
+    })
+  })
+
+  describe('無甲防禦（isArmored）', () => {
+    it("無甲為 'none'：保留已選無甲屬性，不視為著甲清空", async () => {
+      const formState = reactive(baseFormState({ type: 'none', abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe('dexterity')
+    })
+
+    it('未選甲（null）同樣不視為著甲清空', async () => {
+      const formState = reactive(baseFormState({ type: null, abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe('dexterity')
+    })
+
+    it('由無甲切換為實際甲（light）時清空無甲屬性 abilityKey', async () => {
+      const formState = reactive(baseFormState({ type: 'none', abilityKey: 'dexterity' }))
+      mountPanel({ formState })
+      formState.armorClass.type = 'light'
+      await nextTick()
+      expect(formState.armorClass.abilityKey).toBe(null)
     })
   })
 })

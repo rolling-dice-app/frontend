@@ -47,9 +47,15 @@ translated string:
   the user-provided character name (locale-stable user data, not a translation).
 - **`data-testid`** where the only alternative is a translated string — the i18n
   action buttons (`character-build-submit`, `character-build-confirm`,
-  `character-update-submit`, `character-delete-mode-toggle`, `character-delete-confirm`)
-  and the primary-class `@ui` Select (`character-primary-class-select`, whose only
-  other handle is its translated label). These are the harness's only production edits.
+  `character-update-submit`, `character-delete-mode-toggle`, `character-delete-confirm`,
+  the inventory `inventory-add-item-<section>` / `inventory-item-confirm` /
+  per-row `inventory-item-edit` / `inventory-item-delete`) and the primary-class
+  `@ui` Select (`character-primary-class-select`, whose only other handle is its
+  translated label). These are the harness's only production edits.
+
+  Note on the inventory tab: it is reached via the `@ui` tab trigger's stable
+  `data-value="backpack"` (not i18n-bound), so it needs no testid; the inventory
+  modal's name field already has the `#item-modal-name` id.
 
   Note on the Select: `id` is a declared prop on the `@ui` component (it lands on a
   hidden proxy input for `<label for>`), so `data-testid` — an undeclared attr that

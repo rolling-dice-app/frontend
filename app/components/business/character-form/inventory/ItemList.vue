@@ -29,6 +29,7 @@
         <li>
           <button
             type="button"
+            :data-testid="`inventory-add-item-${section}`"
             :aria-label="t('inventory.addItem')"
             class="flex w-full items-center justify-center py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
             @click="openCreate"
@@ -97,6 +98,7 @@
                   </button>
                   <button
                     type="button"
+                    data-testid="inventory-item-edit"
                     :aria-label="`${t('ui.action.edit')} ${item.name}`"
                     :disabled="props.pendingItemIds.has(item.id)"
                     class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-content-muted"
@@ -106,6 +108,7 @@
                   </button>
                   <button
                     type="button"
+                    data-testid="inventory-item-delete"
                     :aria-label="`${t('ui.action.delete')} ${item.name}`"
                     :disabled="props.pendingItemIds.has(item.id)"
                     class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-content-muted"
@@ -263,7 +266,12 @@
     </div>
 
     <template #footer>
-      <CommonAppButton variant="primary" :disabled="!draft.name.trim()" @click="save">
+      <CommonAppButton
+        variant="primary"
+        data-testid="inventory-item-confirm"
+        :disabled="!draft.name.trim()"
+        @click="save"
+      >
         {{ t('ui.action.confirm') }}
       </CommonAppButton>
     </template>

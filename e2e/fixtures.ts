@@ -1,18 +1,26 @@
 import { test as base, type Page } from '@playwright/test'
-import { seedAuthedUser } from './helpers/auth'
+import { seedAuthedUser, type SeededUser } from './helpers/auth'
 import { BACKEND_ORIGIN } from './helpers/env'
 
 interface Fixtures {
-  /** A page already authenticated as a freshly seeded user. */
+  /** The freshly seeded user (id + session) backing `authedPage`; exposed so a
+   *  test can seed owned sub-resources (e.g. a character) for the same user. */
+  seededUser: SeededUser
+  /** A page already authenticated as `seededUser`. */
   authedPage: Page
 }
 
 export const test = base.extend<Fixtures>({
-  authedPage: async ({ page, context }, use) => {
-    const { sessionId } = await seedAuthedUser()
+  // oxlint-disable-next-line no-empty-pattern -- Playwright requires the destructured deps arg; this fixture has no dependencies
+  seededUser: async ({}, use) => {
+    await use(await seedAuthedUser())
+  },
+  authedPage: async ({ page, context, seededUser }, use) => {
     // Cookie is host-scoped to `localhost`, so the SSR document request and the
     // client XHR both carry it regardless of port — no production code change needed.
-    await context.addCookies([{ name: 'rd_session', value: sessionId, url: BACKEND_ORIGIN }])
+    await context.addCookies([
+      { name: 'rd_session', value: seededUser.sessionId, url: BACKEND_ORIGIN },
+    ])
     await use(page)
   },
 })

@@ -1,0 +1,22 @@
+{
+  // Standalone project for the Playwright e2e harness. It runs in a Node context
+  // (node: builtins, process) and its page.evaluate callbacks run in the browser
+  // (DOM lib), neither of which the Nuxt app tsconfigs cover. Referenced from the
+  // root tsconfig so editors and `tsc -b` pick it up.
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts", "../playwright.config.ts"]
+}

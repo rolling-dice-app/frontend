@@ -61,6 +61,7 @@
                 ? 'bg-danger text-content-inverse'
                 : 'text-content-muted hover:bg-surface'
             "
+            data-testid="character-delete-mode-toggle"
             @click="isDeleteMode = !isDeleteMode"
           >
             <Icon name="trash" :size="20" />
@@ -359,6 +360,7 @@
             type="button"
             variant="danger"
             :disabled="deleting"
+            data-testid="character-delete-confirm"
             @click="onDeleteConfirm"
           >
             {{ t('ui.action.delete') }}

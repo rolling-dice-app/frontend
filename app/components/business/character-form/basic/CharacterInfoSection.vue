@@ -185,6 +185,7 @@
           </label>
           <CommonAppSelect
             :id="`prof-${index}`"
+            :data-testid="index === 0 ? 'character-primary-class-select' : undefined"
             :model-value="entry.classKey || null"
             :options="getClassOptions(index)"
             class="w-full"

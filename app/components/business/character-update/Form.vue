@@ -7,6 +7,7 @@
           :disabled="!canSubmit"
           :loading="isSubmitting"
           class="min-w-22 whitespace-nowrap ml-auto"
+          data-testid="character-update-submit"
           @click="submit"
         >
           {{ t('ui.action.save') }}

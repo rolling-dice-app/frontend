@@ -1,0 +1,71 @@
+# E2E test harness (Playwright, local stage)
+
+Real-browser end-to-end tests that drive the SSR Nuxt app against a **throwaway**
+backend + Postgres stack. Design doc: [`docs/e2e-test-system-design.md`](../docs/e2e-test-system-design.md).
+
+## Prerequisites
+
+- **Docker** running (Testcontainers spins up a disposable `postgres:16`).
+- The sibling **backend** checked out and installed: `../backend` with `pnpm install`
+  done (it is run from source via `tsx`, no build step). Override the location with
+  the `BACKEND_DIR` env var.
+- `@rolling-dice-app/core` installed (already a dependency here).
+- Ports **3100** (harness Nuxt) and **3101** (harness backend) free. These are
+  deliberately off the default dev ports (3000/3001) so a running `pnpm dev` stack is
+  never reused or collided with. Override with `E2E_FRONTEND_PORT` / `E2E_BACKEND_PORT`.
+  If 3101 is taken, setup fails fast rather than silently using a foreign backend.
+
+## Run
+
+```sh
+pnpm test:e2e        # headless run
+pnpm test:e2e:ui     # Playwright UI mode, step through the flow
+```
+
+`global-setup` brings the stack up once: starts the container, applies the
+committed migrations with the backend's `drizzle-kit`, spawns the backend with
+`tsx src/index.ts`, and polls `/healthz`. The Nuxt dev server is managed by
+Playwright's `webServer`. `global-teardown` kills the backend and stops the
+container; `docker ps` should show nothing left behind.
+
+## How auth works (no production code change)
+
+Each test seeds its own user + session straight into the DB and drops the session
+id into the `rd_session` cookie, host-scoped to `localhost`. Because the cookie is
+host- (not port-) scoped, both the SSR document request and the client XHR carry it
+regardless of port, so first screen and soft navigation are both authenticated.
+Per-test fresh users give natural ownership isolation — no table truncation.
+
+## Selector policy
+
+Stable, non-i18n hooks first; `data-testid` only where the alternative is a
+translated string:
+
+- **Name input** by its existing element id `#char-name` (not i18n-bound; shared by
+  the build and update forms).
+- **List rows / per-row delete** by accessible name, where the matched segment is
+  the user-provided character name (locale-stable user data, not a translation).
+- **`data-testid`** where the only alternative is a translated string — the i18n
+  action buttons (`character-build-submit`, `character-build-confirm`,
+  `character-update-submit`, `character-delete-mode-toggle`, `character-delete-confirm`)
+  and the primary-class `@ui` Select (`character-primary-class-select`, whose only
+  other handle is its translated label). These are the harness's only production edits.
+
+  Note on the Select: `id` is a declared prop on the `@ui` component (it lands on a
+  hidden proxy input for `<label for>`), so `data-testid` — an undeclared attr that
+  falls through to the Select root — is used instead, then scoped down to its
+  `role="combobox"`.
+
+## Maintenance invariants
+
+- **Seed field shapes follow `backend/tests/helpers/auth.ts`.** When the backend
+  changes required columns on `users` / `sessions`, update `e2e/helpers/auth.ts`
+  (raw SQL, snake_case columns) to match.
+- **Backend env follows `backend/src/config/env.ts`.** `e2e/helpers/env.ts` must
+  satisfy every required var (a missing/invalid one makes the backend exit at boot,
+  surfacing here as a `/healthz` timeout). Note `R2_PUBLIC_URL_BASE` is required and
+  validated (https, no trailing slash).
+- **Session ids must stay high-entropy random** (`uuid().defaultRandom()`). The
+  seeded-cookie approach assumes session ids are unguessable.
+- **Cookie host-sharing** assumes `:3000`/`:3001` share the `localhost` host. If the
+  app ever spans real cross-origin hosts, revisit the `addCookies` scope.

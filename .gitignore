@@ -26,6 +26,13 @@ logs
 
 .eslintcache
 coverage/
+*.tsbuildinfo
+
+# Playwright e2e
+e2e/.runtime.json
+test-results/
+playwright-report/
+.playwright/
 
 # Local code review reports (not versioned)
 docs/

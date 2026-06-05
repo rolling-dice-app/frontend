@@ -56,7 +56,8 @@ translated string:
   per-row `inventory-item-edit` / `inventory-item-delete`; the campaign
   `campaign-add-record` / `campaign-record-confirm` / per-row
   `campaign-record-edit` / `campaign-record-delete`; the currency
-  `currency-edit` / `currency-edit-confirm`) and the primary-class
+  `currency-edit` / `currency-edit-confirm`; the combat `combat-hp-max-increment`
+  / `combat-reset` / `combat-reset-confirm`) and the primary-class
   `@ui` Select (`character-primary-class-select`, whose only other handle is its
   translated label). These are the harness's only production edits.
 
@@ -100,6 +101,17 @@ translated string:
   Persistence is verified by re-opening the modal after a reload and reading a
   coin input back — the modal seeds from the store's currency, which is re-fetched
   from the DB on load, so a surviving value means it persisted.
+
+  Note on combat-state: it lives on the detail page's combat tab
+  (`data-value="combat"`, the quickview) and has two write models — field edits
+  (e.g. max-HP) fire a debounced PATCH → re-GET, while rest / reset are POSTs that
+  return no body and then re-GET the fresh state. The slice covers both via the
+  max-HP `(+1)` adjustment, read from the HP card's stable
+  `aria-labelledby="quickview-hp-label"` section by its `(+N)` modifier text (from
+  `formatModifier`, not i18n), so no display testid is needed; only the three
+  i18n-only buttons (max-HP +1, reset, reset-confirm) carry a `data-testid`. The
+  reset action waits for both the `/combat-state/reset` POST and its follow-up
+  `/combat-state` GET, since the POST has no body and the GET is what clears the UI.
 
 ## Maintenance invariants
 

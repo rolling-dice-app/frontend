@@ -26,6 +26,7 @@
           </button>
           <button
             type="button"
+            data-testid="combat-hp-max-increment"
             :aria-label="`${t('combat.hpMax')} +1`"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-surface-raised hover:text-content"
             @click="emit('adjustMax', 1)"

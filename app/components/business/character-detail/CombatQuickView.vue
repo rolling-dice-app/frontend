@@ -25,7 +25,12 @@
         <CommonAppButton variant="neutral" :disabled="isResting" @click="onLongRest">
           {{ t('combat.longRest') }}
         </CommonAppButton>
-        <CommonAppButton variant="danger" :disabled="isResting" @click="resetModalOpen = true">
+        <CommonAppButton
+          variant="danger"
+          data-testid="combat-reset"
+          :disabled="isResting"
+          @click="resetModalOpen = true"
+        >
           {{ t('combat.reset') }}
         </CommonAppButton>
       </header>
@@ -159,7 +164,12 @@
         <CommonAppButton variant="ghost" :disabled="isResetting" @click="resetModalOpen = false">
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton variant="danger" :disabled="isResetting" @click="onConfirmReset">
+        <CommonAppButton
+          variant="danger"
+          data-testid="combat-reset-confirm"
+          :disabled="isResetting"
+          @click="onConfirmReset"
+        >
           {{ isResetting ? t('combat.resetting') : t('ui.action.confirm') }}
         </CommonAppButton>
       </template>

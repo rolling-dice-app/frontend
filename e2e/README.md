@@ -23,10 +23,14 @@ pnpm test:e2e:ui     # Playwright UI mode, step through the flow
 ```
 
 `global-setup` brings the stack up once: starts the container, applies the
-committed migrations with the backend's `drizzle-kit`, spawns the backend with
-`tsx src/index.ts`, and polls `/healthz`. The Nuxt dev server is managed by
-Playwright's `webServer`. `global-teardown` kills the backend and stops the
-container; `docker ps` should show nothing left behind.
+committed migrations with the backend's `drizzle-kit`, seeds the SRD spell
+catalog (`scripts/seed-spells.ts`, an idempotent upsert run unconditionally so
+spell flows always have a catalog), spawns the backend with `tsx src/index.ts`,
+and polls `/healthz`. The seed step uses the full backend env (it imports
+`db/client.ts` → `config/env.ts`, which validates the whole schema at import),
+unlike `drizzle-kit`, which only reads `DATABASE_URL`. The Nuxt dev server is
+managed by Playwright's `webServer`. `global-teardown` kills the backend and
+stops the container; `docker ps` should show nothing left behind.
 
 ## How auth works (no production code change)
 
@@ -61,6 +65,19 @@ translated string:
   hidden proxy input for `<label for>`), so `data-testid` — an undeclared attr that
   falls through to the Select root — is used instead, then scoped down to its
   `role="combobox"`.
+
+  Note on spells (no testid added): the spell slice needs no production edits. The
+  spells tab uses the stable `data-value="spells"` (both the detail and update
+  pages). On the detail quickview, the favorite toggle is matched by its component
+  class `.favorite-btn` scoped to the spell name in its `aria-label` (its
+  `aria-pressed` carries the state), avoiding the `FavoriteSpellList`'s name-bearing
+  select button. On the update form, the catalog learn checkbox can't be reached by
+  `getByRole('checkbox', { name })`: the `@ui` `Checkbox`'s native input is
+  `sr-only` and nameless, and the `:aria-label` passed in is an _undeclared_ attr
+  that falls through to the wrapper element — so match the labelled wrapper by
+  `[aria-label*="<spell name>"]` and click it (the click lands on the inner
+  `<label>` and toggles the checkbox). The save button reuses the existing
+  `character-update-submit` testid.
 
 ## Maintenance invariants
 

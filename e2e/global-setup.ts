@@ -71,6 +71,17 @@ export default async function globalSetup(): Promise<void> {
       stdio: 'inherit',
     })
 
+    // Seed the SRD spell catalog so spell flows (learn / forget / prepare) have a
+    // catalog to reference. Idempotent upsert, run once per stack. Uses the full
+    // backend env because seed-spells.ts imports src/db/client.ts → config/env.ts,
+    // which validates the whole schema at import (unlike drizzle-kit, which only
+    // reads DATABASE_URL).
+    await execa('pnpm', ['exec', 'tsx', 'scripts/seed-spells.ts'], {
+      cwd,
+      env: buildBackendEnv(databaseUrl),
+      stdio: 'inherit',
+    })
+
     const backend = execa('pnpm', ['exec', 'tsx', 'src/index.ts'], {
       cwd,
       env: buildBackendEnv(databaseUrl),

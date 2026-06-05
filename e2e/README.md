@@ -57,7 +57,8 @@ translated string:
   `campaign-add-record` / `campaign-record-confirm` / per-row
   `campaign-record-edit` / `campaign-record-delete`; the currency
   `currency-edit` / `currency-edit-confirm`; the combat `combat-hp-max-increment`
-  / `combat-reset` / `combat-reset-confirm`) and the primary-class
+  / `combat-reset` / `combat-reset-confirm`; the share `character-share-toggle`)
+  and the primary-class
   `@ui` Select (`character-primary-class-select`, whose only other handle is its
   translated label). These are the harness's only production edits.
 
@@ -112,6 +113,17 @@ translated string:
   i18n-only buttons (max-HP +1, reset, reset-confirm) carry a `data-testid`. The
   reset action waits for both the `/combat-state/reset` POST and its follow-up
   `/combat-state` GET, since the POST has no body and the GET is what clears the UI.
+
+  Note on share: it spans the list page's `ShareMenu` (a Teleported menu) and the
+  public read-only page `/share/:shareId`. The menu trigger is matched by its
+  `aria-haspopup="menu"` plus the character name in its `aria-label` (locale-stable
+  user data); the toggle item is the only production edit — its three menu items are
+  i18n-only and the toggle's label flips with `shareable`, so it carries
+  `data-testid="character-share-toggle"` (same id in both directions). The public
+  read runs in a **cookieless** `browser.newContext()` to prove it needs no session:
+  a successful read is genuine unauthenticated (teammate-style) access. The shared
+  identity is probed by the `<h1>` name heading and the unavailable (404) state by
+  its `role="alert"` — both non-i18n, so no display testid is added.
 
 ## Maintenance invariants
 

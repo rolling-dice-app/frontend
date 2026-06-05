@@ -53,7 +53,9 @@ translated string:
   action buttons (`character-build-submit`, `character-build-confirm`,
   `character-update-submit`, `character-delete-mode-toggle`, `character-delete-confirm`,
   the inventory `inventory-add-item-<section>` / `inventory-item-confirm` /
-  per-row `inventory-item-edit` / `inventory-item-delete`) and the primary-class
+  per-row `inventory-item-edit` / `inventory-item-delete`; the campaign
+  `campaign-add-record` / `campaign-record-confirm` / per-row
+  `campaign-record-edit` / `campaign-record-delete`) and the primary-class
   `@ui` Select (`character-primary-class-select`, whose only other handle is its
   translated label). These are the harness's only production edits.
 
@@ -78,6 +80,16 @@ translated string:
   `[aria-label*="<spell name>"]` and click it (the click lands on the inner
   `<label>` and toggles the checkbox). The save button reuses the existing
   `character-update-submit` testid.
+
+  Note on campaigns: the campaigns tab uses the stable `data-value="campaigns"`,
+  and the modal fields keep their element ids (`#campaign-title` /
+  `#campaign-content`), but the four action elements are i18n-only. The add and
+  confirm buttons have no other handle, and the per-row edit / delete pair share
+  the record title in their `aria-label` (so the title alone can't tell them
+  apart) — all four carry a `data-testid`, mirroring the inventory slice. The
+  per-row controls are then pinned by `data-testid` (verb) + `aria-label*=<title>`
+  (row), so no accordion-nesting assumption is needed; the row presence probe is
+  the title heading.
 
 ## Maintenance invariants
 

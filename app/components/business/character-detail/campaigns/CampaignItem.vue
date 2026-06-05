@@ -19,6 +19,7 @@
             <span
               role="button"
               tabindex="0"
+              data-testid="campaign-record-edit"
               :aria-label="`${t('ui.action.edit')} ${entry.title}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
               @click.stop="$emit('edit', entry)"
@@ -30,6 +31,7 @@
             <span
               role="button"
               tabindex="0"
+              data-testid="campaign-record-delete"
               :aria-label="`${t('ui.action.delete')} ${entry.title}`"
               class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:text-danger-hover"
               @click.stop="$emit('remove', entry.id)"

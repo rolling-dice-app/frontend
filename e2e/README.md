@@ -55,7 +55,8 @@ translated string:
   the inventory `inventory-add-item-<section>` / `inventory-item-confirm` /
   per-row `inventory-item-edit` / `inventory-item-delete`; the campaign
   `campaign-add-record` / `campaign-record-confirm` / per-row
-  `campaign-record-edit` / `campaign-record-delete`) and the primary-class
+  `campaign-record-edit` / `campaign-record-delete`; the currency
+  `currency-edit` / `currency-edit-confirm`) and the primary-class
   `@ui` Select (`character-primary-class-select`, whose only other handle is its
   translated label). These are the harness's only production edits.
 
@@ -90,6 +91,15 @@ translated string:
   per-row controls are then pinned by `data-testid` (verb) + `aria-label*=<title>`
   (row), so no accordion-nesting assumption is needed; the row presence probe is
   the title heading.
+
+  Note on currency: it lives under the inventory tab (`data-value="backpack"`) as
+  a per-character singleton, so the slice is a read + update round-trip (no
+  create / delete) with a single, non-debounced PATCH. The coin fields keep their
+  element ids (`#currency-edit-<key>`), shared by the panel and the modal; only
+  the i18n-only panel-edit and modal-confirm buttons carry a `data-testid`.
+  Persistence is verified by re-opening the modal after a reload and reading a
+  coin input back — the modal seeds from the store's currency, which is re-fetched
+  from the DB on load, so a surviving value means it persisted.
 
 ## Maintenance invariants
 

@@ -28,7 +28,7 @@
     </div>
 
     <template #footer>
-      <CommonAppButton variant="primary" @click="onConfirm">
+      <CommonAppButton variant="primary" data-testid="currency-edit-confirm" @click="onConfirm">
         {{ t('ui.action.confirm') }}
       </CommonAppButton>
     </template>

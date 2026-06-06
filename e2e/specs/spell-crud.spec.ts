@@ -4,18 +4,19 @@ import { seedCharacter } from '../helpers/seedCharacter'
 import { fetchSpellCatalog, seedSpellEntry } from '../helpers/seedSpell'
 import { CharacterSpellsPom } from '../pom/character-spells.pom'
 
-/** Two distinct catalog spells whose names are letters/digits/spaces only (so
- *  they are safe inside a CSS attribute selector and as an accessible-name
- *  match) and where neither name is a substring of the other (so name-scoped
- *  locators stay unambiguous). */
+/** Two catalog spells whose names are letters/digits/spaces only (selector-safe) and
+ *  not a substring of any other catalog name — so the substring catalog search
+ *  filters to one row and each `[aria-label*=<name>]` locator stays unambiguous. */
 function pickTwoSpells(catalog: SpellDTO[]): [SpellDTO, SpellDTO] {
-  const safe = catalog.filter((s) => /^[\p{L}\p{N} ]+$/u.test(s.name))
-  const first = safe[0]
-  if (!first) throw new Error('need a selector-safe catalog spell')
-  const second = safe.find(
-    (s) => s.id !== first.id && !s.name.includes(first.name) && !first.name.includes(s.name),
-  )
-  if (!second) throw new Error('need a second non-overlapping catalog spell')
+  const safe = catalog.filter((s) => {
+    if (!/^[\p{L}\p{N} ]+$/u.test(s.name)) return false
+    const needle = s.name.toLowerCase()
+    return !catalog.some((other) => other.id !== s.id && other.name.toLowerCase().includes(needle))
+  })
+  const [first, second] = safe
+  if (!first || !second) {
+    throw new Error('need two selector-unique catalog spells (name not a substring of any other)')
+  }
   return [first, second]
 }
 

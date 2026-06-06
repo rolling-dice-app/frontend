@@ -29,7 +29,9 @@ export default defineConfig({
     command: `pnpm dev --port ${FRONTEND_PORT}`,
     url: FRONTEND_ORIGIN,
     env: { NUXT_PUBLIC_API_BASE: BACKEND_ORIGIN },
-    reuseExistingServer: !process.env.CI,
+    // Never reuse: the env above only applies when Playwright starts the server, so a
+    // reused one would keep its old API base. Fresh start also fails loud if :3100 is taken.
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 })

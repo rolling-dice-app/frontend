@@ -82,11 +82,14 @@ export default async function globalSetup(): Promise<void> {
       stdio: 'inherit',
     })
 
+    // `detached` makes the backend its own process-group leader so teardown can
+    // signal the whole tree (`pnpm exec` → `tsx` → node), not just the `pnpm` child.
     const backend = execa('pnpm', ['exec', 'tsx', 'src/index.ts'], {
       cwd,
       env: buildBackendEnv(databaseUrl),
       stdout: 'inherit',
       stderr: 'inherit',
+      detached: true,
     })
     stack.backend = backend
 

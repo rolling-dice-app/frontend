@@ -1,8 +1,17 @@
 import { rmSync } from 'node:fs'
-import { RUNTIME_FILE } from './helpers/db'
+import { closeDb, RUNTIME_FILE } from './helpers/db'
 import { getStack } from './helpers/stack'
 
 const KILL_TIMEOUT_MS = 5_000
+
+/** Signal the backend's whole process group by negative pid; ignore an already-gone group. */
+function killBackendGroup(pid: number, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-pid, signal)
+  } catch {
+    // group already gone
+  }
+}
 
 /**
  * Tear down everything global-setup may have started. Written to be safe against a
@@ -14,25 +23,33 @@ export async function teardownStack(): Promise<void> {
   try {
     if (stack.backend) {
       const backend = stack.backend
-      backend.kill('SIGTERM')
-      const timer = setTimeout(() => backend.kill('SIGKILL'), KILL_TIMEOUT_MS)
-      try {
-        await backend
-      } catch {
-        // expected: killed process rejects
-      } finally {
-        clearTimeout(timer)
+      const pid = backend.pid
+      if (pid !== undefined) {
+        killBackendGroup(pid, 'SIGTERM')
+        const timer = setTimeout(() => killBackendGroup(pid, 'SIGKILL'), KILL_TIMEOUT_MS)
+        try {
+          await backend
+        } catch {
+          // expected: killed process rejects
+        } finally {
+          clearTimeout(timer)
+        }
       }
       stack.backend = undefined
     }
   } finally {
     try {
-      if (stack.container) {
-        await stack.container.stop()
-        stack.container = undefined
-      }
+      // Drain the test-side Postgres pool before the container goes away.
+      await closeDb()
     } finally {
-      rmSync(RUNTIME_FILE, { force: true })
+      try {
+        if (stack.container) {
+          await stack.container.stop()
+          stack.container = undefined
+        }
+      } finally {
+        rmSync(RUNTIME_FILE, { force: true })
+      }
     }
   }
 }

@@ -125,6 +125,17 @@ translated string:
   identity is probed by the `<h1>` name heading and the unavailable (404) state by
   its `role="alert"` — both non-i18n, so no display testid is added.
 
+  Note on detail read (no testid added): the `/character/:id` page fetches its
+  character client-only (`useAsyncData(..., { server: false })`), so the slice is a
+  single privacy guard with zero production edits. `page.request.get('/character/:id')`
+  pulls the raw SSR document (a plain GET, no client JS) and the slice asserts the
+  seeded private name is absent from it, guarding against an edge cache (Vercel)
+  leaking one user's character; the same name then becomes visible after hydration,
+  proving it's client-only by design, not broken. Scoped out on purpose: tab
+  switching is `@ui` Tabs' own contract (tested in packages/ui), and deep per-tab
+  content is owned by the combat / spells / inventory / currency / campaign slices —
+  asserting either here would test another repo's component or duplicate coverage.
+
 ## Maintenance invariants
 
 - **Seed field shapes follow `backend/tests/helpers/auth.ts`.** When the backend

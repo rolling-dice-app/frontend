@@ -10,11 +10,14 @@ name: E2E
 # for reproducibility -- main is what auto-deploys to prod, so this gate verifies the
 # real "about to ship together" combination.
 #
+# Layout: frontend and backend are checked out as SIBLINGS under the workspace
+# (frontend/ + backend/), mirroring the local repo layout. Nesting backend inside the
+# frontend checkout makes pnpm walk up into frontend's workspace and mis-resolve the
+# backend's own binaries (drizzle-kit/tsx), so keep them siblings.
+#
 # IMPORTANT (self-lock trap): do NOT mark this check "required" in branch protection
-# until it has actually gone green on a real PR. It cannot pass until the
-# BACKEND_CHECKOUT_TOKEN secret is provisioned, and a required-but-never-green check
-# would dead-lock every release PR. Order: land this -> provision token -> see it go
-# green -> only then mark required and switch dev->main to PR-merge.
+# until it has actually gone green on a real PR. Order: land this -> see it go green
+# -> only then mark required and switch dev->main to PR-merge.
 
 on:
   pull_request:
@@ -29,6 +32,10 @@ permissions:
   contents: read
   packages: read
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   e2e:
     name: E2E
@@ -38,22 +45,24 @@ jobs:
       - name: Checkout frontend
         uses: actions/checkout@v4
         with:
+          path: frontend
           submodules: recursive
 
-      # Strategy A: backend source, anchored to main. Needs a cross-repo read token
-      # (the job's automatic GITHUB_TOKEN is scoped to this repo only). Lands in a
-      # dot-prefixed dir so Nuxt's app scan and the pnpm workspace never pick it up.
+      # Strategy A: backend source, anchored to main, as a sibling of frontend/ so its
+      # pnpm install/exec resolve against the backend's own root (not frontend's
+      # workspace). Needs a cross-repo read token -- the job's automatic GITHUB_TOKEN
+      # is scoped to this repo only.
       - name: Checkout backend (main, from source)
         uses: actions/checkout@v4
         with:
           repository: rolling-dice-app/backend
           ref: main
-          path: .backend-src
+          path: backend
           token: ${{ secrets.BACKEND_CHECKOUT_TOKEN }}
 
       - name: Record backend commit under test
         run: |
-          SHA="$(git -C .backend-src rev-parse HEAD)"
+          SHA="$(git -C "$GITHUB_WORKSPACE/backend" rev-parse HEAD)"
           echo "Backend under test: main @ $SHA"
           echo "- Backend tested: \`main\` @ \`$SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
@@ -67,6 +76,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
@@ -80,11 +90,10 @@ jobs:
         run: cd packages/ui && pnpm build
 
       # Backend is run from source via tsx (drizzle-kit migrate, seed:spells, the
-      # server itself), so it needs its own install. Reuses the packages token the
-      # same way frontend does to pull @rolling-dice-app/core.
+      # server itself), so it needs its own install in its own dir.
       - name: Install backend dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: .backend-src
+        working-directory: backend
         env:
           GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -93,11 +102,11 @@ jobs:
 
       # global-setup brings up Testcontainers Postgres + the tsx backend; the Nuxt dev
       # server is managed by Playwright's webServer. BACKEND_DIR points global-setup at
-      # the checked-out backend instead of the local sibling default.
+      # the sibling backend checkout.
       - name: Run e2e
         run: pnpm test:e2e
         env:
-          BACKEND_DIR: ${{ github.workspace }}/.backend-src
+          BACKEND_DIR: ${{ github.workspace }}/backend
 
       - name: Upload Playwright report
         if: ${{ failure() }}
@@ -105,7 +114,7 @@ jobs:
         with:
           name: playwright-report
           path: |
-            playwright-report/
-            test-results/
+            frontend/playwright-report/
+            frontend/test-results/
           retention-days: 7
           if-no-files-found: ignore

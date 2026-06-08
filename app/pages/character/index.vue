@@ -397,6 +397,7 @@
             type="button"
             variant="primary"
             :disabled="restoring"
+            data-testid="character-restore-confirm"
             @click="onRestoreConfirm"
           >
             {{ t('character.trash.restoreLabel') }}

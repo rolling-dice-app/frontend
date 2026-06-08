@@ -18,8 +18,13 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: 0,
-  reporter: 'list',
+  // One retry in CI buys a flake buffer for the merge-gate and is what makes
+  // `trace: 'on-first-retry'` actually fire (the retry captures a trace for the
+  // failure artifact). Locally stays 0 so a failure surfaces immediately.
+  retries: process.env.CI ? 1 : 0,
+  // CI also emits an HTML report (uploaded as an artifact); locally the list
+  // reporter is enough.
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: FRONTEND_ORIGIN,
     trace: 'on-first-retry',

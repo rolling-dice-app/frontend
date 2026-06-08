@@ -14,6 +14,16 @@ export const BACKEND_ORIGIN = `http://localhost:${BACKEND_PORT}`
 export const BACKEND_HEALTHZ_URL = `http://127.0.0.1:${BACKEND_PORT}/healthz`
 
 /**
+ * The one e2e user treated as super-admin: the backend derives `isSuperAdmin`
+ * from whether the request user's email is in `SUPER_ADMIN_EMAILS` (see
+ * `backend/src/middleware/auth.ts`), which bypasses all plan limits. Seed a user
+ * with this exact email (see `seedAuthedUser`) to reach flows that need more than
+ * the free plan allows (e.g. >1 active character for multi-card sort). Kept here
+ * as the single source shared by the backend env and the seed helper.
+ */
+export const SUPER_ADMIN_EMAIL = 'e2e-admin@test.local'
+
+/**
  * Backend dummy env, single source of truth for the throwaway stack.
  *
  * Every field below is required by `backend/src/config/env.ts` (zod). A missing
@@ -38,6 +48,9 @@ export function buildBackendEnv(databaseUrl: string): NodeJS.ProcessEnv {
     CORS_ALLOWED_ORIGINS: FRONTEND_ORIGIN,
     GOOGLE_OAUTH_CLIENT_ID: 'dummy',
     GOOGLE_OAUTH_CLIENT_SECRET: 'dummy',
+    // comma-separated email allowlist → backend Set; one fixed admin for tests
+    // that need >1 active character (free plan caps at 1).
+    SUPER_ADMIN_EMAILS: SUPER_ADMIN_EMAIL,
     R2_ACCOUNT_ID: 'dummy',
     R2_ACCESS_KEY_ID: 'dummy',
     R2_SECRET_ACCESS_KEY: 'dummy',

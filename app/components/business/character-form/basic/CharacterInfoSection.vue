@@ -240,6 +240,7 @@
           variant="secondary"
           size="sm"
           :disabled="isButtonDisabled"
+          data-testid="character-add-class"
           @click="addClass"
         >
           + {{ t('class.addClass') }}

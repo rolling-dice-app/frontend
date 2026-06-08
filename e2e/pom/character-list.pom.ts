@@ -46,6 +46,28 @@ export class CharacterListPom {
     await this.page.getByRole('option').first().click()
   }
 
+  /** Add another class entry row (enabled only once every entry has a class). */
+  async addClassEntry(): Promise<void> {
+    await this.page.getByTestId('character-add-class').click()
+  }
+
+  /**
+   * Pick the first available class in the entry at `index`. The select's `:id`
+   * lands on a hidden proxy input (`#prof-<index>`), not the clickable trigger,
+   * so we reach the combobox via its shared Select root. For index > 0 the option
+   * list already excludes the primary's pick, so `.first()` is a distinct class.
+   */
+  async selectClassAt(index: number): Promise<void> {
+    const root = this.page.locator(`div:has(> input#prof-${index})`)
+    await root.getByRole('combobox').click()
+    await this.page.getByRole('option').first().click()
+  }
+
+  /** The class-entry select at `index` (its proxy input); a presence probe per persisted class. */
+  classEntry(index: number): Locator {
+    return this.page.locator(`#prof-${index}`)
+  }
+
   /** Submit the build form and confirm the modal; resolves when create POST succeeds. */
   async submitBuild(): Promise<void> {
     await this.page.getByTestId('character-build-submit').click()

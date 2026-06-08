@@ -136,6 +136,19 @@ translated string:
   content is owned by the combat / spells / inventory / currency / campaign slices —
   asserting either here would test another repo's component or duplicate coverage.
 
+  Note on ownership (no testid added): a second user (B) is seeded with
+  `seedAuthedUser()` and owns a character via `seedCharacter(B.sessionId)` — B's
+  cookie is never placed in the browser, only the authed user A's is. The backend
+  ownership preHandler returns **404, not 403**, for a row owned by another user
+  (`backend/src/middleware/ownership.ts`, deliberately indistinguishable from a
+  missing id to avoid existence leakage), so A opening B's `/character/:id` and
+  `/character/:id/update` lands on each page's client-only NotFound branch. The
+  NotFound state is probed by its back-to-list link `a[href="/character"]` (a
+  stable, non-i18n href) scoped to the `<main>` landmark — the BottomNavDrawer
+  carries the same href but is teleported outside `<main>`; the PageHeader back
+  control is a `<button>`, not a link. B's name (PageHeader `<h2>`) must stay
+  hidden throughout, proving no data leak.
+
 ## Maintenance invariants
 
 - **Seed field shapes follow `backend/tests/helpers/auth.ts`.** When the backend

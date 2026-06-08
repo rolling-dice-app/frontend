@@ -4,6 +4,7 @@
       <h2 class="font-display text-lg font-bold text-content">{{ t('inventory.asset') }}</h2>
       <button
         type="button"
+        data-testid="currency-edit"
         :aria-label="t('inventory.editCurrency')"
         class="flex size-7 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
         @click="modalOpen = true"

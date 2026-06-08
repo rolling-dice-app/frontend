@@ -53,6 +53,7 @@
         variant="primary"
         :disabled="!canSubmit"
         :loading="isSubmitting"
+        data-testid="character-build-submit"
         @click="openConfirm"
       >
         {{ t('character.saveCharacter') }}

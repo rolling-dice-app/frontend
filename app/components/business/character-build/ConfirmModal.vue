@@ -49,7 +49,11 @@
         <CommonAppButton variant="ghost" @click="emit('cancel')">
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton variant="primary" @click="emit('confirm')">
+        <CommonAppButton
+          variant="primary"
+          data-testid="character-build-confirm"
+          @click="emit('confirm')"
+        >
           {{ t('character.buildConfirmAction') }}
         </CommonAppButton>
       </div>

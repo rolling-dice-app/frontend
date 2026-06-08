@@ -49,6 +49,7 @@
 
       <button
         type="button"
+        data-testid="campaign-add-record"
         :aria-label="t('character.addCampaignRecord')"
         class="flex w-full items-center justify-center rounded-lg border border-dashed border-border-soft bg-canvas-elevated py-3 text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content"
         @click="openCreate"

@@ -23,6 +23,7 @@
             :aria-pressed="isListMode"
             :aria-label="t('character.toggleViewMode')"
             class="relative flex h-11 cursor-pointer items-center overflow-hidden rounded-lg border border-border"
+            data-testid="character-view-mode-toggle"
             @click="isListMode = !isListMode"
             @keydown.enter.prevent="isListMode = !isListMode"
             @keydown.space.prevent="isListMode = !isListMode"
@@ -61,6 +62,7 @@
                 ? 'bg-danger text-content-inverse'
                 : 'text-content-muted hover:bg-surface'
             "
+            data-testid="character-delete-mode-toggle"
             @click="isDeleteMode = !isDeleteMode"
           >
             <Icon name="trash" :size="20" />
@@ -359,6 +361,7 @@
             type="button"
             variant="danger"
             :disabled="deleting"
+            data-testid="character-delete-confirm"
             @click="onDeleteConfirm"
           >
             {{ t('ui.action.delete') }}
@@ -395,6 +398,7 @@
             type="button"
             variant="primary"
             :disabled="restoring"
+            data-testid="character-restore-confirm"
             @click="onRestoreConfirm"
           >
             {{ t('character.trash.restoreLabel') }}

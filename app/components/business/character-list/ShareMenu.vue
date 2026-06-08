@@ -31,6 +31,7 @@
           :ref="(el) => setItemRef(el, index)"
           type="button"
           role="menuitem"
+          :data-testid="item.key === 'toggle-share' ? 'character-share-toggle' : undefined"
           tabindex="-1"
           class="block w-full px-3 py-2 text-left text-sm text-content cursor-pointer hover:bg-surface focus-visible:bg-surface focus-visible:outline-none transition-colors duration-150"
           @click="select(item.key)"

@@ -126,6 +126,7 @@
       <template #footer>
         <CommonAppButton
           variant="primary"
+          data-testid="campaign-record-confirm"
           :disabled="!draft.title.trim() || !draft.content.trim() || submitting"
           @click="onSave"
         >

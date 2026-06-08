@@ -116,12 +116,12 @@ describe('getSuggestedRegularSpellSlots', () => {
       ).toEqual({ 1: 2 })
     })
 
-    it('遊蕩者 2 + 奧法詭術師 → floor(2/3) = 0 → {}', () => {
+    it('遊蕩者 2 + 奧法詭術師 → 主職 ceil(2/3) = 1 → effective 1 → 1:2', () => {
       expect(
         getSuggestedRegularSpellSlots([
           { classKey: 'rogue', level: 2, subclass: 'arcaneTrickster' },
         ]),
-      ).toEqual({})
+      ).toEqual({ 1: 2 })
     })
   })
 

@@ -149,6 +149,29 @@ translated string:
   control is a `<button>`, not a link. B's name (PageHeader `<h2>`) must stay
   hidden throughout, proving no data leak.
 
+  Note on not-found (no testid added): a freshly generated, never-seeded random
+  UUID is opened on `/character/:id` and `/character/:id/update`; both land on the
+  same client-only NotFound branch as ownership. The id must be a valid UUID so it
+  passes the backend's `z.string().uuid()` params check and reaches the handler
+  (where the ownership lookup returns null → 404); a malformed id is a different
+  contract — zod rejects it with **400**, which the pages render as the retryable
+  transient-error state, not NotFound — so it is deliberately out of scope. The
+  slice reuses the ownership POM (same NotFound state, same client-only 404 path;
+  only the reason for the 404 differs: missing vs not-owned).
+
+  Note on auth-guard (no testid added): the `auth` route middleware is client-only,
+  so an unauthenticated visit to a protected route (`/settings`, `/character`,
+  `/character/build`, detail, update) redirects back to `/` once the boot `/auth/me`
+  resolves to null (no `rd_session` cookie → 401). The slice uses the base `page`
+  fixture (not `authedPage`, so no cookie) and asserts each route lands on `/` with
+  the home hero `<img alt="Rolling Dice">` visible (SSR-rendered, non-i18n). The
+  detail / update routes use a **constant** dummy id, not `randomUUID()`: a random id
+  in the parametrized test title shifts between Playwright's collection and worker
+  passes, breaking the run with "Test not found in the worker process"; the id value
+  is irrelevant anyway since the guard redirects before any client-only fetch. A
+  small `AuthGuardPom` is added (the guard spans `/settings` too, so it isn't
+  character-specific).
+
 ## Maintenance invariants
 
 - **Seed field shapes follow `backend/tests/helpers/auth.ts`.** When the backend

@@ -2,7 +2,9 @@ import ability from './ability'
 import character from './character'
 import classLabels from './class'
 import combat from './combat'
+import dm from './dm'
 import inventory from './inventory'
+import monster from './monster'
 import settings from './settings'
 import skill from './skill'
 import spell from './spell'
@@ -27,7 +29,9 @@ export const zhTW = {
   character,
   class: classLabels,
   combat,
+  dm,
   inventory,
+  monster,
   settings,
   skill,
   spell,

@@ -77,7 +77,7 @@ export default {
   nav: {
     swipeUp: '滑動開啟',
     workInProgress: '開發中',
-    dmRelated: 'DM 相關',
+    dmRelated: 'DM 工具',
     otherTools: '其他工具',
   },
   /** 找不到資源（共用版本；character.notFound 為角色專屬訊息） */

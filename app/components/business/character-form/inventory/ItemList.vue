@@ -139,6 +139,7 @@
                 :class="{ 'rotate-180': isExpanded(item.id) }"
               />
             </button>
+            <div v-else class="size-7 shrink-0" aria-hidden="true" />
           </div>
 
           <!-- Description panel -->

@@ -160,7 +160,12 @@
             <CommonAppButton type="button" variant="ghost" @click="onRemoveCancel">
               {{ t('ui.action.cancel') }}
             </CommonAppButton>
-            <CommonAppButton type="button" variant="danger" @click="onRemoveConfirm">
+            <CommonAppButton
+              type="button"
+              variant="danger"
+              data-testid="detail-remove-confirm"
+              @click="onRemoveConfirm"
+            >
               {{ t('ui.action.delete') }}
             </CommonAppButton>
           </div>

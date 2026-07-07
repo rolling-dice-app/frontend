@@ -33,6 +33,14 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # Newer pnpm ignores env-var credentials in the committed project .npmrc
+      # (potential leak to an attacker-controlled registry), so the token must live
+      # in the runner's user-level config, which pnpm still expands.
+      - name: Setup GitHub Packages auth
+        run: pnpm config set "//npm.pkg.github.com/:_authToken" "${GITHUB_PACKAGES_TOKEN}"
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:

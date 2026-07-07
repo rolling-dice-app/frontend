@@ -15,8 +15,7 @@ export async function waitHydrated(page: Page): Promise<void> {
       () =>
         page.evaluate(() => {
           const root = document.querySelector('#__nuxt') as
-            | (Element & { __vue_app__?: unknown })
-            | null
+            (Element & { __vue_app__?: unknown }) | null
           return !!root?.__vue_app__
         }),
       { timeout: 15_000 },

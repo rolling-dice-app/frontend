@@ -173,6 +173,7 @@ describe('character store — isAtCharacterLimit', () => {
     maxCharacters: 20,
     maxActiveCharacters: 3,
     maxCampaignRecordsPerCharacter: 100,
+    maxMonsterTemplates: 20,
   }
   const makeItems = (n: number): CharacterSummaryDTO[] =>
     Array.from({ length: n }, (_, i) => ({

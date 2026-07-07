@@ -107,7 +107,7 @@
               :max-carry-weight="maxCarryWeight"
               :is-over-encumbered="isOverEncumbered"
               @add-item="(draft) => runInventoryOp(() => inventoryStore.addItem(draft))"
-              @remove-item="(itemId) => runInventoryOp(() => inventoryStore.removeItem(itemId))"
+              @remove-item="requestRemoveItem"
               @update-item="
                 (itemId, draft) => runInventoryOp(() => inventoryStore.updateItem(itemId, draft))
               "
@@ -136,17 +136,43 @@
             :add-campaign="campaigns.addCampaign"
             :update-campaign="campaigns.updateCampaign"
             @retry="retryCampaigns"
-            @remove="(entryId) => void campaigns.removeCampaign(entryId)"
+            @remove="requestRemoveCampaign"
           />
         </Tab>
       </Tabs>
+
+      <!-- 細項刪除確認（物品 / 戰役皆立即持久化且無 undo，需二段式確認） -->
+      <Modal
+        v-model="confirmRemoveOpen"
+        :title="t('ui.confirmDelete.title')"
+        bg-color="var(--color-canvas-elevated)"
+        text-color="var(--color-content)"
+        border-color="var(--color-border)"
+      >
+        <p class="text-content">
+          {{ t('ui.confirmDelete.message') }}
+        </p>
+        <p v-if="pendingRemove" class="mt-2 font-bold text-content">
+          {{ pendingRemove.name }}
+        </p>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <CommonAppButton type="button" variant="ghost" @click="onRemoveCancel">
+              {{ t('ui.action.cancel') }}
+            </CommonAppButton>
+            <CommonAppButton type="button" variant="danger" @click="onRemoveConfirm">
+              {{ t('ui.action.delete') }}
+            </CommonAppButton>
+          </div>
+        </template>
+      </Modal>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { Tab, Tabs } from '@ui'
+import { Modal, Tab, Tabs } from '@ui'
 
 // key 綁 route.params.id：直接切換 /character/a → /character/b（同 route record）時整頁 remount，
 // 讓以常數捕獲 id 的子 composable（campaigns / combat state）都以新 id 重跑 setup。
@@ -219,6 +245,7 @@ onBeforeRouteLeave(async () => {
 })
 
 const {
+  items,
   currency,
   backpackItems,
   dimensionalBagItems,
@@ -260,6 +287,35 @@ const runInventoryOp = async (op: () => Promise<unknown>): Promise<void> => {
     await op()
   } catch (err) {
     apiErrorToast.handle(err)
+  }
+}
+
+const confirmRemoveOpen = ref(false)
+const pendingRemove = ref<{ kind: 'item' | 'campaign'; id: string; name: string } | null>(null)
+
+const requestRemoveItem = (itemId: string): void => {
+  const target = items.value.find((item) => item.id === itemId)
+  pendingRemove.value = { kind: 'item', id: itemId, name: target?.name ?? '' }
+  confirmRemoveOpen.value = true
+}
+const requestRemoveCampaign = (entryId: string): void => {
+  const target = campaignEntries.value.find((entry) => entry.id === entryId)
+  pendingRemove.value = { kind: 'campaign', id: entryId, name: target?.title ?? '' }
+  confirmRemoveOpen.value = true
+}
+const onRemoveCancel = (): void => {
+  confirmRemoveOpen.value = false
+  pendingRemove.value = null
+}
+const onRemoveConfirm = (): void => {
+  const target = pendingRemove.value
+  confirmRemoveOpen.value = false
+  pendingRemove.value = null
+  if (!target) return
+  if (target.kind === 'item') {
+    void runInventoryOp(() => inventoryStore.removeItem(target.id))
+  } else {
+    void campaigns.removeCampaign(target.id)
   }
 }
 </script>

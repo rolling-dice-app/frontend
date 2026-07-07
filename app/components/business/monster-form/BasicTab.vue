@@ -160,10 +160,10 @@ import {
   ALIGNMENT_KEYS,
   CHARACTER_INT_LIMITS,
   CHARACTER_TEXT_LIMITS,
+  SIZE_KEYS,
   type AlignmentKey,
   type SizeKey,
 } from '@rolling-dice-app/core'
-import { SIZE_KEYS } from '~/constants/monster'
 import type { MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()

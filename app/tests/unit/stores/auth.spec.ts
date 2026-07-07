@@ -17,6 +17,7 @@ const sampleLimits: PlanLimits = {
   maxCharacters: 20,
   maxActiveCharacters: 10,
   maxCampaignRecordsPerCharacter: 100,
+  maxMonsterTemplates: 20,
 }
 
 const sampleMe: MeResponseDTO = { user: sampleUser, limits: sampleLimits }

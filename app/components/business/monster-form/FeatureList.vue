@@ -112,12 +112,8 @@
 
 <script setup lang="ts">
 import { Icon, Modal, TextArea } from '@ui'
-import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
-import type {
-  MonsterFeature,
-  MonsterFeatureDraft,
-  MonsterTemplateFormState,
-} from '~/types/business/monster'
+import { CHARACTER_TEXT_LIMITS, type MonsterFeature } from '@rolling-dice-app/core'
+import type { MonsterFeatureDraft, MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()
 const toast = useToast()

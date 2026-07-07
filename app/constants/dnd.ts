@@ -6,7 +6,6 @@ import {
   type ArmorType,
   type DieType,
   type ClassKey,
-  type SizeKey,
   type SkillKey,
 } from '@rolling-dice-app/core'
 
@@ -109,16 +108,3 @@ export const ARMOR_TYPES = [
   'none',
   ...CORE_ARMOR_TYPES.filter((type) => type !== 'none'),
 ] as const satisfies readonly ArmorType[]
-
-/**
- * 所有 SizeKey，用於迭代。core 僅導出 `SizeKey` 型別、無對應 runtime 陣列，
- * 故此處本地維護迭代序（satisfies 確保與 core 型別不漂移）。
- */
-export const SIZE_KEYS = [
-  'tiny',
-  'small',
-  'medium',
-  'large',
-  'huge',
-  'gargantuan',
-] as const satisfies readonly SizeKey[]

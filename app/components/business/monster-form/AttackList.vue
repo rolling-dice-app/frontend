@@ -234,12 +234,9 @@ import {
   type DamageDieEntry,
   type DamageDieType,
   type DamageTypeKey,
+  type MonsterAttackEntry,
 } from '@rolling-dice-app/core'
-import type {
-  MonsterAttackDraft,
-  MonsterAttackEntry,
-  MonsterTemplateFormState,
-} from '~/types/business/monster'
+import type { MonsterAttackDraft, MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()
 const toast = useToast()

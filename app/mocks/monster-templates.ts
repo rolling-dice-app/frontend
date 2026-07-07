@@ -1,5 +1,9 @@
 import { ref } from 'vue'
-import { ABILITY_KEYS, type AbilityKey } from '@rolling-dice-app/core'
+import {
+  ABILITY_KEYS,
+  buildMonsterTemplateCreateDefaults,
+  type AbilityKey,
+} from '@rolling-dice-app/core'
 import type { MonsterTemplateView } from '~/types/business/monster'
 
 /**
@@ -149,28 +153,7 @@ export function getMonsterTemplate(id: string): MonsterTemplateView | undefined 
  * 真正 id 於存檔（addMonsterTemplate）時才配。
  */
 export function buildDefaultMonsterView(): MonsterTemplateView {
-  return {
-    id: '',
-    name: '',
-    size: null,
-    alignment: null,
-    challengeRating: null,
-    ac: 10,
-    hp: 1,
-    speed: '',
-    initiativeBonus: 0,
-    abilities: buildAbilities({}),
-    savingThrows: {},
-    skills: {},
-    damageVulnerabilities: null,
-    damageResistances: null,
-    damageImmunities: null,
-    conditionImmunities: null,
-    senses: null,
-    languages: null,
-    attacks: [],
-    features: [],
-  }
+  return { id: '', name: '', ...buildMonsterTemplateCreateDefaults() }
 }
 
 /** 把一筆完整草稿加入清單（於 client 存檔時呼叫），配發新 id 後回傳。 */

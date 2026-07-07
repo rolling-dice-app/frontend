@@ -25,16 +25,16 @@ describe('navItems', () => {
     expect(navItems[0]!.to).toBe('/character')
   })
 
-  it('/dm 與 /tools 應標記為 disabled', () => {
-    const dm = navItems.find((item) => item.to === '/dm')
+  it('/tools 應標記為 disabled', () => {
     const tools = navItems.find((item) => item.to === '/tools')
-    expect(dm?.disabled).toBe(true)
     expect(tools?.disabled).toBe(true)
   })
 
-  it('/character 不應為 disabled', () => {
+  it('/character 與 /dm 不應為 disabled', () => {
     const character = navItems.find((item) => item.to === '/character')
+    const dm = navItems.find((item) => item.to === '/dm')
     expect(character?.disabled).toBeFalsy()
+    expect(dm?.disabled).toBeFalsy()
   })
 })
 

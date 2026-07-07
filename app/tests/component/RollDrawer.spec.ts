@@ -109,12 +109,7 @@ const mountDrawer = (
     abilityScores?: TotalAbilityScores
     proficiencyBonus?: number
     savingThrowProficiencies?: (
-      | 'strength'
-      | 'dexterity'
-      | 'constitution'
-      | 'intelligence'
-      | 'wisdom'
-      | 'charisma'
+      'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma'
     )[]
     savingThrowAdjustments?: Partial<Record<string, number>>
     hitDiceUsed?: Partial<Record<string, number>>

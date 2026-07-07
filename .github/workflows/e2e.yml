@@ -78,6 +78,14 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
+      # Newer pnpm ignores env-var credentials in the committed project .npmrc
+      # (potential leak to an attacker-controlled registry). User-level config is
+      # still expanded and covers both the frontend and sibling backend installs.
+      - name: Setup GitHub Packages auth
+        run: pnpm config set "//npm.pkg.github.com/:_authToken" "${GITHUB_PACKAGES_TOKEN}"
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
         env:

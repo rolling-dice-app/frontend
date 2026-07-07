@@ -97,11 +97,7 @@ export interface D100RollEntry extends BaseRollEntry {
 }
 
 export type RollEntry =
-  | D20RollEntry
-  | DamageRollEntry
-  | HitDieRollEntry
-  | RawRollEntry
-  | D100RollEntry
+  D20RollEntry | DamageRollEntry | HitDieRollEntry | RawRollEntry | D100RollEntry
 
 /** push 用的草稿型別：對 union 分配套用 Omit，避免共同欄位被合併 */
 export type RollEntryDraft =

@@ -1,7 +1,7 @@
 <template>
   <section aria-labelledby="monster-section-attacks">
     <h3 id="monster-section-attacks" class="mb-3 font-display text-base font-bold text-content">
-      {{ t('monster.field.attacks') }}
+      {{ t('monster.field.attacksModule') }}
     </h3>
 
     <ul class="space-y-2">
@@ -62,7 +62,7 @@
   <!-- 新增 / 編輯 攻擊 Modal -->
   <Modal
     v-model="modalOpen"
-    :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('monster.field.attacks')}`"
+    :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('monster.field.attacksModule')}`"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"

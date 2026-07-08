@@ -17,7 +17,7 @@ export default {
   limitReached: '怪物模板數量已達方案上限',
   deleteLabel: '刪除怪物模板',
   deleteConfirm: '刪除後將永久移除（無法還原），確定要刪除以下怪物？',
-  savedHint: '（示意）已儲存；串接後端後才會真正保存',
+  savedHint: '已儲存',
 
   // 表單欄位分組小標
   formGroup: {
@@ -45,6 +45,7 @@ export default {
     senses: '感官',
     languages: '語言',
     attacks: '攻擊',
+    attacksModule: '攻擊模組',
     features: '特性 / 動作',
   },
 

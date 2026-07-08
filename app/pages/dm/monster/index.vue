@@ -2,9 +2,31 @@
   <div>
     <CommonPageHeader :title="t('monster.listTitle')" :show-back="true" back-to="/" />
 
+    <!-- Loading -->
+    <div
+      v-if="status === 'idle' || status === 'pending'"
+      class="flex min-h-[50dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      {{ t('ui.state.loading') }}
+    </div>
+
+    <!-- Error -->
+    <div
+      v-else-if="status === 'error'"
+      class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center text-content-muted"
+      role="alert"
+    >
+      <p class="font-display text-2xl text-content">{{ t('monster.loadFailed') }}</p>
+      <CommonAppButton variant="warning" class="mt-2" @click="refresh()">
+        {{ t('ui.state.retry') }}
+      </CommonAppButton>
+    </div>
+
     <!-- 空狀態 -->
     <button
-      v-if="monsters.length === 0"
+      v-else-if="monsters.length === 0"
       type="button"
       class="group relative flex min-h-[50dvh] w-full cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-lg border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('monster.addMonster')"
@@ -97,7 +119,12 @@
           <CommonAppButton type="button" variant="ghost" @click="onDeleteCancel">
             {{ t('ui.action.cancel') }}
           </CommonAppButton>
-          <CommonAppButton type="button" variant="danger" @click="onDeleteConfirm">
+          <CommonAppButton
+            type="button"
+            variant="danger"
+            :disabled="deleting"
+            @click="onDeleteConfirm"
+          >
             {{ t('ui.action.delete') }}
           </CommonAppButton>
         </div>
@@ -108,26 +135,32 @@
 
 <script setup lang="ts">
 import { Icon, Modal } from '@ui'
-import {
-  monsterTemplates,
-  monsterTemplatesAtLimit,
-  removeMonsterTemplate,
-} from '~/mocks/monster-templates'
-import type { MonsterTemplateView } from '~/types/business/monster'
+import type { MonsterTemplateSummaryDTO } from '@rolling-dice-app/core'
 
 definePageMeta({ middleware: 'auth', noindex: true })
 
 const { t } = useI18n()
 const toast = useToast()
+const apiErrorToast = useApiErrorToast()
 
 useHead({ title: t('monster.listTitle') })
 
-// 本階段直接消費 mock reactive 清單；串接階段改 monster-template store。
-const monsters = monsterTemplates
+const monsterTemplateStore = useMonsterTemplateStore()
+
+// server: false：SSR 階段不拉使用者資料，避免 Vercel edge cache 把
+// 某使用者的怪物列表共享給其他人（與 character 列表同步）。
+const { status, refresh } = useAsyncData(
+  'monster-templates',
+  () => monsterTemplateStore.loadList(),
+  { server: false, lazy: true },
+)
+
+const monsters = computed<MonsterTemplateSummaryDTO[]>(() => monsterTemplateStore.list)
 
 // ── 建立 ────────────────────────────────────────────────────────────────────
+// 達上限時列表入口前置攔截；create 頁另有 monster-template-limit guard，判斷統一由 store 提供。
 const onAdd = (): void => {
-  if (monsterTemplatesAtLimit.value) {
+  if (monsterTemplateStore.isAtMonsterTemplateLimit) {
     toast.error(t('monster.limitReached'))
     return
   }
@@ -135,10 +168,11 @@ const onAdd = (): void => {
 }
 
 // ── 刪除 ────────────────────────────────────────────────────────────────────
-const pendingDelete = ref<MonsterTemplateView | null>(null)
+const pendingDelete = ref<MonsterTemplateSummaryDTO | null>(null)
 const confirmOpen = ref(false)
+const deleting = ref(false)
 
-const onDeleteRequest = (monster: MonsterTemplateView): void => {
+const onDeleteRequest = (monster: MonsterTemplateSummaryDTO): void => {
   pendingDelete.value = monster
   confirmOpen.value = true
 }
@@ -148,10 +182,17 @@ const onDeleteCancel = (): void => {
   pendingDelete.value = null
 }
 
-const onDeleteConfirm = (): void => {
-  if (!pendingDelete.value) return
-  removeMonsterTemplate(pendingDelete.value.id)
-  confirmOpen.value = false
-  pendingDelete.value = null
+const onDeleteConfirm = async (): Promise<void> => {
+  if (!pendingDelete.value || deleting.value) return
+  deleting.value = true
+  try {
+    await monsterTemplateStore.removeMonsterTemplate(pendingDelete.value.id)
+    confirmOpen.value = false
+    pendingDelete.value = null
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    deleting.value = false
+  }
 }
 </script>

@@ -3,22 +3,34 @@
 </template>
 
 <script setup lang="ts">
-import { addMonsterTemplate, buildDefaultMonsterView } from '~/mocks/monster-templates'
 import type { MonsterTemplateView } from '~/types/business/monster'
 
-definePageMeta({ middleware: 'auth', noindex: true })
+definePageMeta({ middleware: ['auth', 'monster-template-limit'], noindex: true })
 
 const { t } = useI18n()
 const toast = useToast()
+const apiErrorToast = useApiErrorToast()
+const monsterTemplateStore = useMonsterTemplateStore()
 
 useHead({ title: t('monster.createTitle') })
 
-// 本地草稿；存檔前不落 mock，中途離開不留空白怪物。
+// 本地草稿；存檔成功前不落 API，中途離開不留空白怪物。
 const draft = buildDefaultMonsterView()
 
-const onSave = (next: MonsterTemplateView): void => {
-  addMonsterTemplate(next)
-  toast.success(t('monster.savedHint'))
-  void navigateTo('/dm/monster')
+const isSaving = ref(false)
+
+const onSave = async (next: MonsterTemplateView): Promise<void> => {
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    await monsterTemplateStore.createMonsterTemplate(next)
+    toast.success(t('monster.savedHint'))
+    await navigateTo('/dm/monster')
+  } catch (err) {
+    // plan-limit race（入口攔截後仍被搶滿）與 validation 漏網走統一 toast
+    apiErrorToast.handle(err)
+  } finally {
+    isSaving.value = false
+  }
 }
 </script>

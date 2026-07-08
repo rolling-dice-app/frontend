@@ -13,7 +13,6 @@ import type { InterpolationParams, MessagePath } from '~/i18n'
  * 設計原則：thin dispatcher + preempt。新增 race code 時兩邊同步：
  *   - 加 mapping 條目於本檔 ERROR_MESSAGE_MAP
  *   - 加 i18n 訊息於 `app/i18n/zh-TW/ui.ts` 的 `error.*`
- *   - 同步 backend `error-handling-conventions` skill 的「Frontend toast 同步」段
  */
 
 interface NormalizedError {
@@ -73,6 +72,8 @@ const ERROR_MESSAGE_MAP: Partial<Record<ApiErrorCode, ErrorMapping>> = {
   STALE_USER_VERSION: { messageKey: 'ui.error.staleVersion' },
   /** Currency PATCH 撞 race（背包資產與 campaign record moneyEarning 自動同步衝突） */
   STALE_CURRENCY_VERSION: { messageKey: 'ui.error.staleVersion' },
+  /** 怪物模板 PATCH 撞 race（如同時開兩個 tab 編輯同一模板） */
+  STALE_MONSTER_TEMPLATE_VERSION: { messageKey: 'ui.error.staleVersion' },
 
   // ─ Backend-tracked cooldown：時間限制由 backend 把關，client 無法事先得知是否已過期。
   /** 還原角色卡後 7 天 cooldown 內又按刪除；details.cooldownEndsAt 帶剩餘時間 */

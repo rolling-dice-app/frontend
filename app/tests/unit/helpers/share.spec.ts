@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseShareIdFromLink } from '~/utils/parseShareId'
+import { parseShareIdFromLink } from '~/helpers/share'
 
 const VALID = 'chs_AbCdEfGhIjKlMnOpQrStUv'
 

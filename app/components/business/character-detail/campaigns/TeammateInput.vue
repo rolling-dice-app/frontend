@@ -89,7 +89,7 @@
 import { Button, Icon } from '@ui'
 import { RADIUS } from '~/constants/style'
 import type { SharedCharacterPreviewDTO } from '@rolling-dice-app/core'
-import { parseShareIdFromLink } from '~/utils/parseShareId'
+import { parseShareIdFromLink } from '~/helpers/share'
 
 const { t } = useI18n()
 const toast = useToast()

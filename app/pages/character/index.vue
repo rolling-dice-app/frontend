@@ -193,7 +193,7 @@
           />
           <Icon name="double-sword" :size="72" class="relative text-content-faint" />
         </div>
-        <h2 class="mt-6 font-display text-5xl font-bold text-content sm:text-6xl">
+        <h2 class="mt-6 font-display text-4xl font-bold text-content sm:text-6xl">
           {{ t('character.empty') }}
         </h2>
         <p class="mt-3 font-display text-lg text-content-muted sm:text-xl">
@@ -227,20 +227,9 @@
         </template>
 
         <div class="p-4">
-          <!-- Active 空（如：全部移到 trash） -->
+          <!-- Active grid（空列表時只渲染結尾的 + 號新增 tile） -->
           <div
-            v-if="activeCharacters.length === 0"
-            class="flex min-h-[40dvh] flex-col items-center justify-center gap-4 px-4 py-12 text-center text-content-muted"
-          >
-            <p class="font-display text-xl text-content">{{ t('character.empty') }}</p>
-            <CommonAppButton variant="primary" @click="onAddCharacter">
-              {{ t('character.addCharacter') }}
-            </CommonAppButton>
-          </div>
-
-          <!-- Active grid -->
-          <div
-            v-else-if="!isListMode"
+            v-if="!isListMode"
             class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6"
           >
             <BusinessCharacterListCard

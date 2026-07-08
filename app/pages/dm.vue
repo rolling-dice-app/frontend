@@ -3,7 +3,7 @@
     <!-- DM 工具次導覽：segmented 切換各工具，底層是真路由。 -->
     <nav
       :aria-label="t('dm.toolsTitle')"
-      class="mb-4 flex gap-1 overflow-x-auto rounded-lg border border-border-soft bg-canvas-inset p-1"
+      class="scrollbar-hidden mb-4 flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg border border-border-soft bg-canvas-inset p-1"
     >
       <NuxtLink
         to="/dm/monster"

@@ -6,7 +6,7 @@
 
     <div class="grid grid-cols-1 gap-x-6 gap-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-9">
       <div v-for="key in SKILL_KEYS" :key="key" class="flex items-center gap-2">
-        <label :for="`monster-skill-${key}`" class="flex-1 text-sm text-content">
+        <label :for="`monster-skill-${key}`" class="flex-1 text-xs text-content">
           {{ t(`skill.label.${key}`) }}
         </label>
         <CommonAppInput

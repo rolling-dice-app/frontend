@@ -19,7 +19,7 @@
       <li
         v-for="attack in formState.attacks"
         :key="attack.id"
-        class="flex items-center justify-between rounded-lg border border-border-soft bg-surface px-3 py-2"
+        class="flex items-start justify-between rounded-lg border border-border-soft bg-surface px-3 py-2"
       >
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">

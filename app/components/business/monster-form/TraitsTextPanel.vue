@@ -4,7 +4,7 @@
       id="monster-section-traits"
       class="font-display text-base font-bold text-content lg:col-span-2"
     >
-      {{ t('monster.field.senses') }} / {{ t('monster.field.languages') }}
+      {{ t('monster.formGroup.defensesSenses') }}
     </h3>
 
     <div v-for="field in fields" :key="field.key">

@@ -2,14 +2,33 @@
   <div>
     <CommonPageHeader :title="t('monster.listTitle')" :show-back="true" back-to="/" />
 
-    <!-- Loading -->
+    <!-- Loading：鏡像資料卡的 grid 骨架（名稱 / badge / AC·HP）。
+         列表無佈局切換、markup 亦無 auth 衍生分支，故不需 ClientOnly。 -->
     <div
       v-if="status === 'idle' || status === 'pending'"
-      class="flex min-h-[50dvh] items-center justify-center text-content-muted"
       role="status"
       aria-live="polite"
+      aria-busy="true"
     >
-      {{ t('ui.state.loading') }}
+      <span class="sr-only">{{ t('ui.state.loading') }}</span>
+      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="animate-pulse rounded-lg border border-border-soft bg-canvas-elevated p-4 motion-reduce:animate-none"
+          aria-hidden="true"
+        >
+          <div class="h-6 w-2/3 rounded bg-surface" />
+          <div class="mt-2 flex gap-1.5">
+            <div class="h-5 w-12 rounded bg-surface" />
+            <div class="h-5 w-16 rounded bg-surface" />
+          </div>
+          <div class="mt-3 flex gap-4">
+            <div class="h-4 w-14 rounded bg-surface" />
+            <div class="h-4 w-14 rounded bg-surface" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error -->
@@ -37,8 +56,7 @@
         aria-hidden="true"
       />
       <div class="relative z-10 flex flex-col items-center px-6 py-12">
-        <Icon name="dice" :size="64" class="text-content-faint" />
-        <h2 class="mt-6 font-display text-4xl font-bold text-content sm:text-5xl">
+        <h2 class="mt-6 font-display text-4xl font-bold text-content sm:text-6xl">
           {{ t('monster.empty') }}
         </h2>
         <p class="mt-3 font-display text-lg text-content-muted">{{ t('monster.emptyHint') }}</p>
@@ -86,7 +104,7 @@
         <button
           type="button"
           :aria-label="`${t('ui.action.delete')} ${monster.name}`"
-          class="absolute right-2 top-2 flex size-8 items-center justify-center rounded-md text-content-faint opacity-100 transition-colors duration-150 hover:text-danger-hover focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint opacity-100 transition-colors duration-150 hover:text-danger-hover focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           @click="onDeleteRequest(monster)"
         >
           <Icon name="trash" :size="16" />
@@ -96,7 +114,7 @@
       <!-- 新增 tile -->
       <button
         type="button"
-        class="flex min-h-32 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        class="flex min-h-28 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('monster.addMonster')"
         @click="onAdd"
       >
@@ -196,3 +214,24 @@ const onDeleteConfirm = async (): Promise<void> => {
   }
 }
 </script>
+
+<style scoped>
+/* 空狀態 hero 光暈：緩慢呼吸（非 animate-pulse），對齊角色列表空狀態份量 */
+.empty-glow {
+  animation: empty-glow-breathe 7s ease-in-out infinite alternate;
+}
+@keyframes empty-glow-breathe {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-glow {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+</style>

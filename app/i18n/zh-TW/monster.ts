@@ -22,6 +22,7 @@ export default {
   formGroup: {
     identity: '基本資料',
     abilitiesSaves: '屬性與豁免',
+    defensesSenses: '防禦、感官與語言',
   },
 
   // 欄位 label

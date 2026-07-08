@@ -68,8 +68,9 @@ export class CharacterInventoryPom {
     ])
   }
 
-  /** Delete an item by name (no confirm modal); resolves when the DELETE succeeds. */
+  /** Delete an item by name via its confirm modal; resolves when the DELETE succeeds. */
   async deleteItem(name: string): Promise<void> {
+    await this.rowByName(name).getByTestId('inventory-item-delete').click()
     await Promise.all([
       this.page.waitForResponse(
         (r) =>
@@ -77,7 +78,7 @@ export class CharacterInventoryPom {
           new URL(r.url()).pathname.includes('/inventory/items/') &&
           r.ok(),
       ),
-      this.rowByName(name).getByTestId('inventory-item-delete').click(),
+      this.page.getByTestId('detail-remove-confirm').click(),
     ])
   }
 }

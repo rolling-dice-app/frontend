@@ -63,8 +63,9 @@ export class CharacterCampaignsPom {
     await this.confirmAwaiting('PATCH', (pathname) => pathname.includes('/campaign-records/'))
   }
 
-  /** Delete a record by title (no confirm modal); resolves when the DELETE succeeds. */
+  /** Delete a record by title via its confirm modal; resolves when the DELETE succeeds. */
   async deleteRecord(title: string): Promise<void> {
+    await this.rowAction('campaign-record-delete', title).click()
     await Promise.all([
       this.page.waitForResponse(
         (r) =>
@@ -72,7 +73,7 @@ export class CharacterCampaignsPom {
           new URL(r.url()).pathname.includes('/campaign-records/') &&
           r.ok(),
       ),
-      this.rowAction('campaign-record-delete', title).click(),
+      this.page.getByTestId('detail-remove-confirm').click(),
     ])
   }
 

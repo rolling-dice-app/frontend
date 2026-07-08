@@ -41,8 +41,8 @@
       </template>
 
       <!-- Body -->
-      <div class="flex items-end justify-between px-4 pb-4 pt-3">
-        <div>
+      <div class="flex items-end justify-between gap-2 px-4 pb-4 pt-3">
+        <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
             <img
               v-if="firstClassKey && !classIconError"
@@ -61,11 +61,12 @@
               {{ character.name }}
             </h3>
           </div>
-          <div class="mt-2 flex items-center gap-2">
-            <CommonAppBadge variant="default" size="sm">
+          <!-- 種族/職業列：窄寬或兼職過多時改為橫向滾動，不擠壓變形 -->
+          <div class="scrollbar-hidden mt-2 flex items-center gap-2 overflow-x-auto">
+            <CommonAppBadge variant="default" size="sm" class="shrink-0">
               {{ character.race ?? '-' }}
             </CommonAppBadge>
-            <span class="text-xs text-content-muted">
+            <span class="whitespace-nowrap text-xs text-content-muted">
               {{ character.classes.map((p) => t(`class.label.${p.classKey}`)).join(' / ') }}
             </span>
           </div>

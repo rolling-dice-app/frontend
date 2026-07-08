@@ -22,6 +22,11 @@ export default {
     expand: '展開',
     collapse: '收合',
   },
+  /** 確認刪除彈窗（角色卡細項刪除共用） */
+  confirmDelete: {
+    title: '確認刪除',
+    message: '刪除後無法復原，確定要刪除以下項目？',
+  },
   /** 表單提示 */
   form: {
     required: '必填',

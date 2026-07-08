@@ -41,19 +41,15 @@
           <CommonAppInput
             :id="`monster-save-${key}`"
             :radius="0"
-            :model-value="String(formState.savingThrows[key] ?? 0)"
+            :model-value="
+              formState.savingThrows[key] != null ? String(formState.savingThrows[key]) : ''
+            "
             type="number"
             size="sm"
             outline
             placeholder="±0"
             class="w-full text-center"
-            @update:model-value="
-              formState.savingThrows[key] = parseIntegerInput(
-                $event,
-                0,
-                CHARACTER_INT_LIMITS.SMALL_INT_MAX,
-              )
-            "
+            @update:model-value="onSavingThrowInput(key, $event)"
           />
         </div>
       </div>
@@ -62,10 +58,20 @@
 </template>
 
 <script setup lang="ts">
-import { ABILITY_KEYS, CHARACTER_INT_LIMITS } from '@rolling-dice-app/core'
+import { ABILITY_KEYS, CHARACTER_INT_LIMITS, type AbilityKey } from '@rolling-dice-app/core'
 import type { MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()
 
 const formState = defineModel<MonsterTemplateFormState>('formState', { required: true })
+
+/** DTO 語意為「只列有的」：清空輸入時移除 key，而非留下 0 值。 */
+const onSavingThrowInput = (key: AbilityKey, raw: string): void => {
+  if (raw.trim() === '') {
+    const { [key]: _removed, ...rest } = formState.value.savingThrows
+    formState.value.savingThrows = rest
+    return
+  }
+  formState.value.savingThrows[key] = parseIntegerInput(raw, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
+}
 </script>

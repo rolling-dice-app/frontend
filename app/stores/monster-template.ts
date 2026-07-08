@@ -70,7 +70,8 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
   const createMonsterTemplate = async (view: MonsterTemplateView): Promise<MonsterTemplateDTO> => {
     const created = await monsterTemplates().create(buildMonsterTemplateCreateBody(view))
     detailCache.value.set(created.id, created)
-    list.value.push(monsterTemplateToSummary(created))
+    // 後端列表為 updatedAt desc，新建者置頂對齊
+    list.value.unshift(monsterTemplateToSummary(created))
     return cloneTemplate(created)
   }
 
@@ -80,10 +81,20 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     return cached ? cloneTemplate(cached) : undefined
   }
 
+  /** 剛更新者置頂，對齊後端 updatedAt desc；summary 無 updatedAt 無法完整重排，移到最前為最小修法。 */
+  const moveSummaryToFront = (id: string, summary?: MonsterTemplateSummaryDTO): void => {
+    const idx = list.value.findIndex((t) => t.id === id)
+    if (idx < 0) return
+    const entry = summary ?? list.value[idx]
+    list.value.splice(idx, 1)
+    if (entry) list.value.unshift(entry)
+  }
+
+  /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
   const updateMonsterTemplate = async (
     id: string,
     formState: MonsterTemplateFormState,
-  ): Promise<MonsterTemplateDTO> => {
+  ): Promise<MonsterTemplateDTO | null> => {
     const original = detailCache.value.get(id)
     if (!original) throw new Error('updateMonsterTemplate: template not loaded')
 
@@ -93,10 +104,18 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     const api = monsterTemplates()
     await api.update(id, patch)
     // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）並同步列表
-    const next = await api.get(id)
+    let next: MonsterTemplateDTO
+    try {
+      next = await api.get(id)
+    } catch {
+      // PATCH 已成功，re-GET 失敗不得誤報為儲存失敗；cache 內舊 lock token 已作廢，
+      // 失效之避免原地重試撞 409，下次進入頁面重抓。
+      detailCache.value.delete(id)
+      moveSummaryToFront(id)
+      return null
+    }
     detailCache.value.set(id, next)
-    const idx = list.value.findIndex((t) => t.id === id)
-    if (idx >= 0) list.value[idx] = monsterTemplateToSummary(next)
+    moveSummaryToFront(id, monsterTemplateToSummary(next))
     return cloneTemplate(next)
   }
 

@@ -85,7 +85,10 @@
           outline
           class="w-full"
           @update:model-value="
-            formState.hp = parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.GENERAL_INT_MAX)
+            formState.hp = Math.max(
+              0,
+              parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.GENERAL_INT_MAX),
+            )
           "
         />
       </div>
@@ -128,7 +131,10 @@
           outline
           class="w-full"
           @update:model-value="
-            formState.ac = parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX)
+            formState.ac = Math.max(
+              0,
+              parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+            )
           "
         />
       </div>

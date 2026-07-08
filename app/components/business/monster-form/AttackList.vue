@@ -1,7 +1,7 @@
 <template>
   <section aria-labelledby="monster-section-attacks">
     <h3 id="monster-section-attacks" class="mb-3 font-display text-base font-bold text-content">
-      {{ t('monster.field.attacks') }}
+      {{ t('monster.field.attacksModule') }}
     </h3>
 
     <ul class="space-y-2">
@@ -62,7 +62,7 @@
   <!-- 新增 / 編輯 攻擊 Modal -->
   <Modal
     v-model="modalOpen"
-    :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('monster.field.attacks')}`"
+    :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('monster.field.attacksModule')}`"
     size="md"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
@@ -231,6 +231,7 @@ import {
   CHARACTER_TEXT_LIMITS,
   DAMAGE_DIE_TYPES,
   DAMAGE_TYPE_KEYS,
+  VALIDATION_LIMITS,
   type DamageDieEntry,
   type DamageDieType,
   type DamageTypeKey,
@@ -243,10 +244,8 @@ const toast = useToast()
 
 const formState = defineModel<MonsterTemplateFormState>('formState', { required: true })
 
-// core 含怪物 caps 的版本尚未發佈到前端；此處先以拍板值頂著。
-// TODO(串接階段): 改用 VALIDATION_LIMITS.maxAttacksPerMonsterTemplate / maxDamageDicePerAttack。
-const MAX_ATTACKS = 10
-const MAX_DAMAGE_DICE = 10
+const MAX_ATTACKS = VALIDATION_LIMITS.maxAttacksPerMonsterTemplate
+const MAX_DAMAGE_DICE = VALIDATION_LIMITS.maxDamageDicePerAttack
 
 const dieTypeOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('monster.emptyDash') },

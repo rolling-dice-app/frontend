@@ -23,6 +23,7 @@ import type {
 import { CLASS_CONFIG } from '~/constants/dnd'
 import { getAbilityModifier, getTotalScore } from '~/helpers/ability'
 import { cleanText, cleanTextOrNull } from '~/utils/text'
+import { deepEqual } from '~/utils/deep-equal'
 
 /** 角色分級：依總職業等級分為 common / elite / master / legendary，僅供 UI 呈現 */
 export type CharacterTier = 'common' | 'elite' | 'master' | 'legendary'
@@ -354,23 +355,6 @@ const originalCapabilities = (c: CharacterDTO): CharacterCapabilities => ({
   pactSlotsDelta: c.pactSlotsDelta,
   features: c.features,
 })
-
-const deepEqual = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true
-  if (a === null || b === null) return a === b
-  if (typeof a !== 'object' || typeof b !== 'object') return false
-  if (Array.isArray(a)) {
-    if (!Array.isArray(b) || a.length !== b.length) return false
-    return a.every((v, i) => deepEqual(v, b[i]))
-  }
-  if (Array.isArray(b)) return false
-  const ao = a as Record<string, unknown>
-  const bo = b as Record<string, unknown>
-  const ak = Object.keys(ao)
-  const bk = Object.keys(bo)
-  if (ak.length !== bk.length) return false
-  return ak.every((k) => k in bo && deepEqual(ao[k], bo[k]))
-}
 
 const sectionChanged = <T>(a: T, b: T): boolean => !deepEqual(a, b)
 

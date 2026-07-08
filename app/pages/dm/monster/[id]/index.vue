@@ -16,15 +16,38 @@
       </template>
     </CommonPageHeader>
 
+    <!-- Loading -->
+    <div
+      v-if="status === 'idle' || status === 'pending'"
+      class="flex min-h-[50dvh] items-center justify-center text-content-muted"
+      role="status"
+      aria-live="polite"
+    >
+      {{ t('ui.state.loading') }}
+    </div>
+
+    <!-- 真 404：模板不存在（或非擁有者） -->
     <CommonNotFound
-      v-if="!monster"
+      v-else-if="isNotFound"
       :message="t('monster.notFound')"
       back-to="/dm/monster"
       :back-label="t('monster.backToList')"
     />
 
+    <!-- 暫時性錯誤：可重試 -->
     <div
-      v-else
+      v-else-if="isTransientError"
+      class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
+      role="alert"
+    >
+      <p class="text-danger">{{ t('monster.loadFailed') }}</p>
+      <CommonAppButton variant="warning" @click="retryDetail">
+        {{ t('ui.state.retry') }}
+      </CommonAppButton>
+    </div>
+
+    <div
+      v-else-if="monster"
       class="divide-y divide-divider rounded-lg border border-border-soft bg-canvas-elevated p-4 sm:p-6"
     >
       <!-- 身分 + 核心數值 -->
@@ -168,7 +191,12 @@
           <CommonAppButton type="button" variant="ghost" @click="confirmOpen = false">
             {{ t('ui.action.cancel') }}
           </CommonAppButton>
-          <CommonAppButton type="button" variant="danger" @click="onDeleteConfirm">
+          <CommonAppButton
+            type="button"
+            variant="danger"
+            :disabled="deleting"
+            @click="onDeleteConfirm"
+          >
             {{ t('ui.action.delete') }}
           </CommonAppButton>
         </div>
@@ -181,7 +209,6 @@
 import { Modal } from '@ui'
 import { ABILITY_KEYS, SKILL_KEYS, type DamageDieEntry } from '@rolling-dice-app/core'
 import type { MessagePath } from '~/i18n'
-import { getMonsterTemplate, removeMonsterTemplate } from '~/mocks/monster-templates'
 
 definePageMeta({
   middleware: 'auth',
@@ -192,10 +219,30 @@ definePageMeta({
 const { t } = useI18n()
 const route = useRoute()
 const id = getRouteParam(route.params.id)
+const apiErrorToast = useApiErrorToast()
+const monsterTemplateStore = useMonsterTemplateStore()
 
 useHead({ title: t('monster.detailTitle') })
 
-const monster = computed(() => getMonsterTemplate(id))
+// 與列表同步：私有資料不進 SSR HTML / payload。id 在本次 mount 內恆定（route 變動走 page key remount）。
+const { status, error, refresh } = useAsyncData(
+  () => `monster-template-${id}`,
+  () => monsterTemplateStore.loadDetail(id),
+  { server: false, lazy: true },
+)
+
+const monster = computed(() => monsterTemplateStore.getById(id))
+
+// 真 404（模板不存在 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !monster.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
+const retryDetail = (): void => {
+  void refresh()
+}
 
 const skillText = computed(() => {
   const m = monster.value
@@ -230,10 +277,19 @@ const damageSummary = (damageDice: DamageDieEntry[]): string => {
 }
 
 const confirmOpen = ref(false)
+const deleting = ref(false)
 
-const onDeleteConfirm = (): void => {
-  removeMonsterTemplate(id)
-  confirmOpen.value = false
-  void navigateTo('/dm/monster')
+const onDeleteConfirm = async (): Promise<void> => {
+  if (deleting.value) return
+  deleting.value = true
+  try {
+    await monsterTemplateStore.removeMonsterTemplate(id)
+    confirmOpen.value = false
+    await navigateTo('/dm/monster')
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    deleting.value = false
+  }
 }
 </script>

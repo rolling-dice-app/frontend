@@ -27,10 +27,9 @@
           outline
           class="w-full text-center"
           @update:model-value="
-            formState.abilities[key] = parseIntegerInput(
-              $event,
-              10,
-              CHARACTER_INT_LIMITS.SMALL_INT_MAX,
+            formState.abilities[key] = Math.max(
+              0,
+              parseIntegerInput($event, 10, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
             )
           "
         />

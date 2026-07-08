@@ -50,7 +50,7 @@ const emit = defineEmits<{ save: [value: MonsterTemplateView] }>()
 
 const { t } = useI18n()
 
-// 從 view 深拷一份本地 form state；本階段不接後端，提交只回拋給頁面做示意。
+// 從 view 深拷一份本地 form state；提交時回拋給頁面，由頁面呼叫 store 打後端。
 const formState = reactive<MonsterTemplateFormState>(structuredClone(toRaw(props.monster)))
 
 const pageTitle = computed(

@@ -231,6 +231,7 @@ import {
   CHARACTER_TEXT_LIMITS,
   DAMAGE_DIE_TYPES,
   DAMAGE_TYPE_KEYS,
+  VALIDATION_LIMITS,
   type DamageDieEntry,
   type DamageDieType,
   type DamageTypeKey,
@@ -243,10 +244,8 @@ const toast = useToast()
 
 const formState = defineModel<MonsterTemplateFormState>('formState', { required: true })
 
-// core 含怪物 caps 的版本尚未發佈到前端；此處先以拍板值頂著。
-// TODO(串接階段): 改用 VALIDATION_LIMITS.maxAttacksPerMonsterTemplate / maxDamageDicePerAttack。
-const MAX_ATTACKS = 10
-const MAX_DAMAGE_DICE = 10
+const MAX_ATTACKS = VALIDATION_LIMITS.maxAttacksPerMonsterTemplate
+const MAX_DAMAGE_DICE = VALIDATION_LIMITS.maxDamageDicePerAttack
 
 const dieTypeOptions = computed<SelectOption[]>(() => [
   { value: '', label: t('monster.emptyDash') },

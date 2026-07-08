@@ -112,7 +112,11 @@
 
 <script setup lang="ts">
 import { Icon, Modal, TextArea } from '@ui'
-import { CHARACTER_TEXT_LIMITS, type MonsterFeature } from '@rolling-dice-app/core'
+import {
+  CHARACTER_TEXT_LIMITS,
+  VALIDATION_LIMITS,
+  type MonsterFeature,
+} from '@rolling-dice-app/core'
 import type { MonsterFeatureDraft, MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()
@@ -120,8 +124,7 @@ const toast = useToast()
 
 const formState = defineModel<MonsterTemplateFormState>('formState', { required: true })
 
-// TODO(串接階段): 改用 VALIDATION_LIMITS.maxFeaturesPerMonsterTemplate。
-const MAX_FEATURES = 10
+const MAX_FEATURES = VALIDATION_LIMITS.maxFeaturesPerMonsterTemplate
 
 const modalOpen = ref(false)
 const editingId = ref<string | null>(null)

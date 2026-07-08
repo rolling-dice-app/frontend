@@ -13,7 +13,6 @@ export default {
   createTitle: '建立怪物模板',
   editTitle: '編輯怪物模板',
   detailTitle: '怪物模板詳情',
-  namePlaceholder: '輸入怪物名稱',
   limitReached: '怪物模板數量已達方案上限',
   deleteLabel: '刪除怪物模板',
   deleteConfirm: '刪除後將永久移除（無法還原），確定要刪除以下怪物？',
@@ -35,7 +34,6 @@ export default {
     hp: '生命值',
     speed: '速度',
     initiative: '先攻加值',
-    abilities: '屬性',
     savingThrows: '豁免',
     skills: '技能',
     damageVulnerabilities: '傷害易傷',
@@ -62,7 +60,6 @@ export default {
   hitBonus: '命中加值',
   attackComment: '補充說明',
   attackCommentPlaceholder: '觸發條件、附加效果、備註等（選填）',
-  emptyAttack: '尚未設定攻擊',
   thisAttack: '此攻擊',
   attackLimitReached: '攻擊數量已達上限',
 
@@ -71,7 +68,6 @@ export default {
   featureName: '特性名稱',
   featureDescription: '描述',
   featureDescriptionPlaceholder: '特性效果說明（選填）',
-  emptyFeature: '尚未設定特性',
   thisFeature: '此特性',
   featureLimitReached: '特性數量已達上限',
 

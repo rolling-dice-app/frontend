@@ -33,6 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
     useCharacterStore().reset()
     useCharacterInventoryStore().reset()
     useCharacterSpellsStore().reset()
+    useMonsterTemplateStore().reset()
   }
 
   const refresh = async () => {

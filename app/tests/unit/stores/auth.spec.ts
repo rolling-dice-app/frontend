@@ -151,9 +151,11 @@ describe('useAuthStore — logout()', () => {
     const characterReset = vi.fn()
     const inventoryReset = vi.fn()
     const spellsReset = vi.fn()
+    const monsterTemplateReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
+    vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -163,10 +165,11 @@ describe('useAuthStore — logout()', () => {
     expect(apiFetch).toHaveBeenCalledWith('/auth/logout', { method: 'POST' })
     expect(store.user).toBe(null)
     expect(store.limits).toBe(null)
-    // 換帳號污染防線：登出時連同各角色私有 store 一併清空
+    // 換帳號污染防線：登出時連同各私有 store 一併清空
     expect(characterReset).toHaveBeenCalledOnce()
     expect(inventoryReset).toHaveBeenCalledOnce()
     expect(spellsReset).toHaveBeenCalledOnce()
+    expect(monsterTemplateReset).toHaveBeenCalledOnce()
   })
 })
 
@@ -176,9 +179,11 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     const characterReset = vi.fn()
     const inventoryReset = vi.fn()
     const spellsReset = vi.fn()
+    const monsterTemplateReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
+    vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -191,6 +196,7 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     expect(characterReset).toHaveBeenCalledOnce()
     expect(inventoryReset).toHaveBeenCalledOnce()
     expect(spellsReset).toHaveBeenCalledOnce()
+    expect(monsterTemplateReset).toHaveBeenCalledOnce()
   })
 })
 

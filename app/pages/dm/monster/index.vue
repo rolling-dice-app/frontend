@@ -71,7 +71,7 @@
       <div
         v-for="monster in monsters"
         :key="monster.id"
-        class="group relative flex flex-col rounded-lg border border-border-soft bg-canvas-elevated shadow-elev-1 transition-colors duration-150 hover:bg-surface"
+        class="relative flex flex-col rounded-lg border border-border-soft bg-canvas-elevated shadow-elev-1 transition-colors duration-150 hover:bg-surface"
       >
         <NuxtLink
           :to="`/dm/monster/${monster.id}`"
@@ -104,7 +104,7 @@
         <button
           type="button"
           :aria-label="`${t('ui.action.delete')} ${monster.name}`"
-          class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint opacity-100 transition-colors duration-150 hover:text-danger-hover focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover"
           @click="onDeleteRequest(monster)"
         >
           <Icon name="trash" :size="16" />

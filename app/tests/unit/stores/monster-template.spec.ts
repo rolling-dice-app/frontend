@@ -251,6 +251,8 @@ describe('monster-template store — isAtMonsterTemplateLimit', () => {
     maxActiveCharacters: 3,
     maxCampaignRecordsPerCharacter: 100,
     maxMonsterTemplates: 2,
+    maxDmSessionContainers: 10,
+    maxDmSessionLogsPerContainer: 100,
   }
   const summaries = (n: number): MonsterTemplateSummaryDTO[] =>
     Array.from({ length: n }, (_, i) =>

@@ -17,6 +17,18 @@
         {{ t('dm.nav.monster') }}
       </NuxtLink>
 
+      <NuxtLink
+        to="/dm/session"
+        class="shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        :class="
+          isActive('/dm/session')
+            ? 'bg-primary text-content-inverse'
+            : 'text-content-muted hover:bg-surface hover:text-content'
+        "
+      >
+        {{ t('dm.nav.campaignRecord') }}
+      </NuxtLink>
+
       <span
         v-for="seg in disabledSegments"
         :key="seg.labelKey"
@@ -44,10 +56,7 @@ definePageMeta({ middleware: 'auth', noindex: true })
 const { t } = useI18n()
 const route = useRoute()
 
-const disabledSegments: { labelKey: MessagePath }[] = [
-  { labelKey: 'dm.nav.campaignRecord' },
-  { labelKey: 'dm.nav.battlefield' },
-]
+const disabledSegments: { labelKey: MessagePath }[] = [{ labelKey: 'dm.nav.battlefield' }]
 
 // 完全相等或落在該路徑的子段（/dm/monster → /dm/monster/123）。
 const isActive = (to: string): boolean => route.path === to || route.path.startsWith(`${to}/`)

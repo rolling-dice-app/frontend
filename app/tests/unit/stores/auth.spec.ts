@@ -18,6 +18,8 @@ const sampleLimits: PlanLimits = {
   maxActiveCharacters: 10,
   maxCampaignRecordsPerCharacter: 100,
   maxMonsterTemplates: 20,
+  maxDmSessionContainers: 10,
+  maxDmSessionLogsPerContainer: 100,
 }
 
 const sampleMe: MeResponseDTO = { user: sampleUser, limits: sampleLimits }
@@ -152,10 +154,12 @@ describe('useAuthStore — logout()', () => {
     const inventoryReset = vi.fn()
     const spellsReset = vi.fn()
     const monsterTemplateReset = vi.fn()
+    const dmSessionReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
     vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
+    vi.stubGlobal('useDmSessionStore', () => ({ reset: dmSessionReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -170,6 +174,7 @@ describe('useAuthStore — logout()', () => {
     expect(inventoryReset).toHaveBeenCalledOnce()
     expect(spellsReset).toHaveBeenCalledOnce()
     expect(monsterTemplateReset).toHaveBeenCalledOnce()
+    expect(dmSessionReset).toHaveBeenCalledOnce()
   })
 })
 
@@ -180,10 +185,12 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     const inventoryReset = vi.fn()
     const spellsReset = vi.fn()
     const monsterTemplateReset = vi.fn()
+    const dmSessionReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
     vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
+    vi.stubGlobal('useDmSessionStore', () => ({ reset: dmSessionReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -197,6 +204,7 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     expect(inventoryReset).toHaveBeenCalledOnce()
     expect(spellsReset).toHaveBeenCalledOnce()
     expect(monsterTemplateReset).toHaveBeenCalledOnce()
+    expect(dmSessionReset).toHaveBeenCalledOnce()
   })
 })
 

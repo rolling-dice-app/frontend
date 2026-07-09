@@ -3,6 +3,7 @@ import character from './character'
 import classLabels from './class'
 import combat from './combat'
 import dm from './dm'
+import dmSession from './dm-session'
 import inventory from './inventory'
 import monster from './monster'
 import settings from './settings'
@@ -30,6 +31,7 @@ export const zhTW = {
   class: classLabels,
   combat,
   dm,
+  dmSession,
   inventory,
   monster,
   settings,

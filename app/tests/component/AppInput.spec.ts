@@ -38,6 +38,16 @@ describe('AppInput', () => {
     expect(wrapper.find('input').element.disabled).toBe(true)
   })
 
+  it('maxlength attr passes through to the native input', () => {
+    const wrapper = mount(AppInput, { attrs: { maxlength: 100 } })
+    expect(wrapper.find('input').attributes('maxlength')).toBe('100')
+  })
+
+  it('list attr passes through to the native input (datalist 關聯)', () => {
+    const wrapper = mount(AppInput, { attrs: { list: 'player-options' } })
+    expect(wrapper.find('input').attributes('list')).toBe('player-options')
+  })
+
   it('strips leading whitespace on input event', async () => {
     const handler = vi.fn()
     const wrapper = mount(AppInput, {

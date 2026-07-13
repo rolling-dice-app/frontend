@@ -24,18 +24,12 @@ const props = withDefaults(
      */
     trim?: boolean
     selectOnFocus?: boolean
-    /**
-     * 最大字元數。底層 @ui Input 不轉送原生 maxlength（fallthrough 落在外層 div），
-     * 故在此於 emit 前截斷，連帶涵蓋貼上超長字串的情形。
-     */
-    maxlength?: number
   }>(),
   {
     modelValue: '',
     borderColor: 'var(--color-primary)',
     trim: true,
     selectOnFocus: true,
-    maxlength: undefined,
   },
 )
 
@@ -52,11 +46,8 @@ const onFocus = (event: FocusEvent) => {
   emit('focus', event)
 }
 
-const onInput = (value: string) => {
-  const trimmed = props.trim ? value.replace(/^\s+/, '') : value
-  const capped = props.maxlength !== undefined ? trimmed.slice(0, props.maxlength) : trimmed
-  emit('update:modelValue', capped)
-}
+const onInput = (value: string) =>
+  emit('update:modelValue', props.trim ? value.replace(/^\s+/, '') : value)
 </script>
 
 <style scoped>

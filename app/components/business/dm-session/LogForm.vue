@@ -104,12 +104,6 @@
               "
               @click="onToggleRoster(member)"
             >
-              <span
-                aria-hidden="true"
-                class="flex size-4 items-center justify-center rounded-full bg-surface-raised text-content-muted"
-              >
-                <Icon name="user" :size="10" />
-              </span>
               <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
               <span
                 v-if="member.character?.available && member.character.name"

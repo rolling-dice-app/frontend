@@ -14,20 +14,6 @@
         :aria-label="`${member.playerName} · ${member.character.name ?? member.character.shareId}`"
         class="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content transition-colors hover:border-primary hover:bg-info-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <img
-          v-if="member.character.avatar"
-          :src="member.character.avatar"
-          :alt="member.character.name ?? ''"
-          class="size-4 rounded-full object-cover"
-          loading="lazy"
-        />
-        <span
-          v-else
-          aria-hidden="true"
-          class="flex size-4 items-center justify-center rounded-full bg-surface-raised text-content-muted"
-        >
-          <Icon name="user" :size="10" />
-        </span>
         <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
         <span class="max-w-32 truncate text-content-muted">
           · {{ member.character.name ?? member.character.shareId }}
@@ -39,12 +25,6 @@
         v-else
         class="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content"
       >
-        <span
-          aria-hidden="true"
-          class="flex size-4 items-center justify-center rounded-full bg-surface-raised text-content-muted"
-        >
-          <Icon name="user" :size="10" />
-        </span>
         <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
         <span v-if="member.character" class="text-content-faint">
           · {{ t('dmSession.member.unavailable') }}
@@ -55,7 +35,6 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@ui'
 import type { DmSessionMemberDTO } from '@rolling-dice-app/core'
 
 const { t } = useI18n()

@@ -3,6 +3,7 @@
     :model-value="open"
     :title="mode === 'create' ? t('dmSession.createTitle') : t('dmSession.renameTitle')"
     size="md"
+    :close-on-click-outside="false"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"

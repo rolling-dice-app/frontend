@@ -64,6 +64,7 @@
     v-model="modalOpen"
     :title="`${editingId ? t('ui.action.edit') : t('ui.action.add')}${t('monster.field.attacksModule')}`"
     size="md"
+    :close-on-click-outside="false"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"

@@ -4,6 +4,7 @@
       :model-value="modelValue"
       :title="editing ? t('character.editCampaignRecord') : t('character.addCampaignRecord')"
       size="md"
+      :close-on-click-outside="false"
       bg-color="var(--color-canvas-elevated)"
       text-color="var(--color-content)"
       border-color="var(--color-border)"

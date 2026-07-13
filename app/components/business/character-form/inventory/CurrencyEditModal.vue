@@ -3,6 +3,7 @@
     :model-value="open"
     :title="t('inventory.editCurrency')"
     size="md"
+    :close-on-click-outside="false"
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"

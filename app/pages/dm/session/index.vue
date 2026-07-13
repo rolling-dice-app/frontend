@@ -102,7 +102,7 @@
         <button
           type="button"
           :aria-label="`${t('ui.action.delete')} ${container.title}`"
-          class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover"
+          class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           @click="onDeleteRequest(container)"
         >
           <Icon name="trash" :size="16" />

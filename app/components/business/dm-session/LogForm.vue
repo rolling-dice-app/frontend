@@ -129,7 +129,7 @@
               <button
                 type="button"
                 :aria-label="`${t('dmSession.log.attendance.remove')} ${member.playerName}`"
-                class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger"
+                class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 @click="onRemoveMember(member.id)"
               >
                 <Icon name="close" :size="10" />
@@ -151,7 +151,7 @@
                 <button
                   type="button"
                   :aria-label="`${t('dmSession.log.attendance.remove')} ${member.playerName}`"
-                  class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger"
+                  class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   @click="onRemoveMember(member.id)"
                 >
                   <Icon name="close" :size="10" />
@@ -333,8 +333,6 @@ const adhocMembers = computed(() =>
   formState.members.filter((m) => !props.containerMembers.some((r) => r.id === m.id)),
 )
 
-const attendancePlayerNames = computed(() => formState.members.map((m) => m.playerName))
-
 const onToggleRoster = (member: DmSessionMemberDTO): void => {
   if (isAttending(member.id)) {
     onRemoveMember(member.id)
@@ -347,6 +345,8 @@ const onToggleRoster = (member: DmSessionMemberDTO): void => {
 const onRemoveMember = (memberId: string): void => {
   formState.members = formState.members.filter((m) => m.id !== memberId)
 }
+
+const attendancePlayerNames = computed(() => formState.members.map((m) => m.playerName))
 
 const adhocInput = ref('')
 

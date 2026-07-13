@@ -44,13 +44,11 @@ export default {
     linkAction: '連結',
     unlinkAction: '解除連結',
     add: '新增成員',
-    limitReached: '成員數量已達上限',
     unavailable: '角色已失效',
     invalidLink: '無法辨識的分享連結',
     duplicate: '此角色卡已在名單中',
     resolveFailed: '找不到對應的角色卡',
     linkPlaceholder: '貼上角色卡分享連結',
-    unlinked: '未連結角色卡',
   },
 
   // 時間軸
@@ -99,7 +97,6 @@ export default {
     attendance: {
       adhocLabel: '臨時出席',
       adhocAdd: '加入',
-      limitReached: '出席人數已達上限',
       rosterEmptyHint: '此劇本尚未建立常駐名單，可直接新增臨時出席',
       remove: '移除出席',
     },
@@ -108,7 +105,6 @@ export default {
       empty: '本場未發放獎勵',
       addRow: '新增一列',
       thisReward: '此獎勵',
-      limitReached: '物品獎勵數量已達上限',
     },
   },
 }

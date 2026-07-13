@@ -76,7 +76,7 @@
           <button
             type="button"
             :aria-label="t('dmSession.container.editTitle')"
-            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="renameOpen = true"
           >
             <Icon name="edit" :size="18" />
@@ -99,7 +99,7 @@
               <button
                 v-else
                 type="button"
-                class="text-xs text-content-faint transition-colors hover:text-content"
+                class="rounded-sm text-xs text-content-faint transition-colors hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 @click="membersOpen = true"
               >
                 {{ t('dmSession.container.membersEmpty') }}
@@ -109,7 +109,7 @@
           <button
             type="button"
             :aria-label="t('dmSession.container.editMembers')"
-            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="membersOpen = true"
           >
             <Icon name="edit" :size="18" />
@@ -125,7 +125,7 @@
             <button
               v-else
               type="button"
-              class="mt-1 text-xs text-content-faint transition-colors hover:text-content"
+              class="mt-1 rounded-sm text-xs text-content-faint transition-colors hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               @click="remarkOpen = true"
             >
               {{ t('dmSession.container.remarkEmpty') }}
@@ -134,7 +134,7 @@
           <button
             type="button"
             :aria-label="t('dmSession.container.editRemark')"
-            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content"
+            class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="remarkOpen = true"
           >
             <Icon name="edit" :size="18" />

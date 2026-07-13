@@ -12,7 +12,7 @@
         target="_blank"
         rel="noopener noreferrer"
         :aria-label="`${member.playerName} · ${member.character.name ?? member.character.shareId}`"
-        class="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content transition-colors hover:border-primary hover:bg-info-soft"
+        class="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content transition-colors hover:border-primary hover:bg-info-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <img
           v-if="member.character.avatar"

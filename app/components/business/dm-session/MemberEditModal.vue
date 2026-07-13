@@ -34,7 +34,7 @@
             <button
               type="button"
               :aria-label="`${t('ui.action.delete')} ${member.playerName}`"
-              class="flex size-8 shrink-0 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover"
+              class="flex size-8 shrink-0 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               @click="onRemoveRow(member.id)"
             >
               <Icon name="trash" :size="14" />
@@ -71,7 +71,7 @@
               <button
                 type="button"
                 :aria-label="t('dmSession.member.unlinkAction')"
-                class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger"
+                class="flex size-4 items-center justify-center rounded-full text-content-muted hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 @click="member.character = null"
               >
                 <Icon name="close" :size="10" />
@@ -107,7 +107,7 @@
       <button
         type="button"
         :disabled="atMax"
-        class="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content disabled:cursor-not-allowed disabled:opacity-50"
+        class="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         @click="onAddRow"
       >
         <Icon name="plus" :size="16" />

@@ -153,7 +153,7 @@
           </span>
         </div>
 
-        <BusinessDmSessionSessionTimeline
+        <BusinessDmSessionTimeline
           v-if="container.sessions.length > 0"
           :sessions="container.sessions"
           :container-id="id"

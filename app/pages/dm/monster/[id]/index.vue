@@ -52,31 +52,57 @@
     >
       <!-- 身分 + 核心數值 -->
       <div class="space-y-3 pb-4">
-        <p class="text-sm text-content-muted">
+        <p v-if="monster.size || monster.alignment" class="text-sm text-content-muted">
           <span v-if="monster.size">{{ t(`character.size.${monster.size}`) }}</span>
           <span v-if="monster.size && monster.alignment">，</span>
           <span v-if="monster.alignment">{{ t(`character.alignment.${monster.alignment}`) }}</span>
-          <span v-if="monster.challengeRating" class="ml-2"
-            >· CR {{ monster.challengeRating }}</span
-          >
         </p>
 
-        <div class="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+        <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響，與列表卡同 token -->
+        <svg
+          viewBox="0 0 400 5"
+          preserveAspectRatio="none"
+          class="h-[5px] w-full"
+          aria-hidden="true"
+        >
+          <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
+        </svg>
+
+        <div class="grid grid-cols-3 items-end gap-x-6 gap-y-3 sm:grid-cols-5">
           <div>
-            <p class="text-xs text-content-muted">{{ t('monster.field.ac') }}</p>
-            <p class="font-bold text-content tabular-nums">{{ monster.ac }}</p>
+            <p class="text-xs text-content-muted">{{ t('monster.stat.ac') }}</p>
+            <p class="text-2xl leading-tight font-bold text-content tabular-nums sm:text-[32px]">
+              {{ monster.ac }}
+            </p>
           </div>
           <div>
-            <p class="text-xs text-content-muted">{{ t('monster.field.hp') }}</p>
-            <p class="font-bold text-content tabular-nums">{{ monster.hp }}</p>
+            <p class="text-xs text-content-muted">{{ t('monster.stat.hp') }}</p>
+            <p class="text-2xl leading-tight font-bold text-content tabular-nums sm:text-[32px]">
+              {{ monster.hp }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-content-muted">{{ t('monster.stat.cr') }}</p>
+            <p
+              v-if="monster.challengeRating"
+              class="text-2xl leading-tight font-bold text-content tabular-nums sm:text-[32px]"
+            >
+              {{ monster.challengeRating }}
+            </p>
+            <p v-else class="text-2xl leading-tight font-normal text-content-faint sm:text-[32px]">
+              {{ t('monster.emptyDash') }}
+            </p>
           </div>
           <div v-if="monster.speed">
             <p class="text-xs text-content-muted">{{ t('monster.field.speed') }}</p>
-            <p class="font-bold text-content">{{ monster.speed }}</p>
+            <p class="text-base font-bold text-content">{{ monster.speed }}</p>
           </div>
           <div>
             <p class="text-xs text-content-muted">{{ t('monster.field.initiative') }}</p>
-            <p class="font-bold text-content tabular-nums">
+            <p
+              class="text-xl font-bold tabular-nums"
+              :class="getModifierColorClass(monster.initiativeBonus)"
+            >
               {{ formatModifier(monster.initiativeBonus) }}
             </p>
           </div>
@@ -99,7 +125,7 @@
               （{{ formatModifier(getAbilityModifier(monster.abilities[key])) }}）
             </span>
           </p>
-          <p class="font-bold text-content tabular-nums">{{ monster.abilities[key] }}</p>
+          <p class="text-xl font-bold text-content tabular-nums">{{ monster.abilities[key] }}</p>
           <p class="mt-1 border-t border-divider pt-1 text-xs text-content-muted">
             {{ t('monster.field.savingThrows') }}
             <span

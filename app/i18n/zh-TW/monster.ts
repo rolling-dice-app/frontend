@@ -10,6 +10,7 @@ export default {
 
   // 列表 / 互動
   addMonster: '新增怪物',
+  sizeUnset: '未設定體型',
   createTitle: '建立怪物模板',
   editTitle: '編輯怪物模板',
   detailTitle: '怪物模板詳情',
@@ -23,6 +24,13 @@ export default {
     identity: '基本資料',
     abilitiesSaves: '屬性與豁免',
     defensesSenses: '防禦、感官與語言',
+  },
+
+  // 列表卡 stat 列短標籤（表單長標籤在 field.*）
+  stat: {
+    ac: 'AC',
+    hp: 'HP',
+    cr: 'CR',
   },
 
   // 欄位 label

@@ -83,6 +83,9 @@
   --color-danger-soft: var(--rd--color-danger-soft);
   --color-danger-softer: var(--rd--color-danger-softer);
 
+  /* stat block rule */
+  --color-statblock-rule: var(--rd--color-statblock-rule);
+
   /* semantic — info */
   --color-info: var(--rd--color-info);
   --color-info-hover: var(--rd--color-info-hover);

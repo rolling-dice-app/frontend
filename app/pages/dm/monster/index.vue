@@ -2,7 +2,7 @@
   <div>
     <CommonPageHeader :title="t('monster.listTitle')" :show-back="true" back-to="/" />
 
-    <!-- Loading：鏡像資料卡的 grid 骨架（名稱 / badge / AC·HP）。
+    <!-- Loading：鏡像資料卡的 grid 骨架（名稱 / 錐形線 / badge / AC·HP·CR stat 列）。
          列表無佈局切換、markup 亦無 auth 衍生分支，故不需 ClientOnly。 -->
     <div
       v-if="status === 'idle' || status === 'pending'"
@@ -19,13 +19,15 @@
           aria-hidden="true"
         >
           <div class="h-6 w-2/3 rounded bg-surface" />
+          <div class="mt-2 h-[5px] w-full rounded bg-surface" />
           <div class="mt-2 flex gap-1.5">
             <div class="h-5 w-12 rounded bg-surface" />
-            <div class="h-5 w-16 rounded bg-surface" />
           </div>
-          <div class="mt-3 flex gap-4">
-            <div class="h-4 w-14 rounded bg-surface" />
-            <div class="h-4 w-14 rounded bg-surface" />
+          <div class="mt-3 grid grid-cols-3 gap-2">
+            <div v-for="j in 3" :key="j">
+              <div class="h-4 w-8 rounded bg-surface" />
+              <div class="mt-1 h-6 w-10 rounded bg-surface" />
+            </div>
           </div>
         </div>
       </div>
@@ -77,28 +79,55 @@
           :to="`/dm/monster/${monster.id}`"
           class="flex flex-1 flex-col gap-2 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <p class="truncate font-display text-lg font-bold text-content">{{ monster.name }}</p>
-          <div class="flex flex-wrap items-center gap-1.5">
+          <p class="truncate pr-8 font-display text-lg font-bold text-content">
+            {{ monster.name }}
+          </p>
+          <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響 -->
+          <svg
+            viewBox="0 0 400 5"
+            preserveAspectRatio="none"
+            class="h-[5px] w-full"
+            aria-hidden="true"
+          >
+            <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
+          </svg>
+          <div class="flex min-h-6 flex-wrap items-center gap-1.5">
             <CommonAppBadge v-if="monster.size" variant="default">
               {{ t(`character.size.${monster.size}`) }}
             </CommonAppBadge>
-            <CommonAppBadge
-              v-if="monster.challengeRating"
-              variant="status"
-              bg-color="var(--color-surface-3)"
-            >
-              CR {{ monster.challengeRating }}
-            </CommonAppBadge>
+            <span v-else class="text-xs text-content-faint">{{ t('monster.sizeUnset') }}</span>
           </div>
-          <div class="mt-1 flex gap-4 text-xs text-content-muted">
-            <span
-              >{{ t('monster.field.ac') }}
-              <span class="font-bold text-content tabular-nums">{{ monster.ac }}</span></span
-            >
-            <span
-              >{{ t('monster.field.hp') }}
-              <span class="font-bold text-content tabular-nums">{{ monster.hp }}</span></span
-            >
+          <div class="mt-auto grid grid-cols-3 gap-2 pt-2">
+            <div>
+              <span class="block text-xs font-medium text-content-muted">
+                {{ t('monster.stat.ac') }}
+              </span>
+              <span class="block text-xl font-bold text-content tabular-nums">
+                {{ monster.ac }}
+              </span>
+            </div>
+            <div>
+              <span class="block text-xs font-medium text-content-muted">
+                {{ t('monster.stat.hp') }}
+              </span>
+              <span class="block text-xl font-bold text-content tabular-nums">
+                {{ monster.hp }}
+              </span>
+            </div>
+            <div>
+              <span class="block text-xs font-medium text-content-muted">
+                {{ t('monster.stat.cr') }}
+              </span>
+              <span
+                v-if="monster.challengeRating"
+                class="block text-xl font-bold text-content tabular-nums"
+              >
+                {{ monster.challengeRating }}
+              </span>
+              <span v-else class="block text-xl font-normal text-content-faint">
+                {{ t('monster.emptyDash') }}
+              </span>
+            </div>
           </div>
         </NuxtLink>
         <button

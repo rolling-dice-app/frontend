@@ -1,0 +1,115 @@
+<template>
+  <div>
+    <!-- Loading：表單需要常駐名單做出席預填，先等劇本載入 -->
+    <template v-if="status === 'idle' || status === 'pending'">
+      <CommonPageHeader :title="''" :show-back="true" :back-to="`/dm/session/${id}`" />
+      <div
+        class="flex min-h-[50dvh] items-center justify-center text-content-muted"
+        role="status"
+        aria-live="polite"
+      >
+        {{ t('ui.state.loading') }}
+      </div>
+    </template>
+
+    <!-- 真 404：劇本不存在（或非擁有者） -->
+    <template v-else-if="isNotFound">
+      <CommonPageHeader :title="''" :show-back="true" back-to="/dm/session" />
+      <CommonNotFound
+        :message="t('dmSession.notFound')"
+        back-to="/dm/session"
+        :back-label="t('dmSession.backToList')"
+      />
+    </template>
+
+    <!-- 暫時性錯誤：可重試 -->
+    <template v-else-if="status === 'error'">
+      <CommonPageHeader :title="''" :show-back="true" :back-to="`/dm/session/${id}`" />
+      <div
+        class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
+        role="alert"
+      >
+        <p class="text-danger">{{ t('dmSession.loadFailed') }}</p>
+        <CommonAppButton variant="warning" @click="refresh()">
+          {{ t('ui.state.retry') }}
+        </CommonAppButton>
+      </div>
+    </template>
+
+    <BusinessDmSessionLogForm
+      v-else-if="draft"
+      :log="draft"
+      :container-members="container?.members ?? []"
+      mode="create"
+      :back-to="`/dm/session/${id}`"
+      @save="onSave"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { buildDmSessionLogCreateDefaults } from '@rolling-dice-app/core'
+import type { DmSessionLogDraft } from '~/types/business/dm-session'
+
+definePageMeta({
+  middleware: 'auth',
+  noindex: true,
+  key: (route) => route.params.id as string,
+})
+
+const { t } = useI18n()
+const route = useRoute()
+const id = getRouteParam(route.params.id)
+const toast = useToast()
+const apiErrorToast = useApiErrorToast()
+const dmSessionStore = useDmSessionStore()
+
+useHead({ title: t('dmSession.log.createTitle') })
+
+const { status, refresh } = useAsyncData(
+  () => `dm-session-log-create-${id}`,
+  () => dmSessionStore.loadContainer(id),
+  { server: false, lazy: true },
+)
+
+const container = computed(() => dmSessionStore.getContainerById(id))
+const isNotFound = computed(() => status.value === 'success' && !container.value)
+
+/** 日期由 client 預填今日（契約：defaults 不碰時間） */
+const todayISO = (): string => {
+  const now = new Date()
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+// 出席預填常駐名單全員（缺席者由 DM 反選）；container 讀取已是防禦性 clone。
+const draft = computed<DmSessionLogDraft | undefined>(() => {
+  const loaded = container.value
+  if (!loaded) return undefined
+  return {
+    ...buildDmSessionLogCreateDefaults(),
+    title: '',
+    date: todayISO(),
+    members: loaded.members,
+  }
+})
+
+const isSaving = ref(false)
+
+const onSave = async (next: DmSessionLogDraft): Promise<void> => {
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    const created = await dmSessionStore.createLog(id, next)
+    toast.success(t('dmSession.savedHint'))
+    // 存檔後落在剛寫的紀錄上（非跳回劇本），與 monster 回列表為刻意差異
+    await navigateTo(`/dm/session/${id}/log/${created.id}`)
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    isSaving.value = false
+  }
+}
+</script>

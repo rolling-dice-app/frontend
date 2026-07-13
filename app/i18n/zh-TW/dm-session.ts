@@ -79,7 +79,7 @@ export default {
       basic: '基本資料',
       content: '內文',
       attendance: '出席名單',
-      rewards: '本場獎勵',
+      rewards: '獎勵',
     },
 
     field: {

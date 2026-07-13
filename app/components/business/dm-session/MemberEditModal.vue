@@ -91,8 +91,10 @@
             />
             <CommonAppButton
               type="button"
-              variant="secondary"
+              variant="primary"
+              outline
               size="sm"
+              class="h-8 min-h-8!"
               :disabled="resolving || !(linkInputs[member.id] ?? '').trim()"
               @click="onLink(member)"
             >

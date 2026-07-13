@@ -22,16 +22,50 @@ const props = withDefaults(
   defineProps<{
     variant?: Variant
     size?: Size
+    /** 外框模式：透明底、邊框與文字用 variant 主色；尺寸與實底模式相同 */
+    outline?: boolean
   }>(),
   {
     variant: 'primary',
     size: 'md',
+    outline: false,
   },
 )
 
 // variant 對應 design-language §8：色彩交給 @ui Button 的 bg/text/border。
 // 每個 variant 都帶 1px border（同底色＝隱形但佔位），確保所有 variant box model 等寬。
 const variantProps = computed(() => {
+  if (props.outline) {
+    switch (props.variant) {
+      case 'neutral':
+        return {
+          outline: true,
+          borderColor: 'var(--color-border)',
+          textColor: 'var(--color-content)',
+        }
+      case 'ghost':
+        return { outline: true, borderColor: 'transparent', textColor: 'var(--color-content)' }
+      case 'danger':
+        return {
+          outline: true,
+          borderColor: 'var(--color-danger)',
+          textColor: 'var(--color-danger)',
+        }
+      case 'warning':
+        return {
+          outline: true,
+          borderColor: 'var(--color-warning)',
+          textColor: 'var(--color-warning)',
+        }
+      // primary / secondary 皆為主色外框（等同既有 secondary variant 的呈現）
+      default:
+        return {
+          outline: true,
+          borderColor: 'var(--color-primary)',
+          textColor: 'var(--color-primary)',
+        }
+    }
+  }
   switch (props.variant) {
     case 'secondary':
       return {
@@ -72,8 +106,10 @@ const variantProps = computed(() => {
   }
 })
 
-// ghost / neutral 透明底，hover 給淡底回饋
-const hasSurfaceHover = computed(() => props.variant === 'ghost' || props.variant === 'neutral')
+// ghost / neutral / outline 透明底，hover 給淡底回饋
+const hasSurfaceHover = computed(
+  () => props.outline || props.variant === 'ghost' || props.variant === 'neutral',
+)
 
 // @ui Button 的 size 只改 padding/字級，高度由此補：sm 36 / md 44 / lg 52。
 const minHeightClass = computed(

@@ -29,6 +29,7 @@ export default {
       remark: '備註',
     },
     membersEmpty: '尚未加入成員',
+    memberCount: '{count} 位成員',
     remarkEmpty: '尚未填寫備註',
     remarkPlaceholder: '劇本概要、house rules、進度備忘等（選填）',
     editTitle: '編輯劇本名稱',

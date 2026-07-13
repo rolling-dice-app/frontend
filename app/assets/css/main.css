@@ -40,6 +40,8 @@
   /* panel */
   --color-panel: var(--rd--color-panel);
   --color-panel-2: var(--rd--color-panel-2);
+  --color-panel-3: var(--rd--color-panel-3);
+  --color-panel-border: var(--rd--color-panel-border);
 
   /* text — mapped to "content" to avoid text-text */
   --color-content: var(--rd--color-text);

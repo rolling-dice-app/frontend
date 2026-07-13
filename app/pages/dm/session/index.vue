@@ -2,7 +2,7 @@
   <div>
     <CommonPageHeader :title="t('dmSession.listTitle')" :show-back="true" back-to="/" />
 
-    <!-- Loading：鏡像資料卡的 grid 骨架（劇本名 / 成員 pill / 建立日期）。 -->
+    <!-- Loading：鏡像資料卡的 grid 骨架（劇本名 / 成員 pill / footer meta 列）。 -->
     <div
       v-if="status === 'idle' || status === 'pending'"
       role="status"
@@ -14,16 +14,19 @@
         <div
           v-for="i in 6"
           :key="i"
-          class="animate-pulse rounded-lg border border-border-soft bg-canvas-elevated p-4 motion-reduce:animate-none"
+          class="animate-pulse rounded-lg border border-panel-border bg-panel p-4 motion-reduce:animate-none"
           aria-hidden="true"
         >
-          <div class="h-6 w-2/3 rounded bg-surface" />
+          <div class="h-6 w-2/3 rounded bg-panel-2" />
           <div class="mt-2 flex gap-1.5">
-            <div class="h-5 w-14 rounded-full bg-surface" />
-            <div class="h-5 w-14 rounded-full bg-surface" />
-            <div class="h-5 w-10 rounded-full bg-surface" />
+            <div class="h-5 w-14 rounded-full bg-panel-2" />
+            <div class="h-5 w-14 rounded-full bg-panel-2" />
+            <div class="h-5 w-10 rounded-full bg-panel-2" />
           </div>
-          <div class="mt-3 h-4 w-24 rounded bg-surface" />
+          <div class="mt-3 flex justify-between border-t border-panel-border pt-2.5">
+            <div class="h-4 w-16 rounded bg-panel-2" />
+            <div class="h-4 w-20 rounded bg-panel-2" />
+          </div>
         </div>
       </div>
     </div>
@@ -68,7 +71,7 @@
       <div
         v-for="container in containers"
         :key="container.id"
-        class="relative flex flex-col rounded-lg border border-border-soft bg-canvas-elevated shadow-elev-1 transition-colors duration-150 hover:bg-surface"
+        class="group relative flex flex-col rounded-lg border border-panel-border bg-panel shadow-elev-1 transition-colors duration-150 hover:bg-panel-2"
       >
         <NuxtLink
           :to="`/dm/session/${container.id}`"
@@ -81,7 +84,7 @@
             <span
               v-for="(member, index) in container.members.slice(0, MEMBER_PREVIEW_COUNT)"
               :key="index"
-              class="inline-flex max-w-28 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content"
+              class="inline-flex max-w-28 rounded-full border border-panel-border bg-panel-2 px-2 py-0.5 text-xs text-content-soft transition-colors duration-150 group-hover:bg-panel-3"
             >
               <span class="truncate">{{ member.playerName }}</span>
             </span>
@@ -95,9 +98,18 @@
           <p v-else class="text-xs text-content-faint">
             {{ t('dmSession.container.membersEmpty') }}
           </p>
-          <p class="mt-1 text-xs text-content-muted tabular-nums">
-            {{ container.createdAt.slice(0, 10) }}
-          </p>
+          <div
+            class="mt-auto flex items-center justify-between gap-2 border-t border-panel-border pt-2.5 text-xs text-content-muted tabular-nums"
+          >
+            <span class="inline-flex items-center gap-1">
+              <Icon name="user" :size="14" aria-hidden="true" />
+              {{ t('dmSession.container.memberCount', { count: container.members.length }) }}
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <Icon name="calendar" :size="14" aria-hidden="true" />
+              {{ container.createdAt.slice(0, 10) }}
+            </span>
+          </div>
         </NuxtLink>
         <button
           type="button"
@@ -112,7 +124,7 @@
       <!-- 新增 tile -->
       <button
         type="button"
-        class="flex min-h-28 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        class="flex min-h-28 cursor-pointer items-center justify-center rounded-lg border border-panel-border bg-panel text-content-muted transition-colors duration-200 hover:bg-panel-2 hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('dmSession.addContainer')"
         @click="onAdd"
       >

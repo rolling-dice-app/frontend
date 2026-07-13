@@ -6,7 +6,9 @@
     v-bind="$attrs"
     @update:model-value="onInput"
     @focus="onFocus"
-  />
+  >
+    <template v-if="$slots.suffix" #suffix><slot name="suffix" /></template>
+  </Input>
 </template>
 
 <script setup lang="ts">

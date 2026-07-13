@@ -40,14 +40,15 @@ export default {
   // 成員編輯
   member: {
     playerName: '玩家名稱',
+    characterName: '角色名稱',
     characterLink: '角色卡連結',
-    linkAction: '連結',
-    unlinkAction: '解除連結',
     add: '新增成員',
-    unavailable: '角色已失效',
+    unavailable: '角色不存在或連結失效',
     invalidLink: '無法辨識的分享連結',
     duplicate: '此角色卡已在名單中',
+    resolving: '解析角色卡中…',
     resolveFailed: '找不到對應的角色卡',
+    resolveError: '解析失敗',
     linkPlaceholder: '貼上角色卡分享連結',
   },
 

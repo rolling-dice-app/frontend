@@ -84,6 +84,13 @@ describe('AppInput', () => {
     expect(handler).toHaveBeenLastCalledWith('')
   })
 
+  it('suffix slot forwards into the inner @ui Input', () => {
+    const wrapper = mount(AppInput, {
+      slots: { suffix: '<span>尾端內容</span>' },
+    })
+    expect(wrapper.text()).toContain('尾端內容')
+  })
+
   it('trim=false passes raw value through on input', async () => {
     const handler = vi.fn()
     const wrapper = mount(AppInput, {

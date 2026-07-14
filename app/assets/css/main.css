@@ -87,6 +87,7 @@
 
   /* stat block rule */
   --color-statblock-rule: var(--rd--color-statblock-rule);
+  --color-statblock-rule-text: var(--rd--color-statblock-rule-text);
 
   /* semantic — info */
   --color-info: var(--rd--color-info);

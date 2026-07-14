@@ -58,16 +58,6 @@
           <span v-if="monster.alignment">{{ t(`character.alignment.${monster.alignment}`) }}</span>
         </p>
 
-        <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響，與列表卡同 token -->
-        <svg
-          viewBox="0 0 400 5"
-          preserveAspectRatio="none"
-          class="h-[5px] w-full"
-          aria-hidden="true"
-        >
-          <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
-        </svg>
-
         <div class="grid grid-cols-3 items-end gap-x-6 gap-y-3 sm:grid-cols-5">
           <div>
             <p class="text-xs text-content-muted">{{ t('monster.stat.ac') }}</p>
@@ -107,6 +97,16 @@
             </p>
           </div>
         </div>
+
+        <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響，與列表卡同 token -->
+        <svg
+          viewBox="0 0 400 5"
+          preserveAspectRatio="none"
+          class="h-[5px] w-full"
+          aria-hidden="true"
+        >
+          <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
+        </svg>
       </div>
 
       <!-- 屬性 -->
@@ -141,22 +141,33 @@
       <!-- 豁免 / 技能 / 抗性 / 感官 / 語言 -->
       <dl
         v-if="skillText || traitLines.length > 0"
-        class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 py-4 text-sm"
+        class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 py-4 text-sm sm:grid-cols-[max-content_1fr_max-content_1fr]"
       >
         <template v-if="skillText">
-          <dt class="text-content-muted">{{ t('monster.field.skills') }}</dt>
+          <dt class="font-bold text-statblock-rule-text">{{ t('monster.field.skills') }}</dt>
           <dd class="text-content">{{ skillText }}</dd>
         </template>
         <template v-for="trait in traitLines" :key="trait.labelKey">
-          <dt class="text-content-muted">{{ t(trait.labelKey) }}</dt>
-          <dd class="whitespace-pre-line text-content">{{ trait.value }}</dd>
+          <!-- fullWidth 項強制從新列起頭並讓值跨滿右側，避免 dt 落在右半欄時與值分行 -->
+          <dt
+            class="font-bold text-statblock-rule-text"
+            :class="trait.fullWidth ? 'sm:col-start-1' : ''"
+          >
+            {{ t(trait.labelKey) }}
+          </dt>
+          <dd
+            class="whitespace-pre-line text-content"
+            :class="trait.fullWidth ? 'sm:col-span-3' : ''"
+          >
+            {{ trait.value }}
+          </dd>
         </template>
       </dl>
 
       <!-- 攻擊 -->
       <section v-if="monster.attacks.length > 0" aria-labelledby="view-attacks" class="py-4">
         <h3 id="view-attacks" class="mb-2 font-display text-base font-bold text-content">
-          {{ t('monster.field.attacks') }}
+          {{ t('monster.field.attacksModule') }}
         </h3>
         <ul class="grid grid-cols-1 gap-2 lg:grid-cols-2">
           <li
@@ -233,7 +244,13 @@
 
 <script setup lang="ts">
 import { Modal } from '@ui'
-import { ABILITY_KEYS, SKILL_KEYS, type DamageDieEntry } from '@rolling-dice-app/core'
+import {
+  ABILITY_KEYS,
+  DAMAGE_TYPE_KEYS,
+  SKILL_KEYS,
+  type DamageDieEntry,
+  type DamageModifierKey,
+} from '@rolling-dice-app/core'
 import type { MessagePath } from '~/i18n'
 
 definePageMeta({
@@ -278,18 +295,28 @@ const skillText = computed(() => {
     .join(' · ')
 })
 
-const traitLines = computed<{ labelKey: MessagePath; value: string }[]>(() => {
+const traitLines = computed<{ labelKey: MessagePath; value: string; fullWidth?: boolean }[]>(() => {
   const m = monster.value
   if (!m) return []
-  const candidates: { labelKey: MessagePath; value: string | null }[] = [
-    { labelKey: 'monster.field.damageVulnerabilities', value: m.damageVulnerabilities },
-    { labelKey: 'monster.field.damageResistances', value: m.damageResistances },
-    { labelKey: 'monster.field.damageImmunities', value: m.damageImmunities },
-    { labelKey: 'monster.field.conditionImmunities', value: m.conditionImmunities },
+  const damageLine = (modifier: DamageModifierKey): string =>
+    DAMAGE_TYPE_KEYS.filter((key) => m.damageModifiers[key] === modifier)
+      .map((key) => t(`combat.damageType.${key}`))
+      .join('、')
+  const candidates: { labelKey: MessagePath; value: string | null; fullWidth?: boolean }[] = [
+    { labelKey: 'monster.field.damageVulnerabilities', value: damageLine('vulnerability') },
+    { labelKey: 'monster.field.damageResistances', value: damageLine('resistance') },
+    { labelKey: 'monster.field.damageImmunities', value: damageLine('immunity') },
+    {
+      labelKey: 'monster.field.conditionImmunities',
+      value: m.conditionImmunityKeys.map((key) => t(`combat.condition.${key}`)).join('、'),
+    },
     { labelKey: 'monster.field.senses', value: m.senses },
     { labelKey: 'monster.field.languages', value: m.languages },
+    { labelKey: 'monster.field.remark', value: m.remark, fullWidth: true },
   ]
-  return candidates.filter((c): c is { labelKey: MessagePath; value: string } => !!c.value)
+  return candidates.filter(
+    (c): c is { labelKey: MessagePath; value: string; fullWidth?: boolean } => !!c.value,
+  )
 })
 
 const damageSummary = (damageDice: DamageDieEntry[]): string => {

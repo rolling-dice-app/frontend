@@ -67,10 +67,12 @@ describe('useApiErrorToast — mapping + fallback', () => {
       'STALE_CAMPAIGN_RECORD_VERSION',
       'STALE_USER_VERSION',
       'STALE_CURRENCY_VERSION',
+      'STALE_DM_SESSION_CONTAINER_VERSION',
+      'STALE_DM_SESSION_LOG_VERSION',
     ]) {
       handle(makeFetchError({ code, status: 409 }))
     }
-    expect(items).toHaveLength(4)
+    expect(items).toHaveLength(6)
     for (const item of items) {
       expect(item.message).toBe('資料已被其他來源更新，請重新整理')
     }

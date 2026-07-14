@@ -74,6 +74,10 @@ const ERROR_MESSAGE_MAP: Partial<Record<ApiErrorCode, ErrorMapping>> = {
   STALE_CURRENCY_VERSION: { messageKey: 'ui.error.staleVersion' },
   /** 怪物模板 PATCH 撞 race（如同時開兩個 tab 編輯同一模板） */
   STALE_MONSTER_TEMPLATE_VERSION: { messageKey: 'ui.error.staleVersion' },
+  /** 劇本容器 PATCH 撞 race（如同時開兩個 tab 編輯同一劇本的標題 / 成員 / 備註） */
+  STALE_DM_SESSION_CONTAINER_VERSION: { messageKey: 'ui.error.staleVersion' },
+  /** 團務紀錄 PATCH 撞 race（同筆團務在他端被修改） */
+  STALE_DM_SESSION_LOG_VERSION: { messageKey: 'ui.error.staleVersion' },
 
   // ─ Backend-tracked cooldown：時間限制由 backend 把關，client 無法事先得知是否已過期。
   /** 還原角色卡後 7 天 cooldown 內又按刪除；details.cooldownEndsAt 帶剩餘時間 */

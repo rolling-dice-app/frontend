@@ -91,8 +91,13 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     return cached ? cloneContainer(cached) : undefined
   }
 
-  const createContainer = async (title: string): Promise<DmSessionContainerDTO> => {
-    const created = await dmSessionContainers().create({ title })
+  const createContainer = async (
+    title: string,
+    remark?: string,
+  ): Promise<DmSessionContainerDTO> => {
+    const created = await dmSessionContainers().create(
+      remark === undefined ? { title } : { title, remark },
+    )
     containerCache.value.set(created.id, created)
     // 後端列表為 createdAt desc，新建者置頂對齊
     list.value.unshift(dmSessionContainerToSummary(created))

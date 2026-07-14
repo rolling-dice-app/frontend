@@ -204,9 +204,9 @@ const onAdd = (): void => {
   createOpen.value = true
 }
 
-const onCreateConfirm = async (title: string): Promise<void> => {
+const onCreateConfirm = async (title: string, remark?: string): Promise<void> => {
   try {
-    const created = await dmSessionStore.createContainer(title)
+    const created = await dmSessionStore.createContainer(title, remark)
     await navigateTo(`/dm/session/${created.id}`)
   } catch (err) {
     apiErrorToast.handle(err)

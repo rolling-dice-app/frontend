@@ -169,6 +169,23 @@ describe('dm-session store — createContainer', () => {
     expect(store.containerCache.get('dsc-new')).toEqual(created)
     expect(store.list).toEqual([containerToSummary(created), containerToSummary(existing)])
   })
+
+  it('有帶 remark 時 POST body 一併含 remark', async () => {
+    const created = createMockDmSessionContainer({
+      id: 'dsc-new',
+      title: '新劇本',
+      remark: '劇本概要',
+    })
+    mockCreate.mockResolvedValue(created)
+
+    const { useDmSessionStore } = await import('~/stores/dm-session')
+    const store = useDmSessionStore()
+    const result = await store.createContainer('新劇本', '劇本概要')
+
+    expect(mockCreate).toHaveBeenCalledWith({ title: '新劇本', remark: '劇本概要' })
+    expect(result).toEqual(created)
+    expect(store.containerCache.get('dsc-new')).toEqual(created)
+  })
 })
 
 describe('dm-session store — updateContainer', () => {

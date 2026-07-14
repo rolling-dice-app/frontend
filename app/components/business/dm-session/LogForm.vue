@@ -39,8 +39,7 @@
               {{ t('dmSession.log.field.date') }}
               <span class="text-danger">*</span>
             </label>
-            <!-- teleport 關閉讓 popover 留在包裝層內，吃得到下方的 --rui token 覆寫 -->
-            <div class="dm-date-picker relative z-10 w-44">
+            <div class="dm-date-picker relative z-10 w-63">
               <DatePicker
                 id="dm-session-log-date"
                 v-model="dateModel"
@@ -379,5 +378,10 @@ const onSave = (): void => {
 /* trigger 本身無背景，補上與其他輸入框一致的內凹底色 */
 .dm-date-picker :deep([role='combobox']) {
   background: var(--color-canvas-inset);
+}
+/* teleport 關閉時 popover 為 absolute 無寬度，shrink-to-fit 以包裝層為上限；
+   包裝層 w-63 已等於日曆天然寬度，此處保底讓日曆寬度永不受箝制擠壓 */
+.dm-date-picker :deep([role='dialog']) {
+  width: max-content;
 }
 </style>

@@ -14,6 +14,13 @@
         :aria-label="`${member.playerName} · ${member.character.name ?? member.character.shareId}`"
         class="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content transition-colors hover:border-primary hover:bg-info-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
+        <img
+          v-if="member.character.avatar"
+          :src="member.character.avatar"
+          :alt="member.character.name ?? ''"
+          class="size-4 rounded-full object-cover"
+          loading="lazy"
+        />
         <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
         <span class="max-w-32 truncate text-content-muted">
           · {{ member.character.name ?? member.character.shareId }}

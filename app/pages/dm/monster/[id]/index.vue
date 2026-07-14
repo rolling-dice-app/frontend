@@ -102,7 +102,7 @@
         <svg
           viewBox="0 0 400 5"
           preserveAspectRatio="none"
-          class="h-[5px] w-full"
+          class="h-1.25 w-full"
           aria-hidden="true"
         >
           <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />

@@ -82,6 +82,20 @@ const isNotFound = computed(
 )
 const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
 
+// ── log 上限守門（per-container，直連 URL 也適用；詳情頁 onAddLog 已前置擋一次） ──
+const isAtLogLimit = computed(() => {
+  const limits = useAuthStore().limits
+  return (
+    limits != null && (container.value?.sessions.length ?? 0) >= limits.maxDmSessionLogsPerContainer
+  )
+})
+
+watch(status, (value) => {
+  if (value !== 'success' || !isAtLogLimit.value) return
+  toast.error(t('dmSession.log.limitReached'))
+  void navigateTo(`/dm/session/${id}`, { replace: true })
+})
+
 /** 日期由 client 預填今日（契約：defaults 不碰時間） */
 const todayISO = (): string => {
   const now = new Date()

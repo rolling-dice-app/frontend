@@ -1,38 +1,30 @@
 import { toRaw } from 'vue'
-import { buildDmSessionContainerCreateDefaults } from '@rolling-dice-app/core'
 import type {
   DmSessionContainerDTO,
   DmSessionContainerSummaryDTO,
   DmSessionLogDTO,
-  DmSessionLogSummaryDTO,
   DmSessionMemberDTO,
 } from '@rolling-dice-app/core'
 import type { DmSessionLogDraft } from '~/types/business/dm-session'
-import { buildDmSessionMockSeed } from '~/mocks/dm-sessions'
+import {
+  buildDmSessionContainerUpdateBody,
+  buildDmSessionLogCreateBody,
+  buildDmSessionLogUpdateBody,
+  dmSessionContainerToSummary,
+  dmSessionLogToSummary,
+  sortDmSessionLogSummaries,
+} from '~/helpers/dm-session'
 import { createSingleFlight } from '~/utils/single-flight'
 
 const cloneContainer = (c: DmSessionContainerDTO): DmSessionContainerDTO =>
   structuredClone(toRaw(c))
 const cloneLog = (l: DmSessionLogDTO): DmSessionLogDTO => structuredClone(toRaw(l))
 
-const toContainerSummary = (c: DmSessionContainerDTO): DmSessionContainerSummaryDTO => ({
-  id: c.id,
-  title: c.title,
-  members: c.members.map((m) => ({ playerName: m.playerName })),
-  createdAt: c.createdAt,
-})
-
-const toLogSummary = (l: DmSessionLogDTO): DmSessionLogSummaryDTO => ({
-  id: l.id,
-  title: l.title,
-  date: l.date,
-})
-
 /**
- * 團務容器 / 團務紀錄 store（m7.2）。
+ * 團務容器 / 團務紀錄 store。
  *
- * UI 階段：內部以 `app/mocks/dm-sessions.ts` seed 的 in-memory 資料模擬後端（重整即還原）。
- * action 簽名對齊未來 API client；TODO(串接階段): 內部改走 api client，簽名與頁面不動。
+ * 內部走 /dm-session-containers API（含 session-logs 子資源）；
+ * PATCH 以 cache 內 DTO 的 updatedAt 作樂觀鎖 token，204 後 re-GET 換新 token。
  */
 export const useDmSessionStore = defineStore('dmSession', () => {
   const list = ref<DmSessionContainerSummaryDTO[]>([])
@@ -52,37 +44,14 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     return limits != null && list.value.length >= limits.maxDmSessionContainers
   })
 
-  // ── mock 資料層（串接後整段移除） ──────────────────────────────────────────
-  let seeded = false
-  /** 首次存取時把 seed clone 進 cache，模擬後端既有資料 */
-  const ensureSeeded = (): void => {
-    if (seeded) return
-    seeded = true
-    const seed = buildDmSessionMockSeed()
-    for (const container of seed.containers) containerCache.value.set(container.id, container)
-    for (const log of seed.logs) logCache.value.set(log.id, log)
-  }
-
-  /** 模擬 server 衍生欄位排序：date 升冪、同日依 createdAt 升冪（跑團時序） */
-  const sortContainerSessions = (container: DmSessionContainerDTO): void => {
-    container.sessions.sort((a, b) => {
-      if (a.date !== b.date) return a.date < b.date ? -1 : 1
-      const aCreated = logCache.value.get(a.id)?.createdAt ?? ''
-      const bCreated = logCache.value.get(b.id)?.createdAt ?? ''
-      return aCreated < bCreated ? -1 : aCreated > bCreated ? 1 : 0
-    })
-  }
-
   // ── 容器 ───────────────────────────────────────────────────────────────────
+  // 單飛：並發的 loadList 共享同一輪 GET，避免先發後到的舊結果覆蓋較新結果。
   const listFlight = createSingleFlight(async (): Promise<DmSessionContainerSummaryDTO[]> => {
     listLoading.value = true
     listError.value = null
     try {
-      ensureSeeded()
-      // mock 列表序：createdAt desc（後端定案後對齊）
-      const items = [...containerCache.value.values()]
-        .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-        .map(toContainerSummary)
+      // server 排序 createdAt desc，本地不再重排
+      const items = await dmSessionContainers().list()
       list.value = items
       listLoaded.value = true
       return items
@@ -95,20 +64,19 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   })
   const loadList = (): Promise<DmSessionContainerSummaryDTO[]> => listFlight.run()
 
-  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複載入。 */
+  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
   const ensureListLoaded = async (): Promise<void> => {
     if (listLoaded.value) return
     await loadList()
   }
 
-  /** 回傳 null 表示容器不存在；頁面走 NotFound 分支。 */
-  const loadContainer = async (id: string): Promise<DmSessionContainerDTO | null> => {
+  const loadContainer = async (id: string): Promise<DmSessionContainerDTO> => {
     detailLoading.value = true
     detailError.value = null
     try {
-      ensureSeeded()
-      const container = containerCache.value.get(id)
-      return container ? cloneContainer(container) : null
+      const container = await dmSessionContainers().get(id)
+      containerCache.value.set(id, container)
+      return cloneContainer(container)
     } catch (error) {
       detailError.value = error
       throw error
@@ -124,39 +92,51 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   }
 
   const createContainer = async (title: string): Promise<DmSessionContainerDTO> => {
-    ensureSeeded()
-    const now = new Date().toISOString()
-    const created: DmSessionContainerDTO = {
-      ...buildDmSessionContainerCreateDefaults(),
-      id: crypto.randomUUID(),
-      userId: 'mock-dm-user',
-      title,
-      sessions: [],
-      createdAt: now,
-      updatedAt: now,
-    }
+    const created = await dmSessionContainers().create({ title })
     containerCache.value.set(created.id, created)
-    list.value.unshift(toContainerSummary(created))
+    // 後端列表為 createdAt desc，新建者置頂對齊
+    list.value.unshift(dmSessionContainerToSummary(created))
     return cloneContainer(created)
   }
 
+  /** 列表按 createdAt 排序，update 不改位置：summary 原位替換即可。 */
+  const replaceSummaryInPlace = (container: DmSessionContainerDTO): void => {
+    const idx = list.value.findIndex((c) => c.id === container.id)
+    if (idx >= 0) list.value.splice(idx, 1, dmSessionContainerToSummary(container))
+  }
+
+  /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
   const updateContainer = async (
     id: string,
     patch: Partial<Pick<DmSessionContainerDTO, 'title' | 'remark'>> &
       Partial<{ members: DmSessionMemberDTO[] }>,
-  ): Promise<DmSessionContainerDTO> => {
-    const container = containerCache.value.get(id)
-    if (!container) throw new Error('updateContainer: container not loaded')
-    if (patch.title !== undefined) container.title = patch.title
-    if (patch.remark !== undefined) container.remark = patch.remark
-    if (patch.members !== undefined) container.members = structuredClone(toRaw(patch.members))
-    container.updatedAt = new Date().toISOString()
-    const idx = list.value.findIndex((c) => c.id === id)
-    if (idx >= 0) list.value.splice(idx, 1, toContainerSummary(container))
-    return cloneContainer(container)
+  ): Promise<DmSessionContainerDTO | null> => {
+    const original = containerCache.value.get(id)
+    if (!original) throw new Error('updateContainer: container not loaded')
+
+    const body = buildDmSessionContainerUpdateBody(original, patch)
+    if (Object.keys(body).length <= 1) return cloneContainer(original)
+
+    const api = dmSessionContainers()
+    await api.update(id, body)
+    // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）並同步列表
+    let next: DmSessionContainerDTO
+    try {
+      next = await api.get(id)
+    } catch {
+      // PATCH 已成功，re-GET 失敗不得誤報為儲存失敗；cache 內舊 lock token 已作廢，
+      // 失效之避免原地重試撞 409，頁面重載時重抓。
+      containerCache.value.delete(id)
+      return null
+    }
+    containerCache.value.set(id, next)
+    replaceSummaryInPlace(next)
+    return cloneContainer(next)
   }
 
+  // hard-delete 無 deletedAt 分流，本地移除即與後端一致；cascade 同步清掉所屬紀錄。
   const removeContainer = async (id: string): Promise<void> => {
+    await dmSessionContainers().remove(id)
     const container = containerCache.value.get(id)
     for (const session of container?.sessions ?? []) logCache.value.delete(session.id)
     containerCache.value.delete(id)
@@ -164,14 +144,13 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   }
 
   // ── 紀錄 ───────────────────────────────────────────────────────────────────
-  /** 回傳 null 表示紀錄不存在（或不屬於該容器）；頁面走 NotFound 分支。 */
-  const loadLog = async (containerId: string, logId: string): Promise<DmSessionLogDTO | null> => {
+  const loadLog = async (containerId: string, logId: string): Promise<DmSessionLogDTO> => {
     detailLoading.value = true
     detailError.value = null
     try {
-      ensureSeeded()
-      const log = logCache.value.get(logId)
-      return log && log.containerId === containerId ? cloneLog(log) : null
+      const log = await dmSessionContainers().getLog(containerId, logId)
+      logCache.value.set(logId, log)
+      return cloneLog(log)
     } catch (error) {
       detailError.value = error
       throw error
@@ -190,41 +169,55 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     containerId: string,
     draft: DmSessionLogDraft,
   ): Promise<DmSessionLogDTO> => {
-    const container = containerCache.value.get(containerId)
-    if (!container) throw new Error('createLog: container not loaded')
-    const now = new Date().toISOString()
-    const created: DmSessionLogDTO = {
-      ...structuredClone(toRaw(draft)),
-      id: crypto.randomUUID(),
+    const created = await dmSessionContainers().createLog(
       containerId,
-      createdAt: now,
-      updatedAt: now,
-    }
+      buildDmSessionLogCreateBody(draft),
+    )
     logCache.value.set(created.id, created)
-    container.sessions.push(toLogSummary(created))
-    sortContainerSessions(container)
+    const container = containerCache.value.get(containerId)
+    if (container) {
+      container.sessions = sortDmSessionLogSummaries([
+        ...container.sessions,
+        dmSessionLogToSummary(created),
+      ])
+    }
     return cloneLog(created)
   }
 
+  /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
   const updateLog = async (
     containerId: string,
     logId: string,
     draft: DmSessionLogDraft,
-  ): Promise<DmSessionLogDTO> => {
-    const log = logCache.value.get(logId)
-    if (!log || log.containerId !== containerId) throw new Error('updateLog: log not loaded')
-    Object.assign(log, structuredClone(toRaw(draft)))
-    log.updatedAt = new Date().toISOString()
+  ): Promise<DmSessionLogDTO | null> => {
+    const original = logCache.value.get(logId)
+    if (!original || original.containerId !== containerId)
+      throw new Error('updateLog: log not loaded')
+
+    const body = buildDmSessionLogUpdateBody(original, draft)
+    if (Object.keys(body).length <= 1) return cloneLog(original)
+
+    const api = dmSessionContainers()
+    await api.updateLog(containerId, logId, body)
+    let next: DmSessionLogDTO
+    try {
+      next = await api.getLog(containerId, logId)
+    } catch {
+      logCache.value.delete(logId)
+      return null
+    }
+    logCache.value.set(logId, next)
     const container = containerCache.value.get(containerId)
     if (container) {
       const idx = container.sessions.findIndex((s) => s.id === logId)
-      if (idx >= 0) container.sessions.splice(idx, 1, toLogSummary(log))
-      sortContainerSessions(container)
+      if (idx >= 0) container.sessions.splice(idx, 1, dmSessionLogToSummary(next))
+      container.sessions = sortDmSessionLogSummaries(container.sessions)
     }
-    return cloneLog(log)
+    return cloneLog(next)
   }
 
   const removeLog = async (containerId: string, logId: string): Promise<void> => {
+    await dmSessionContainers().removeLog(containerId, logId)
     logCache.value.delete(logId)
     const container = containerCache.value.get(containerId)
     if (container) container.sessions = container.sessions.filter((s) => s.id !== logId)
@@ -240,7 +233,6 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     listError.value = null
     detailLoading.value = false
     detailError.value = null
-    seeded = false
   }
 
   return {

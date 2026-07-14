@@ -41,6 +41,7 @@ export default {
   // 成員編輯
   member: {
     playerName: '玩家名稱',
+    playerNameLinkedHint: '已連結角色卡，玩家名稱自動使用玩家暱稱',
     characterName: '角色名稱',
     characterLink: '角色卡連結',
     add: '新增成員',

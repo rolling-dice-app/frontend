@@ -22,10 +22,13 @@
           class="rounded-md border border-border-soft bg-surface p-3"
         >
           <div class="flex items-center gap-2">
+            <!-- 已連結成員的玩家名稱以 PL 帳號暱稱 snapshot 為準，唯讀；未連結才可手填 -->
             <CommonAppInput
               :model-value="member.playerName"
               size="sm"
               outline
+              :readonly="member.character !== null"
+              :title="member.character ? t('dmSession.member.playerNameLinkedHint') : undefined"
               :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
               :placeholder="t('dmSession.member.playerName')"
               :aria-label="t('dmSession.member.playerName')"
@@ -178,6 +181,13 @@ watch(
   (next) => {
     if (!next) return
     draft.value = structuredClone(toRaw(props.members))
+    // 開窗時以最新 hydrate 值刷新已連結成員的玩家名稱（snapshot 自癒）；
+    // 失效連結（available: false）hydrate 全 null，保留舊 snapshot 不覆寫
+    for (const member of draft.value) {
+      if (member.character?.available && member.character.ownerDisplayName) {
+        member.playerName = member.character.ownerDisplayName
+      }
+    }
     linkInputs.value = Object.fromEntries(
       draft.value.flatMap((m) => (m.character ? [[m.id, shareLinkOf(m.character.shareId)]] : [])),
     )
@@ -271,6 +281,8 @@ const resolveRow = async (id: string, shareId: string): Promise<void> => {
       return
     }
     member.character = preview
+    // 連結成功即 snapshot PL 暱稱為玩家名稱（唯讀）；暱稱缺漏時保留原值
+    if (preview.ownerDisplayName) member.playerName = preview.ownerDisplayName
     clearLinkState(id)
   } catch (err) {
     if (!isCurrentRequest(id, shareId)) return

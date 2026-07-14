@@ -94,6 +94,12 @@ type Wrapper = ReturnType<typeof mountModal>
 const linkInput = (wrapper: Wrapper, index = 0) =>
   wrapper.findAll('input[aria-label="角色卡連結"]')[index]!
 
+const playerNameInput = (wrapper: Wrapper, index = 0) =>
+  wrapper.findAll('input[aria-label="玩家名稱"]')[index]!
+
+const playerNameValue = (wrapper: Wrapper, index = 0) =>
+  (playerNameInput(wrapper, index).element as HTMLInputElement).value
+
 const charNameValue = (wrapper: Wrapper, index = 0) =>
   (wrapper.findAll('input[aria-label="角色名稱"]')[index]!.element as HTMLInputElement).value
 
@@ -159,12 +165,14 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
   })
 
   describe('連結 input 為綁定單一來源', () => {
-    it('已連結列開窗時預填 canonical 連結並顯示成功 icon', () => {
+    it('已連結列開窗時預填 canonical 連結並顯示成功 icon，玩家名稱以最新暱稱自癒且唯讀', () => {
       const wrapper = mountModal([makeMember({ character: makePreview(SHARE_A) })])
 
       expect((linkInput(wrapper).element as HTMLInputElement).value).toBe(canonicalLinkOf(SHARE_A))
       expect(charNameValue(wrapper)).toBe('艾莉絲')
       expect(iconNames(wrapper)).toContain('check-circle')
+      expect(playerNameValue(wrapper)).toBe('Roger')
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
     })
 
     it('預填連結原樣 blur 為 no-op：不發請求、不報 duplicate', async () => {
@@ -177,7 +185,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       expect(iconNames(wrapper)).toContain('check-circle')
     })
 
-    it('清空連結 input 後 blur 解除連結；confirm emit 的該列 character 為 null', async () => {
+    it('清空連結 input 後 blur 解除連結；玩家名稱恢復可編輯並保留 snapshot，confirm emit 的該列 character 為 null', async () => {
       const wrapper = mountModal([makeMember({ character: makePreview(SHARE_A) })])
 
       await linkInput(wrapper).setValue('')
@@ -185,10 +193,13 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
 
       expect(charNameValue(wrapper)).toBe('')
       expect(iconNames(wrapper)).not.toContain('check-circle')
+      // 開窗自癒已把玩家名稱刷成 'Roger'；解除連結後值保留、恢復可編輯
+      expect(playerNameValue(wrapper)).toBe('Roger')
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeUndefined()
 
       await findButtonByText(wrapper, '確認')!.trigger('click')
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
-        [expect.objectContaining({ playerName: 'Anna', character: null })],
+        [expect.objectContaining({ playerName: 'Roger', character: null })],
       ])
     })
 
@@ -247,6 +258,51 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
 
       expect(charNameValue(wrapper)).toBe('')
       expect(wrapper.find('[role="status"]').text()).toContain('角色不存在或連結失效')
+    })
+  })
+
+  describe('玩家名稱 snapshot（PL 暱稱優先）', () => {
+    it('未連結列玩家名稱可編輯；解析成功後自動帶入 ownerDisplayName 並轉唯讀', async () => {
+      mockResolve.mockResolvedValue({ previews: [makePreview(SHARE_A)] })
+      const wrapper = mountModal()
+
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeUndefined()
+
+      await linkInput(wrapper).setValue(linkOf(SHARE_A))
+      await linkInput(wrapper).trigger('blur')
+      await flushPromises()
+
+      expect(playerNameValue(wrapper)).toBe('Roger')
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
+    })
+
+    it('解析成功但 ownerDisplayName 為 null：玩家名稱保留原值、仍轉唯讀', async () => {
+      mockResolve.mockResolvedValue({
+        previews: [makePreview(SHARE_A, { ownerDisplayName: null })],
+      })
+      const wrapper = mountModal()
+
+      await linkInput(wrapper).setValue(linkOf(SHARE_A))
+      await linkInput(wrapper).trigger('blur')
+      await flushPromises()
+
+      expect(playerNameValue(wrapper)).toBe('Anna')
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
+    })
+
+    it('失效連結（available: false）成員開窗：玩家名稱保留舊 snapshot 不覆寫、維持唯讀', () => {
+      const wrapper = mountModal([
+        makeMember({
+          character: makePreview(SHARE_A, {
+            available: false,
+            name: null,
+            ownerDisplayName: null,
+          }),
+        }),
+      ])
+
+      expect(playerNameValue(wrapper)).toBe('Anna')
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
     })
   })
 
@@ -396,8 +452,9 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await flushPromises()
 
       await confirmButton.trigger('click')
+      // 解析成功即 snapshot PL 暱稱，emit 的玩家名稱為 ownerDisplayName
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
-        [expect.objectContaining({ playerName: 'Anna', character: makePreview(SHARE_A) })],
+        [expect.objectContaining({ playerName: 'Roger', character: makePreview(SHARE_A) })],
       ])
       expect(wrapper.emitted('update:open')?.at(-1)).toEqual([false])
     })

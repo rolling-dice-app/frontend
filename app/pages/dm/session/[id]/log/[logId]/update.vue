@@ -23,7 +23,7 @@
     </template>
 
     <!-- 暫時性錯誤：可重試 -->
-    <template v-else-if="status === 'error'">
+    <template v-else-if="isTransientError">
       <CommonPageHeader :title="''" :show-back="true" :back-to="`/dm/session/${id}/log/${logId}`" />
       <div
         class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
@@ -68,7 +68,7 @@ const dmSessionStore = useDmSessionStore()
 useHead({ title: t('dmSession.log.editTitle') })
 
 // 表單同時需要紀錄本體與劇本常駐名單（出席 toggle chips）。
-const { status, refresh } = useAsyncData(
+const { status, error, refresh } = useAsyncData(
   () => `dm-session-log-update-${logId}`,
   async () => {
     const [log] = await Promise.all([
@@ -89,8 +89,14 @@ const draft = computed<DmSessionLogDraft | undefined>(() => {
   return rest
 })
 
-// mock 讀取不會拋錯，404 僅剩 success 但查無資料一種形態；串接後補 FetchError 404 分支。
-const isNotFound = computed(() => status.value === 'success' && !draft.value)
+// 真 404（紀錄或劇本不存在 / 不屬於此劇本 / 非擁有者，Promise.all 任一 GET 404 都進 error）
+// 走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !draft.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
 
 const isSaving = ref(false)
 

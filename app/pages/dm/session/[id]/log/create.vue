@@ -23,7 +23,7 @@
     </template>
 
     <!-- 暫時性錯誤：可重試 -->
-    <template v-else-if="status === 'error'">
+    <template v-else-if="isTransientError">
       <CommonPageHeader :title="''" :show-back="true" :back-to="`/dm/session/${id}`" />
       <div
         class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
@@ -66,14 +66,21 @@ const dmSessionStore = useDmSessionStore()
 
 useHead({ title: t('dmSession.log.createTitle') })
 
-const { status, refresh } = useAsyncData(
+const { status, error, refresh } = useAsyncData(
   () => `dm-session-log-create-${id}`,
   () => dmSessionStore.loadContainer(id),
   { server: false, lazy: true },
 )
 
 const container = computed(() => dmSessionStore.getContainerById(id))
-const isNotFound = computed(() => status.value === 'success' && !container.value)
+
+// 真 404（劇本不存在 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !container.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
 
 /** 日期由 client 預填今日（契約：defaults 不碰時間） */
 const todayISO = (): string => {

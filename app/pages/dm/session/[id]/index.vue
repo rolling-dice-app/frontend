@@ -51,7 +51,7 @@
 
     <!-- 暫時性錯誤：可重試 -->
     <div
-      v-else-if="status === 'error'"
+      v-else-if="isTransientError"
       class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
       role="alert"
     >
@@ -252,7 +252,7 @@ useHead({ title: t('dmSession.detailTitle') })
 const maxMembers = VALIDATION_LIMITS.maxMembersPerDmSessionContainer
 
 // 與列表同步：私有資料不進 SSR HTML / payload。id 在本次 mount 內恆定（route 變動走 page key remount）。
-const { status, refresh } = useAsyncData(
+const { status, error, refresh } = useAsyncData(
   () => `dm-session-container-${id}`,
   () => dmSessionStore.loadContainer(id),
   { server: false, lazy: true },
@@ -260,8 +260,13 @@ const { status, refresh } = useAsyncData(
 
 const container = computed(() => dmSessionStore.getContainerById(id))
 
-// mock 讀取不會拋錯，404 僅剩 success 但查無資料一種形態；串接後補 FetchError 404 分支。
-const isNotFound = computed(() => status.value === 'success' && !container.value)
+// 真 404（劇本不存在 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !container.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
 
 // ── 新增團務 ────────────────────────────────────────────────────────────────
 const isAtLogLimit = computed(() => {
@@ -288,8 +293,10 @@ const patchContainer = async (
   patch: Partial<{ title: string; remark: string; members: DmSessionMemberDTO[] }>,
 ): Promise<void> => {
   try {
-    await dmSessionStore.updateContainer(id, patch)
+    const next = await dmSessionStore.updateContainer(id, patch)
     toast.success(t('dmSession.savedHint'))
+    // PATCH 已成功但 re-GET 失敗（回 null）：cache 已失效，重載拿新樂觀鎖 token
+    if (next === null) void refresh()
   } catch (err) {
     apiErrorToast.handle(err)
   }

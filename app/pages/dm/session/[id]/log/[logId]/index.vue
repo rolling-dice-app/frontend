@@ -36,7 +36,7 @@
 
     <!-- 暫時性錯誤：可重試 -->
     <div
-      v-else-if="status === 'error'"
+      v-else-if="isTransientError"
       class="flex min-h-[50dvh] flex-col items-center justify-center gap-3 text-center"
       role="alert"
     >
@@ -170,7 +170,7 @@ const dmSessionStore = useDmSessionStore()
 
 useHead({ title: t('dmSession.log.detailTitle') })
 
-const { status, refresh } = useAsyncData(
+const { status, error, refresh } = useAsyncData(
   () => `dm-session-log-${logId}`,
   () => dmSessionStore.loadLog(id, logId),
   { server: false, lazy: true },
@@ -181,8 +181,13 @@ const log = computed(() => {
   return cached && cached.containerId === id ? cached : undefined
 })
 
-// mock 讀取不會拋錯，404 僅剩 success 但查無資料一種形態；串接後補 FetchError 404 分支。
-const isNotFound = computed(() => status.value === 'success' && !log.value)
+// 真 404（紀錄不存在 / 不屬於該劇本 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
+const isNotFound = computed(
+  () =>
+    (status.value === 'error' && isFetchError(error.value) && error.value.statusCode === 404) ||
+    (status.value === 'success' && !log.value),
+)
+const isTransientError = computed(() => status.value === 'error' && !isNotFound.value)
 
 const buildMoneyParts = useMoneyEarningParts()
 const moneyParts = computed(() => (log.value ? buildMoneyParts(log.value.moneyRewards) : []))

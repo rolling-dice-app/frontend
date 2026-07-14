@@ -29,6 +29,10 @@ describe('monsterTemplateToView / monsterTemplateToSummary', () => {
     expect(view).not.toHaveProperty('userId')
     expect(view).not.toHaveProperty('createdAt')
     expect(view).not.toHaveProperty('updatedAt')
+    expect(view).not.toHaveProperty('damageVulnerabilities')
+    expect(view).not.toHaveProperty('damageResistances')
+    expect(view).not.toHaveProperty('damageImmunities')
+    expect(view).not.toHaveProperty('conditionImmunities')
     expect(view.id).toBe(dto.id)
     expect(view.attacks).toEqual(dto.attacks)
   })
@@ -59,10 +63,20 @@ describe('buildMonsterTemplateCreateBody', () => {
       name: '  紅龍  ',
       senses: '   ',
       languages: '龍語',
+      remark: '   ',
     })
     expect(body.name).toBe('紅龍')
     expect(body.senses).toBeNull()
     expect(body.languages).toBe('龍語')
+    expect(body.remark).toBeNull()
+  })
+
+  it('不含 deprecated free-text 抗性欄位（runtime 也已剝除）', () => {
+    const body = buildMonsterTemplateCreateBody(buildDefaultMonsterView())
+    expect(body).not.toHaveProperty('damageVulnerabilities')
+    expect(body).not.toHaveProperty('damageResistances')
+    expect(body).not.toHaveProperty('damageImmunities')
+    expect(body).not.toHaveProperty('conditionImmunities')
   })
 })
 
@@ -86,6 +100,8 @@ describe('buildMonsterTemplateUpdatePatch', () => {
     const dto = createMockMonsterTemplate()
     const form = createMockMonsterFormState(dto, {
       skills: { ...dto.skills },
+      damageModifiers: { ...dto.damageModifiers },
+      conditionImmunityKeys: [...dto.conditionImmunityKeys],
       attacks: structuredClone(dto.attacks),
     })
     const patch = buildMonsterTemplateUpdatePatch(dto, form)
@@ -115,14 +131,13 @@ describe('buildMonsterTemplateUpdatePatch', () => {
       abilities: { ...dto.abilities, strength: 16 },
       savingThrows: { strength: 3 },
       skills: { intimidation: 2 },
-      damageVulnerabilities: '光耀',
-      damageResistances: '鈍擊',
-      damageImmunities: '毒素',
-      conditionImmunities: '恐懼',
+      damageModifiers: { radiant: 'vulnerability', bludgeoning: 'resistance' },
+      conditionImmunityKeys: ['frightened'],
       senses: '黑暗視覺 120 ft.',
       languages: '獸人語',
       attacks: [],
       features: [],
+      remark: '抗性僅對非魔法攻擊生效',
     })
     const patch = buildMonsterTemplateUpdatePatch(dto, form)
     expect(Object.keys(patch).sort()).toEqual(
@@ -139,14 +154,13 @@ describe('buildMonsterTemplateUpdatePatch', () => {
         'abilities',
         'savingThrows',
         'skills',
-        'damageVulnerabilities',
-        'damageResistances',
-        'damageImmunities',
-        'conditionImmunities',
+        'damageModifiers',
+        'conditionImmunityKeys',
         'senses',
         'languages',
         'attacks',
         'features',
+        'remark',
       ].sort(),
     )
     expect(patch.updatedAt).toBe(dto.updatedAt)

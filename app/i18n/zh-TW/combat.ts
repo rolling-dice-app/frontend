@@ -1,4 +1,9 @@
-import type { DamageTypeKey, FeatureSource, FeatureUsageRecovery } from '@rolling-dice-app/core'
+import type {
+  ConditionKey,
+  DamageTypeKey,
+  FeatureSource,
+  FeatureUsageRecovery,
+} from '@rolling-dice-app/core'
 
 const damageType: Readonly<Record<DamageTypeKey, string>> = {
   bludgeoning: '鈍擊',
@@ -14,6 +19,24 @@ const damageType: Readonly<Record<DamageTypeKey, string>> = {
   necrotic: '暗蝕',
   radiant: '光耀',
   psychic: '心靈',
+}
+
+const condition: Readonly<Record<ConditionKey, string>> = {
+  blinded: '目盲',
+  charmed: '魅惑',
+  deafened: '耳聾',
+  exhaustion: '力竭',
+  frightened: '恐懼',
+  grappled: '擒抱',
+  incapacitated: '失能',
+  invisible: '隱形',
+  paralyzed: '麻痺',
+  petrified: '石化',
+  poisoned: '中毒',
+  prone: '倒地',
+  restrained: '束縛',
+  stunned: '震懾',
+  unconscious: '昏迷',
 }
 
 const featureSource: Readonly<Record<FeatureSource, string>> = {
@@ -33,6 +56,7 @@ const featureRecovery: Readonly<Record<FeatureUsageRecovery, string>> = {
 /** 戰鬥相關 enum + 規則 / 衍生值 / AC / 攻擊 / 特性 / 擲骰 用詞 */
 export default {
   // T1 enum
+  condition,
   damageType,
   featureRecovery,
   featureSource,

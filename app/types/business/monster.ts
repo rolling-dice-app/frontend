@@ -11,8 +11,17 @@ export type MonsterAttackDraft = Omit<MonsterAttackEntry, 'id'>
 /** 特性草稿（尚未具備 id 的條目） */
 export type MonsterFeatureDraft = Omit<MonsterFeature, 'id'>
 
-/** 表單用 view；由 monsterTemplateToView 自 DTO 導出，不含伺服端欄位（userId / 時間戳） */
-export type MonsterTemplateView = Omit<MonsterTemplateDTO, 'userId' | 'createdAt' | 'updatedAt'>
+/** 表單用 view；由 monsterTemplateToView 自 DTO 導出，不含伺服端欄位（userId / 時間戳）與 deprecated free-text 抗性欄位 */
+export type MonsterTemplateView = Omit<
+  MonsterTemplateDTO,
+  | 'userId'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'damageVulnerabilities'
+  | 'damageResistances'
+  | 'damageImmunities'
+  | 'conditionImmunities'
+>
 
 /**
  * 編輯怪物模板的 form state；欄位等同 view 的可改欄位（含 id 以利對應）。

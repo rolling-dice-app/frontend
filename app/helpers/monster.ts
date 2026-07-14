@@ -30,12 +30,28 @@ export function formatDamageDice(entry: DamageDieEntry): string {
  * 真正 id 由 backend 於建立時配發。
  */
 export function buildDefaultMonsterView(): MonsterTemplateView {
-  return { id: '', name: '', ...buildMonsterTemplateCreateDefaults() }
+  const {
+    damageVulnerabilities: _dv,
+    damageResistances: _dr,
+    damageImmunities: _di,
+    conditionImmunities: _ci,
+    ...defaults
+  } = buildMonsterTemplateCreateDefaults()
+  return { id: '', name: '', ...defaults }
 }
 
-/** DTO → 表單 view：剝除 server-owned 欄位（userId / 時間戳）。 */
+/** DTO → 表單 view：剝除 server-owned 欄位（userId / 時間戳）與 deprecated free-text 抗性欄位。 */
 export function monsterTemplateToView(dto: MonsterTemplateDTO): MonsterTemplateView {
-  const { userId: _userId, createdAt: _createdAt, updatedAt: _updatedAt, ...view } = dto
+  const {
+    userId: _userId,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    damageVulnerabilities: _dv,
+    damageResistances: _dr,
+    damageImmunities: _di,
+    conditionImmunities: _ci,
+    ...view
+  } = dto
   return view
 }
 
@@ -58,12 +74,9 @@ function cleanMonsterTextFields<T extends Omit<MonsterTemplateView, 'id'>>(view:
     name: cleanText(view.name),
     challengeRating: cleanTextOrNull(view.challengeRating),
     speed: cleanText(view.speed),
-    damageVulnerabilities: cleanTextOrNull(view.damageVulnerabilities),
-    damageResistances: cleanTextOrNull(view.damageResistances),
-    damageImmunities: cleanTextOrNull(view.damageImmunities),
-    conditionImmunities: cleanTextOrNull(view.conditionImmunities),
     senses: cleanTextOrNull(view.senses),
     languages: cleanTextOrNull(view.languages),
+    remark: cleanTextOrNull(view.remark),
   }
 }
 
@@ -101,21 +114,16 @@ export function buildMonsterTemplateUpdatePatch(
       savingThrows: next.savingThrows,
     }),
     ...(!deepEqual(next.skills, original.skills) && { skills: next.skills }),
-    ...(next.damageVulnerabilities !== original.damageVulnerabilities && {
-      damageVulnerabilities: next.damageVulnerabilities,
+    ...(!deepEqual(next.damageModifiers, original.damageModifiers) && {
+      damageModifiers: next.damageModifiers,
     }),
-    ...(next.damageResistances !== original.damageResistances && {
-      damageResistances: next.damageResistances,
-    }),
-    ...(next.damageImmunities !== original.damageImmunities && {
-      damageImmunities: next.damageImmunities,
-    }),
-    ...(next.conditionImmunities !== original.conditionImmunities && {
-      conditionImmunities: next.conditionImmunities,
+    ...(!deepEqual(next.conditionImmunityKeys, original.conditionImmunityKeys) && {
+      conditionImmunityKeys: next.conditionImmunityKeys,
     }),
     ...(next.senses !== original.senses && { senses: next.senses }),
     ...(next.languages !== original.languages && { languages: next.languages }),
     ...(!deepEqual(next.attacks, original.attacks) && { attacks: next.attacks }),
     ...(!deepEqual(next.features, original.features) && { features: next.features }),
+    ...(next.remark !== original.remark && { remark: next.remark }),
   }
 }

@@ -42,7 +42,7 @@ export default {
     ac: '護甲等級',
     hp: '生命值',
     speed: '速度',
-    initiative: '先攻加值',
+    initiative: '先攻',
     savingThrows: '豁免',
     skills: '技能',
     damageVulnerabilities: '傷害易傷',
@@ -51,9 +51,9 @@ export default {
     conditionImmunities: '狀態免疫',
     senses: '感官',
     languages: '語言',
-    attacks: '攻擊',
     attacksModule: '攻擊模組',
     features: '特性 / 動作',
+    remark: '備註',
   },
 
   // placeholder
@@ -61,6 +61,7 @@ export default {
     challengeRating: '如 1/2、5',
     speed: '如 30 ft., fly 60 ft.',
     freeText: '自由填寫（選填）',
+    remark: '條件式例外（如：非魔法攻擊）、DM 註記等（選填）',
   },
 
   // 攻擊

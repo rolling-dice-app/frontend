@@ -136,6 +136,7 @@
     <BusinessDmSessionContainerTitleModal
       v-model:open="createOpen"
       mode="create"
+      :submitting="creating"
       @confirm="onCreateConfirm"
     />
 
@@ -204,12 +205,20 @@ const onAdd = (): void => {
   createOpen.value = true
 }
 
+const creating = ref(false)
+
+// 成功才關窗再導頁；失敗保持開啟保留輸入
 const onCreateConfirm = async (title: string, remark?: string): Promise<void> => {
+  if (creating.value) return
+  creating.value = true
   try {
     const created = await dmSessionStore.createContainer(title, remark)
+    createOpen.value = false
     await navigateTo(`/dm/session/${created.id}`)
   } catch (err) {
     apiErrorToast.handle(err)
+  } finally {
+    creating.value = false
   }
 }
 

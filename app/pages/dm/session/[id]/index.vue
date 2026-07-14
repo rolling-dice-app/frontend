@@ -187,16 +187,19 @@
       v-model:open="renameOpen"
       mode="rename"
       :initial-title="container?.title ?? ''"
+      :submitting="saving"
       @confirm="onRenameConfirm"
     />
     <BusinessDmSessionMemberEditModal
       v-model:open="membersOpen"
       :members="container?.members ?? []"
+      :submitting="saving"
       @confirm="onMembersConfirm"
     />
     <BusinessDmSessionContainerRemarkModal
       v-model:open="remarkOpen"
       :remark="container?.remark ?? ''"
+      :submitting="saving"
       @confirm="onRemarkConfirm"
     />
 
@@ -289,23 +292,32 @@ const renameOpen = ref(false)
 const membersOpen = ref(false)
 const remarkOpen = ref(false)
 
+// 三彈窗互斥開啟，共用一支 saving；成功才關窗，失敗保持開啟保留輸入
+const saving = ref(false)
+
 const patchContainer = async (
   patch: Partial<{ title: string; remark: string; members: DmSessionMemberDTO[] }>,
+  openRef: Ref<boolean>,
 ): Promise<void> => {
+  if (saving.value) return
+  saving.value = true
   try {
     const next = await dmSessionStore.updateContainer(id, patch)
+    openRef.value = false
     toast.success(t('dmSession.savedHint'))
     // PATCH 已成功但 re-GET 失敗（回 null）：cache 已失效，重載拿新樂觀鎖 token
     if (next === null) void refresh()
   } catch (err) {
     apiErrorToast.handle(err)
+  } finally {
+    saving.value = false
   }
 }
 
-const onRenameConfirm = (title: string): Promise<void> => patchContainer({ title })
+const onRenameConfirm = (title: string): Promise<void> => patchContainer({ title }, renameOpen)
 const onMembersConfirm = (members: DmSessionMemberDTO[]): Promise<void> =>
-  patchContainer({ members })
-const onRemarkConfirm = (remark: string): Promise<void> => patchContainer({ remark })
+  patchContainer({ members }, membersOpen)
+const onRemarkConfirm = (remark: string): Promise<void> => patchContainer({ remark }, remarkOpen)
 
 // ── 刪除 ────────────────────────────────────────────────────────────────────
 const confirmOpen = ref(false)

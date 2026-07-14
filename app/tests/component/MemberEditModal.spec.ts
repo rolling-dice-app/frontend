@@ -68,9 +68,10 @@ const ModalStub = {
 
 const ButtonStub = {
   name: 'Button',
-  props: ['radius', 'disabled', 'bgColor'],
+  props: ['radius', 'disabled', 'bgColor', 'loading'],
+  // 比照 @ui Button：loading 時自動 disabled
   template:
-    '<button type="button" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+    '<button type="button" :disabled="disabled || loading" @click="$emit(\'click\')"><slot /></button>',
   emits: ['click'],
 }
 
@@ -80,9 +81,9 @@ const IconStub = {
   template: '<span aria-hidden="true" />',
 }
 
-const mountModal = (members: DmSessionMemberDTO[] = [makeMember()]) =>
+const mountModal = (members: DmSessionMemberDTO[] = [makeMember()], submitting = false) =>
   mount(MemberEditModal, {
-    props: { open: true, members },
+    props: { open: true, members, submitting },
     global: {
       stubs: { Modal: ModalStub, Button: ButtonStub, Icon: IconStub },
       components: { CommonAppInput: AppInput, CommonAppButton: AppButton },
@@ -456,7 +457,8 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
         [expect.objectContaining({ playerName: 'Roger', character: makePreview(SHARE_A) })],
       ])
-      expect(wrapper.emitted('update:open')?.at(-1)).toEqual([false])
+      // confirm 不自行關窗：成功後由父頁關閉
+      expect(wrapper.emitted('update:open')).toBeUndefined()
     })
 
     it('他列輸入不受某列 resolving 影響（per-row 隔離）', async () => {
@@ -471,6 +473,40 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
 
       expect(linkInput(wrapper, 1).attributes('disabled')).toBeUndefined()
       expect(wrapper.findAll('[role="status"]')[1]!.text()).toBe('')
+    })
+  })
+
+  describe('submitting 協議', () => {
+    it('submitting 時確認鈕與取消鈕皆 disabled，confirm 不 emit', async () => {
+      const wrapper = mountModal([makeMember()], true)
+
+      const confirmButton = findButtonByText(wrapper, '確認')!
+      const cancelButton = findButtonByText(wrapper, '取消')!
+      expect(confirmButton.attributes('disabled')).toBeDefined()
+      expect(cancelButton.attributes('disabled')).toBeDefined()
+
+      await confirmButton.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+    })
+
+    it('submitting 時 Modal 的關窗請求（ESC / X）被擋下，非 submitting 時正常轉發', async () => {
+      const wrapper = mountModal([makeMember()], true)
+
+      wrapper.findComponent(ModalStub).vm.$emit('update:modelValue', false)
+      expect(wrapper.emitted('update:open')).toBeUndefined()
+
+      await wrapper.setProps({ submitting: false })
+      wrapper.findComponent(ModalStub).vm.$emit('update:modelValue', false)
+      expect(wrapper.emitted('update:open')?.at(-1)).toEqual([false])
+    })
+
+    it('confirm 後不自行關窗（由父頁於成功分支關閉）', async () => {
+      const wrapper = mountModal()
+
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+
+      expect(wrapper.emitted('confirm')).toHaveLength(1)
+      expect(wrapper.emitted('update:open')).toBeUndefined()
     })
   })
 })

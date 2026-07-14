@@ -5,6 +5,7 @@
         <CommonAppButton
           variant="primary"
           :disabled="!canSubmit"
+          :loading="submitting"
           class="ml-auto min-w-22 whitespace-nowrap"
           @click="onSave"
         >
@@ -263,8 +264,10 @@ const props = withDefaults(
     containerMembers: DmSessionMemberDTO[]
     mode?: 'create' | 'edit'
     backTo?: string
+    /** 父頁送出中：儲存鈕轉 loading */
+    submitting?: boolean
   }>(),
-  { mode: 'edit', backTo: undefined },
+  { mode: 'edit', backTo: undefined, submitting: false },
 )
 
 const emit = defineEmits<{ save: [value: DmSessionLogDraft] }>()
@@ -353,7 +356,7 @@ const onAddAdhoc = (): void => {
 // ── 提交 ────────────────────────────────────────────────────────────────────
 /** 物品內容為空的獎勵列視為未填，儲存時丟棄 */
 const onSave = (): void => {
-  if (!canSubmit.value) return
+  if (!canSubmit.value || props.submitting) return
   const next = structuredClone(toRaw(formState))
   next.title = next.title.trim()
   next.itemRewards = next.itemRewards.filter((r) => r.item.trim() !== '')

@@ -43,6 +43,7 @@
       :container-members="container?.members ?? []"
       mode="edit"
       :back-to="`/dm/session/${id}/log/${logId}`"
+      :submitting="isSaving"
       @save="onSave"
     />
   </div>

@@ -42,6 +42,7 @@
       :container-members="container?.members ?? []"
       mode="create"
       :back-to="`/dm/session/${id}`"
+      :submitting="isSaving"
       @save="onSave"
     />
   </div>

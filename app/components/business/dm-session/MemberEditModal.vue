@@ -7,7 +7,7 @@
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"
-    @update:model-value="(value: boolean) => emit('update:open', value)"
+    @update:model-value="onOpenChange"
   >
     <div class="space-y-3">
       <p class="text-xs text-content-muted">
@@ -120,13 +120,19 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <CommonAppButton type="button" variant="ghost" @click="emit('update:open', false)">
+        <CommonAppButton
+          type="button"
+          variant="ghost"
+          :disabled="submitting"
+          @click="onOpenChange(false)"
+        >
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
         <CommonAppButton
           type="button"
           variant="primary"
           :disabled="anyResolving"
+          :loading="submitting"
           @click="onConfirm"
         >
           {{ t('ui.action.confirm') }}
@@ -146,10 +152,15 @@ import { parseShareIdFromLink } from '~/helpers/share'
 const { t } = useI18n()
 const apiErrorToast = useApiErrorToast()
 
-const props = defineProps<{
-  open: boolean
-  members: DmSessionMemberDTO[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    members: DmSessionMemberDTO[]
+    /** 父頁送出中：確認鈕轉 loading，並擋下所有關窗路徑 */
+    submitting?: boolean
+  }>(),
+  { submitting: false },
+)
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -330,13 +341,18 @@ const linkHint = (
   }
 }
 
-/** 名字修剪後為空且未連結角色的列視為未填，確認時丟棄 */
+/** 關窗單一入口：submitting 期間忽略（含 ESC / header X / 取消鈕） */
+const onOpenChange = (value: boolean): void => {
+  if (props.submitting) return
+  emit('update:open', value)
+}
+
+/** 名字修剪後為空且未連結的列視為未填，確認時丟棄；不自行關窗，成功後由父頁關閉 */
 const onConfirm = (): void => {
-  if (anyResolving.value) return
+  if (anyResolving.value || props.submitting) return
   const cleaned = draft.value
     .map((m) => ({ ...m, playerName: m.playerName.trim() }))
     .filter((m) => m.playerName !== '' || m.character !== null)
   emit('confirm', cleaned)
-  emit('update:open', false)
 }
 </script>

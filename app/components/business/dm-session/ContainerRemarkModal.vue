@@ -7,7 +7,7 @@
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"
-    @update:model-value="(value: boolean) => emit('update:open', value)"
+    @update:model-value="onOpenChange"
   >
     <label for="dm-session-container-remark" class="mb-1 block text-xs text-content-muted">
       {{ t('dmSession.container.field.remark') }}
@@ -29,10 +29,15 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <CommonAppButton type="button" variant="ghost" @click="emit('update:open', false)">
+        <CommonAppButton
+          type="button"
+          variant="ghost"
+          :disabled="submitting"
+          @click="onOpenChange(false)"
+        >
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton type="button" variant="primary" @click="onConfirm">
+        <CommonAppButton type="button" variant="primary" :loading="submitting" @click="onConfirm">
           {{ t('ui.action.confirm') }}
         </CommonAppButton>
       </div>
@@ -46,10 +51,15 @@ import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 
-const props = defineProps<{
-  open: boolean
-  remark: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    remark: string
+    /** 父頁送出中：確認鈕轉 loading，並擋下所有關窗路徑 */
+    submitting?: boolean
+  }>(),
+  { submitting: false },
+)
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -67,8 +77,15 @@ watch(
   { immediate: true },
 )
 
+/** 關窗單一入口：submitting 期間忽略（含 ESC / header X / 取消鈕） */
+const onOpenChange = (value: boolean): void => {
+  if (props.submitting) return
+  emit('update:open', value)
+}
+
+// confirm 不自行關窗：成功後由父頁關閉，失敗保持開啟保留輸入
 const onConfirm = (): void => {
+  if (props.submitting) return
   emit('confirm', draft.value)
-  emit('update:open', false)
 }
 </script>

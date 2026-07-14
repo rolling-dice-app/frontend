@@ -7,7 +7,7 @@
     bg-color="var(--color-canvas-elevated)"
     text-color="var(--color-content)"
     border-color="var(--color-border)"
-    @update:model-value="(value: boolean) => emit('update:open', value)"
+    @update:model-value="onOpenChange"
   >
     <label for="dm-session-container-title" class="mb-1 block text-xs text-content-muted">
       {{ t('dmSession.container.field.title') }}
@@ -43,10 +43,21 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <CommonAppButton type="button" variant="ghost" @click="emit('update:open', false)">
+        <CommonAppButton
+          type="button"
+          variant="ghost"
+          :disabled="submitting"
+          @click="onOpenChange(false)"
+        >
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton type="button" variant="primary" :disabled="!canSubmit" @click="onConfirm">
+        <CommonAppButton
+          type="button"
+          variant="primary"
+          :disabled="!canSubmit"
+          :loading="submitting"
+          @click="onConfirm"
+        >
           {{ t('ui.action.confirm') }}
         </CommonAppButton>
       </div>
@@ -66,8 +77,10 @@ const props = withDefaults(
     mode: 'create' | 'rename'
     /** rename 模式的現有名稱；open 當下快照進 draft */
     initialTitle?: string
+    /** 父頁送出中：確認鈕轉 loading，並擋下所有關窗路徑 */
+    submitting?: boolean
   }>(),
-  { initialTitle: '' },
+  { initialTitle: '', submitting: false },
 )
 
 const emit = defineEmits<{
@@ -90,12 +103,18 @@ watch(
 
 const canSubmit = computed(() => draft.value.trim().length > 0)
 
+/** 關窗單一入口：submitting 期間忽略（含 ESC / header X / 取消鈕） */
+const onOpenChange = (value: boolean): void => {
+  if (props.submitting) return
+  emit('update:open', value)
+}
+
+// confirm 不自行關窗：成功後由父頁關閉，失敗保持開啟保留輸入
 const onConfirm = (): void => {
-  if (!canSubmit.value) return
+  if (!canSubmit.value || props.submitting) return
   // remark 未填傳 undefined，不帶欄位交由 server 補預設
   const remark =
     props.mode === 'create' && remarkDraft.value.trim() !== '' ? remarkDraft.value : undefined
   emit('confirm', draft.value.trim(), remark)
-  emit('update:open', false)
 }
 </script>

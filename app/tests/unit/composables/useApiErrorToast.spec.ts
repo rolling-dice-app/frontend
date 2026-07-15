@@ -13,7 +13,8 @@ interface FakeFetchError extends Error {
   _isFakeFetchError: true
   statusCode?: number
   response?: { status?: number }
-  data?: { code?: string; details?: unknown }
+  // 對齊真實 wire envelope `{ error: code, message, details? }`（core/src/types/api-error.ts）
+  data?: { error?: string; message?: string; details?: unknown }
   request?: string
 }
 
@@ -31,7 +32,7 @@ const makeFetchError = (init: {
   } else {
     err.response = {}
   }
-  if (init.code !== undefined) err.data = { code: init.code, details: init.details }
+  if (init.code !== undefined) err.data = { error: init.code, details: init.details }
   if (init.url !== undefined) err.request = init.url
   return err
 }
@@ -83,6 +84,13 @@ describe('useApiErrorToast — mapping + fallback', () => {
     const { handle } = useApiErrorToast()
     handle(makeFetchError({ code: 'RATE_LIMITED', status: 429 }))
     expect(items[0]!.message).toBe('操作過於頻繁，請稍後再試')
+  })
+
+  it('DM_SESSION_MEMBER_SHARE_ID_INVALID → ui.error.dmSessionMemberShareIdInvalid', () => {
+    const { items } = useToast()
+    const { handle } = useApiErrorToast()
+    handle(makeFetchError({ code: 'DM_SESSION_MEMBER_SHARE_ID_INVALID', status: 422 }))
+    expect(items[0]!.message).toBe('成員的角色卡分享連結已失效，請重新確認後再送出')
   })
 
   it('RESTORE_COOLDOWN_ACTIVE → 內插剩餘分鐘', () => {

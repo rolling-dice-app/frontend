@@ -352,6 +352,38 @@ describe('dm-session store — createLog', () => {
     expect(result).toEqual(created)
     expect(store.logCache.get(created.id)).toEqual(created)
   })
+
+  it('container 既存失效成員預填出席 → POST body 收斂為 characterShareId: null', async () => {
+    // 情境：PL 關閉角色卡分享後 hydrate 為 available:false，DM 新增團務時預填全員出席
+    const deadMember = createMockDmSessionMember({
+      id: 'mem-002',
+      playerName: '小華',
+      character: createMockSharedCharacterPreview({
+        available: false,
+        name: null,
+        avatar: null,
+        ownerDisplayName: null,
+      }),
+    })
+    const created = createMockDmSessionLog({
+      members: [createMockDmSessionMember(), deadMember],
+    })
+    mockCreateLog.mockResolvedValue(created)
+
+    const { useDmSessionStore } = await import('~/stores/dm-session')
+    const store = useDmSessionStore()
+    await store.createLog(created.containerId, createMockDmSessionLogDraft(created))
+
+    expect(mockCreateLog).toHaveBeenCalledWith(
+      created.containerId,
+      expect.objectContaining({
+        members: [
+          { id: 'mem-001', playerName: '小明', characterShareId: null },
+          { id: 'mem-002', playerName: '小華', characterShareId: null },
+        ],
+      }),
+    )
+  })
 })
 
 describe('dm-session store — updateLog', () => {

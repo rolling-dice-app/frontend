@@ -291,7 +291,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
     })
 
-    it('失效連結（available: false）成員開窗：玩家名稱保留舊 snapshot 不覆寫、維持唯讀', () => {
+    it('失效連結（available: false）成員開窗：玩家名稱保留舊 snapshot 不覆寫、可編輯（snapshot 不再自癒，不必先解綁）', async () => {
       const wrapper = mountModal([
         makeMember({
           character: makePreview(SHARE_A, {
@@ -303,7 +303,18 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       ])
 
       expect(playerNameValue(wrapper)).toBe('Anna')
-      expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
+      expect(playerNameInput(wrapper).attributes('readonly')).toBeUndefined()
+
+      await playerNameInput(wrapper).setValue('Anna 改')
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
+        [
+          expect.objectContaining({
+            playerName: 'Anna 改',
+            character: expect.objectContaining({ shareId: SHARE_A, available: false }),
+          }),
+        ],
+      ])
     })
   })
 
@@ -473,6 +484,71 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
 
       expect(linkInput(wrapper, 1).attributes('disabled')).toBeUndefined()
       expect(wrapper.findAll('[role="status"]')[1]!.text()).toBe('')
+    })
+  })
+
+  describe('confirm 與錯誤列互動（有錯誤列時禁止送出）', () => {
+    it('已連結列貼上解析失敗的連結（API reject）：confirm disabled、不 emit，避免靜默解綁', async () => {
+      mockResolve.mockRejectedValue(new Error('network'))
+      const wrapper = mountModal([makeMember({ character: makePreview(SHARE_A) })])
+
+      await linkInput(wrapper).setValue(linkOf(SHARE_B))
+      await linkInput(wrapper).trigger('blur')
+      await flushPromises()
+
+      const confirmButton = findButtonByText(wrapper, '確認')!
+      expect(confirmButton.attributes('disabled')).toBeDefined()
+      await confirmButton.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+    })
+
+    it('invalid 連結格式：confirm disabled；清空該列輸入（解除連結）後恢復可送出', async () => {
+      const wrapper = mountModal([makeMember({ character: makePreview(SHARE_A) })])
+
+      await linkInput(wrapper).setValue('not-a-link')
+      await linkInput(wrapper).trigger('blur')
+
+      const confirmButton = findButtonByText(wrapper, '確認')!
+      expect(confirmButton.attributes('disabled')).toBeDefined()
+
+      await linkInput(wrapper).setValue('')
+      await linkInput(wrapper).trigger('blur')
+
+      expect(confirmButton.attributes('disabled')).toBeUndefined()
+      await confirmButton.trigger('click')
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
+        [expect.objectContaining({ character: null })],
+      ])
+    })
+
+    it('duplicate 連結：confirm disabled', async () => {
+      const wrapper = mountModal([
+        makeMember({ id: 'row-1', character: makePreview(SHARE_A) }),
+        makeMember({ id: 'row-2', playerName: 'Bob' }),
+      ])
+
+      await linkInput(wrapper, 1).setValue(linkOf(SHARE_A))
+      await linkInput(wrapper, 1).trigger('blur')
+
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+    })
+
+    it('刪除帶錯誤狀態的列後 confirm 恢復可送出（狀態不殘留）', async () => {
+      const wrapper = mountModal([
+        makeMember({ id: 'row-1' }),
+        makeMember({ id: 'row-2', playerName: 'Bob' }),
+      ])
+
+      await linkInput(wrapper, 0).setValue('not-a-link')
+      await linkInput(wrapper, 0).trigger('blur')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+
+      await wrapper.find('button[aria-label="刪除 Anna"]').trigger('click')
+
+      const confirmButton = findButtonByText(wrapper, '確認')!
+      expect(confirmButton.attributes('disabled')).toBeUndefined()
+      await confirmButton.trigger('click')
+      expect(wrapper.emitted('confirm')).toHaveLength(1)
     })
   })
 

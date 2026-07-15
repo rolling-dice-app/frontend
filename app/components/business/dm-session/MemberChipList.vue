@@ -4,7 +4,7 @@
     :aria-label="t('dmSession.container.field.members')"
     class="flex flex-wrap items-center gap-1.5"
   >
-    <li v-for="member in members" :key="member.id">
+    <li v-for="member in members" :key="member.id" class="flex">
       <!-- 有效連結：整顆 chip 連到公開角色卡 -->
       <NuxtLink
         v-if="member.character?.available"

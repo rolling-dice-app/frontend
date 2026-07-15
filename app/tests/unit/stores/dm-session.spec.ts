@@ -244,6 +244,25 @@ describe('dm-session store — updateContainer', () => {
     expect(store.list).toEqual([containerToSummary(other), containerToSummary(next)])
   })
 
+  it('原位替換 summary 時沿用列表現值的 nextSession（server 衍生，不本地重算）', async () => {
+    const log = createMockDmSessionLog()
+    const c = createMockDmSessionContainer({ sessions: [logToSummary(log)] })
+    const next = { ...c, title: '改名後', updatedAt: '2026-01-03T00:00:00.000Z' }
+    mockList.mockResolvedValue([containerToSummary(c, logToSummary(log))])
+    mockGet.mockResolvedValueOnce(c).mockResolvedValueOnce(next)
+    mockUpdate.mockResolvedValue(undefined)
+
+    const { useDmSessionStore } = await import('~/stores/dm-session')
+    const store = useDmSessionStore()
+    await store.loadList()
+    await store.loadContainer(c.id)
+
+    await store.updateContainer(c.id, { title: '改名後' })
+
+    expect(store.list[0]?.title).toBe('改名後')
+    expect(store.list[0]?.nextSession).toEqual(logToSummary(log))
+  })
+
   it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效', async () => {
     const c = createMockDmSessionContainer()
     mockGet.mockResolvedValueOnce(c).mockRejectedValueOnce(new Error('network down'))

@@ -21,14 +21,19 @@ export function toDmSessionMemberInputs(members: DmSessionMemberDTO[]): DmSessio
   }))
 }
 
-/** DTO → 列表 summary：create / update 後本地同步列表用，欄位對齊 GET /dm-session-containers。 */
+/**
+ * DTO → 列表 summary：create / update 後本地同步列表用，欄位對齊 GET /dm-session-containers。
+ * nextSession 為 server 衍生欄位（推導規則在後端），本地不重算，由呼叫端明示；列表重抓時以 server 為準。
+ */
 export function dmSessionContainerToSummary(
   c: DmSessionContainerDTO,
+  nextSession: DmSessionLogSummaryDTO | null,
 ): DmSessionContainerSummaryDTO {
   return {
     id: c.id,
     title: c.title,
     members: c.members.map((m) => ({ playerName: m.playerName })),
+    nextSession,
     createdAt: c.createdAt,
   }
 }

@@ -41,14 +41,21 @@ describe('toDmSessionMemberInputs', () => {
 })
 
 describe('dmSessionContainerToSummary / dmSessionLogToSummary', () => {
-  it('容器 summary 只投影 id / title / members.playerName / createdAt', () => {
-    const summary = dmSessionContainerToSummary(createMockDmSessionContainer())
+  it('容器 summary 投影 id / title / members.playerName / createdAt，nextSession 由呼叫端明示', () => {
+    const summary = dmSessionContainerToSummary(createMockDmSessionContainer(), null)
     expect(summary).toEqual({
       id: 'dsc-001',
       title: '失落的礦坑',
       members: [{ playerName: '小明' }, { playerName: '小華' }],
+      nextSession: null,
       createdAt: '2026-01-01T00:00:00.000Z',
     })
+  })
+
+  it('nextSession 原樣帶入，不做本地推導', () => {
+    const next = { id: 'dsl-002', title: '未來場', date: '2026-01-20' }
+    const summary = dmSessionContainerToSummary(createMockDmSessionContainer(), next)
+    expect(summary.nextSession).toEqual(next)
   })
 
   it('紀錄 summary 只投影 id / title / date', () => {

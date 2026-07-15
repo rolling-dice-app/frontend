@@ -2,7 +2,7 @@
   <div>
     <CommonPageHeader :title="t('dmSession.listTitle')" :show-back="true" back-to="/" />
 
-    <!-- Loading：鏡像資料卡的 grid 骨架（劇本名 / 成員 pill / footer meta 列）。 -->
+    <!-- Loading：鏡像資料卡的 grid 骨架（劇本名 / 成員 pill / 下一場團務列）。 -->
     <div
       v-if="status === 'idle' || status === 'pending'"
       role="status"
@@ -23,9 +23,8 @@
             <div class="h-5 w-14 rounded-full bg-surface" />
             <div class="h-5 w-10 rounded-full bg-surface" />
           </div>
-          <div class="mt-3 flex justify-between border-t border-divider pt-2.5">
-            <div class="h-4 w-16 rounded bg-surface" />
-            <div class="h-4 w-20 rounded bg-surface" />
+          <div class="mt-3 border-t border-divider pt-2.5">
+            <div class="h-4 w-3/4 rounded bg-surface" />
           </div>
         </div>
       </div>
@@ -75,7 +74,7 @@
       >
         <NuxtLink
           :to="`/dm/session/${container.id}`"
-          class="flex flex-1 flex-col gap-2 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="flex flex-1 flex-col gap-2 p-4 pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <p class="truncate pr-8 font-display text-lg font-bold text-content">
             {{ container.title }}
@@ -98,19 +97,36 @@
           <p v-else class="text-xs text-content-faint">
             {{ t('dmSession.container.membersEmpty') }}
           </p>
-          <div
-            class="mt-auto flex items-center justify-between gap-2 border-t border-divider pt-2.5 text-xs text-content-muted tabular-nums"
-          >
-            <span class="inline-flex items-center gap-1">
-              <Icon name="user" :size="14" aria-hidden="true" />
-              {{ t('dmSession.container.memberCount', { count: container.members.length }) }}
-            </span>
-            <span class="inline-flex items-center gap-1">
-              <Icon name="calendar" :size="14" aria-hidden="true" />
-              {{ container.createdAt.slice(0, 10) }}
-            </span>
-          </div>
         </NuxtLink>
+        <!-- 下一場團務：獨立可點區，與主 link 平行避免 a 巢 a -->
+        <NuxtLink
+          v-if="container.nextSession"
+          :to="`/dm/session/${container.id}/log/${container.nextSession.id}`"
+          class="mx-4 flex items-center gap-1.5 border-t border-divider py-2.5 text-xs text-content-muted transition-colors duration-150 hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          :aria-label="
+            t('dmSession.container.nextSessionAria', {
+              title: container.nextSession.title,
+              date: container.nextSession.date,
+            })
+          "
+        >
+          <Icon name="calendar" :size="14" aria-hidden="true" class="shrink-0" />
+          <span class="tabular-nums">{{ container.nextSession.date }}</span>
+          <span class="min-w-0 flex-1 truncate">{{ container.nextSession.title }}</span>
+          <Icon
+            name="chevron-right"
+            :size="14"
+            aria-hidden="true"
+            class="shrink-0 text-content-faint"
+          />
+        </NuxtLink>
+        <div
+          v-else
+          class="mx-4 flex items-center gap-1.5 border-t border-divider py-2.5 text-xs text-content-faint"
+        >
+          <Icon name="calendar" :size="14" aria-hidden="true" class="shrink-0" />
+          {{ t('dmSession.container.nextSessionEmpty') }}
+        </div>
         <button
           type="button"
           :aria-label="`${t('ui.action.delete')} ${container.title}`"

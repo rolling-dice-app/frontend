@@ -99,15 +99,17 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       remark === undefined ? { title } : { title, remark },
     )
     containerCache.value.set(created.id, created)
-    // 後端列表為 createdAt desc，新建者置頂對齊
-    list.value.unshift(dmSessionContainerToSummary(created))
+    // 後端列表為 createdAt desc，新建者置頂對齊；新劇本無團務，nextSession 恆 null
+    list.value.unshift(dmSessionContainerToSummary(created, null))
     return cloneContainer(created)
   }
 
-  /** 列表按 createdAt 排序，update 不改位置：summary 原位替換即可。 */
+  /** 列表按 createdAt 排序，update 不改位置：summary 原位替換即可。nextSession 沿用列表現值（server 衍生，重抓時校正）。 */
   const replaceSummaryInPlace = (container: DmSessionContainerDTO): void => {
     const idx = list.value.findIndex((c) => c.id === container.id)
-    if (idx >= 0) list.value.splice(idx, 1, dmSessionContainerToSummary(container))
+    const current = list.value[idx]
+    if (current)
+      list.value.splice(idx, 1, dmSessionContainerToSummary(container, current.nextSession))
   }
 
   /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */

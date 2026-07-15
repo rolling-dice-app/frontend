@@ -101,6 +101,7 @@ export default {
     attendance: {
       adhocLabel: '臨時出席',
       adhocAdd: '加入',
+      adhocPlaceholder: '玩家名稱或角色卡分享連結',
       rosterEmptyHint: '此劇本尚未建立常駐名單，可直接新增臨時出席',
       remove: '移除出席',
     },

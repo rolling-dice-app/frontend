@@ -120,6 +120,12 @@
               class="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary-soft px-2.5 py-1 text-xs text-content"
             >
               <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
+              <span
+                v-if="member.character?.available && member.character.name"
+                class="max-w-24 truncate text-content-muted"
+              >
+                · {{ member.character.name }}
+              </span>
               <button
                 type="button"
                 :aria-label="`${t('dmSession.log.attendance.remove')} ${member.playerName}`"
@@ -142,6 +148,12 @@
                 class="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary-soft px-2.5 py-1 text-xs text-content"
               >
                 <span class="max-w-32 truncate font-medium">{{ member.playerName }}</span>
+                <span
+                  v-if="member.character?.available && member.character.name"
+                  class="max-w-24 truncate text-content-muted"
+                >
+                  · {{ member.character.name }}
+                </span>
                 <button
                   type="button"
                   :aria-label="`${t('dmSession.log.attendance.remove')} ${member.playerName}`"
@@ -155,7 +167,7 @@
           </ul>
         </template>
 
-        <!-- 臨時出席：純文字玩家名 -->
+        <!-- 臨時出席：分享連結優先（成功即連結角色卡），非連結視為純文字玩家名 -->
         <div class="mt-3 flex items-end gap-2">
           <div class="flex-1">
             <label for="dm-session-log-adhoc" class="mb-1 block text-xs text-content-muted">
@@ -167,12 +179,21 @@
               size="sm"
               outline
               :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
-              :placeholder="t('dmSession.member.playerName')"
+              :placeholder="t('dmSession.log.attendance.adhocPlaceholder')"
               :disabled="atAttendanceMax"
               class="w-full"
-              @update:model-value="(value: string) => (adhocInput = value)"
+              @update:model-value="onAdhocInput"
               @keydown.enter.prevent="onAddAdhoc"
-            />
+            >
+              <template #suffix>
+                <span
+                  v-if="adhocState?.status === 'resolving'"
+                  aria-hidden="true"
+                  class="size-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-border border-t-primary"
+                />
+                <Icon v-else-if="adhocState" name="alert-circle" :size="14" class="text-danger" />
+              </template>
+            </CommonAppInput>
           </div>
           <!-- !min-h-8 蓋掉元件的觸控目標下限，與 sm 輸入框等高（表單列內按鈕，比照 TeammateInput 允許 32px） -->
           <CommonAppButton
@@ -181,12 +202,28 @@
             outline
             size="sm"
             class="h-8 min-h-8!"
-            :disabled="atAttendanceMax || !adhocInput.trim()"
+            :disabled="atAttendanceMax || adhocResolving || !adhocInput.trim()"
             @click="onAddAdhoc"
           >
             {{ t('dmSession.log.attendance.adhocAdd') }}
           </CommonAppButton>
         </div>
+        <p
+          role="status"
+          class="mt-1 flex items-center gap-1 text-xs"
+          :class="adhocHint?.tone === 'muted' ? 'text-content-muted' : 'text-danger'"
+        >
+          {{ adhocHint?.text }}
+          <button
+            v-if="adhocHint?.retry"
+            type="button"
+            :aria-label="t('ui.state.retry')"
+            class="flex size-4 shrink-0 items-center justify-center hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            @click="onAddAdhoc"
+          >
+            <Icon name="restore" :size="12" />
+          </button>
+        </p>
       </div>
 
       <!-- 本場獎勵 -->
@@ -256,6 +293,7 @@ import {
 } from '@rolling-dice-app/core'
 import type { CurrencyKey, DmSessionMemberDTO } from '@rolling-dice-app/core'
 import type { DmSessionLogDraft } from '~/types/business/dm-session'
+import { parseShareIdFromLink } from '~/helpers/share'
 
 const props = withDefaults(
   defineProps<{
@@ -273,6 +311,7 @@ const props = withDefaults(
 const emit = defineEmits<{ save: [value: DmSessionLogDraft] }>()
 
 const { t } = useI18n()
+const apiErrorToast = useApiErrorToast()
 
 const COIN_KEYS: readonly CurrencyKey[] = ['pp', 'gp', 'sp', 'cp']
 const maxAttendance = VALIDATION_LIMITS.maxMembersPerDmSessionLog
@@ -293,7 +332,9 @@ const pageTitle = computed(
     (props.mode === 'create' ? t('dmSession.log.createTitle') : t('dmSession.log.editTitle')),
 )
 
-const canSubmit = computed(() => formState.title.trim().length > 0 && formState.date !== '')
+const canSubmit = computed(
+  () => formState.title.trim().length > 0 && formState.date !== '' && !adhocResolving.value,
+)
 
 // ── 日期（契約為 YYYY-MM-DD 字串，DatePicker 吃 Date；以本地時區互轉避免日期偏移） ──
 const parseDateString = (value: string): Date | null => {
@@ -344,22 +385,132 @@ const onRemoveMember = (memberId: string): void => {
 
 const attendancePlayerNames = computed(() => formState.members.map((m) => m.playerName))
 
+// ── 臨時出席：分享連結優先，非連結視為純文字玩家名 ──────────────────────────
+/** 連結解析狀態；resolving 時的 shareId 兼作 request token，過期回應直接丟棄。null 表示 idle */
+type AdhocResolveState =
+  | { status: 'resolving'; shareId: string }
+  | { status: 'duplicate' }
+  | { status: 'error'; kind: 'notFound' | 'unavailable' | 'request' }
+
 const adhocInput = ref('')
+const adhocState = ref<AdhocResolveState | null>(null)
+
+const adhocResolving = computed(() => adhocState.value?.status === 'resolving')
+
+/** 輸入變動只更新值並清掉狀態；in-flight 回應會因 token 不符被丟棄 */
+const onAdhocInput = (value: string): void => {
+  adhocInput.value = value
+  adhocState.value = null
+}
+
+const isCurrentAdhocRequest = (shareId: string): boolean =>
+  adhocState.value?.status === 'resolving' && adhocState.value.shareId === shareId
+
+const hasAttendingShareId = (shareId: string): boolean =>
+  formState.members.some((m) => m.character?.shareId === shareId)
 
 const onAddAdhoc = (): void => {
-  const playerName = adhocInput.value.trim()
-  if (!playerName || atAttendanceMax.value) return
-  formState.members.push({ id: crypto.randomUUID(), playerName, character: null })
-  adhocInput.value = ''
+  const input = adhocInput.value.trim()
+  if (!input || atAttendanceMax.value || adhocResolving.value) return
+  const shareId = parseShareIdFromLink(input)
+  if (!shareId) {
+    formState.members.push({ id: crypto.randomUUID(), playerName: input, character: null })
+    adhocInput.value = ''
+    adhocState.value = null
+    return
+  }
+  if (hasAttendingShareId(shareId)) {
+    adhocState.value = { status: 'duplicate' }
+    return
+  }
+  // 連結對應常駐成員 → 直接標記出席，不產生重複的臨時 chip
+  const rosterMember = props.containerMembers.find((m) => m.character?.shareId === shareId)
+  if (rosterMember) {
+    onToggleRoster(rosterMember)
+    adhocInput.value = ''
+    adhocState.value = null
+    return
+  }
+  void resolveAdhoc(shareId)
 }
+
+const resolveAdhoc = async (shareId: string): Promise<void> => {
+  adhocState.value = { status: 'resolving', shareId }
+  try {
+    const { previews } = await share().resolveSharedCharacters([shareId])
+    if (!isCurrentAdhocRequest(shareId)) return
+    // 等待期間名單可能已變動，重驗重複與上限
+    if (hasAttendingShareId(shareId)) {
+      adhocState.value = { status: 'duplicate' }
+      return
+    }
+    if (atAttendanceMax.value) {
+      adhocState.value = null
+      return
+    }
+    const preview = previews[0]
+    if (!preview) {
+      adhocState.value = { status: 'error', kind: 'notFound' }
+      return
+    }
+    if (!preview.available) {
+      adhocState.value = { status: 'error', kind: 'unavailable' }
+      return
+    }
+    formState.members.push({
+      id: crypto.randomUUID(),
+      // 連結成功即 snapshot PL 暱稱為玩家名稱；available 時實務必非空，後備鏈僅防禦
+      playerName: preview.ownerDisplayName ?? preview.name ?? shareId,
+      character: preview,
+    })
+    adhocInput.value = ''
+    adhocState.value = null
+  } catch (err) {
+    if (!isCurrentAdhocRequest(shareId)) return
+    adhocState.value = { status: 'error', kind: 'request' }
+    apiErrorToast.handle(err)
+  }
+}
+
+const ADHOC_ERROR_HINT_KEY = {
+  notFound: 'dmSession.member.resolveFailed',
+  unavailable: 'dmSession.member.unavailable',
+  request: 'dmSession.member.resolveError',
+} as const
+
+/** 依解析狀態產生 inline 提示；null 表示無提示 */
+const adhocHint = computed(
+  (): { text: string; tone: 'muted' | 'danger'; retry: boolean } | null => {
+    const state = adhocState.value
+    if (!state) return null
+    switch (state.status) {
+      case 'resolving':
+        return { text: t('dmSession.member.resolving'), tone: 'muted', retry: false }
+      case 'duplicate':
+        return { text: t('dmSession.member.duplicate'), tone: 'danger', retry: false }
+      case 'error':
+        return { text: t(ADHOC_ERROR_HINT_KEY[state.kind]), tone: 'danger', retry: true }
+    }
+  },
+)
 
 // ── 提交 ────────────────────────────────────────────────────────────────────
 /** 物品內容為空的獎勵列視為未填，儲存時丟棄 */
 const onSave = (): void => {
   if (!canSubmit.value || props.submitting) return
-  const next = structuredClone(toRaw(formState))
-  next.title = next.title.trim()
-  next.itemRewards = next.itemRewards.filter((r) => r.item.trim() !== '')
+  // members / itemRewards 會被 filter 整列重建，重建後元素是 reactive proxy，
+  // 整包 structuredClone(toRaw(formState)) 會 DataCloneError；須逐元素 toRaw 再 clone
+  const next: DmSessionLogDraft = {
+    title: formState.title.trim(),
+    date: formState.date,
+    content: formState.content,
+    members: formState.members.map((m) => structuredClone(toRaw(m))),
+    moneyRewards: { ...formState.moneyRewards },
+    expRewards: formState.expRewards,
+    itemRewards: formState.itemRewards
+      .filter((r) => r.item.trim() !== '')
+      .map((r) => structuredClone(toRaw(r))),
+  }
   emit('save', next)
 }
 </script>

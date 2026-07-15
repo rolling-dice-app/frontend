@@ -88,7 +88,11 @@ export const useCharacterStore = defineStore('character', () => {
     listLoading.value = true
     listError.value = null
     try {
-      const items = await characters().list()
+      // level 一律由前端自 classes 重算，不信任 backend 預算值（DTO 欄位已棄用）
+      const items = (await characters().list()).map((dto) => ({
+        ...dto,
+        level: calculateTotalLevel(dto.classes),
+      }))
       list.value = items
       listLoaded.value = true
       return items

@@ -1,10 +1,8 @@
 import type {
   DmSessionContainerDTO,
-  DmSessionContainerSummaryDTO,
   DmSessionContainerUpdateBody,
   DmSessionLogCreateBody,
   DmSessionLogDTO,
-  DmSessionLogSummaryDTO,
   DmSessionLogUpdateBody,
   DmSessionMemberDTO,
   DmSessionMemberInput,
@@ -19,34 +17,6 @@ export function toDmSessionMemberInputs(members: DmSessionMemberDTO[]): DmSessio
     playerName: m.playerName,
     characterShareId: m.character?.shareId ?? null,
   }))
-}
-
-/** DTO → 列表 summary：create / update 後本地同步列表用，欄位對齊 GET /dm-session-containers。 */
-export function dmSessionContainerToSummary(
-  c: DmSessionContainerDTO,
-): DmSessionContainerSummaryDTO {
-  return {
-    id: c.id,
-    title: c.title,
-    members: c.members.map((m) => ({ playerName: m.playerName })),
-    createdAt: c.createdAt,
-  }
-}
-
-/** DTO → 容器時間軸 summary：create / update 後本地同步 container.sessions 用。 */
-export function dmSessionLogToSummary(l: DmSessionLogDTO): DmSessionLogSummaryDTO {
-  return { id: l.id, title: l.title, date: l.date }
-}
-
-/**
- * 對齊 server 排序（date 升冪）後回傳新陣列；同日靠 stable sort 保留輸入相對序。
- * 輸入需已是 server 序：新建 log 的 createdAt 恆最大，push 後重排即與 server 一致；
- * 僅「把舊 log 改成與更早 log 同日」會暫時錯序，下次重抓容器自癒。
- */
-export function sortDmSessionLogSummaries(
-  sessions: DmSessionLogSummaryDTO[],
-): DmSessionLogSummaryDTO[] {
-  return [...sessions].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
 }
 
 /** 以欄位為粒度比對 patch 與原始 DTO，只放變更欄位；updatedAt 作 optimistic lock token。 */

@@ -165,7 +165,7 @@ describe('monster-template store — updateMonsterTemplate', () => {
     expect(result).toEqual(m)
   })
 
-  it('有 diff 時 PATCH 只含變更欄位 + updatedAt，成功後 re-GET 刷 cache 並將 summary 移到最前', async () => {
+  it('有 diff 時 PATCH 只含變更欄位 + updatedAt，成功後 re-GET 刷 cache；列表不動（導頁後必重抓）', async () => {
     const other = createMockMonsterTemplate({ id: 'other-1', name: '別隻怪' })
     const m = createMockMonsterTemplate()
     const next = { ...m, ac: 16, updatedAt: '2026-01-03T00:00:00.000Z' }
@@ -187,10 +187,10 @@ describe('monster-template store — updateMonsterTemplate', () => {
     expect(mockGet).toHaveBeenCalledTimes(2)
     expect(result?.updatedAt).toBe(next.updatedAt)
     expect(store.detailCache.get(m.id)).toEqual(next)
-    expect(store.list).toEqual([monsterToSummary(next), monsterToSummary(other)])
+    expect(store.list).toEqual([monsterToSummary(other), monsterToSummary(m)])
   })
 
-  it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效、summary 移到最前', async () => {
+  it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效、列表不動', async () => {
     const other = createMockMonsterTemplate({ id: 'other-1', name: '別隻怪' })
     const m = createMockMonsterTemplate()
     mockList.mockResolvedValue([monsterToSummary(other), monsterToSummary(m)])
@@ -211,7 +211,7 @@ describe('monster-template store — updateMonsterTemplate', () => {
     expect(result).toBeNull()
     // 舊 lock token 已作廢：cache 必須失效，避免原地重試撞 409
     expect(store.detailCache.has(m.id)).toBe(false)
-    expect(store.list.map((t) => t.id)).toEqual([m.id, other.id])
+    expect(store.list.map((t) => t.id)).toEqual([other.id, m.id])
   })
 
   it('未載入 detail 時 throw（頁面流程保證先 loadDetail）', async () => {

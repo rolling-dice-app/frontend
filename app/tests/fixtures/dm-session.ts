@@ -84,11 +84,16 @@ export function createMockDmSessionLogDraft(
   return { ...draft, ...overrides }
 }
 
-export function containerToSummary(c: DmSessionContainerDTO): DmSessionContainerSummaryDTO {
+/** nextSession 由測試明示期望值，不重跑推導邏輯。 */
+export function containerToSummary(
+  c: DmSessionContainerDTO,
+  nextSession: DmSessionLogSummaryDTO | null = null,
+): DmSessionContainerSummaryDTO {
   return {
     id: c.id,
     title: c.title,
     members: c.members.map((m) => ({ playerName: m.playerName })),
+    nextSession,
     createdAt: c.createdAt,
   }
 }

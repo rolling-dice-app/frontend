@@ -46,7 +46,7 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
   })
   const loadList = (): Promise<MonsterTemplateSummaryDTO[]> => listFlight.run()
 
-  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
+  /** limit middleware 冷啟動 seed：至少載入一次即 no-op；列表頁一律直呼 loadList 重抓。 */
   const ensureListLoaded = async (): Promise<void> => {
     if (listLoaded.value) return
     await loadList()
@@ -81,15 +81,6 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     return cached ? cloneTemplate(cached) : undefined
   }
 
-  /** 剛更新者置頂，對齊後端 updatedAt desc；summary 無 updatedAt 無法完整重排，移到最前為最小修法。 */
-  const moveSummaryToFront = (id: string, summary?: MonsterTemplateSummaryDTO): void => {
-    const idx = list.value.findIndex((t) => t.id === id)
-    if (idx < 0) return
-    const entry = summary ?? list.value[idx]
-    list.value.splice(idx, 1)
-    if (entry) list.value.unshift(entry)
-  }
-
   /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
   const updateMonsterTemplate = async (
     id: string,
@@ -103,7 +94,7 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
 
     const api = monsterTemplates()
     await api.update(id, patch)
-    // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）並同步列表
+    // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）
     let next: MonsterTemplateDTO
     try {
       next = await api.get(id)
@@ -111,11 +102,10 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
       // PATCH 已成功，re-GET 失敗不得誤報為儲存失敗；cache 內舊 lock token 已作廢，
       // 失效之避免原地重試撞 409，下次進入頁面重抓。
       detailCache.value.delete(id)
-      moveSummaryToFront(id)
       return null
     }
     detailCache.value.set(id, next)
-    moveSummaryToFront(id, monsterTemplateToSummary(next))
+    // 列表不本地同步（含 updatedAt desc 置頂）：成功後必導列表，該頁必重抓
     return cloneTemplate(next)
   }
 

@@ -363,7 +363,7 @@ describe('character store — removeCharacter', () => {
 })
 
 describe('character store — refreshCharacterAfterAvatar', () => {
-  it('重抓角色：detailCache 更新成新 avatar/updatedAt，list 縮圖同步', async () => {
+  it('重抓角色：detailCache 更新成新 avatar/updatedAt（樂觀鎖 token）；列表不本地同步', async () => {
     const before = createMockCharacter({
       id: 'av-1',
       name: '阿凡',
@@ -390,24 +390,8 @@ describe('character store — refreshCharacterAfterAvatar', () => {
       avatar: 'https://r2/av-1.webp',
       updatedAt: '2026-05-01T00:00:00.000Z',
     })
-    expect(store.list[0]).toMatchObject({
-      id: 'av-1',
-      avatar: 'https://r2/av-1.webp',
-      updatedAt: '2026-05-01T00:00:00.000Z',
-    })
-  })
-
-  it('list 內無對應項時只更新 detailCache，不丟錯', async () => {
-    const after = createMockCharacter({ id: 'av-2', avatar: 'https://r2/av-2.webp' })
-    mockListCharacters.mockResolvedValue([])
-    mockGetCharacter.mockResolvedValue(after)
-
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    await store.loadList()
-
-    await expect(store.refreshCharacterAfterAvatar('av-2')).resolves.toBeUndefined()
-    expect(store.getById('av-2')).toMatchObject({ avatar: 'https://r2/av-2.webp' })
+    // 列表不本地同步：update 頁不掛載列表，返回列表時必重抓
+    expect(store.list[0]).toMatchObject({ id: 'av-1', avatar: null })
   })
 })
 
@@ -447,7 +431,7 @@ describe('character store — updateCharacter', () => {
     expect(mockUpdateCharacter).not.toHaveBeenCalled()
   })
 
-  it('有變動時送 PATCH、重新 fetch、同步 cache 與 list', async () => {
+  it('有變動時送 PATCH、重新 fetch、同步 cache；列表不動', async () => {
     const before = createMockCharacter({ id: 'u-2', name: '舊名' })
     const after = createMockCharacter({
       id: 'u-2',
@@ -488,7 +472,8 @@ describe('character store — updateCharacter', () => {
 
     expect(mockGetCharacter).toHaveBeenCalledTimes(2)
     expect(store.detailCache.get('u-2')?.name).toBe('新名')
-    expect(store.list[0]?.name).toBe('新名')
+    // 列表不本地同步：update 頁不掛載列表，返回列表時必重抓
+    expect(store.list[0]?.name).toBe('舊名')
     expect(result.name).toBe('新名')
   })
 

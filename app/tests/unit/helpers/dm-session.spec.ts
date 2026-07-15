@@ -3,9 +3,6 @@ import {
   buildDmSessionContainerUpdateBody,
   buildDmSessionLogCreateBody,
   buildDmSessionLogUpdateBody,
-  dmSessionContainerToSummary,
-  dmSessionLogToSummary,
-  sortDmSessionLogSummaries,
   toDmSessionMemberInputs,
 } from '~/helpers/dm-session'
 import {
@@ -37,44 +34,6 @@ describe('toDmSessionMemberInputs', () => {
       }),
     })
     expect(toDmSessionMemberInputs([member])[0]?.characterShareId).toBe('chs_mock0001')
-  })
-})
-
-describe('dmSessionContainerToSummary / dmSessionLogToSummary', () => {
-  it('容器 summary 只投影 id / title / members.playerName / createdAt', () => {
-    const summary = dmSessionContainerToSummary(createMockDmSessionContainer())
-    expect(summary).toEqual({
-      id: 'dsc-001',
-      title: '失落的礦坑',
-      members: [{ playerName: '小明' }, { playerName: '小華' }],
-      createdAt: '2026-01-01T00:00:00.000Z',
-    })
-  })
-
-  it('紀錄 summary 只投影 id / title / date', () => {
-    const summary = dmSessionLogToSummary(createMockDmSessionLog())
-    expect(summary).toEqual({ id: 'dsl-001', title: '第一章：進入礦坑', date: '2026-01-10' })
-  })
-})
-
-describe('sortDmSessionLogSummaries', () => {
-  it('date 升冪排序，同日保留輸入相對序（stable）', () => {
-    const sorted = sortDmSessionLogSummaries([
-      { id: 'b', title: 'B', date: '2026-01-05' },
-      { id: 'c', title: 'C', date: '2026-01-05' },
-      { id: 'a', title: 'A', date: '2026-01-01' },
-    ])
-    expect(sorted.map((s) => s.id)).toEqual(['a', 'b', 'c'])
-  })
-
-  it('回傳新陣列，不改動輸入', () => {
-    const input = [
-      { id: 'b', title: 'B', date: '2026-01-05' },
-      { id: 'a', title: 'A', date: '2026-01-01' },
-    ]
-    const sorted = sortDmSessionLogSummaries(input)
-    expect(sorted).not.toBe(input)
-    expect(input.map((s) => s.id)).toEqual(['b', 'a'])
   })
 })
 

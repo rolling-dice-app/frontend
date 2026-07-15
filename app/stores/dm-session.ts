@@ -10,9 +10,6 @@ import {
   buildDmSessionContainerUpdateBody,
   buildDmSessionLogCreateBody,
   buildDmSessionLogUpdateBody,
-  dmSessionContainerToSummary,
-  dmSessionLogToSummary,
-  sortDmSessionLogSummaries,
 } from '~/helpers/dm-session'
 import { createSingleFlight } from '~/utils/single-flight'
 
@@ -33,7 +30,6 @@ export const useDmSessionStore = defineStore('dmSession', () => {
 
   const listLoading = ref(false)
   const listError = ref<unknown>(null)
-  const listLoaded = ref(false)
 
   const detailLoading = ref(false)
   const detailError = ref<unknown>(null)
@@ -53,7 +49,6 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       // server 排序 createdAt desc，本地不再重排
       const items = await dmSessionContainers().list()
       list.value = items
-      listLoaded.value = true
       return items
     } catch (error) {
       listError.value = error
@@ -63,12 +58,6 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     }
   })
   const loadList = (): Promise<DmSessionContainerSummaryDTO[]> => listFlight.run()
-
-  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
-  const ensureListLoaded = async (): Promise<void> => {
-    if (listLoaded.value) return
-    await loadList()
-  }
 
   const loadContainer = async (id: string): Promise<DmSessionContainerDTO> => {
     detailLoading.value = true
@@ -99,15 +88,8 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       remark === undefined ? { title } : { title, remark },
     )
     containerCache.value.set(created.id, created)
-    // 後端列表為 createdAt desc，新建者置頂對齊
-    list.value.unshift(dmSessionContainerToSummary(created))
+    // 列表不本地同步：成功即導詳情，返回列表時必重抓
     return cloneContainer(created)
-  }
-
-  /** 列表按 createdAt 排序，update 不改位置：summary 原位替換即可。 */
-  const replaceSummaryInPlace = (container: DmSessionContainerDTO): void => {
-    const idx = list.value.findIndex((c) => c.id === container.id)
-    if (idx >= 0) list.value.splice(idx, 1, dmSessionContainerToSummary(container))
   }
 
   /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
@@ -124,7 +106,7 @@ export const useDmSessionStore = defineStore('dmSession', () => {
 
     const api = dmSessionContainers()
     await api.update(id, body)
-    // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）並同步列表
+    // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）
     let next: DmSessionContainerDTO
     try {
       next = await api.get(id)
@@ -135,15 +117,15 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       return null
     }
     containerCache.value.set(id, next)
-    replaceSummaryInPlace(next)
     return cloneContainer(next)
   }
 
-  // hard-delete 無 deletedAt 分流，本地移除即與後端一致；cascade 同步清掉所屬紀錄。
+  // hard-delete 無 deletedAt 分流，本地移除即與後端一致；cascade 以 containerId 清掉所屬紀錄 cache。
   const removeContainer = async (id: string): Promise<void> => {
     await dmSessionContainers().remove(id)
-    const container = containerCache.value.get(id)
-    for (const session of container?.sessions ?? []) logCache.value.delete(session.id)
+    for (const [logId, log] of logCache.value) {
+      if (log.containerId === id) logCache.value.delete(logId)
+    }
     containerCache.value.delete(id)
     list.value = list.value.filter((c) => c.id !== id)
   }
@@ -179,13 +161,7 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       buildDmSessionLogCreateBody(draft),
     )
     logCache.value.set(created.id, created)
-    const container = containerCache.value.get(containerId)
-    if (container) {
-      container.sessions = sortDmSessionLogSummaries([
-        ...container.sessions,
-        dmSessionLogToSummary(created),
-      ])
-    }
+    // container.sessions 不本地同步：成功即導 log 詳情，容器頁重進時必重抓
     return cloneLog(created)
   }
 
@@ -212,20 +188,12 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       return null
     }
     logCache.value.set(logId, next)
-    const container = containerCache.value.get(containerId)
-    if (container) {
-      const idx = container.sessions.findIndex((s) => s.id === logId)
-      if (idx >= 0) container.sessions.splice(idx, 1, dmSessionLogToSummary(next))
-      container.sessions = sortDmSessionLogSummaries(container.sessions)
-    }
     return cloneLog(next)
   }
 
   const removeLog = async (containerId: string, logId: string): Promise<void> => {
     await dmSessionContainers().removeLog(containerId, logId)
     logCache.value.delete(logId)
-    const container = containerCache.value.get(containerId)
-    if (container) container.sessions = container.sessions.filter((s) => s.id !== logId)
   }
 
   /** 清空所有 session-bound state；登出 / 換帳號 / 401 時由 auth store 統一呼叫。 */
@@ -233,7 +201,6 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     list.value = []
     containerCache.value = new Map()
     logCache.value = new Map()
-    listLoaded.value = false
     listLoading.value = false
     listError.value = null
     detailLoading.value = false
@@ -247,11 +214,9 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     isAtContainerLimit,
     listLoading,
     listError,
-    listLoaded,
     detailLoading,
     detailError,
     loadList,
-    ensureListLoaded,
     loadContainer,
     getContainerById,
     createContainer,

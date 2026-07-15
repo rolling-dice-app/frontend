@@ -73,6 +73,23 @@ describe('character store — loadList', () => {
     expect(store.listError).toBeNull()
   })
 
+  it('level 由前端自 classes 重算，不信任 backend 預算值', async () => {
+    const c = createMockCharacter({
+      id: 'list-derived',
+      classes: [
+        { classKey: 'monk', level: 3, subclass: null },
+        { classKey: 'fighter', level: 2, subclass: null },
+      ],
+    })
+    mockListCharacters.mockResolvedValue([{ ...charToSummary(c), level: 999 }])
+
+    const { useCharacterStore } = await import('~/stores/character')
+    const store = useCharacterStore()
+    await store.loadList()
+
+    expect(store.list[0]?.level).toBe(5)
+  })
+
   it('過程中 listLoading 為 true，完成後為 false', async () => {
     let resolveFn: (v: CharacterSummaryDTO[]) => void = () => {}
     mockListCharacters.mockReturnValue(

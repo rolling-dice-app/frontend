@@ -33,9 +33,10 @@ const extractError = (err: unknown): NormalizedError => {
       isFetch: false,
     }
   }
-  const data = err.data as { code?: unknown; details?: unknown } | undefined
+  // Wire envelope is `{ error: code, message, details? }` — see core/src/types/api-error.ts
+  const data = err.data as { error?: unknown; details?: unknown } | undefined
   return {
-    code: typeof data?.code === 'string' ? data.code : undefined,
+    code: typeof data?.error === 'string' ? data.error : undefined,
     status: err.response?.status ?? err.statusCode,
     url: typeof err.request === 'string' ? err.request : undefined,
     details: data?.details,
@@ -89,6 +90,11 @@ const ERROR_MESSAGE_MAP: Partial<Record<ApiErrorCode, ErrorMapping>> = {
   // ─ Rate limit：bucket 狀態只在 backend，client 看不到剩餘額度。
   /** session-keyed mutation 連發超過閾值（@fastify/rate-limit 拋出） */
   RATE_LIMITED: { messageKey: 'ui.error.rateLimited' },
+
+  // ─ 分享連結有效性：只有 backend 能驗證 shareId 是否仍指向 shareable 角色卡，
+  //   PL 可能在解析成功後、送出前才關閉分享，client 無法 preempt。
+  /** 團務成員的 characterShareId 已失效（對方關閉分享或角色已刪除） */
+  DM_SESSION_MEMBER_SHARE_ID_INVALID: { messageKey: 'ui.error.dmSessionMemberShareIdInvalid' },
 }
 
 export const useApiErrorToast = () => {

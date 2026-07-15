@@ -35,6 +35,19 @@ describe('toDmSessionMemberInputs', () => {
     })
     expect(toDmSessionMemberInputs([member])[0]?.characterShareId).toBe('chs_mock0001')
   })
+
+  it('collapseUnavailable 時失效連結收斂為 null，有效連結不受影響', () => {
+    const dead = createMockDmSessionMember({
+      character: createMockSharedCharacterPreview({ available: false, name: null }),
+    })
+    const alive = createMockDmSessionMember({
+      id: 'mem-002',
+      character: createMockSharedCharacterPreview(),
+    })
+    const inputs = toDmSessionMemberInputs([dead, alive], { collapseUnavailable: true })
+    expect(inputs[0]?.characterShareId).toBeNull()
+    expect(inputs[1]?.characterShareId).toBe('chs_mock0001')
+  })
 })
 
 describe('buildDmSessionContainerUpdateBody', () => {
@@ -82,6 +95,19 @@ describe('buildDmSessionContainerUpdateBody', () => {
       { id: 'mem-003', playerName: '小美', characterShareId: null },
     ])
   })
+
+  it('members 含失效連結時保留原 shareId（既存失效引用可續存，不收斂）', () => {
+    const original = createMockDmSessionContainer()
+    const members = structuredClone(original.members)
+    members[1]!.character = createMockSharedCharacterPreview({ available: false, name: null })
+    members.push(createMockDmSessionMember({ id: 'mem-003', playerName: '小美' }))
+    const body = buildDmSessionContainerUpdateBody(original, { members })
+    expect(body.members?.[1]).toEqual({
+      id: 'mem-002',
+      playerName: '小華',
+      characterShareId: 'chs_mock0001',
+    })
+  })
 })
 
 describe('buildDmSessionLogCreateBody', () => {
@@ -97,6 +123,27 @@ describe('buildDmSessionLogCreateBody', () => {
       expRewards: draft.expRewards,
       itemRewards: draft.itemRewards,
     })
+  })
+
+  it('失效連結成員收斂為 characterShareId: null（container 預填全員出席不再 422）', () => {
+    const draft = createMockDmSessionLogDraft(
+      createMockDmSessionLog({
+        members: [
+          createMockDmSessionMember({
+            character: createMockSharedCharacterPreview({ available: false, name: null }),
+          }),
+          createMockDmSessionMember({
+            id: 'mem-002',
+            playerName: '小華',
+            character: createMockSharedCharacterPreview(),
+          }),
+        ],
+      }),
+    )
+    expect(buildDmSessionLogCreateBody(draft).members).toEqual([
+      { id: 'mem-001', playerName: '小明', characterShareId: null },
+      { id: 'mem-002', playerName: '小華', characterShareId: 'chs_mock0001' },
+    ])
   })
 })
 
@@ -146,6 +193,38 @@ describe('buildDmSessionLogUpdateBody', () => {
     expect(buildDmSessionLogUpdateBody(original, draft)).toEqual({
       updatedAt: original.updatedAt,
       members: [],
+    })
+  })
+
+  it('出席名單變更時失效連結成員收斂為 null（roster 重新 toggle 失效成員不再 422）', () => {
+    const original = createMockDmSessionLog()
+    const draft = createMockDmSessionLogDraft(original, {
+      members: [
+        ...structuredClone(original.members),
+        createMockDmSessionMember({
+          id: 'mem-002',
+          playerName: '小華',
+          character: createMockSharedCharacterPreview({ available: false, name: null }),
+        }),
+      ],
+    })
+    expect(buildDmSessionLogUpdateBody(original, draft).members).toEqual([
+      { id: 'mem-001', playerName: '小明', characterShareId: null },
+      { id: 'mem-002', playerName: '小華', characterShareId: null },
+    ])
+  })
+
+  it('log 既存失效成員、出席名單未變更 → 不放入 members（不觸發誤 diff）', () => {
+    const original = createMockDmSessionLog({
+      members: [
+        createMockDmSessionMember({
+          character: createMockSharedCharacterPreview({ available: false, name: null }),
+        }),
+      ],
+    })
+    const draft = createMockDmSessionLogDraft(original)
+    expect(buildDmSessionLogUpdateBody(original, draft)).toEqual({
+      updatedAt: original.updatedAt,
     })
   })
 })

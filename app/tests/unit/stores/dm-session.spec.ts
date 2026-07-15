@@ -67,7 +67,7 @@ afterEach(() => {
 })
 
 describe('dm-session store — loadList', () => {
-  it('成功時將 backend summary 寫入 list 並設 listLoaded', async () => {
+  it('成功時將 backend summary 寫入 list', async () => {
     const c = createMockDmSessionContainer()
     mockList.mockResolvedValue([containerToSummary(c)])
 
@@ -76,7 +76,6 @@ describe('dm-session store — loadList', () => {
     await store.loadList()
 
     expect(store.list).toEqual([containerToSummary(c)])
-    expect(store.listLoaded).toBe(true)
     expect(store.listLoading).toBe(false)
     expect(store.listError).toBeNull()
   })
@@ -89,7 +88,6 @@ describe('dm-session store — loadList', () => {
     const store = useDmSessionStore()
     await expect(store.loadList()).rejects.toThrow('boom')
     expect(store.listError).toBe(err)
-    expect(store.listLoaded).toBe(false)
     expect(store.listLoading).toBe(false)
   })
 
@@ -108,19 +106,6 @@ describe('dm-session store — loadList', () => {
     expect(mockList).toHaveBeenCalledTimes(1)
     resolveFn([])
     await Promise.all([p1, p2])
-  })
-})
-
-describe('dm-session store — ensureListLoaded', () => {
-  it('未載入時打 API；已載入後 no-op', async () => {
-    mockList.mockResolvedValue([])
-
-    const { useDmSessionStore } = await import('~/stores/dm-session')
-    const store = useDmSessionStore()
-    await store.ensureListLoaded()
-    await store.ensureListLoaded()
-
-    expect(mockList).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -153,7 +138,7 @@ describe('dm-session store — loadContainer / getContainerById', () => {
 })
 
 describe('dm-session store — createContainer', () => {
-  it('POST body 只含 title；成功後 cache 完整 DTO，summary 置頂 list（對齊 createdAt desc）', async () => {
+  it('POST body 只含 title；成功後 cache 完整 DTO，列表不本地同步（導頁後必重抓）', async () => {
     const existing = createMockDmSessionContainer({ id: 'dsc-old', title: '舊劇本' })
     mockList.mockResolvedValue([containerToSummary(existing)])
     const created = createMockDmSessionContainer({ id: 'dsc-new', title: '新劇本' })
@@ -167,7 +152,7 @@ describe('dm-session store — createContainer', () => {
     expect(mockCreate).toHaveBeenCalledWith({ title: '新劇本' })
     expect(result).toEqual(created)
     expect(store.containerCache.get('dsc-new')).toEqual(created)
-    expect(store.list).toEqual([containerToSummary(created), containerToSummary(existing)])
+    expect(store.list).toEqual([containerToSummary(existing)])
   })
 
   it('有帶 remark 時 POST body 一併含 remark', async () => {
@@ -202,7 +187,7 @@ describe('dm-session store — updateContainer', () => {
     expect(result).toEqual(c)
   })
 
-  it('有 diff 時 PATCH 只含變更欄位 + updatedAt（members 轉寫入形），成功後 re-GET 刷 cache 並原位替換 summary', async () => {
+  it('有 diff 時 PATCH 只含變更欄位 + updatedAt（members 轉寫入形），成功後 re-GET 刷 cache；列表不動', async () => {
     const other = createMockDmSessionContainer({ id: 'dsc-other', title: '別的劇本' })
     const c = createMockDmSessionContainer()
     const nextMembers = [
@@ -218,7 +203,6 @@ describe('dm-session store — updateContainer', () => {
       members: nextMembers,
       updatedAt: '2026-01-03T00:00:00.000Z',
     }
-    // 列表序固定 createdAt desc：update 不得移動位置
     mockList.mockResolvedValue([containerToSummary(other), containerToSummary(c)])
     mockGet.mockResolvedValueOnce(c).mockResolvedValueOnce(next)
     mockUpdate.mockResolvedValue(undefined)
@@ -241,26 +225,8 @@ describe('dm-session store — updateContainer', () => {
     expect(mockGet).toHaveBeenCalledTimes(2)
     expect(result?.updatedAt).toBe(next.updatedAt)
     expect(store.containerCache.get(c.id)).toEqual(next)
-    expect(store.list).toEqual([containerToSummary(other), containerToSummary(next)])
-  })
-
-  it('原位替換 summary 時沿用列表現值的 nextSession（server 衍生，不本地重算）', async () => {
-    const log = createMockDmSessionLog()
-    const c = createMockDmSessionContainer({ sessions: [logToSummary(log)] })
-    const next = { ...c, title: '改名後', updatedAt: '2026-01-03T00:00:00.000Z' }
-    mockList.mockResolvedValue([containerToSummary(c, logToSummary(log))])
-    mockGet.mockResolvedValueOnce(c).mockResolvedValueOnce(next)
-    mockUpdate.mockResolvedValue(undefined)
-
-    const { useDmSessionStore } = await import('~/stores/dm-session')
-    const store = useDmSessionStore()
-    await store.loadList()
-    await store.loadContainer(c.id)
-
-    await store.updateContainer(c.id, { title: '改名後' })
-
-    expect(store.list[0]?.title).toBe('改名後')
-    expect(store.list[0]?.nextSession).toEqual(logToSummary(log))
+    // 列表不本地同步：update 發生在詳情頁，返回列表時必重抓
+    expect(store.list).toEqual([containerToSummary(other), containerToSummary(c)])
   })
 
   it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效', async () => {
@@ -344,7 +310,7 @@ describe('dm-session store — loadLog / getLogById', () => {
 })
 
 describe('dm-session store — createLog', () => {
-  it('POST body members 轉寫入形；成功後 cache 紀錄並將 summary 插入容器時間軸（同日置尾）', async () => {
+  it('POST body members 轉寫入形；成功後 cache 紀錄，容器時間軸不本地同步（容器頁重進必重抓）', async () => {
     const sameDay = createMockDmSessionLog({ id: 'dsl-a', date: '2026-01-10' })
     const c = createMockDmSessionContainer({ sessions: [logToSummary(sameDay)] })
     const created = createMockDmSessionLog({
@@ -373,11 +339,10 @@ describe('dm-session store — createLog', () => {
     })
     expect(result).toEqual(created)
     expect(store.logCache.get('dsl-new')).toEqual(created)
-    // 同日新建：stable sort 置於同日組尾端，對齊 server createdAt asc
-    expect(store.containerCache.get(c.id)?.sessions.map((s) => s.id)).toEqual(['dsl-a', 'dsl-new'])
+    expect(store.containerCache.get(c.id)?.sessions).toEqual([logToSummary(sameDay)])
   })
 
-  it('容器未在 cache 時仍成功建立，不動 sessions', async () => {
+  it('容器未在 cache 時仍成功建立', async () => {
     const created = createMockDmSessionLog()
     mockCreateLog.mockResolvedValue(created)
 
@@ -403,7 +368,7 @@ describe('dm-session store — updateLog', () => {
     expect(result).toEqual(log)
   })
 
-  it('有 diff 時 PATCH + re-GET，同步容器時間軸 summary 並依 date 重排', async () => {
+  it('有 diff 時 PATCH + re-GET 刷 logCache；容器時間軸不本地同步（容器頁重進必重抓）', async () => {
     const early = createMockDmSessionLog({ id: 'dsl-early', date: '2026-01-01' })
     const log = createMockDmSessionLog({ id: 'dsl-001', date: '2026-01-10' })
     const c = createMockDmSessionContainer({
@@ -431,10 +396,9 @@ describe('dm-session store — updateLog', () => {
     })
     expect(result?.updatedAt).toBe(next.updatedAt)
     expect(store.logCache.get(log.id)).toEqual(next)
-    // 改早於 early 的日期後重排到最前
-    expect(store.containerCache.get(c.id)?.sessions.map((s) => s.id)).toEqual([
-      'dsl-001',
-      'dsl-early',
+    expect(store.containerCache.get(c.id)?.sessions).toEqual([
+      logToSummary(early),
+      logToSummary(log),
     ])
   })
 
@@ -469,7 +433,7 @@ describe('dm-session store — updateLog', () => {
 })
 
 describe('dm-session store — removeLog', () => {
-  it('DELETE 後本地移除 logCache 與容器時間軸項', async () => {
+  it('DELETE 後本地移除 logCache；容器時間軸不本地同步（刪除後導容器頁必重抓）', async () => {
     const log = createMockDmSessionLog()
     const c = createMockDmSessionContainer({ sessions: [logToSummary(log)] })
     mockGet.mockResolvedValue(c)
@@ -485,7 +449,7 @@ describe('dm-session store — removeLog', () => {
 
     expect(mockRemoveLog).toHaveBeenCalledWith(c.id, log.id)
     expect(store.logCache.has(log.id)).toBe(false)
-    expect(store.containerCache.get(c.id)?.sessions).toEqual([])
+    expect(store.containerCache.get(c.id)?.sessions).toEqual([logToSummary(log)])
   })
 })
 
@@ -527,7 +491,7 @@ describe('dm-session store — isAtContainerLimit', () => {
 })
 
 describe('dm-session store — reset', () => {
-  it('清空 list / cache / loaded / error 等 session-bound state', async () => {
+  it('清空 list / cache / error 等 session-bound state', async () => {
     const log = createMockDmSessionLog()
     const c = createMockDmSessionContainer({ sessions: [logToSummary(log)] })
     mockList.mockResolvedValue([containerToSummary(c)])
@@ -548,7 +512,6 @@ describe('dm-session store — reset', () => {
     expect(store.list).toEqual([])
     expect(store.containerCache.size).toBe(0)
     expect(store.logCache.size).toBe(0)
-    expect(store.listLoaded).toBe(false)
     expect(store.listError).toBeNull()
     expect(store.detailError).toBeNull()
   })

@@ -22,13 +22,16 @@
           class="rounded-md border border-border-soft bg-surface p-3"
         >
           <div class="flex items-center gap-2">
-            <!-- 已連結成員的玩家名稱以 PL 帳號暱稱 snapshot 為準，唯讀；未連結才可手填 -->
+            <!-- 有效連結成員的玩家名稱以 PL 帳號暱稱 snapshot 為準，唯讀；
+                 未連結或連結已失效（snapshot 不再自癒）可手動編輯 -->
             <CommonAppInput
               :model-value="member.playerName"
               size="sm"
               outline
-              :readonly="member.character !== null"
-              :title="member.character ? t('dmSession.member.playerNameLinkedHint') : undefined"
+              :readonly="member.character?.available === true"
+              :title="
+                member.character?.available ? t('dmSession.member.playerNameLinkedHint') : undefined
+              "
               :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
               :placeholder="t('dmSession.member.playerName')"
               :aria-label="t('dmSession.member.playerName')"
@@ -131,7 +134,7 @@
         <CommonAppButton
           type="button"
           variant="primary"
-          :disabled="anyResolving"
+          :disabled="anyResolving || anyBlocking"
           :loading="submitting"
           @click="onConfirm"
         >
@@ -216,10 +219,17 @@ const onAddRow = (): void => {
 
 const onRemoveRow = (id: string): void => {
   draft.value = draft.value.filter((m) => m.id !== id)
+  // 一併清掉該列解析狀態，避免殘留的 error / invalid 永久鎖死確認鈕
+  clearLinkState(id)
 }
 
 const anyResolving = computed(() =>
   Object.values(linkStates.value).some((state) => state.status === 'resolving'),
+)
+
+/** 任一列處於 invalid / duplicate / error：確認會靜默解除該列原有連結，須先修正或清空輸入 */
+const anyBlocking = computed(() =>
+  Object.values(linkStates.value).some((state) => state.status !== 'resolving'),
 )
 
 const clearLinkState = (id: string): void => {
@@ -349,7 +359,7 @@ const onOpenChange = (value: boolean): void => {
 
 /** 名字修剪後為空且未連結的列視為未填，確認時丟棄；不自行關窗，成功後由父頁關閉 */
 const onConfirm = (): void => {
-  if (anyResolving.value || props.submitting) return
+  if (anyResolving.value || anyBlocking.value || props.submitting) return
   const cleaned = draft.value
     .map((m) => ({ ...m, playerName: m.playerName.trim() }))
     .filter((m) => m.playerName !== '' || m.character !== null)

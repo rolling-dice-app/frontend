@@ -97,7 +97,12 @@ watch(status, (value) => {
   void navigateTo(`/dm/session/${id}`, { replace: true })
 })
 
-/** 日期由 client 預填今日（契約：defaults 不碰時間） */
+/**
+ * 日期由 client 預填今日（契約：defaults 不碰時間）。
+ * Known divergence: "today" here is client-local time, while backend nextSession
+ * derivation is fixed to Asia/Taipei (product decision, zh-TW single market).
+ * Accepted — the prefill is editable and off-by-one only matters near midnight abroad.
+ */
 const todayISO = (): string => {
   const now = new Date()
   const yyyy = now.getFullYear()

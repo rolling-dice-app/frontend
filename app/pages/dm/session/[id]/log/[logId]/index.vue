@@ -95,7 +95,7 @@
               v-if="log.expRewards !== 0"
               class="inline-flex items-center gap-1 rounded-full border border-border-soft bg-surface-2 px-2 py-0.5 text-xs text-content tabular-nums"
             >
-              {{ t('dmSession.log.field.exp') }} +{{ log.expRewards }}
+              {{ t('dmSession.log.field.exp') }} {{ expDisplay }}
             </span>
           </div>
 
@@ -191,6 +191,12 @@ const isTransientError = computed(() => status.value === 'error' && !isNotFound.
 
 const buildMoneyParts = useMoneyEarningParts()
 const moneyParts = computed(() => (log.value ? buildMoneyParts(log.value.moneyRewards) : []))
+
+// 契約允許負值（他端寫入），前綴依正負決定，避免渲染成 +-500
+const expDisplay = computed(() => {
+  const exp = log.value?.expRewards ?? 0
+  return exp > 0 ? `+${exp}` : `${exp}`
+})
 
 const hasRewards = computed(() => {
   const current = log.value

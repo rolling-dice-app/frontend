@@ -46,7 +46,7 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
   })
   const loadList = (): Promise<MonsterTemplateSummaryDTO[]> => listFlight.run()
 
-  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
+  /** limit middleware 冷啟動 seed：至少載入一次即 no-op；列表頁一律直呼 loadList 重抓。 */
   const ensureListLoaded = async (): Promise<void> => {
     if (listLoaded.value) return
     await loadList()

@@ -101,7 +101,7 @@ export const useCharacterStore = defineStore('character', () => {
   })
   const loadList = (): Promise<CharacterListItem[]> => listFlight.run()
 
-  /** 確保列表已載入一次；已載入則 no-op，避免 SPA 內導航重複打 API。 */
+  /** limit middleware 冷啟動 seed：至少載入一次即 no-op；列表頁一律直呼 loadList 重抓。 */
   const ensureListLoaded = async (): Promise<void> => {
     if (listLoaded.value) return
     await loadList()
@@ -153,21 +153,14 @@ export const useCharacterStore = defineStore('character', () => {
     await api.update(id, patch)
     const next = await api.get(id)
     detailCache.value.set(id, next)
-    const nextItem = characterToListItem(next)
-    const idx = list.value.findIndex((c) => c.id === id)
-    if (idx >= 0) list.value[idx] = nextItem
+    // 列表不本地同步：update 頁不掛載列表，返回列表時必重抓
     return cloneCharacter(next)
   }
 
-  /** avatar 原子變更後重抓角色，同步 detailCache（含新 updatedAt）與列表縮圖。 */
+  /** avatar 原子變更後重抓角色，同步 detailCache（含新 updatedAt 樂觀鎖 token）。 */
   const refreshCharacterAfterAvatar = async (id: string): Promise<void> => {
     const next = await characters().get(id)
     detailCache.value.set(id, next)
-    const item = list.value.find((c) => c.id === id)
-    if (item) {
-      item.avatar = next.avatar
-      item.updatedAt = next.updatedAt
-    }
   }
 
   /** 切換公開分享；樂觀更新列表（失敗回滾），detailCache 於成功後同步。 */

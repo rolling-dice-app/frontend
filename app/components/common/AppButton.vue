@@ -16,7 +16,7 @@ import { RADIUS } from '~/constants/style'
 defineOptions({ inheritAttrs: false })
 
 type Variant = 'primary' | 'secondary' | 'neutral' | 'ghost' | 'danger' | 'warning'
-type Size = 'sm' | 'md' | 'lg'
+type Size = 'xs' | 'sm' | 'md' | 'lg'
 
 const props = withDefaults(
   defineProps<{
@@ -111,8 +111,8 @@ const hasSurfaceHover = computed(
   () => props.outline || props.variant === 'ghost' || props.variant === 'neutral',
 )
 
-// @ui Button 的 size 只改 padding/字級，高度由此補：sm 36 / md 44 / lg 52。
+// @ui Button 的 size 只改 padding/字級，高度由此補：xs 28 / sm 36 / md 44 / lg 52。
 const minHeightClass = computed(
-  () => ({ sm: 'min-h-9', md: 'min-h-11', lg: 'min-h-13' })[props.size],
+  () => ({ xs: 'min-h-7', sm: 'min-h-9', md: 'min-h-11', lg: 'min-h-13' })[props.size],
 )
 </script>

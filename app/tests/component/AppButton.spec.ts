@@ -42,7 +42,8 @@ describe('AppButton', () => {
     }
   })
 
-  it('size maps to the design-language min-height (36 / 44 / 52)', () => {
+  it('size maps to the design-language min-height (28 / 36 / 44 / 52)', () => {
+    expect(mountBtn({ size: 'xs' }).find('button').classes()).toContain('min-h-7')
     expect(mountBtn({ size: 'sm' }).find('button').classes()).toContain('min-h-9')
     expect(mountBtn({ size: 'lg' }).find('button').classes()).toContain('min-h-13')
   })

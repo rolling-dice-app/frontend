@@ -1,4 +1,5 @@
 import ability from './ability'
+import battlefield from './battlefield'
 import character from './character'
 import classLabels from './class'
 import combat from './combat'
@@ -27,6 +28,7 @@ import ui from './ui'
  */
 export const zhTW = {
   ability,
+  battlefield,
   character,
   class: classLabels,
   combat,

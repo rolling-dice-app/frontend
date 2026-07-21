@@ -34,6 +34,13 @@ function formatDamageEntry(entry: DamageDieEntry): string {
   return `${bonus}${typeLabel}`
 }
 
+/** 將傷害條目組合為顯示字串（不套屬性 mod；戰場攻擊快照用），例如 `1d8+3 穿刺 + 2d8 毒素` */
+export function formatDamageDiceSummary(damageDice: DamageDieEntry[]): string {
+  const renderable = damageDice.filter((entry) => hasDicePart(entry) || (entry.bonus ?? 0) !== 0)
+  if (renderable.length === 0) return '—'
+  return renderable.map((entry, i) => `${i > 0 ? '+ ' : ''}${formatDamageEntry(entry)}`).join(' ')
+}
+
 /** 將攻擊的傷害條目組合為顯示字串，例如 `1d8+5 劈砍 + 4d8+10 光耀` 或 `10 酸蝕` */
 export function formatDamageSummary(
   attack: AttackDraft,

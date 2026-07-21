@@ -31,6 +31,9 @@ export function createMockBattlefieldUnit(
     sortOrder: 0,
     conditions: [],
     inCombat: false,
+    deathSaves: { successes: 0, failures: 0 },
+    attacks: [],
+    skills: {},
     ...overrides,
   }
 }

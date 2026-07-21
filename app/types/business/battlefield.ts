@@ -1,4 +1,10 @@
-import type { ClassEntry, ConditionKey } from '@rolling-dice-app/core'
+import type {
+  ClassEntry,
+  ConditionKey,
+  DamageDieEntry,
+  DeathSaves,
+  SkillKey,
+} from '@rolling-dice-app/core'
 
 /**
  * m7.3 即時戰場 — 契約鏡像 + UI 型別（mock 階段）。
@@ -19,6 +25,17 @@ export interface BattlefieldCondition {
   id: string
   key: ConditionKey
   note: string | null
+}
+
+/** 攻擊快照條目；命中為 flat 總值（快照時已攤平），傷害復用 DamageDieEntry 供自動擲骰取數 */
+export interface BattlefieldAttackEntry {
+  id: string
+  name: string
+  /** 命中加值（flat 總值） */
+  hitBonus: number
+  damageDice: DamageDieEntry[]
+  /** 補充說明（觸發條件、附加效果等）；未填為 null */
+  comment: string | null
 }
 
 export interface BattlefieldUnit {
@@ -54,6 +71,12 @@ export interface BattlefieldUnit {
   sortOrder: number
   conditions: BattlefieldCondition[]
   inCombat: boolean
+  /** 死亡豁免計數；僅 HP 0 時顯示／計數（HP ≥ 1 歸零） */
+  deathSaves: DeathSaves
+  /** 攻擊快照；角色／怪物加入時由來源快照，adhoc 空陣列起步 */
+  attacks: BattlefieldAttackEntry[]
+  /** 技能加值快照（flat 總值）；只快照有加值的技能，adhoc 為空物件 */
+  skills: Partial<Record<SkillKey, number>>
 }
 
 export interface BattlefieldDTO {
@@ -100,6 +123,10 @@ export type BattlefieldMemberSource =
       speed: number
       /** 含 DEX 與額外能力的先攻總修正；非契約 initiativeBonus（額外加值）原值 */
       totalInitiative: number
+      /** 攻擊快照（命中已攤平為 flat 總值） */
+      attacks: BattlefieldAttackEntry[]
+      /** 技能加值快照；只含熟練或有調整的技能攤平總值 */
+      skills: Partial<Record<SkillKey, number>>
     }
   | {
       shareId: string
@@ -118,6 +145,10 @@ export interface BattlefieldTemplateSource {
   /** 速度（呎；core v12 起模板 speed 為 number） */
   speed: number
   initiativeBonus: number
+  /** 攻擊列表（模板 hitBonus 即 flat 總值） */
+  attacks: BattlefieldAttackEntry[]
+  /** 技能加值（模板 skills 原樣搬） */
+  skills: Partial<Record<SkillKey, number>>
 }
 
 /** 手動臨時單位表單輸入 */

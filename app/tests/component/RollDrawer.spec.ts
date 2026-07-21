@@ -18,9 +18,10 @@ vi.mock('~/helpers/dice', () => ({
   rollD20: vi.fn(),
   rollDice: vi.fn(),
   rollDie: vi.fn(),
+  rollDamageLines: vi.fn(),
 }))
 
-const { rollD20, rollDice, rollDie } = await import('~/helpers/dice')
+const { rollD20, rollDice, rollDie, rollDamageLines } = await import('~/helpers/dice')
 
 const push = vi.fn()
 const clear = vi.fn()
@@ -40,6 +41,7 @@ beforeEach(() => {
   vi.mocked(rollD20).mockReset()
   vi.mocked(rollDice).mockReset()
   vi.mocked(rollDie).mockReset()
+  vi.mocked(rollDamageLines).mockReset()
 })
 
 afterEach(() => {
@@ -77,7 +79,7 @@ const AttackRowStub = {
 }
 
 const OutputListStub = {
-  name: 'BusinessCharacterDetailQuickviewRollOutputList',
+  name: 'BusinessDiceRollOutputList',
   props: ['entries'],
   emits: ['clear'],
   template: `<div data-output-list />`,
@@ -136,7 +138,7 @@ const mountDrawer = (
         Drawer: DrawerStub,
         BusinessCharacterDetailQuickviewRollTriggerRow: TriggerRowStub,
         BusinessCharacterDetailQuickviewRollAttackRow: AttackRowStub,
-        BusinessCharacterDetailQuickviewRollOutputList: OutputListStub,
+        BusinessDiceRollOutputList: OutputListStub,
         BusinessCharacterDetailQuickviewRollAdHocBar: AdHocBarStub,
       },
     },
@@ -292,9 +294,11 @@ describe('RollDrawer', () => {
   })
 
   describe('handleAttackDamage', () => {
-    it('一般傷害：count 不翻倍、push entry total 正確', async () => {
-      // 1d8+0 ability mod +3（applyAbilityToDamage true, str mod +3） → 骰 [5] + 3 = 8
-      vi.mocked(rollDice).mockReturnValueOnce([5])
+    it('一般傷害：委派 rollDamageLines（帶 ability mod）、push entry total 正確', async () => {
+      // 1d8 + ability mod +3（applyAbilityToDamage true, str mod +3） → 骰 [5] + 3 = 8
+      vi.mocked(rollDamageLines).mockReturnValueOnce([
+        { rolls: [5], sides: 8, count: 1, bonus: 3, damageType: 'slashing', subtotal: 8 },
+      ])
       const wrapper = mountDrawer({
         character: makeCharacter({
           attacks: [makeAttack({ id: 'a', name: '長劍' })],
@@ -303,7 +307,11 @@ describe('RollDrawer', () => {
       await openDrawer(wrapper)
       const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
       attackRow.vm.$emit('rollDamage', false)
-      expect(rollDice).toHaveBeenCalledWith(1, 8)
+      expect(rollDamageLines).toHaveBeenCalledWith(
+        [{ id: 'd-1', dieType: 8, count: 1, bonus: null, damageType: 'slashing' }],
+        false,
+        3,
+      )
       expect(push).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: 'attack-damage',
@@ -314,8 +322,10 @@ describe('RollDrawer', () => {
       )
     })
 
-    it('暴擊：rollDice 用 count*2 呼叫', async () => {
-      vi.mocked(rollDice).mockReturnValueOnce([5, 6])
+    it('暴擊：委派 rollDamageLines isCritical=true', async () => {
+      vi.mocked(rollDamageLines).mockReturnValueOnce([
+        { rolls: [5, 6], sides: 8, count: 2, bonus: 3, damageType: 'slashing', subtotal: 14 },
+      ])
       const wrapper = mountDrawer({
         character: makeCharacter({
           attacks: [makeAttack({ id: 'a', name: '長劍' })],
@@ -324,11 +334,12 @@ describe('RollDrawer', () => {
       await openDrawer(wrapper)
       const attackRow = wrapper.findAllComponents(AttackRowStub)[0]!
       attackRow.vm.$emit('rollDamage', true)
-      expect(rollDice).toHaveBeenCalledWith(2, 8)
-      expect(push).toHaveBeenCalledWith(expect.objectContaining({ isCritical: true }))
+      expect(rollDamageLines).toHaveBeenCalledWith(expect.anything(), true, 3)
+      expect(push).toHaveBeenCalledWith(expect.objectContaining({ isCritical: true, total: 14 }))
     })
 
     it('renderable 為空（純 0 加值且無骰）時不 push', async () => {
+      vi.mocked(rollDamageLines).mockReturnValueOnce([])
       const wrapper = mountDrawer({
         character: makeCharacter({
           attacks: [

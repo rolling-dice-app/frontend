@@ -28,6 +28,27 @@ const ButtonStub = {
   emits: ['click'],
 }
 
+const DeathSavesSectionStub = {
+  name: 'DeathSavesSectionStub',
+  props: ['successes', 'failures'],
+  emits: ['setSuccess', 'setFailure', 'roll'],
+  template: '<div data-death-saves />',
+}
+
+const UnitAttackRowStub = {
+  name: 'UnitAttackRowStub',
+  props: ['attack'],
+  emits: ['rollHit', 'rollDamage'],
+  template: '<li data-attack-row :data-name="attack.name" />',
+}
+
+const UnitSkillListStub = {
+  name: 'UnitSkillListStub',
+  props: ['skills'],
+  emits: ['roll'],
+  template: '<ul data-skill-list />',
+}
+
 const mountPanel = (unit: Partial<BattlefieldUnit> = {}, isActive = false) =>
   mount(UnitDetailPanel, {
     props: {
@@ -53,6 +74,9 @@ const mountPanel = (unit: Partial<BattlefieldUnit> = {}, isActive = false) =>
         Button: ButtonStub,
         BusinessBattlefieldHpQuickControls: true,
         BusinessBattlefieldConditionBadgeList: true,
+        BusinessBattlefieldDeathSavesSection: DeathSavesSectionStub,
+        BusinessBattlefieldUnitAttackRow: UnitAttackRowStub,
+        BusinessBattlefieldUnitSkillList: UnitSkillListStub,
       },
       components: { CommonAppButton: AppButton },
       mocks: { formatModifier, hpRatioTier },
@@ -187,5 +211,52 @@ describe('UnitDetailPanel', () => {
     await buttonByText(wrapper, `＋${t('battlefield.applyCondition')}`)!.trigger('click')
     expect(wrapper.emitted('addCondition')?.at(-1)).toEqual(['prone', '被巨蛛絆倒'])
     expect((note.element as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('UnitDetailPanel — 死亡豁免 / 攻擊 / 技能', () => {
+  it('HP 0 才渲染死亡豁免區塊，計數與擲骰事件透傳', () => {
+    const alive = mountPanel()
+    expect(alive.find('[data-death-saves]').exists()).toBe(false)
+
+    const downed = mountPanel({ currentHp: 0, deathSaves: { successes: 1, failures: 0 } })
+    const section = downed.findComponent({ name: 'DeathSavesSectionStub' })
+    expect(section.exists()).toBe(true)
+    expect(section.props()).toMatchObject({ successes: 1, failures: 0 })
+    section.vm.$emit('setSuccess', 2)
+    section.vm.$emit('setFailure', 3)
+    section.vm.$emit('roll')
+    expect(downed.emitted('setDeathSaveSuccesses')).toEqual([[2]])
+    expect(downed.emitted('setDeathSaveFailures')).toEqual([[3]])
+    expect(downed.emitted('rollDeathSave')).toHaveLength(1)
+  })
+
+  it('attacks 空陣列不渲染攻擊區塊；有值逐列渲染並透傳擲骰事件', () => {
+    expect(mountPanel().find('[data-attack-row]').exists()).toBe(false)
+
+    const attack = {
+      id: 'a-1',
+      name: '彎刀',
+      hitBonus: 4,
+      damageDice: [{ id: 'd-1', dieType: 6 as const, count: 1, bonus: 2, damageType: null }],
+      comment: null,
+    }
+    const wrapper = mountPanel({ attacks: [attack] })
+    const row = wrapper.findComponent({ name: 'UnitAttackRowStub' })
+    expect(row.props('attack')).toMatchObject({ name: '彎刀' })
+    row.vm.$emit('rollHit', 'advantage')
+    row.vm.$emit('rollDamage', true)
+    expect(wrapper.emitted('rollAttackHit')).toEqual([[attack, 'advantage']])
+    expect(wrapper.emitted('rollAttackDamage')).toEqual([[attack, true]])
+  })
+
+  it('skills 空物件不渲染技能區塊；有值透傳 roll 事件', () => {
+    expect(mountPanel().find('[data-skill-list]').exists()).toBe(false)
+
+    const wrapper = mountPanel({ skills: { stealth: 6 } })
+    const list = wrapper.findComponent({ name: 'UnitSkillListStub' })
+    expect(list.props('skills')).toEqual({ stealth: 6 })
+    list.vm.$emit('roll', 'stealth', 'disadvantage')
+    expect(wrapper.emitted('rollSkill')).toEqual([['stealth', 'disadvantage']])
   })
 })

@@ -102,6 +102,14 @@ export default {
   conditionNotePlaceholder: '備註（選填）',
   applyCondition: '套用',
   removeConditionAria: '移除狀態 {name}',
+  attacksTitle: '攻擊',
+  skillsTitle: '技能',
+
+  // 戰鬥紀錄（中欄固定高度 log）；死亡豁免 label 重用 combat.deathSave
+  battleLogTitle: '戰鬥紀錄',
+  logInitiative: '先攻',
+  logHit: '{name}命中',
+  logDamage: '{name}傷害',
 
   // 增援 drawer
   setupTitle: '增援／建立單位',

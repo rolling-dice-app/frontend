@@ -252,3 +252,25 @@ describe('speedDisplay', () => {
     expect(speedDisplay({ speed: null, speedAdjustment: 0 }, '呎')).toBe('—')
   })
 })
+
+describe('resetUnitAfterBattle — 死亡豁免', () => {
+  const downed = () =>
+    createMockBattlefieldUnit({
+      inCombat: true,
+      maxHp: 20,
+      currentHp: 0,
+      deathSaves: { successes: 2, failures: 1 },
+    })
+
+  it('回復滿血（不保留當前 HP）時死亡豁免歸零', () => {
+    const next = resetUnitAfterBattle(downed(), { ...KEEP_ALL, keepCurrentHp: false })
+    expect(next.currentHp).toBe(20)
+    expect(next.deathSaves).toEqual({ successes: 0, failures: 0 })
+  })
+
+  it('保留當前 HP 且仍為 0 時計數保留', () => {
+    const next = resetUnitAfterBattle(downed(), KEEP_ALL)
+    expect(next.currentHp).toBe(0)
+    expect(next.deathSaves).toEqual({ successes: 2, failures: 1 })
+  })
+})

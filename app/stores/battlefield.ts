@@ -1,5 +1,6 @@
 import type {
   AdhocUnitInput,
+  BattlefieldAttackEntry,
   BattlefieldDTO,
   BattlefieldFaction,
   BattlefieldMemberSource,
@@ -30,6 +31,11 @@ const UNIT_NAME_MAX_LENGTH = 30
 export interface InitiativeRollResult {
   roll: number
   total: number
+}
+
+export interface EnemyInitiativeRollResult extends InitiativeRollResult {
+  unitId: string
+  name: string
 }
 
 /**
@@ -72,6 +78,14 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   let seeded = false
   let mockIdCounter = 0
   const nextMockId = (prefix: string): string => `${prefix}-${++mockIdCounter}`
+
+  /** 攻擊快照：deep clone 並重生行內 id（與來源互不同步、不回寫） */
+  const snapshotAttacks = (attacks: BattlefieldAttackEntry[]): BattlefieldAttackEntry[] =>
+    attacks.map((entry) => ({
+      ...entry,
+      id: nextMockId('bfa'),
+      damageDice: entry.damageDice.map((line) => ({ ...line, id: nextMockId('bfd') })),
+    }))
 
   /** 首次存取時把 seed clone 進 cache，模擬後端既有資料 */
   const ensureSeeded = (): void => {
@@ -207,6 +221,9 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       sortOrder: SORT_ORDER_LAST,
       conditions: [],
       inCombat: true,
+      deathSaves: { successes: 0, failures: 0 },
+      attacks: snapshotAttacks(source.attacks),
+      skills: { ...source.skills },
     }
     bf.units.push(created)
     resortByInitiative(bf)
@@ -251,6 +268,9 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       sortOrder: SORT_ORDER_LAST,
       conditions: [],
       inCombat: true,
+      deathSaves: { successes: 0, failures: 0 },
+      attacks: snapshotAttacks(template.attacks),
+      skills: { ...template.skills },
     }
     bf.units.push(created)
     resortByInitiative(bf)
@@ -291,6 +311,9 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       sortOrder: SORT_ORDER_LAST,
       conditions: [],
       inCombat: joinCombat,
+      deathSaves: { successes: 0, failures: 0 },
+      attacks: [],
+      skills: {},
     }
     bf.units.push(created)
     if (joinCombat) {
@@ -370,6 +393,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   }
 
   // ── 數值 ───────────────────────────────────────────────────────────────────
+  /** HP ≥ 1 時死亡豁免歸零（比照 combat）；掛在所有可能改動 currentHp 的 action 尾端 */
+  const clearDeathSavesIfUp = (target: BattlefieldUnit): void => {
+    if (target.currentHp >= 1) target.deathSaves = { successes: 0, failures: 0 }
+  }
+
   /** @returns 本次操作是否使單位倒下（HP 降到 0） */
   const applyDamage = (battlefieldId: string, unitId: string, amount: number): boolean => {
     const bf = requireBattlefield(battlefieldId)
@@ -378,6 +406,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const pools = applyDamageToHp(target, amount)
     target.currentHp = pools.currentHp
     target.tempHp = pools.tempHp
+    clearDeathSavesIfUp(target)
     touch(bf)
     return wasUp && target.currentHp === 0
   }
@@ -386,6 +415,25 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const bf = requireBattlefield(battlefieldId)
     const target = requireUnit(bf, unitId)
     target.currentHp = applyHealToHp(target, amount).currentHp
+    clearDeathSavesIfUp(target)
+    touch(bf)
+  }
+
+  // ── 死亡豁免 ───────────────────────────────────────────────────────────────
+  /** 僅 HP 0 時可計數（不變量守在 store，防多入口漏接）；值 clamp 0..3 */
+  const setDeathSaveSuccesses = (battlefieldId: string, unitId: string, value: number): void => {
+    const bf = requireBattlefield(battlefieldId)
+    const target = requireUnit(bf, unitId)
+    if (target.currentHp !== 0) return
+    target.deathSaves.successes = Math.max(0, Math.min(3, value))
+    touch(bf)
+  }
+
+  const setDeathSaveFailures = (battlefieldId: string, unitId: string, value: number): void => {
+    const bf = requireBattlefield(battlefieldId)
+    const target = requireUnit(bf, unitId)
+    if (target.currentHp !== 0) return
+    target.deathSaves.failures = Math.max(0, Math.min(3, value))
     touch(bf)
   }
 
@@ -405,6 +453,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const grown = target.maxHp - previous
     if (grown > 0) target.currentHp += grown
     target.currentHp = Math.min(Math.max(target.currentHp, 0), target.maxHp)
+    clearDeathSavesIfUp(target)
     touch(bf)
   }
 
@@ -450,18 +499,20 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     return { roll, total: target.initiative }
   }
 
-  /** 全部在場敵人重骰先攻；回傳擲骰數量（0 = 沒有在場敵人） */
-  const rollAllEnemyInitiatives = (battlefieldId: string): number => {
+  /** 全部在場敵人重骰先攻；回傳逐筆結果（空陣列 = 沒有在場敵人），供 toast 與戰鬥紀錄 */
+  const rollAllEnemyInitiatives = (battlefieldId: string): EnemyInitiativeRollResult[] => {
     const bf = requireBattlefield(battlefieldId)
     const enemies = combatantsOf(bf.units).filter((u) => u.faction === 'enemy')
-    for (const enemy of enemies) {
-      enemy.initiative = rollDie(20) + enemy.initiativeBonus
-    }
-    if (enemies.length > 0) {
+    const results = enemies.map((enemy) => {
+      const roll = rollDie(20)
+      enemy.initiative = roll + enemy.initiativeBonus
+      return { unitId: enemy.id, name: enemy.name, roll, total: enemy.initiative }
+    })
+    if (results.length > 0) {
       resortByInitiative(bf)
       touch(bf)
     }
-    return enemies.length
+    return results
   }
 
   // ── 回合 ───────────────────────────────────────────────────────────────────
@@ -585,6 +636,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     removeCondition,
     applyDamage,
     applyHeal,
+    setDeathSaveSuccesses,
+    setDeathSaveFailures,
     adjustTempHp,
     adjustMaxHp,
     adjustAc,

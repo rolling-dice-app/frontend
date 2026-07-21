@@ -123,6 +123,8 @@ describe('useBattlefieldStore — 單位建立', () => {
       ac: 10,
       speed: 30,
       initiativeBonus: 0,
+      attacks: [],
+      skills: {},
     })
     const unit = store.addMonsterInstance(SEED_BF_ID, 'mock-tpl-no-cr')
     expect(unit?.title).toBe('')
@@ -181,13 +183,14 @@ describe('useBattlefieldStore — 數值', () => {
     expect(aliya).toMatchObject({ speed: 30, speedAdjustment: -99 })
   })
 
-  it('rollInitiative 用 1d20+加值並重排；rollAllEnemyInitiatives 回傳敵方數量', async () => {
+  it('rollInitiative 用 1d20+加值並重排；rollAllEnemyInitiatives 回傳逐筆結果', async () => {
     const { store } = await setup()
     // 索林加值 0、固定骰 15
     const result = store.rollInitiative(SEED_BF_ID, 'mock-u-thorin')
     expect(result).toEqual({ roll: 15, total: 15 })
-    const count = store.rollAllEnemyInitiatives(SEED_BF_ID)
-    expect(count).toBe(4) // 哥布林 1〜3＋首領
+    const results = store.rollAllEnemyInitiatives(SEED_BF_ID)
+    expect(results).toHaveLength(4) // 哥布林 1〜3＋首領
+    expect(results).toContainEqual({ unitId: 'mock-u-g1', name: '哥布林 1', roll: 15, total: 17 })
   })
 })
 
@@ -311,5 +314,79 @@ describe('useBattlefieldStore — reset', () => {
     expect(store.getBattlefieldById(SEED_BF_ID)).toBeUndefined()
     await store.loadSessionOptions()
     expect(store.sessionOptions).toHaveLength(3)
+  })
+})
+
+describe('useBattlefieldStore — 死亡豁免', () => {
+  it('setDeathSave* clamp 0..3；HP > 0 時 no-op', async () => {
+    const { store, battlefield } = await setup()
+    const luna = battlefield.units.find((u) => u.id === 'mock-u-luna')!
+    // HP 12 → no-op
+    store.setDeathSaveSuccesses(SEED_BF_ID, 'mock-u-luna', 2)
+    expect(luna.deathSaves.successes).toBe(0)
+    // 打到 0 後可計數並 clamp
+    store.applyDamage(SEED_BF_ID, 'mock-u-luna', 999)
+    expect(luna.currentHp).toBe(0)
+    store.setDeathSaveSuccesses(SEED_BF_ID, 'mock-u-luna', 5)
+    expect(luna.deathSaves.successes).toBe(3)
+    store.setDeathSaveFailures(SEED_BF_ID, 'mock-u-luna', -1)
+    expect(luna.deathSaves.failures).toBe(0)
+  })
+
+  it('applyHeal 0 → ≥1 歸零計數；adjustMaxHp 抬升 currentHp 連動歸零', async () => {
+    const { store, battlefield } = await setup()
+    const luna = battlefield.units.find((u) => u.id === 'mock-u-luna')!
+    store.applyDamage(SEED_BF_ID, 'mock-u-luna', 999)
+    store.setDeathSaveFailures(SEED_BF_ID, 'mock-u-luna', 2)
+    store.applyHeal(SEED_BF_ID, 'mock-u-luna', 1)
+    expect(luna.deathSaves).toEqual({ successes: 0, failures: 0 })
+
+    const g2 = battlefield.units.find((u) => u.id === 'mock-u-g2')!
+    store.applyDamage(SEED_BF_ID, 'mock-u-g2', 999)
+    store.setDeathSaveSuccesses(SEED_BF_ID, 'mock-u-g2', 1)
+    store.adjustMaxHp(SEED_BF_ID, 'mock-u-g2', 1) // 上調同步 +1 當前 HP → 站起
+    expect(g2.currentHp).toBe(1)
+    expect(g2.deathSaves.successes).toBe(0)
+  })
+})
+
+describe('useBattlefieldStore — 攻擊/技能快照', () => {
+  it('importMember 快照 attacks/skills：deep clone 且行內 id 重生', async () => {
+    const { store } = await setup()
+    const bf = await store.createBattlefield('mock-session-mist-4')
+    const created = store.importMember(bf.id, 'chs_mock_a1x2')!
+    const source = store.getMemberSources(bf.id).find((m) => m.shareId === 'chs_mock_a1x2')!
+    if (!source.available) throw new Error('unexpected unavailable source')
+    expect(created.attacks).toHaveLength(1)
+    expect(created.attacks[0]).toMatchObject({ name: '長劍', hitBonus: 8 })
+    expect(created.attacks[0]!.id).not.toBe(source.attacks[0]!.id)
+    expect(created.attacks[0]!.damageDice[0]!.id).not.toBe(source.attacks[0]!.damageDice[0]!.id)
+    // deep clone：改單位不回寫來源
+    created.attacks[0]!.hitBonus = 99
+    created.skills.athletics = 99
+    expect(source.attacks[0]!.hitBonus).toBe(8)
+    expect(source.skills.athletics).toBe(8)
+    expect(created.deathSaves).toEqual({ successes: 0, failures: 0 })
+  })
+
+  it('addMonsterInstance 快照模板 attacks/skills；createAdhocUnit 空值起步', async () => {
+    const { store, battlefield } = await setup()
+    const monster = store.addMonsterInstance(SEED_BF_ID, 'mock-tpl-spider')!
+    const template = store.templates.find((tpl) => tpl.id === 'mock-tpl-spider')!
+    expect(monster.attacks[0]).toMatchObject({ name: '毒咬', hitBonus: 5 })
+    expect(monster.attacks[0]!.damageDice).toHaveLength(2)
+    expect(monster.attacks[0]!.id).not.toBe(template.attacks[0]!.id)
+    expect(monster.skills).toEqual({ stealth: 7 })
+    expect(monster.skills).not.toBe(template.skills)
+
+    const adhoc = store.createAdhocUnit(
+      SEED_BF_ID,
+      { name: '臨時單位', maxHp: 5, ac: 10, speed: 30, initiativeBonus: 0 },
+      false,
+    )
+    expect(adhoc.attacks).toEqual([])
+    expect(adhoc.skills).toEqual({})
+    expect(adhoc.deathSaves).toEqual({ successes: 0, failures: 0 })
+    expect(battlefield.units).toContainEqual(expect.objectContaining({ id: adhoc.id }))
   })
 })

@@ -129,7 +129,7 @@
       <div class="flex min-h-0 grow basis-1/3 flex-col gap-2">
         <BusinessCharacterDetailQuickviewRollAdHocBar @roll="handleAdHocRoll" />
         <div class="min-h-0 flex-1">
-          <BusinessCharacterDetailQuickviewRollOutputList :entries="entries" @clear="clear" />
+          <BusinessDiceRollOutputList :entries="entries" @clear="clear" />
         </div>
       </div>
     </div>
@@ -138,7 +138,7 @@
 
 <script setup lang="ts">
 import { Drawer, Icon } from '@ui'
-import { rollD20, rollDice, rollDie } from '~/helpers/dice'
+import { rollD20, rollDamageLines, rollDie } from '~/helpers/dice'
 import { CLASS_CONFIG } from '~/constants/dnd'
 import {
   ABILITY_KEYS,
@@ -153,7 +153,6 @@ import type {
   D100RollEntry,
   D20RollEntry,
   DamageRollEntry,
-  DamageRollLine,
   HitDieRollEntry,
   RawRollEntry,
   RollMode,
@@ -314,33 +313,7 @@ const handleAttackDamage = (attack: AttackEntry, isCritical: boolean): void => {
       ? getAbilityModifier(props.abilityScores[attack.abilityKey])
       : 0
 
-  const lines: DamageRollLine[] = attack.damageDice.map((entry, idx) => {
-    const totalBonus = (entry.bonus ?? 0) + (idx === 0 ? abilityMod : 0)
-    if (entry.dieType == null || entry.count <= 0) {
-      return {
-        rolls: [],
-        sides: null,
-        count: 0,
-        bonus: totalBonus,
-        damageType: entry.damageType,
-        subtotal: totalBonus,
-      }
-    }
-    const sides = entry.dieType
-    const count = isCritical ? entry.count * 2 : entry.count
-    const rolls = rollDice(count, sides)
-    const subtotal = rolls.reduce((s, r) => s + r, 0) + totalBonus
-    return {
-      rolls,
-      sides,
-      count,
-      bonus: totalBonus,
-      damageType: entry.damageType,
-      subtotal,
-    }
-  })
-
-  const renderable = lines.filter((l) => l.sides != null || l.bonus !== 0)
+  const renderable = rollDamageLines(attack.damageDice, isCritical, abilityMod)
   if (renderable.length === 0) return
 
   const total = renderable.reduce((s, l) => s + l.subtotal, 0)

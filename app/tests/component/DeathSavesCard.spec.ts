@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import DeathSavesCard from '~/components/business/character-detail/quickview/DeathSavesCard.vue'
 
-vi.mock('~/helpers/dice', () => ({
+// resolveDeathSaveRoll 為純函式走真實實作；只 mock 隨機來源
+vi.mock('~/helpers/dice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/helpers/dice')>()),
   rollD20: vi.fn(),
   rollDice: vi.fn(),
   rollDie: vi.fn(),

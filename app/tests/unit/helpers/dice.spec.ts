@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { rollD20, rollDice, rollDie } from '~/helpers/dice'
+import { resolveDeathSaveRoll, rollD20, rollDamageLines, rollDice, rollDie } from '~/helpers/dice'
 
 describe('rollDie', () => {
   it('回傳值為整數且介於 1 到面數之間', () => {
@@ -99,5 +99,72 @@ describe('rollD20', () => {
     const result = rollD20('advantage')
     expect(result.rolls).toEqual([11, 11])
     expect(result.chosen).toBe(11)
+  })
+})
+
+describe('resolveDeathSaveRoll', () => {
+  it('自然 20 → recover（起死回生）', () => {
+    expect(resolveDeathSaveRoll(20)).toEqual({ outcome: 'recover', amount: 1 })
+  })
+
+  it('自然 1 → failure ×2', () => {
+    expect(resolveDeathSaveRoll(1)).toEqual({ outcome: 'failure', amount: 2 })
+  })
+
+  it('10（界值）→ success +1', () => {
+    expect(resolveDeathSaveRoll(10)).toEqual({ outcome: 'success', amount: 1 })
+  })
+
+  it('9（界值）→ failure +1', () => {
+    expect(resolveDeathSaveRoll(9)).toEqual({ outcome: 'failure', amount: 1 })
+  })
+})
+
+describe('rollDamageLines', () => {
+  it('一般傷害：骰數不翻倍、小計含加值', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5) // d8 → 5
+    const lines = rollDamageLines(
+      [{ id: 'd1', dieType: 8, count: 1, bonus: 3, damageType: 'piercing' }],
+      false,
+    )
+    expect(lines).toEqual([
+      { rolls: [5], sides: 8, count: 1, bonus: 3, damageType: 'piercing', subtotal: 8 },
+    ])
+  })
+
+  it('爆擊：骰數 ×2、加值不翻倍', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5) // d8 → 5
+    const lines = rollDamageLines(
+      [{ id: 'd1', dieType: 8, count: 2, bonus: 3, damageType: null }],
+      true,
+    )
+    expect(lines[0]).toMatchObject({ count: 4, rolls: [5, 5, 5, 5], bonus: 3, subtotal: 23 })
+  })
+
+  it('純加值行保留；無骰又 0 加值的空行被過濾', () => {
+    const lines = rollDamageLines(
+      [
+        { id: 'd1', dieType: null, count: 0, bonus: 10, damageType: 'acid' },
+        { id: 'd2', dieType: null, count: 0, bonus: 0, damageType: null },
+      ],
+      false,
+    )
+    expect(lines).toEqual([
+      { rolls: [], sides: null, count: 0, bonus: 10, damageType: 'acid', subtotal: 10 },
+    ])
+  })
+
+  it('多行分別小計；abilityMod 只加在第一行', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0) // 每骰 1
+    const lines = rollDamageLines(
+      [
+        { id: 'd1', dieType: 6, count: 1, bonus: null, damageType: null },
+        { id: 'd2', dieType: 6, count: 2, bonus: null, damageType: null },
+      ],
+      false,
+      3,
+    )
+    expect(lines[0]).toMatchObject({ bonus: 3, subtotal: 4 })
+    expect(lines[1]).toMatchObject({ bonus: 0, rolls: [1, 1], subtotal: 2 })
   })
 })

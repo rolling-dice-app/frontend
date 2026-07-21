@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import RollOutputList from '~/components/business/character-detail/quickview/RollOutputList.vue'
+import RollOutputList from '~/components/business/dice/RollOutputList.vue'
 import { formatModifier } from '~/helpers/ability'
 import type {
   D100RollEntry,
@@ -249,5 +249,26 @@ describe('RollOutputList', () => {
       expect(wrapper.text()).toContain('10')
       expect(wrapper.text()).toContain('酸蝕')
     })
+  })
+})
+
+describe('unitName 前綴與 title 覆寫', () => {
+  it('entry.unitName 存在時渲染「單位名・」前綴', () => {
+    const wrapper = mountList([makeD20Entry({ label: '彎刀命中', unitName: '哥布林 1' })])
+    expect(wrapper.text()).toContain('哥布林 1・彎刀命中')
+  })
+
+  it('entry.unitName 未提供時不渲染前綴（速查頁行為不變）', () => {
+    const wrapper = mountList([makeD20Entry({ label: '力量' })])
+    expect(wrapper.text()).not.toContain('・')
+  })
+
+  it('title prop 覆寫標題；未提供時用預設「擲骰結果」', () => {
+    const withTitle = mount(RollOutputList, {
+      props: { entries: [], title: '戰鬥紀錄' },
+      global: { mocks: { formatModifier } },
+    })
+    expect(withTitle.find('h3').text()).toBe('戰鬥紀錄')
+    expect(mountList().find('h3').text()).toBe('擲骰結果')
   })
 })

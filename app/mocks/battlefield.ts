@@ -1,4 +1,6 @@
+import type { DamageDieType, DamageTypeKey } from '@rolling-dice-app/core'
 import type {
+  BattlefieldAttackEntry,
   BattlefieldDTO,
   BattlefieldMemberSource,
   BattlefieldSessionOption,
@@ -27,6 +29,53 @@ export interface BattlefieldMockSeed {
   battlefields: BattlefieldDTO[]
 }
 
+/** 攻擊 seed 縮寫：prefix 保證行內 id 於單位內唯一；每次呼叫回傳新陣列（避免跨單位共享參照） */
+const attack = (
+  prefix: string,
+  name: string,
+  hitBonus: number,
+  dice: { dieType: DamageDieType | null; count: number; bonus: number | null }[],
+  damageType: (DamageTypeKey | null)[],
+  comment: string | null = null,
+): BattlefieldAttackEntry => ({
+  id: `${prefix}-${name}`,
+  name,
+  hitBonus,
+  damageDice: dice.map((line, index) => ({
+    id: `${prefix}-${name}-${index}`,
+    dieType: line.dieType,
+    count: line.count,
+    bonus: line.bonus,
+    damageType: damageType[index] ?? null,
+  })),
+  comment,
+})
+
+/** 哥布林彎刀＋短弓（模板與實例共用的產生器） */
+const goblinAttacks = (prefix: string): BattlefieldAttackEntry[] => [
+  attack(prefix, '彎刀', 4, [{ dieType: 6, count: 1, bonus: 2 }], ['slashing']),
+  attack(prefix, '短弓', 4, [{ dieType: 6, count: 1, bonus: 2 }], ['piercing'], '射程 80/320 呎'),
+]
+
+/** 巨蛛毒咬：多行傷害條目（穿刺＋毒素），驗爆擊翻倍與分行加總 */
+const spiderAttacks = (prefix: string): BattlefieldAttackEntry[] => [
+  attack(
+    prefix,
+    '毒咬',
+    5,
+    [
+      { dieType: 8, count: 1, bonus: 3 },
+      { dieType: 8, count: 2, bonus: null },
+    ],
+    ['piercing', 'poison'],
+    'DC 11 體質豁免，失敗受毒素傷害',
+  ),
+]
+
+const bossAttacks = (prefix: string): BattlefieldAttackEntry[] => [
+  attack(prefix, '彎刀', 4, [{ dieType: 6, count: 1, bonus: 2 }], ['slashing'], '多重攻擊：兩次'),
+]
+
 const MOCK_TEMPLATES: BattlefieldTemplateSource[] = [
   {
     id: 'mock-tpl-goblin',
@@ -36,6 +85,8 @@ const MOCK_TEMPLATES: BattlefieldTemplateSource[] = [
     ac: 15,
     speed: 30,
     initiativeBonus: 2,
+    attacks: goblinAttacks('mock-a-tpl-goblin'),
+    skills: { stealth: 6 },
   },
   {
     id: 'mock-tpl-boss',
@@ -45,8 +96,11 @@ const MOCK_TEMPLATES: BattlefieldTemplateSource[] = [
     ac: 17,
     speed: 30,
     initiativeBonus: 1,
+    attacks: bossAttacks('mock-a-tpl-boss'),
+    skills: { stealth: 6, intimidation: 2 },
   },
   {
+    // 攻擊／技能皆空：驗右欄兩區塊的空狀態（不渲染）
     id: 'mock-tpl-ghost',
     name: '恐懼幽靈',
     challengeRating: '2',
@@ -54,6 +108,8 @@ const MOCK_TEMPLATES: BattlefieldTemplateSource[] = [
     ac: 12,
     speed: 0,
     initiativeBonus: 2,
+    attacks: [],
+    skills: {},
   },
   {
     id: 'mock-tpl-spider',
@@ -63,6 +119,8 @@ const MOCK_TEMPLATES: BattlefieldTemplateSource[] = [
     ac: 14,
     speed: 30,
     initiativeBonus: 3,
+    attacks: spiderAttacks('mock-a-tpl-spider'),
+    skills: { stealth: 7 },
   },
 ]
 
@@ -78,6 +136,10 @@ const MIST_MEMBERS: BattlefieldMemberSource[] = [
     ac: 18,
     speed: 30,
     totalInitiative: 1,
+    attacks: [
+      attack('mock-a-aliya', '長劍', 8, [{ dieType: 8, count: 1, bonus: 5 }], ['slashing']),
+    ],
+    skills: { athletics: 8, intimidation: 3 },
   },
   {
     shareId: 'chs_mock_b3y4',
@@ -90,6 +152,10 @@ const MIST_MEMBERS: BattlefieldMemberSource[] = [
     ac: 16,
     speed: 25,
     totalInitiative: 0,
+    attacks: [
+      attack('mock-a-thorin', '戰鎚', 5, [{ dieType: 8, count: 1, bonus: 2 }], ['bludgeoning']),
+    ],
+    skills: { medicine: 6, religion: 4, insight: 6 },
   },
   {
     shareId: 'chs_mock_c5z6',
@@ -102,6 +168,11 @@ const MIST_MEMBERS: BattlefieldMemberSource[] = [
     ac: 15,
     speed: 35,
     totalInitiative: 4,
+    attacks: [
+      attack('mock-a-finn', '長弓', 9, [{ dieType: 8, count: 1, bonus: 4 }], ['piercing']),
+      attack('mock-a-finn', '短劍', 7, [{ dieType: 6, count: 1, bonus: 4 }], ['piercing']),
+    ],
+    skills: { perception: 7, stealth: 8, survival: 5 },
   },
   {
     shareId: 'chs_mock_d7w8',
@@ -114,6 +185,17 @@ const MIST_MEMBERS: BattlefieldMemberSource[] = [
     ac: 14,
     speed: 25,
     totalInitiative: 3,
+    attacks: [
+      attack(
+        'mock-a-luna',
+        '短劍',
+        7,
+        [{ dieType: 6, count: 1, bonus: 4 }],
+        ['piercing'],
+        '偷襲成立時 +3d6',
+      ),
+    ],
+    skills: { stealth: 9, sleightOfHand: 7, acrobatics: 6 },
   },
   { shareId: 'chs_mock_e9v0', playerName: '阿豪', available: false },
 ]
@@ -142,6 +224,9 @@ const unit = (
   sortOrder: 999,
   conditions: [],
   inCombat: false,
+  deathSaves: { successes: 0, failures: 0 },
+  attacks: [],
+  skills: {},
   ...base,
 })
 
@@ -169,6 +254,8 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 19,
       sortOrder: 0,
       inCombat: true,
+      attacks: goblinAttacks('mock-a-g1'),
+      skills: { stealth: 6 },
     }),
     unit({
       id: 'mock-u-finn',
@@ -185,6 +272,11 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 17,
       sortOrder: 1,
       inCombat: true,
+      attacks: [
+        attack('mock-a-u-finn', '長弓', 9, [{ dieType: 8, count: 1, bonus: 4 }], ['piercing']),
+        attack('mock-a-u-finn', '短劍', 7, [{ dieType: 6, count: 1, bonus: 4 }], ['piercing']),
+      ],
+      skills: { perception: 7, stealth: 8, survival: 5 },
     }),
     unit({
       id: 'mock-u-boss',
@@ -199,6 +291,8 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 17,
       sortOrder: 2,
       inCombat: true,
+      attacks: bossAttacks('mock-a-u-boss'),
+      skills: { stealth: 6, intimidation: 2 },
     }),
     unit({
       id: 'mock-u-luna',
@@ -217,6 +311,17 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 15,
       sortOrder: 3,
       inCombat: true,
+      attacks: [
+        attack(
+          'mock-a-u-luna',
+          '短劍',
+          7,
+          [{ dieType: 6, count: 1, bonus: 4 }],
+          ['piercing'],
+          '偷襲成立時 +3d6',
+        ),
+      ],
+      skills: { stealth: 9, sleightOfHand: 7, acrobatics: 6 },
     }),
     unit({
       id: 'mock-u-aliya',
@@ -233,6 +338,10 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 12,
       sortOrder: 4,
       inCombat: true,
+      attacks: [
+        attack('mock-a-u-aliya', '長劍', 8, [{ dieType: 8, count: 1, bonus: 5 }], ['slashing']),
+      ],
+      skills: { athletics: 8, intimidation: 3 },
     }),
     unit({
       id: 'mock-u-g3',
@@ -247,6 +356,8 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiative: 11,
       sortOrder: 5,
       inCombat: true,
+      attacks: goblinAttacks('mock-a-g3'),
+      skills: { stealth: 6 },
     }),
     unit({
       id: 'mock-u-thorin',
@@ -264,6 +375,10 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       sortOrder: 6,
       inCombat: true,
       conditions: [{ id: 'mock-c-1', key: 'poisoned', note: '蛛毒，長休解除' }],
+      attacks: [
+        attack('mock-a-u-thorin', '戰鎚', 5, [{ dieType: 8, count: 1, bonus: 2 }], ['bludgeoning']),
+      ],
+      skills: { medicine: 6, religion: 4, insight: 6 },
     }),
     unit({
       id: 'mock-u-g2',
@@ -280,6 +395,8 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       sortOrder: 7,
       inCombat: true,
       conditions: [{ id: 'mock-c-2', key: 'prone', note: null }],
+      attacks: goblinAttacks('mock-a-g2'),
+      skills: { stealth: 6 },
     }),
     // 未參戰單位：中立 NPC（速度數值）＋玩家方召喚物（速度字串的 adhoc 邊界）
     unit({
@@ -292,14 +409,21 @@ const MIST_BATTLEFIELD: BattlefieldDTO = {
       initiativeBonus: 2,
     }),
     unit({
+      // HP 0 ＋死亡豁免進行中：右欄死亡豁免區塊的 seed 邊界
       id: 'mock-u-wolf',
       faction: 'player',
       name: '狼夥伴',
       title: '菲恩的召喚',
       maxHp: 11,
+      currentHp: 0,
       currentAc: 13,
       speed: 40,
       initiativeBonus: 2,
+      deathSaves: { successes: 1, failures: 1 },
+      attacks: [
+        attack('mock-a-u-wolf', '撕咬', 4, [{ dieType: 4, count: 2, bonus: 2 }], ['piercing']),
+      ],
+      skills: { perception: 3 },
     }),
   ],
 }
@@ -347,6 +471,16 @@ export function buildBattlefieldMockSeed(): BattlefieldMockSeed {
             ac: 18,
             speed: 25,
             totalInitiative: 0,
+            attacks: [
+              attack(
+                'mock-a-brandon',
+                '戰鎚',
+                5,
+                [{ dieType: 8, count: 1, bonus: 3 }],
+                ['bludgeoning'],
+              ),
+            ],
+            skills: { persuasion: 4, religion: 3 },
           },
           {
             shareId: 'chs_mock_g4t3',
@@ -359,6 +493,16 @@ export function buildBattlefieldMockSeed(): BattlefieldMockSeed {
             ac: 12,
             speed: 30,
             totalInitiative: 2,
+            attacks: [
+              attack(
+                'mock-a-rinyue',
+                '火焰箭',
+                5,
+                [{ dieType: 10, count: 1, bonus: null }],
+                ['fire'],
+              ),
+            ],
+            skills: { arcana: 5, history: 5, investigation: 4 },
           },
         ],
       },

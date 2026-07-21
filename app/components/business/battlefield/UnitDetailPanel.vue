@@ -287,6 +287,15 @@
       </div>
     </div>
 
+    <BusinessBattlefieldDeathSavesSection
+      v-if="unit.currentHp === 0"
+      :successes="unit.deathSaves.successes"
+      :failures="unit.deathSaves.failures"
+      @set-success="(value) => emit('setDeathSaveSuccesses', value)"
+      @set-failure="(value) => emit('setDeathSaveFailures', value)"
+      @roll="emit('rollDeathSave')"
+    />
+
     <div class="flex flex-col gap-1.5">
       <div class="flex flex-wrap gap-1">
         <template v-if="unit.conditions.length > 0">
@@ -323,14 +332,44 @@
         </CommonAppButton>
       </div>
     </div>
+
+    <div v-if="unit.attacks.length > 0" class="flex flex-col gap-1.5">
+      <h3 class="text-[11px] tracking-wide text-content-muted">
+        {{ t('battlefield.attacksTitle') }}
+      </h3>
+      <ul class="flex flex-col gap-1.5">
+        <BusinessBattlefieldUnitAttackRow
+          v-for="attackEntry in unit.attacks"
+          :key="attackEntry.id"
+          :attack="attackEntry"
+          @roll-hit="(mode) => emit('rollAttackHit', attackEntry, mode)"
+          @roll-damage="(isCritical) => emit('rollAttackDamage', attackEntry, isCritical)"
+        />
+      </ul>
+    </div>
+
+    <div v-if="hasSkills" class="flex flex-col gap-1.5">
+      <h3 class="text-[11px] tracking-wide text-content-muted">
+        {{ t('battlefield.skillsTitle') }}
+      </h3>
+      <BusinessBattlefieldUnitSkillList
+        :skills="unit.skills"
+        @roll="(key, mode) => emit('rollSkill', key, mode)"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { CONDITION_KEYS } from '@rolling-dice-app/core'
-import type { ClassKey, ConditionKey } from '@rolling-dice-app/core'
-import type { BattlefieldFaction, BattlefieldUnit } from '~/types/business/battlefield'
+import type { ClassKey, ConditionKey, SkillKey } from '@rolling-dice-app/core'
+import type {
+  BattlefieldAttackEntry,
+  BattlefieldFaction,
+  BattlefieldUnit,
+} from '~/types/business/battlefield'
+import type { RollMode } from '~/types/business/dice'
 import { FACTION_ORDER } from '~/constants/battlefield'
 
 /** 與 store 端 renameUnit 的截斷上限一致 */
@@ -370,7 +409,15 @@ const emit = defineEmits<{
   rollInitiative: []
   addCondition: [key: ConditionKey, note: string | null]
   removeCondition: [conditionId: string]
+  setDeathSaveSuccesses: [value: number]
+  setDeathSaveFailures: [value: number]
+  rollDeathSave: []
+  rollAttackHit: [attack: BattlefieldAttackEntry, mode: RollMode]
+  rollAttackDamage: [attack: BattlefieldAttackEntry, isCritical: boolean]
+  rollSkill: [key: SkillKey, mode: RollMode]
 }>()
+
+const hasSkills = computed(() => Object.keys(props.unit.skills).length > 0)
 
 const acAdjustment = computed(() => props.unit.currentAc - props.unit.baseAc)
 

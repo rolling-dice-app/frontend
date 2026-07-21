@@ -129,6 +129,7 @@ export function resetUnitAfterBattle(
   const next: BattlefieldUnit = {
     ...source,
     conditions: source.conditions.map((c) => ({ ...c })),
+    deathSaves: { ...source.deathSaves },
     initiative: null,
     inCombat: source.inCombat && source.faction !== 'enemy',
   }
@@ -143,6 +144,8 @@ export function resetUnitAfterBattle(
     if (!flags.keepTempHp) next.tempHp = 0
     if (!flags.keepConditions) next.conditions = []
   }
+  // HP ≥ 1 死亡豁免歸零（與 store clearDeathSavesIfUp 同不變量）
+  if (next.currentHp >= 1) next.deathSaves = { successes: 0, failures: 0 }
   return next
 }
 

@@ -174,6 +174,14 @@
               @reorder="(orderedIds) => battlefieldStore.reorderUnits(battlefieldId, orderedIds)"
             />
           </div>
+          <!-- 戰鬥紀錄：固定高度、內部捲動（D 方案定案） -->
+          <div class="h-52 shrink-0 border-t border-border-soft p-2">
+            <BusinessDiceRollOutputList
+              :entries="rollLogEntries"
+              :title="t('battlefield.battleLogTitle')"
+              @clear="rollLog.clear()"
+            />
+          </div>
         </section>
 
         <!-- 右欄：單位操作面板 -->
@@ -221,6 +229,22 @@
               (conditionId) =>
                 battlefieldStore.removeCondition(battlefieldId, selectedUnit!.id, conditionId)
             "
+            @set-death-save-successes="
+              (value) =>
+                battlefieldStore.setDeathSaveSuccesses(battlefieldId, selectedUnit!.id, value)
+            "
+            @set-death-save-failures="
+              (value) =>
+                battlefieldStore.setDeathSaveFailures(battlefieldId, selectedUnit!.id, value)
+            "
+            @roll-death-save="diceRolls.rollDeathSave(selectedUnit)"
+            @roll-attack-hit="
+              (attack, mode) => diceRolls.rollAttackHit(selectedUnit!, attack, mode)
+            "
+            @roll-attack-damage="
+              (attack, isCritical) => diceRolls.rollAttackDamage(selectedUnit!, attack, isCritical)
+            "
+            @roll-skill="(key, mode) => diceRolls.rollSkill(selectedUnit!, key, mode)"
           />
           <p v-else class="px-4 py-7 text-center text-[13px] text-content-muted">
             {{ t('battlefield.detailEmpty') }}
@@ -343,6 +367,12 @@ const selectedUnit = computed<BattlefieldUnit | null>(() => {
 const unitName = (unitId: string): string =>
   battlefield.value?.units.find((u) => u.id === unitId)?.name ?? ''
 
+// ── 戰鬥紀錄與擲骰編排（module-scoped log；mount 時清除防跨戰場殘留） ────────
+const rollLog = useBattlefieldRollLog()
+const rollLogEntries = rollLog.entries
+const diceRolls = useBattlefieldDiceRolls(battlefieldId)
+onMounted(() => rollLog.clear())
+
 // ── 回合 ─────────────────────────────────────────────────────────────────────
 const onStepTurn = (dir: 1 | -1): void => {
   const newRound = battlefieldStore.stepTurn(battlefieldId, dir)
@@ -356,9 +386,9 @@ const onSetActive = (unitId: string): void => {
 }
 
 const onRollEnemies = (): void => {
-  const count = battlefieldStore.rollAllEnemyInitiatives(battlefieldId)
-  if (count === 0) toast.info(t('battlefield.toastNoEnemies'))
-  else toast.info(t('battlefield.toastEnemiesRolled', { count }))
+  const results = diceRolls.rollEnemiesInitiative()
+  if (results.length === 0) toast.info(t('battlefield.toastNoEnemies'))
+  else toast.info(t('battlefield.toastEnemiesRolled', { count: results.length }))
 }
 
 const onSortInitiative = (): void => {
@@ -379,7 +409,7 @@ const onSetInitiative = (unitId: string, value: number | null): void => {
 const onRollInitiative = (unitId: string): void => {
   const unit = battlefield.value?.units.find((u) => u.id === unitId)
   if (!unit) return
-  const result = battlefieldStore.rollInitiative(battlefieldId, unitId)
+  const result = diceRolls.rollUnitInitiative(unit)
   toast.info(
     t('battlefield.toastInitiativeRolled', {
       name: unit.name,

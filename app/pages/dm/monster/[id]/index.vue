@@ -83,9 +83,13 @@
               {{ t('monster.emptyDash') }}
             </p>
           </div>
-          <div v-if="monster.speed">
-            <p class="text-xs text-content-muted">{{ t('monster.field.speed') }}</p>
-            <p class="text-base font-bold text-content">{{ monster.speed }}</p>
+          <div>
+            <p class="text-xs text-content-muted">
+              {{ t('monster.field.speed') }}（{{ t('combat.unitFeet') }}）
+            </p>
+            <p class="text-2xl leading-tight font-bold text-content tabular-nums sm:text-[32px]">
+              {{ monster.speed }}
+            </p>
           </div>
           <div>
             <p class="text-xs text-content-muted">{{ t('monster.field.initiative') }}</p>

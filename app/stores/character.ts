@@ -7,11 +7,7 @@ import {
 } from '@rolling-dice-app/core'
 import type { CharacterFormState, CharacterUpdateFormState } from '~/types/business/character-form'
 import type { CharacterListItem } from '~/types/business/character-list'
-import {
-  buildCharacterUpdatePatch,
-  calculateTotalLevel,
-  formStateToCharacterPatch,
-} from '~/helpers/character'
+import { buildCharacterUpdatePatch, formStateToCharacterPatch } from '~/helpers/character'
 import { createSingleFlight } from '~/utils/single-flight'
 
 // toRaw 先解開 reactive proxy：structuredClone 無法 clone Vue 的 reactive Proxy（detailCache 內物件讀出即為 proxy）
@@ -47,7 +43,6 @@ const characterToListItem = ({
   id,
   name,
   classes,
-  level: calculateTotalLevel(classes),
   avatar,
   updatedAt,
   race,
@@ -88,11 +83,7 @@ export const useCharacterStore = defineStore('character', () => {
     listLoading.value = true
     listError.value = null
     try {
-      // level 一律由前端自 classes 重算，不信任 backend 預算值（DTO 欄位已棄用）
-      const items = (await characters().list()).map((dto) => ({
-        ...dto,
-        level: calculateTotalLevel(dto.classes),
-      }))
+      const items = await characters().list()
       list.value = items
       listLoaded.value = true
       return items

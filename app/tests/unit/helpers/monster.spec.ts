@@ -29,10 +29,6 @@ describe('monsterTemplateToView / monsterTemplateToSummary', () => {
     expect(view).not.toHaveProperty('userId')
     expect(view).not.toHaveProperty('createdAt')
     expect(view).not.toHaveProperty('updatedAt')
-    expect(view).not.toHaveProperty('damageVulnerabilities')
-    expect(view).not.toHaveProperty('damageResistances')
-    expect(view).not.toHaveProperty('damageImmunities')
-    expect(view).not.toHaveProperty('conditionImmunities')
     expect(view.id).toBe(dto.id)
     expect(view.attacks).toEqual(dto.attacks)
   })
@@ -69,14 +65,6 @@ describe('buildMonsterTemplateCreateBody', () => {
     expect(body.senses).toBeNull()
     expect(body.languages).toBe('龍語')
     expect(body.remark).toBeNull()
-  })
-
-  it('不含 deprecated free-text 抗性欄位（runtime 也已剝除）', () => {
-    const body = buildMonsterTemplateCreateBody(buildDefaultMonsterView())
-    expect(body).not.toHaveProperty('damageVulnerabilities')
-    expect(body).not.toHaveProperty('damageResistances')
-    expect(body).not.toHaveProperty('damageImmunities')
-    expect(body).not.toHaveProperty('conditionImmunities')
   })
 })
 
@@ -126,7 +114,7 @@ describe('buildMonsterTemplateUpdatePatch', () => {
       challengeRating: '1/2',
       ac: 13,
       hp: 15,
-      speed: '40 ft.',
+      speed: 40,
       initiativeBonus: 1,
       abilities: { ...dto.abilities, strength: 16 },
       savingThrows: { strength: 3 },

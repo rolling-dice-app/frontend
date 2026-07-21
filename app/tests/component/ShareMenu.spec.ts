@@ -8,7 +8,6 @@ const makeCharacter = (overrides: Partial<CharacterListItem> = {}): CharacterLis
   id: 'char-1',
   name: '測試角色',
   classes: [{ classKey: 'fighter', level: 3, subclass: null }],
-  level: 3,
   avatar: null,
   updatedAt: '2026-05-01T00:00:00.000Z',
   race: 'human',

@@ -19,7 +19,7 @@ export function createMockMonsterTemplate(
     challengeRating: '1/4',
     ac: 15,
     hp: 7,
-    speed: '30 ft.',
+    speed: 30,
     initiativeBonus: 2,
     skills: { stealth: 6 },
     damageModifiers: { poison: 'immunity' },
@@ -55,15 +55,6 @@ export function createMockMonsterFormState(
   base: MonsterTemplateDTO = createMockMonsterTemplate(),
   overrides: Partial<MonsterTemplateFormState> = {},
 ): MonsterTemplateFormState {
-  const {
-    userId: _u,
-    createdAt: _c,
-    updatedAt: _ts,
-    damageVulnerabilities: _dv,
-    damageResistances: _dr,
-    damageImmunities: _di,
-    conditionImmunities: _ci,
-    ...view
-  } = structuredClone(base)
+  const { userId: _u, createdAt: _c, updatedAt: _ts, ...view } = structuredClone(base)
   return { ...view, ...overrides }
 }

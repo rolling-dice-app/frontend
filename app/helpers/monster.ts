@@ -30,28 +30,12 @@ export function formatDamageDice(entry: DamageDieEntry): string {
  * 真正 id 由 backend 於建立時配發。
  */
 export function buildDefaultMonsterView(): MonsterTemplateView {
-  const {
-    damageVulnerabilities: _dv,
-    damageResistances: _dr,
-    damageImmunities: _di,
-    conditionImmunities: _ci,
-    ...defaults
-  } = buildMonsterTemplateCreateDefaults()
-  return { id: '', name: '', ...defaults }
+  return { id: '', name: '', ...buildMonsterTemplateCreateDefaults() }
 }
 
-/** DTO → 表單 view：剝除 server-owned 欄位（userId / 時間戳）與 deprecated free-text 抗性欄位。 */
+/** DTO → 表單 view：剝除 server-owned 欄位（userId / 時間戳）。 */
 export function monsterTemplateToView(dto: MonsterTemplateDTO): MonsterTemplateView {
-  const {
-    userId: _userId,
-    createdAt: _createdAt,
-    updatedAt: _updatedAt,
-    damageVulnerabilities: _dv,
-    damageResistances: _dr,
-    damageImmunities: _di,
-    conditionImmunities: _ci,
-    ...view
-  } = dto
+  const { userId: _userId, createdAt: _createdAt, updatedAt: _updatedAt, ...view } = dto
   return view
 }
 
@@ -67,13 +51,12 @@ export function monsterTemplateToSummary({
   return { id, name, size, challengeRating, ac, hp }
 }
 
-/** 送後端前的文字欄位淨化：name / speed 修剪空白，自由文字空字串收斂為 null。 */
+/** 送後端前的文字欄位淨化：name 修剪空白，自由文字空字串收斂為 null。 */
 function cleanMonsterTextFields<T extends Omit<MonsterTemplateView, 'id'>>(view: T): T {
   return {
     ...view,
     name: cleanText(view.name),
     challengeRating: cleanTextOrNull(view.challengeRating),
-    speed: cleanText(view.speed),
     senses: cleanTextOrNull(view.senses),
     languages: cleanTextOrNull(view.languages),
     remark: cleanTextOrNull(view.remark),

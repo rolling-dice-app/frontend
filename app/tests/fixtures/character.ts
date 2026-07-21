@@ -17,7 +17,6 @@ export function seedCharacterInStore(character: CharacterDTO): void {
     id: character.id,
     name: character.name,
     classes: character.classes,
-    level: character.classes.reduce((sum, entry) => sum + entry.level, 0),
     avatar: character.avatar,
     updatedAt: character.updatedAt,
     race: character.race,

@@ -59,7 +59,6 @@ export default {
   // placeholder
   placeholder: {
     challengeRating: '如 1/2、5',
-    speed: '如 30 ft., fly 60 ft.',
     freeText: '自由填寫（選填）',
     remark: '條件式例外（如：非魔法攻擊）、DM 註記等（選填）',
   },

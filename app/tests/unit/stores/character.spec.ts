@@ -44,7 +44,6 @@ const charToSummary = (c: CharacterDTO): CharacterSummaryDTO => ({
   id: c.id,
   name: c.name,
   classes: c.classes,
-  level: c.classes.reduce((sum, entry) => sum + entry.level, 0),
   avatar: c.avatar,
   updatedAt: c.updatedAt,
   race: c.race,
@@ -71,23 +70,6 @@ describe('character store — loadList', () => {
     })
     expect(store.listLoading).toBe(false)
     expect(store.listError).toBeNull()
-  })
-
-  it('level 由前端自 classes 重算，不信任 backend 預算值', async () => {
-    const c = createMockCharacter({
-      id: 'list-derived',
-      classes: [
-        { classKey: 'monk', level: 3, subclass: null },
-        { classKey: 'fighter', level: 2, subclass: null },
-      ],
-    })
-    mockListCharacters.mockResolvedValue([{ ...charToSummary(c), level: 999 }])
-
-    const { useCharacterStore } = await import('~/stores/character')
-    const store = useCharacterStore()
-    await store.loadList()
-
-    expect(store.list[0]?.level).toBe(5)
   })
 
   it('過程中 listLoading 為 true，完成後為 false', async () => {
@@ -443,7 +425,6 @@ describe('character store — updateCharacter', () => {
         id: before.id,
         name: before.name,
         classes: before.classes,
-        level: 5,
         avatar: before.avatar,
         updatedAt: before.updatedAt,
         race: before.race,

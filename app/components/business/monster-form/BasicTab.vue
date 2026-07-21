@@ -142,18 +142,22 @@
       <!-- 速度 -->
       <div>
         <label for="monster-speed" class="mb-1 block text-xs text-content">
-          {{ t('monster.field.speed') }}
+          {{ t('monster.field.speed') }}（{{ t('combat.unitFeet') }}）
         </label>
         <CommonAppInput
           id="monster-speed"
           :radius="0"
-          :model-value="formState.speed"
-          :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
+          :model-value="String(formState.speed)"
+          type="number"
           size="sm"
           outline
           class="w-full"
-          :placeholder="t('monster.placeholder.speed')"
-          @update:model-value="formState.speed = $event"
+          @update:model-value="
+            formState.speed = Math.max(
+              0,
+              parseIntegerInput($event, 0, CHARACTER_INT_LIMITS.SMALL_INT_MAX),
+            )
+          "
         />
       </div>
     </div>

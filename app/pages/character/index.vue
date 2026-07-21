@@ -582,10 +582,11 @@ const sortedCharacters = computed(() => {
   const list = [...characters.value]
   const byUpdated = (a: CharacterListItem, b: CharacterListItem) =>
     b.updatedAt.localeCompare(a.updatedAt)
+  const totalLevel = (c: CharacterListItem) => calculateTotalLevel(c.classes)
   if (sortKey.value === 'level-asc')
-    return list.sort((a, b) => a.level - b.level || byUpdated(a, b))
+    return list.sort((a, b) => totalLevel(a) - totalLevel(b) || byUpdated(a, b))
   if (sortKey.value === 'level-desc')
-    return list.sort((a, b) => b.level - a.level || byUpdated(a, b))
+    return list.sort((a, b) => totalLevel(b) - totalLevel(a) || byUpdated(a, b))
   return list.sort(byUpdated)
 })
 </script>

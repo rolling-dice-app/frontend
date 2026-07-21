@@ -81,8 +81,8 @@ describe('useBattlefieldStore — 單位建立', () => {
       classes: [{ classKey: 'fighter', level: 5, subclass: null }],
       maxHp: 44,
       currentHp: 44,
-      speedValue: 30,
-      speedText: null,
+      speed: 30,
+      speedAdjustment: 0,
       inCombat: true,
     })
     // 首位參戰自動成為行動者
@@ -97,14 +97,14 @@ describe('useBattlefieldStore — 單位建立', () => {
     expect(store.importMember(SEED_BF_ID, 'chs_mock_e9v0')).toBeNull()
   })
 
-  it('addMonsterInstance 自動編號且直接參戰；速度保留模板字串', async () => {
+  it('addMonsterInstance 自動編號且直接參戰；速度快照自模板、調整歸零', async () => {
     const { store, battlefield } = await setup()
     // seed 已有哥布林 1〜3
     const fourth = store.addMonsterInstance(SEED_BF_ID, 'mock-tpl-goblin')
     expect(fourth?.name).toBe('哥布林 4')
     expect(fourth?.title).toBe('CR 1/4')
-    expect(fourth?.speedText).toBe('30 ft.')
-    expect(fourth?.speedValue).toBeNull()
+    expect(fourth?.speed).toBe(30)
+    expect(fourth?.speedAdjustment).toBe(0)
     // seed 已有一隻首領（原名）
     const secondBoss = store.addMonsterInstance(SEED_BF_ID, 'mock-tpl-boss')
     expect(secondBoss?.name).toBe('哥布林首領 2')
@@ -121,7 +121,7 @@ describe('useBattlefieldStore — 單位建立', () => {
       challengeRating: null,
       hp: 5,
       ac: 10,
-      speed: '30 ft.',
+      speed: 30,
       initiativeBonus: 0,
     })
     const unit = store.addMonsterInstance(SEED_BF_ID, 'mock-tpl-no-cr')
@@ -132,7 +132,7 @@ describe('useBattlefieldStore — 單位建立', () => {
     const { store, battlefield } = await setup()
     const unit = store.createAdhocUnit(
       SEED_BF_ID,
-      { name: '  火焰精靈  ', maxHp: 12, ac: 13, speed: '飛行 60 呎', initiativeBonus: 2 },
+      { name: '  火焰精靈  ', maxHp: 12, ac: 13, speed: 60, initiativeBonus: 2 },
       false,
     )
     expect(unit).toMatchObject({
@@ -168,6 +168,17 @@ describe('useBattlefieldStore — 數值', () => {
     store.adjustMaxHp(SEED_BF_ID, 'mock-u-aliya', -20)
     aliya = store.getBattlefieldById(SEED_BF_ID)?.units.find((u) => u.id === 'mock-u-aliya')
     expect(aliya).toMatchObject({ maxHp: 29, currentHp: 29 })
+  })
+
+  it('adjustSpeed 疊加調整值並夾 ±99；速度快照本身不變', async () => {
+    const { store } = await setup()
+    // 艾莉亞速度快照 30
+    store.adjustSpeed(SEED_BF_ID, 'mock-u-aliya', 10)
+    let aliya = store.getBattlefieldById(SEED_BF_ID)?.units.find((u) => u.id === 'mock-u-aliya')
+    expect(aliya).toMatchObject({ speed: 30, speedAdjustment: 10 })
+    store.adjustSpeed(SEED_BF_ID, 'mock-u-aliya', -200)
+    aliya = store.getBattlefieldById(SEED_BF_ID)?.units.find((u) => u.id === 'mock-u-aliya')
+    expect(aliya).toMatchObject({ speed: 30, speedAdjustment: -99 })
   })
 
   it('rollInitiative 用 1d20+加值並重排；rollAllEnemyInitiatives 回傳敵方數量', async () => {

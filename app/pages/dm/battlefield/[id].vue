@@ -203,6 +203,9 @@
             @adjust-ac="
               (delta) => battlefieldStore.adjustAc(battlefieldId, selectedUnit!.id, delta)
             "
+            @adjust-speed="
+              (delta) => battlefieldStore.adjustSpeed(battlefieldId, selectedUnit!.id, delta)
+            "
             @set-initiative="
               (value) => battlefieldStore.setInitiative(battlefieldId, selectedUnit!.id, value)
             "

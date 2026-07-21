@@ -56,7 +56,7 @@
                     t('battlefield.statMember', {
                       ac: member.ac,
                       hp: member.maxHp,
-                      speed: member.speedValue,
+                      speed: member.speed,
                       bonus: formatModifier(member.totalInitiative),
                     })
                   }}
@@ -181,6 +181,7 @@
               {{ t('battlefield.adhocSpeed') }}
               <CommonAppInput
                 :model-value="adhocSpeed"
+                type="number"
                 class="w-full"
                 @update:model-value="(value: string) => (adhocSpeed = value)"
               />
@@ -319,7 +320,7 @@ const onNotWired = (): void => {
 const adhocName = ref('')
 const adhocMaxHp = ref('10')
 const adhocAc = ref('10')
-const adhocSpeed = ref('30 ft.')
+const adhocSpeed = ref('30')
 const adhocInitBonus = ref('0')
 
 const canCreateAdhoc = computed(
@@ -334,7 +335,7 @@ const onCreateAdhoc = (joinCombat: boolean): void => {
       name: adhocName.value,
       maxHp: parseIntegerInput(adhocMaxHp.value, 10),
       ac: parseIntegerInput(adhocAc.value, 10),
-      speed: adhocSpeed.value,
+      speed: parseIntegerInput(adhocSpeed.value, 30),
       initiativeBonus: parseIntegerInput(adhocInitBonus.value, 0),
     },
     joinCombat,
@@ -342,7 +343,7 @@ const onCreateAdhoc = (joinCombat: boolean): void => {
   adhocName.value = ''
   adhocMaxHp.value = '10'
   adhocAc.value = '10'
-  adhocSpeed.value = '30 ft.'
+  adhocSpeed.value = '30'
   adhocInitBonus.value = '0'
 }
 </script>

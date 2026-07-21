@@ -44,10 +44,10 @@ export interface BattlefieldUnit {
   /** 快照當下的 AC；重置基準 */
   baseAc: number
   currentAc: number
-  /** 速度雙型別（已拍板）：角色單位存前端計算後數值（呎） */
-  speedValue: number | null
-  /** 怪物單位保留模板 speed 字串原樣（如 "30 ft., fly 60 ft."） */
-  speedText: string | null
+  /** 速度快照（呎；建立時定格、不可變）：角色寫前端計算值、怪物搬模板 speed、adhoc 手填；未知為 null */
+  speed: number | null
+  /** 速度臨時調整（疊加於 speed 快照，比照 HP/AC 調整值模型）；speed 為 null 時無意義 */
+  speedAdjustment: number
   initiativeBonus: number
   initiative: number | null
   /** 先攻軌顯示順序；擲骰後自動重排，拖曳為手動覆蓋 */
@@ -82,7 +82,7 @@ export interface BattlefieldSessionOption {
 
 /**
  * 出席成員快照來源（mock 階段模擬 hydrate 結果；串接階段由前端 fetch share
- * profile 後經衍生管線組成）。maxHp / ac / speedValue / totalInitiative 為前端
+ * profile 後經衍生管線組成）。maxHp / ac / speed / totalInitiative 為前端
  * 以契約基礎欄位計算的衍生總值（useCharacterDerivedStats 同路徑），非後端提供
  * 的儲存欄位。
  */
@@ -96,7 +96,8 @@ export type BattlefieldMemberSource =
       classes: ClassEntry[]
       maxHp: number
       ac: number
-      speedValue: number
+      /** 總速度（30 + speedBonus，呎） */
+      speed: number
       /** 含 DEX 與額外能力的先攻總修正；非契約 initiativeBonus（額外加值）原值 */
       totalInitiative: number
     }
@@ -114,7 +115,8 @@ export interface BattlefieldTemplateSource {
   challengeRating: string | null
   hp: number
   ac: number
-  speed: string
+  /** 速度（呎；core v12 起模板 speed 為 number） */
+  speed: number
   initiativeBonus: number
 }
 
@@ -123,7 +125,8 @@ export interface AdhocUnitInput {
   name: string
   maxHp: number
   ac: number
-  speed: string
+  /** 速度（呎） */
+  speed: number
   initiativeBonus: number
 }
 

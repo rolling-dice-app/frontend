@@ -204,21 +204,39 @@
       >
         <span class="text-[11px] tracking-wide text-content-muted">
           {{ t('battlefield.speedLabel')
-          }}{{ unit.speedValue != null ? t('battlefield.speedFeetSuffix') : '' }}
+          }}{{ unit.speed != null ? t('battlefield.speedFeetSuffix') : '' }}
         </span>
-        <span
-          v-if="unit.speedValue != null"
-          class="text-[22px] font-bold leading-tight tabular-nums"
-        >
-          {{ unit.speedValue }}
-        </span>
-        <span
-          v-else
-          class="line-clamp-2 wrap-break-word text-center text-base font-semibold leading-snug"
-          :title="unit.speedText ?? ''"
-        >
-          {{ unit.speedText || '—' }}
-        </span>
+        <template v-if="unit.speed != null">
+          <span class="flex items-baseline gap-1 text-[22px] font-bold leading-tight tabular-nums">
+            {{ effectiveSpeed }}
+            <span
+              v-if="unit.speedAdjustment !== 0"
+              class="text-[11px] font-semibold"
+              :class="unit.speedAdjustment > 0 ? 'text-success-hover' : 'text-danger-hover'"
+            >
+              ({{ formatModifier(unit.speedAdjustment) }})
+            </span>
+          </span>
+          <span class="flex items-center gap-0.5">
+            <button
+              type="button"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-panel-3 hover:text-content"
+              :aria-label="`${t('battlefield.speedLabel')} -1`"
+              @click="emit('adjustSpeed', -1)"
+            >
+              <Icon name="minus" :size="14" />
+            </button>
+            <button
+              type="button"
+              class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-panel-3 hover:text-content"
+              :aria-label="`${t('battlefield.speedLabel')} +1`"
+              @click="emit('adjustSpeed', 1)"
+            >
+              <Icon name="plus" :size="14" />
+            </button>
+          </span>
+        </template>
+        <span v-else class="text-[22px] font-bold leading-tight text-content-muted">—</span>
       </div>
 
       <div
@@ -346,6 +364,7 @@ const emit = defineEmits<{
   adjustTemp: [delta: number]
   adjustMax: [delta: number]
   adjustAc: [delta: number]
+  adjustSpeed: [delta: number]
   setInitiative: [value: number | null]
   adjustInitiative: [delta: number]
   rollInitiative: []
@@ -354,6 +373,11 @@ const emit = defineEmits<{
 }>()
 
 const acAdjustment = computed(() => props.unit.currentAc - props.unit.baseAc)
+
+// 有效速度＝快照＋調整（夾 0）；speed 為 null（adhoc 未填）時整卡顯示 em dash
+const effectiveSpeed = computed(() =>
+  props.unit.speed == null ? null : Math.max(0, props.unit.speed + props.unit.speedAdjustment),
+)
 
 const currentHpClass = computed(() => {
   const tier = hpRatioTier(props.unit.currentHp, props.unit.maxHp)

@@ -200,8 +200,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       tempHp: 0,
       baseAc: source.ac,
       currentAc: source.ac,
-      speedValue: source.speedValue,
-      speedText: null,
+      speed: source.speed,
+      speedAdjustment: 0,
       initiativeBonus: source.totalInitiative,
       initiative: null,
       sortOrder: SORT_ORDER_LAST,
@@ -244,8 +244,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       tempHp: 0,
       baseAc: template.ac,
       currentAc: template.ac,
-      speedValue: null,
-      speedText: template.speed,
+      speed: template.speed,
+      speedAdjustment: 0,
       initiativeBonus: template.initiativeBonus,
       initiative: null,
       sortOrder: SORT_ORDER_LAST,
@@ -284,8 +284,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       tempHp: 0,
       baseAc: ac,
       currentAc: ac,
-      speedValue: null,
-      speedText: input.speed.trim() || null,
+      speed: Math.max(0, input.speed),
+      speedAdjustment: 0,
       initiativeBonus: input.initiativeBonus,
       initiative: null,
       sortOrder: SORT_ORDER_LAST,
@@ -412,6 +412,15 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const bf = requireBattlefield(battlefieldId)
     const target = requireUnit(bf, unitId)
     target.currentAc = Math.max(0, target.currentAc + delta)
+    touch(bf)
+  }
+
+  /** 速度調整（疊加於 speed 快照）；快照未知（null）不可調，夾 ±99（契約 UNIT_SPEED_ADJUSTMENT_ABS_MAX） */
+  const adjustSpeed = (battlefieldId: string, unitId: string, delta: number): void => {
+    const bf = requireBattlefield(battlefieldId)
+    const target = requireUnit(bf, unitId)
+    if (target.speed == null) return
+    target.speedAdjustment = Math.max(-99, Math.min(99, target.speedAdjustment + delta))
     touch(bf)
   }
 
@@ -579,6 +588,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     adjustTempHp,
     adjustMaxHp,
     adjustAc,
+    adjustSpeed,
     setInitiative,
     adjustInitiative,
     rollInitiative,

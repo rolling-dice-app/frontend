@@ -52,7 +52,7 @@ export default {
   statAcHp: 'AC {ac}・HP {hp}',
   statHpAc: 'HP {current}/{max}・AC {ac}',
   statMember: 'AC {ac}・HP {hp}・速 {speed} 呎・先攻 {bonus}',
-  statTemplate: 'AC {ac}・HP {hp}・{speed}・先攻 {bonus}',
+  statTemplate: 'AC {ac}・HP {hp}・速 {speed} 呎・先攻 {bonus}',
   conditionCount: '{count} 狀態',
 
   // 中欄（參戰列表＋回合工具列）

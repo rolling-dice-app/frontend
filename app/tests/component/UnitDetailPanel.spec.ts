@@ -40,8 +40,8 @@ const mountPanel = (unit: Partial<BattlefieldUnit> = {}, isActive = false) =>
         currentHp: 7,
         currentAc: 15,
         baseAc: 15,
-        speedValue: null,
-        speedText: '30 ft.',
+        speed: 30,
+        speedAdjustment: 0,
         initiativeBonus: 2,
         ...unit,
       }),
@@ -150,9 +150,20 @@ describe('UnitDetailPanel', () => {
     expect(wrapper.text()).toContain('(+2)')
   })
 
-  it('怪物速度顯示模板字串原樣', () => {
-    const wrapper = mountPanel()
-    expect(wrapper.text()).toContain('30 ft.')
+  it('速度卡顯示有效速度（快照＋調整）與 (±N)；±鈕 emit adjustSpeed', async () => {
+    const wrapper = mountPanel({ speed: 30, speedAdjustment: 10 })
+    expect(wrapper.text()).toContain('40')
+    expect(wrapper.text()).toContain('(+10)')
+    await buttonByLabel(wrapper, `${t('battlefield.speedLabel')} -1`).trigger('click')
+    expect(wrapper.emitted('adjustSpeed')?.at(-1)).toEqual([-1])
+  })
+
+  it('速度快照未知（null）顯示 em dash 且不給調整鈕', () => {
+    const wrapper = mountPanel({ speed: null, speedAdjustment: 0 })
+    expect(wrapper.text()).toContain('—')
+    expect(wrapper.find(`button[aria-label="${t('battlefield.speedLabel')} +1"]`).exists()).toBe(
+      false,
+    )
   })
 
   it('character 由快照組「種族 主職業 Lv.總等級」；monster 顯示 title 原字', () => {

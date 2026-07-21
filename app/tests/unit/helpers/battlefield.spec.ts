@@ -245,11 +245,10 @@ describe('formatCharacterTitle', () => {
 })
 
 describe('speedDisplay', () => {
-  it('角色數值加單位、怪物字串原樣、皆無則 em dash', () => {
-    expect(speedDisplay({ speedValue: 30, speedText: null }, '呎')).toBe('30 呎')
-    expect(speedDisplay({ speedValue: null, speedText: '30 ft., fly 60 ft.' }, '呎')).toBe(
-      '30 ft., fly 60 ft.',
-    )
-    expect(speedDisplay({ speedValue: null, speedText: null }, '呎')).toBe('—')
+  it('有效速度＝快照＋調整加單位（夾 0）、快照未知則 em dash', () => {
+    expect(speedDisplay({ speed: 30, speedAdjustment: 0 }, '呎')).toBe('30 呎')
+    expect(speedDisplay({ speed: 30, speedAdjustment: 10 }, '呎')).toBe('40 呎')
+    expect(speedDisplay({ speed: 30, speedAdjustment: -99 }, '呎')).toBe('0 呎')
+    expect(speedDisplay({ speed: null, speedAdjustment: 0 }, '呎')).toBe('—')
   })
 })

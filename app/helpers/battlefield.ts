@@ -137,6 +137,7 @@ export function resetUnitAfterBattle(
       next.currentAc = next.baseAc
       next.maxHp = next.baseMaxHp
       next.currentHp = Math.min(next.currentHp, next.maxHp)
+      next.speedAdjustment = 0
     }
     if (!flags.keepCurrentHp) next.currentHp = next.maxHp
     if (!flags.keepTempHp) next.tempHp = 0
@@ -161,11 +162,11 @@ export function formatCharacterTitle(
   return parts.join(' ')
 }
 
-/** 速度顯示：角色數值加單位、怪物字串原樣、皆無則 em dash */
+/** 速度顯示：有效速度（快照＋調整，夾 0）加單位；快照未知（null）則 em dash */
 export function speedDisplay(
-  unit: Pick<BattlefieldUnit, 'speedValue' | 'speedText'>,
+  unit: Pick<BattlefieldUnit, 'speed' | 'speedAdjustment'>,
   feetUnit: string,
 ): string {
-  if (unit.speedValue != null) return `${unit.speedValue} ${feetUnit}`
-  return unit.speedText != null && unit.speedText !== '' ? unit.speedText : '—'
+  if (unit.speed == null) return '—'
+  return `${Math.max(0, unit.speed + unit.speedAdjustment)} ${feetUnit}`
 }

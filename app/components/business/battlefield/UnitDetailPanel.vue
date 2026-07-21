@@ -303,7 +303,7 @@
       <div class="flex flex-wrap items-center gap-1.5">
         <select
           v-model="conditionDraftKey"
-          class="rounded-md border border-panel-border bg-canvas-inset px-2 py-1 text-xs outline-none focus:border-primary"
+          class="h-7 rounded-md border border-panel-border bg-canvas-inset px-2 text-xs outline-none focus:border-primary"
           :aria-label="t('battlefield.conditionSelectAria')"
         >
           <option v-for="key in CONDITION_KEYS" :key="key" :value="key">
@@ -313,12 +313,12 @@
         <input
           v-model="conditionDraftNote"
           type="text"
-          class="min-w-24 flex-1 rounded-md border border-panel-border bg-canvas-inset px-2 py-1 text-xs outline-none focus:border-primary"
+          class="h-7 min-w-24 flex-1 rounded-md border border-panel-border bg-canvas-inset px-2 text-xs outline-none focus:border-primary"
           :placeholder="t('battlefield.conditionNotePlaceholder')"
           :aria-label="t('battlefield.conditionNotePlaceholder')"
           @keydown.enter="onApplyCondition"
         />
-        <CommonAppButton type="button" variant="neutral" size="sm" @click="onApplyCondition">
+        <CommonAppButton type="button" variant="neutral" size="xs" @click="onApplyCondition">
           ＋{{ t('battlefield.applyCondition') }}
         </CommonAppButton>
       </div>

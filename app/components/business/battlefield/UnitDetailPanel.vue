@@ -91,12 +91,6 @@
           :class="currentHpClass"
         >
           {{ unit.currentHp }}
-          <span
-            v-if="unit.currentHp === 0"
-            class="text-danger-hover"
-            :title="t('battlefield.downMark')"
-            >☠</span
-          >
         </span>
         <BusinessBattlefieldHpQuickControls
           :name="unit.name"

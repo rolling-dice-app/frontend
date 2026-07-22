@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useDiceRollLog } from '~/composables/domain/useDiceRollLog'
+import { createRollLog, useDiceRollLog } from '~/composables/domain/useDiceRollLog'
 import type { D20RollEntry } from '~/types/business/dice'
 
 beforeEach(() => {
@@ -83,5 +83,23 @@ describe('useDiceRollLog — crypto.randomUUID 不可用', () => {
     expect(() => push(sampleEntry())).toThrow()
     vi.restoreAllMocks()
     expect(crypto.randomUUID).toBe(original)
+  })
+})
+
+describe('createRollLog — factory', () => {
+  it('每次呼叫建立獨立佇列，且不影響 singleton', () => {
+    const a = createRollLog()
+    const b = createRollLog()
+    a.push(sampleEntry({ label: '獨立' }))
+    expect(a.entries.value).toHaveLength(1)
+    expect(b.entries.value).toHaveLength(0)
+    expect(useDiceRollLog().entries.value).toHaveLength(0)
+  })
+
+  it('超過 50 筆時 FIFO 截掉最舊', () => {
+    const log = createRollLog()
+    for (let i = 0; i < 55; i++) log.push(sampleEntry({ label: `r${i}` }))
+    expect(log.entries.value).toHaveLength(50)
+    expect(log.entries.value[0]!.label).toBe('r54')
   })
 })

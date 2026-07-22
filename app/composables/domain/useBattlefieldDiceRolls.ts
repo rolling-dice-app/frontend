@@ -1,5 +1,5 @@
 import type { SkillKey } from '@rolling-dice-app/core'
-import { useBattlefieldRollLog } from '~/composables/domain/useBattlefieldRollLog'
+import { createRollLog } from '~/composables/domain/useDiceRollLog'
 import { resolveDeathSaveRoll, rollD20, rollDamageLines } from '~/helpers/dice'
 import {
   useBattlefieldStore,
@@ -10,13 +10,14 @@ import type { BattlefieldAttackEntry, BattlefieldUnit } from '~/types/business/b
 import type { RollMode } from '~/types/business/dice'
 
 /**
- * 戰場擲骰編排：擲骰（helpers/dice）→ 寫入戰鬥紀錄（useBattlefieldRollLog）→
- * 需要落數值的結果走 store action（死亡豁免計數／先攻）。
- * client-only：僅在使用者互動時呼叫。
+ * 戰場擲骰編排：擲骰（helpers/dice）→ 寫入戰鬥紀錄 → 需要落數值的結果走
+ * store action（死亡豁免計數／先攻）。log 為 per-call state，生命週期跟隨
+ * 呼叫端頁面（換戰場 remount 即重置），與戰鬥速查頁的 useDiceRollLog
+ * singleton 天然隔離。擲骰僅在使用者互動時觸發（client-only）。
  */
 export function useBattlefieldDiceRolls(battlefieldId: string) {
   const store = useBattlefieldStore()
-  const log = useBattlefieldRollLog()
+  const log = createRollLog()
   const { t } = useI18n()
 
   const pushD20 = (
@@ -139,6 +140,9 @@ export function useBattlefieldDiceRolls(battlefieldId: string) {
   }
 
   return {
+    /** 戰鬥紀錄 entries（最新在前，上限 50） */
+    entries: log.entries,
+    clearLog: log.clear,
     rollAttackHit,
     rollAttackDamage,
     rollSkill,

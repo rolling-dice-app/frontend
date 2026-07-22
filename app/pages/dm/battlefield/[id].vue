@@ -179,7 +179,7 @@
             <BusinessDiceRollOutputList
               :entries="rollLogEntries"
               :title="t('battlefield.battleLogTitle')"
-              @clear="rollLog.clear()"
+              @clear="diceRolls.clearLog()"
             />
           </div>
         </section>
@@ -367,11 +367,9 @@ const selectedUnit = computed<BattlefieldUnit | null>(() => {
 const unitName = (unitId: string): string =>
   battlefield.value?.units.find((u) => u.id === unitId)?.name ?? ''
 
-// ── 戰鬥紀錄與擲骰編排（module-scoped log；mount 時清除防跨戰場殘留） ────────
-const rollLog = useBattlefieldRollLog()
-const rollLogEntries = rollLog.entries
+// ── 擲骰編排（含戰鬥紀錄；log 為 per-call state，換戰場 remount 即重置） ─────
 const diceRolls = useBattlefieldDiceRolls(battlefieldId)
-onMounted(() => rollLog.clear())
+const rollLogEntries = diceRolls.entries
 
 // ── 回合 ─────────────────────────────────────────────────────────────────────
 const onStepTurn = (dir: 1 | -1): void => {

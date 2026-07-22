@@ -1,7 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useBattlefieldDiceRolls } from '~/composables/domain/useBattlefieldDiceRolls'
-import { useBattlefieldRollLog } from '~/composables/domain/useBattlefieldRollLog'
 import { useBattlefieldStore } from '~/stores/battlefield'
 import type { BattlefieldUnit } from '~/types/business/battlefield'
 
@@ -22,18 +21,17 @@ const setup = async () => {
   const battlefield = await store.loadBattlefield(SEED_BF_ID)
   if (!battlefield) throw new Error('seed battlefield missing')
   const diceRolls = useBattlefieldDiceRolls(SEED_BF_ID)
-  const log = useBattlefieldRollLog()
   const unitOf = (unitId: string): BattlefieldUnit => {
     const found = battlefield.units.find((u) => u.id === unitId)
     if (!found) throw new Error(`unit missing: ${unitId}`)
     return found
   }
-  return { store, battlefield, diceRolls, log, unitOf }
+  // log 為 per-call state：直接以 composable 回傳的 entries 斷言
+  return { store, battlefield, diceRolls, log: { entries: diceRolls.entries }, unitOf }
 }
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  useBattlefieldRollLog().clear()
   vi.mocked(rollD20).mockReset()
   vi.mocked(rollDamageLines).mockReset()
 })
@@ -163,5 +161,19 @@ describe('useBattlefieldDiceRolls — 先攻', () => {
     expect(log.entries.value).toHaveLength(4)
     expect(log.entries.value.every((entry) => entry.kind === 'initiative')).toBe(true)
     expect(log.entries.value.map((entry) => entry.unitName)).toContain('哥布林首領')
+  })
+})
+
+describe('useBattlefieldDiceRolls — log 生命週期', () => {
+  it('每次呼叫建立獨立 log（per-call state）；clearLog 清空', async () => {
+    const { diceRolls, unitOf } = await setup()
+    const other = useBattlefieldDiceRolls(SEED_BF_ID)
+    const g1 = unitOf('mock-u-g1')
+    vi.mocked(rollD20).mockReturnValue({ rolls: [12], chosen: 12 })
+    diceRolls.rollAttackHit(g1, g1.attacks[0]!, 'normal')
+    expect(diceRolls.entries.value).toHaveLength(1)
+    expect(other.entries.value).toHaveLength(0)
+    diceRolls.clearLog()
+    expect(diceRolls.entries.value).toHaveLength(0)
   })
 })

@@ -48,6 +48,7 @@
       type="button"
       class="group relative flex min-h-[50dvh] w-full cursor-pointer select-none flex-col items-center justify-center overflow-hidden rounded-lg border border-border text-center transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       :aria-label="t('dmSession.addContainer')"
+      data-testid="dm-session-add"
       @click="onAdd"
     >
       <div
@@ -131,6 +132,7 @@
           type="button"
           :aria-label="`${t('ui.action.delete')} ${container.title}`"
           class="absolute right-2 top-2 flex size-11 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          data-testid="dm-session-delete"
           @click="onDeleteRequest(container)"
         >
           <Icon name="trash" :size="16" />
@@ -142,6 +144,7 @@
         type="button"
         class="flex min-h-28 cursor-pointer items-center justify-center rounded-lg border border-border bg-canvas-elevated text-content-muted transition-colors duration-200 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         :aria-label="t('dmSession.addContainer')"
+        data-testid="dm-session-add"
         @click="onAdd"
       >
         <Icon name="plus" :size="40" />
@@ -175,6 +178,7 @@
             type="button"
             variant="danger"
             :disabled="deleting"
+            data-testid="dm-session-delete-confirm"
             @click="onDeleteConfirm"
           >
             {{ t('ui.action.delete') }}

@@ -159,9 +159,53 @@ translated string:
   slice reuses the ownership POM (same NotFound state, same client-only 404 path;
   only the reason for the 404 differs: missing vs not-owned).
 
+  Note on monster templates: the four `/dm/monster/*` pages already carry stable
+  element ids on every form field (`#monster-name` / `#monster-hp` / `#monster-ac`
+  / `#monster-cr`, from `monster-form/BasicTab.vue`), so no display testid is
+  added. List cards, and the detail page's edit control, are `NuxtLink`s matched
+  by their `href` (route shape, non-i18n) rather than their translated label.
+  Four i18n-only buttons carry a `data-testid`: `monster-add` (on **both** the
+  empty-state hero and the grid tile — they are mutually exclusive branches of one
+  `v-if` chain, so only ever one is in the DOM), the per-row `monster-delete`
+  (pinned by testid + `aria-label*=<name>`, so no grid-DOM nesting is assumed),
+  `monster-delete-confirm`, and `monster-save` on the shared `monster/Form.vue`
+  (used by both create and update). A plain `authedPage` is enough here: free plan
+  allows `maxMonsterTemplates: 10`, unlike characters (`maxActiveCharacters: 1`)
+  where holding two rows forces the super-admin fixture.
+
+  Note on DM session containers / logs: container and log are one usage path (a
+  container exists to hold logs; there is no standalone log route), so a single
+  spec covers both instead of duplicating the container setup twice. There is no
+  `/dm/session/create` route — creation is a quick-create modal on the list page
+  that navigates straight into the new container, so the POM reads the new id off
+  the resulting URL; the same trick gets the log id, since the log create page
+  deliberately lands on the freshly written log rather than back on the container.
+  Field ids (`#dm-session-container-title`, `#dm-session-log-title`,
+  `#dm-session-log-content`) and the timeline's add-log / edit `NuxtLink` hrefs
+  cover everything except five i18n-only buttons: `dm-session-add`,
+  `dm-session-container-confirm` (shared by the modal's create and rename modes),
+  per-row `dm-session-delete`, `dm-session-delete-confirm`, `dm-session-log-save`.
+  **Scoped out on purpose**: member editing (`MemberEditModal`) and the
+  semi-structured reward fields (`LogRewardItemList`) — each is its own slice.
+
+  Note on multi-field fills (`helpers/form.ts`): `CommonAppInput` defaults to
+  `selectOnFocus`, implemented as `requestAnimationFrame(() => target.select())`.
+  `select()` focuses the input in Chromium, so a callback still pending when focus
+  has already moved fires late and yanks focus back. Two back-to-back Playwright
+  `fill()`s land ~5ms apart — well inside one 16ms frame — so the second field's
+  text can be typed into the first field. This reproduces as a flaky
+  "the edit went into the wrong column" failure, hit on the DM log form and latent
+  in the campaign-records POM (`#campaign-title` → `#campaign-content` is the same
+  Input→TextArea shape). Every multi-field fill therefore goes through
+  `fillSettled()`, which drains one animation frame after each fill. Deliberately
+  **not** a production change: a real user cannot move focus between two fields
+  inside a single frame, so the deferred `select()` always fires while its own
+  input still holds focus.
+
   Note on auth-guard (no testid added): the `auth` route middleware is client-only,
   so an unauthenticated visit to a protected route (`/settings`, `/character`,
-  `/character/build`, detail, update) redirects back to `/` once the boot `/auth/me`
+  `/character/build`, detail, update, plus the DM entries `/dm`, `/dm/monster`,
+  `/dm/session`) redirects back to `/` once the boot `/auth/me`
   resolves to null (no `rd_session` cookie → 401). The slice uses the base `page`
   fixture (not `authedPage`, so no cookie) and asserts each route lands on `/` with
   the home hero `<img alt="Rolling Dice">` visible (SSR-rendered, non-i18n). The
@@ -169,7 +213,11 @@ translated string:
   in the parametrized test title shifts between Playwright's collection and worker
   passes, breaking the run with "Test not found in the worker process"; the id value
   is irrelevant anyway since the guard redirects before any client-only fetch. A
-  small `AuthGuardPom` is added (the guard spans `/settings` too, so it isn't
+  `/dm` is a `redirect: '/dm/monster'` route record — route-level redirects resolve
+  during matching, so it is actually `/dm/monster`'s middleware that lands the visit
+  on `/`; the assertion is the observable contract ("unauthenticated `/dm` ends on
+  `/`"), not which layer stopped it. A
+  small `AuthGuardPom` is added (the guard spans `/settings` and `/dm/*` too, so it isn't
   character-specific).
 
 ## Maintenance invariants

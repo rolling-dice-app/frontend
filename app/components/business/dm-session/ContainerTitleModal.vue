@@ -56,6 +56,7 @@
           variant="primary"
           :disabled="!canSubmit"
           :loading="submitting"
+          data-testid="dm-session-container-confirm"
           @click="onConfirm"
         >
           {{ t('ui.action.confirm') }}

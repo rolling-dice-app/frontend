@@ -6,6 +6,7 @@
           variant="primary"
           :disabled="!canSubmit"
           class="ml-auto min-w-22 whitespace-nowrap"
+          data-testid="monster-save"
           @click="onSave"
         >
           {{ t('ui.action.save') }}

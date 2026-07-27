@@ -7,6 +7,7 @@
           :disabled="!canSubmit"
           :loading="submitting"
           class="ml-auto min-w-22 whitespace-nowrap"
+          data-testid="dm-session-log-save"
           @click="onSave"
         >
           {{ t('ui.action.save') }}

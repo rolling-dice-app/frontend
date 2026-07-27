@@ -17,6 +17,12 @@ const PROTECTED_ROUTES = [
   '/character/build',
   `/character/${DUMMY_ID}`,
   `/character/${DUMMY_ID}/update`,
+  // DM 工具三入口。`/dm` 本身是 `redirect: '/dm/monster'`（route-level redirect 在比對
+  // 階段就解析掉），故它實際是靠 `/dm/monster` 的 auth middleware 落回 `/`——斷言的是
+  // 「未登入進 /dm 最終停在 /」這個可觀察契約，不假設是哪一層擋下的。
+  '/dm',
+  '/dm/monster',
+  '/dm/session',
 ]
 
 for (const path of PROTECTED_ROUTES) {

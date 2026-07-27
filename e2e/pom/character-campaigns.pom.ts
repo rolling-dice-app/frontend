@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
+import { fillSettled } from '../helpers/form'
 import { waitHydrated } from '../helpers/hydrate'
 
 /**
@@ -77,9 +78,14 @@ export class CharacterCampaignsPom {
     ])
   }
 
+  /**
+   * `#campaign-title` (CommonAppInput) then `#campaign-content` (TextArea) is the
+   * exact shape that trips the deferred-`select()` focus steal, so both go
+   * through `fillSettled` — see its doc.
+   */
   private async fillForm(title: string, content: string): Promise<void> {
-    await this.page.locator('#campaign-title').fill(title)
-    await this.page.locator('#campaign-content').fill(content)
+    await fillSettled(this.page, '#campaign-title', title)
+    await fillSettled(this.page, '#campaign-content', content)
   }
 
   private async confirmAwaiting(

@@ -263,6 +263,8 @@
         @create-adhoc="onCreateAdhoc"
         @enter="onEnterCombat"
         @remove-unit="onRemoveUnit"
+        @remove-member="onRemoveMember"
+        @relink-member="onRelinkMember"
       />
 
       <!-- 結束戰鬥彈窗：逐項保留確認 -->
@@ -302,12 +304,10 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeRouteLeave } from 'vue-router'
 import { Icon, Modal } from '@ui'
-import type {
-  AdhocUnitInput,
-  BattlefieldUnit,
-  EndBattleKeepFlags,
-} from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
+import type { AdhocUnitInput, EndBattleKeepFlags } from '~/types/business/battlefield'
 
 definePageMeta({
   middleware: 'auth',
@@ -317,17 +317,27 @@ definePageMeta({
 
 const { t } = useI18n()
 const toast = useToast()
+const apiErrorToast = useApiErrorToast()
 const route = useRoute()
 
 useHead({ title: t('battlefield.listTitle') })
 
 const battlefieldStore = useBattlefieldStore()
+const monsterTemplateStore = useMonsterTemplateStore()
 const battlefieldId = getRouteParam(route.params.id)
 
 // server: false：私有資料不進 SSR/edge cache（與 dm 詳情頁同步）。
+// 載入成功後並行補子資源（成員快照 hydrate／模板列表）；兩者非致命，失敗只降級抽屜內容。
 const { status, refresh } = useAsyncData(
   () => `battlefield-${battlefieldId}`,
-  () => battlefieldStore.loadBattlefield(battlefieldId),
+  async () => {
+    const bf = await battlefieldStore.loadBattlefield(battlefieldId)
+    if (bf) {
+      void battlefieldStore.loadMemberSources(battlefieldId).catch(() => {})
+      void monsterTemplateStore.ensureListLoaded().catch(() => {})
+    }
+    return bf
+  },
   { server: false, lazy: true },
 )
 // 團務選項供頂部標題顯示（劇本／團務名）
@@ -370,6 +380,18 @@ const unitName = (unitId: string): string =>
 // ── 擲骰編排（含戰鬥紀錄；log 為 per-call state，換戰場 remount 即重置） ─────
 const diceRolls = useBattlefieldDiceRolls(battlefieldId)
 const rollLogEntries = diceRolls.entries
+
+// ── 持久化：離頁前 flush pending PATCH；重試後仍失敗（或 409 stale 覆蓋）由此 toast ──
+onBeforeRouteLeave(async () => {
+  await battlefieldStore.flushPersist(battlefieldId)
+})
+
+watch(
+  () => battlefieldStore.persistError,
+  (err) => {
+    if (err != null) apiErrorToast.handle(err)
+  },
+)
 
 // ── 回合 ─────────────────────────────────────────────────────────────────────
 const onStepTurn = (dir: 1 | -1): void => {
@@ -435,18 +457,41 @@ const onImportMember = (shareId: string): void => {
   if (created) toast.info(t('battlefield.toastJoined', { name: created.name }))
 }
 
-const onAddTemplate = (templateId: string): void => {
-  const created = battlefieldStore.addMonsterInstance(battlefieldId, templateId)
+const onAddTemplate = async (templateId: string): Promise<void> => {
+  const created = await battlefieldStore.addMonsterInstance(battlefieldId, templateId)
   if (created) toast.info(t('battlefield.toastJoined', { name: created.name }))
 }
 
 const onCreateAdhoc = (input: AdhocUnitInput, joinCombat: boolean): void => {
   const created = battlefieldStore.createAdhocUnit(battlefieldId, input, joinCombat)
+  if (!created) {
+    toast.error(t('battlefield.unitCapReached'))
+    return
+  }
   toast.info(
     t(joinCombat ? 'battlefield.toastJoined' : 'battlefield.toastCreated', {
       name: created.name,
     }),
   )
+}
+
+// ── 成員名單修復（走 m7.2 團務 log PATCH；成功後 store 會重跑 hydrate） ──────
+const onRemoveMember = async (memberId: string): Promise<void> => {
+  try {
+    await battlefieldStore.removeSessionMember(battlefieldId, memberId)
+    toast.info(t('battlefield.toastMemberRemoved'))
+  } catch (err) {
+    apiErrorToast.handle(err)
+  }
+}
+
+const onRelinkMember = async (memberId: string, shareId: string): Promise<void> => {
+  try {
+    await battlefieldStore.relinkSessionMember(battlefieldId, memberId, shareId)
+    toast.info(t('battlefield.toastMemberRelinked'))
+  } catch (err) {
+    apiErrorToast.handle(err)
+  }
 }
 
 const onRemoveUnit = (unitId: string): void => {
@@ -485,6 +530,8 @@ const onDeleteConfirm = async (): Promise<void> => {
     deleteOpen.value = false
     toast.info(t('battlefield.toastDeleted'))
     await navigateTo('/dm/battlefield')
+  } catch (err) {
+    apiErrorToast.handle(err)
   } finally {
     deleting.value = false
   }

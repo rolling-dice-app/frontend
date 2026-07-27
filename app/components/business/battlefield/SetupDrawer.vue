@@ -94,12 +94,43 @@
                   {{ t('battlefield.memberUnavailable') }}
                 </span>
                 <span class="flex flex-wrap gap-1.5">
-                  <!-- TODO(串接階段): 移除成員／重新連結接真行為 -->
-                  <CommonAppButton type="button" variant="neutral" size="sm" @click="onNotWired">
+                  <CommonAppButton
+                    type="button"
+                    variant="neutral"
+                    size="sm"
+                    @click="emit('removeMember', member.memberId)"
+                  >
                     {{ t('battlefield.removeMember') }}
                   </CommonAppButton>
-                  <CommonAppButton type="button" variant="neutral" size="sm" @click="onNotWired">
+                  <CommonAppButton
+                    type="button"
+                    variant="neutral"
+                    size="sm"
+                    @click="toggleRelink(member.memberId)"
+                  >
                     {{ t('battlefield.relinkMember') }}
+                  </CommonAppButton>
+                </span>
+                <span
+                  v-if="relinkTargetId === member.memberId"
+                  class="flex flex-wrap items-center gap-1.5"
+                >
+                  <CommonAppInput
+                    :model-value="relinkLink"
+                    class="min-w-0 flex-1"
+                    :placeholder="t('battlefield.relinkPlaceholder')"
+                    :aria-label="t('battlefield.relinkPlaceholder')"
+                    @update:model-value="(value: string) => (relinkLink = value)"
+                    @keydown.enter="onConfirmRelink(member.memberId)"
+                  />
+                  <CommonAppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    :disabled="relinkLink.trim() === ''"
+                    @click="onConfirmRelink(member.memberId)"
+                  >
+                    {{ t('battlefield.relinkConfirm') }}
                   </CommonAppButton>
                 </span>
               </span>
@@ -125,14 +156,7 @@
                 </span>
               </span>
               <span class="text-xs text-content-muted tabular-nums">
-                {{
-                  t('battlefield.statTemplate', {
-                    ac: template.ac,
-                    hp: template.hp,
-                    speed: template.speed,
-                    bonus: formatModifier(template.initiativeBonus),
-                  })
-                }}
+                {{ t('battlefield.statTemplate', { ac: template.ac, hp: template.hp }) }}
               </span>
             </span>
             <CommonAppButton
@@ -154,7 +178,7 @@
               {{ t('battlefield.adhocName') }} <span class="sr-only">*</span>
               <CommonAppInput
                 :model-value="adhocName"
-                :maxlength="30"
+                :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
                 class="w-full"
                 @update:model-value="(value: string) => (adhocName = value)"
               />
@@ -233,9 +257,9 @@
               <span class="text-xs text-content-muted tabular-nums">
                 {{
                   t('battlefield.statHpAc', {
-                    current: unit.currentHp,
-                    max: unit.maxHp,
-                    ac: unit.currentAc,
+                    current: unit.hp.current,
+                    max: effectiveMaxHp(unit),
+                    ac: effectiveAc(unit),
                   })
                 }}
               </span>
@@ -266,12 +290,12 @@
 
 <script setup lang="ts">
 import { Drawer } from '@ui'
-import type { ClassKey } from '@rolling-dice-app/core'
+import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
+import type { BattlefieldUnit, ClassKey } from '@rolling-dice-app/core'
 import type {
   AdhocUnitInput,
   BattlefieldMemberSource,
   BattlefieldTemplateSource,
-  BattlefieldUnit,
 } from '~/types/business/battlefield'
 
 type SetupTab = 'members' | 'templates' | 'adhoc'
@@ -303,6 +327,8 @@ const emit = defineEmits<{
   createAdhoc: [input: AdhocUnitInput, joinCombat: boolean]
   enter: [unitId: string]
   removeUnit: [unitId: string]
+  removeMember: [memberId: string]
+  relinkMember: [memberId: string, shareId: string]
 }>()
 
 const activeTab = ref<SetupTab>('members')
@@ -312,8 +338,24 @@ const memberUnitOf = (shareId: string): BattlefieldUnit | undefined =>
 
 const benchUnits = computed(() => props.units.filter((u) => !u.inCombat))
 
-const onNotWired = (): void => {
-  toast.info(t('battlefield.notWiredYet'))
+// ── 重新連結（貼分享連結 → 解析 shareId 後交頁面送 log PATCH） ───────────────
+const relinkTargetId = ref<string | null>(null)
+const relinkLink = ref('')
+
+const toggleRelink = (memberId: string): void => {
+  relinkTargetId.value = relinkTargetId.value === memberId ? null : memberId
+  relinkLink.value = ''
+}
+
+const onConfirmRelink = (memberId: string): void => {
+  const shareId = parseShareIdFromLink(relinkLink.value)
+  if (!shareId) {
+    toast.error(t('battlefield.relinkInvalidLink'))
+    return
+  }
+  emit('relinkMember', memberId, shareId)
+  relinkTargetId.value = null
+  relinkLink.value = ''
 }
 
 // ── 手動臨時單位表單 ─────────────────────────────────────────────────────────

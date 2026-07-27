@@ -2,7 +2,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useBattlefieldDiceRolls } from '~/composables/domain/useBattlefieldDiceRolls'
 import { useBattlefieldStore } from '~/stores/battlefield'
-import type { BattlefieldUnit } from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
+import { createMockBattlefieldDTO, createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
 
 // 隨機來源全 mock；resolveDeathSaveRoll 為純函式走真實實作
 vi.mock('~/helpers/dice', async (importOriginal) => ({
@@ -14,11 +15,74 @@ vi.mock('~/helpers/dice', async (importOriginal) => ({
 
 const { rollD20, rollDamageLines } = await import('~/helpers/dice')
 
-const SEED_BF_ID = 'mock-bf-mist-3'
+const SEED_BF_ID = 'test-bf-1'
+
+/** 直接 seed store cache（本 spec 只驗擲骰編排，不經 API 載入） */
+const buildSeedUnits = (): BattlefieldUnit[] => [
+  createMockBattlefieldUnit({
+    id: 'mock-u-g1',
+    kind: 'monster',
+    faction: 'enemy',
+    name: '哥布林 1',
+    inCombat: true,
+    attacks: [
+      {
+        id: 'atk-1',
+        name: '彎刀',
+        hitBonus: 4,
+        damageDice: [{ id: 'dd-1', dieType: 6, count: 1, bonus: 2, damageType: 'slashing' }],
+        comment: null,
+      },
+    ],
+    skills: { stealth: 6 },
+  }),
+  createMockBattlefieldUnit({
+    id: 'mock-u-g2',
+    kind: 'monster',
+    faction: 'enemy',
+    name: '哥布林 2',
+    inCombat: true,
+  }),
+  createMockBattlefieldUnit({
+    id: 'mock-u-g3',
+    kind: 'monster',
+    faction: 'enemy',
+    name: '哥布林 3',
+    inCombat: true,
+  }),
+  createMockBattlefieldUnit({
+    id: 'mock-u-boss',
+    kind: 'monster',
+    faction: 'enemy',
+    name: '哥布林首領',
+    inCombat: true,
+    initiativeBonus: 2,
+  }),
+  createMockBattlefieldUnit({
+    id: 'mock-u-luna',
+    kind: 'character',
+    faction: 'player',
+    name: '露娜',
+    inCombat: true,
+    maxHp: 12,
+  }),
+  createMockBattlefieldUnit({
+    id: 'mock-u-thorin',
+    kind: 'character',
+    faction: 'player',
+    name: '索林',
+    inCombat: true,
+    initiativeBonus: 0,
+  }),
+]
 
 const setup = async () => {
   const store = useBattlefieldStore()
-  const battlefield = await store.loadBattlefield(SEED_BF_ID)
+  store.battlefieldCache.set(
+    SEED_BF_ID,
+    createMockBattlefieldDTO({ id: SEED_BF_ID, units: buildSeedUnits() }),
+  )
+  const battlefield = store.getBattlefieldById(SEED_BF_ID)
   if (!battlefield) throw new Error('seed battlefield missing')
   const diceRolls = useBattlefieldDiceRolls(SEED_BF_ID)
   const unitOf = (unitId: string): BattlefieldUnit => {
@@ -134,7 +198,7 @@ describe('useBattlefieldDiceRolls — 死亡豁免', () => {
     store.setDeathSaveSuccesses(SEED_BF_ID, luna.id, 2)
     vi.mocked(rollD20).mockReturnValueOnce({ rolls: [20], chosen: 20 })
     diceRolls.rollDeathSave(luna)
-    expect(luna.currentHp).toBe(1)
+    expect(luna.hp.current).toBe(1)
     expect(luna.deathSaves).toEqual({ successes: 0, failures: 0 })
   })
 })

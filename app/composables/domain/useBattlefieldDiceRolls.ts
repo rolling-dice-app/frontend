@@ -1,4 +1,4 @@
-import type { SkillKey } from '@rolling-dice-app/core'
+import type { BattlefieldAttackEntry, BattlefieldUnit, SkillKey } from '@rolling-dice-app/core'
 import { createRollLog } from '~/composables/domain/useDiceRollLog'
 import { resolveDeathSaveRoll, rollD20, rollDamageLines } from '~/helpers/dice'
 import {
@@ -6,7 +6,6 @@ import {
   type EnemyInitiativeRollResult,
   type InitiativeRollResult,
 } from '~/stores/battlefield'
-import type { BattlefieldAttackEntry, BattlefieldUnit } from '~/types/business/battlefield'
 import type { RollMode } from '~/types/business/dice'
 
 /**

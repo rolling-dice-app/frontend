@@ -1,38 +1,48 @@
-import type { ClassEntry, ClassKey } from '@rolling-dice-app/core'
-import type { BattlefieldUnit, EndBattleKeepFlags } from '~/types/business/battlefield'
+import type {
+  BattlefieldUnit,
+  BattlefieldUnitHp,
+  ClassEntry,
+  ClassKey,
+} from '@rolling-dice-app/core'
+import type { EndBattleKeepFlags } from '~/types/business/battlefield'
 
-/** HP 池變更結果（傷害／治療只動這兩欄） */
-export interface HpPools {
-  currentHp: number
-  tempHp: number
+/** 有效最大 HP＝快照基準＋臨時調整，下限 1（調整值模型，比照 combat-state） */
+export function effectiveMaxHp(unit: Pick<BattlefieldUnit, 'maxHp' | 'hp'>): number {
+  return Math.max(1, unit.maxHp + unit.hp.maxAdjustment)
+}
+
+/** 有效 AC＝快照基準＋臨時調整，下限 0 */
+export function effectiveAc(unit: Pick<BattlefieldUnit, 'ac' | 'acAdjustment'>): number {
+  return Math.max(0, unit.ac + unit.acAdjustment)
 }
 
 /**
  * 造成傷害：臨時 HP 先扣（沿用戰鬥速查語意），剩餘扣當前 HP，下限 0。
- * amount <= 0 視為 no-op。
+ * amount <= 0 視為 no-op。回傳新的 HP 子結構（maxAdjustment 原樣保留）。
  */
 export function applyDamageToHp(
-  unit: Pick<BattlefieldUnit, 'currentHp' | 'tempHp' | 'maxHp'>,
+  unit: Pick<BattlefieldUnit, 'maxHp' | 'hp'>,
   amount: number,
-): HpPools {
-  if (amount <= 0) return { currentHp: unit.currentHp, tempHp: unit.tempHp }
-  const fromTemp = Math.min(unit.tempHp, amount)
+): BattlefieldUnitHp {
+  if (amount <= 0) return { ...unit.hp }
+  const fromTemp = Math.min(unit.hp.tempHp, amount)
   const rest = amount - fromTemp
   return {
-    currentHp: Math.min(Math.max(unit.currentHp - rest, 0), unit.maxHp),
-    tempHp: unit.tempHp - fromTemp,
+    ...unit.hp,
+    current: Math.min(Math.max(unit.hp.current - rest, 0), effectiveMaxHp(unit)),
+    tempHp: unit.hp.tempHp - fromTemp,
   }
 }
 
-/** 治療：只補當前 HP，上限 maxHp；不影響臨時 HP。amount <= 0 視為 no-op。 */
+/** 治療：只補當前 HP，上限有效最大 HP；不影響臨時 HP。amount <= 0 視為 no-op。 */
 export function applyHealToHp(
-  unit: Pick<BattlefieldUnit, 'currentHp' | 'tempHp' | 'maxHp'>,
+  unit: Pick<BattlefieldUnit, 'maxHp' | 'hp'>,
   amount: number,
-): HpPools {
-  if (amount <= 0) return { currentHp: unit.currentHp, tempHp: unit.tempHp }
+): BattlefieldUnitHp {
+  if (amount <= 0) return { ...unit.hp }
   return {
-    currentHp: Math.min(unit.currentHp + amount, unit.maxHp),
-    tempHp: unit.tempHp,
+    ...unit.hp,
+    current: Math.min(unit.hp.current + amount, effectiveMaxHp(unit)),
   }
 }
 
@@ -119,7 +129,7 @@ export function buildMonsterInstanceName(
 /**
  * 結束戰鬥的單位重設（2026-07-16 決議）：
  * 必清＝先攻；敵方退出戰鬥（實例保留）、玩家與中立留場。
- * 保留項由 flags 逐項決定；「其他調整值」重置會把 AC／最大 HP 拉回快照基準，
+ * 保留項由 flags 逐項決定；「其他調整值」重置會把 AC／最大 HP／速度調整歸零，
  * 且先套調整值重置再套滿血，避免以調整後上限回血。
  */
 export function resetUnitAfterBattle(
@@ -128,6 +138,7 @@ export function resetUnitAfterBattle(
 ): BattlefieldUnit {
   const next: BattlefieldUnit = {
     ...source,
+    hp: { ...source.hp },
     conditions: source.conditions.map((c) => ({ ...c })),
     deathSaves: { ...source.deathSaves },
     initiative: null,
@@ -135,17 +146,17 @@ export function resetUnitAfterBattle(
   }
   if (source.inCombat) {
     if (!flags.keepAdjustments) {
-      next.currentAc = next.baseAc
-      next.maxHp = next.baseMaxHp
-      next.currentHp = Math.min(next.currentHp, next.maxHp)
+      next.acAdjustment = 0
+      next.hp.maxAdjustment = 0
       next.speedAdjustment = 0
+      next.hp.current = Math.min(next.hp.current, effectiveMaxHp(next))
     }
-    if (!flags.keepCurrentHp) next.currentHp = next.maxHp
-    if (!flags.keepTempHp) next.tempHp = 0
+    if (!flags.keepCurrentHp) next.hp.current = effectiveMaxHp(next)
+    if (!flags.keepTempHp) next.hp.tempHp = 0
     if (!flags.keepConditions) next.conditions = []
   }
   // HP ≥ 1 死亡豁免歸零（與 store clearDeathSavesIfUp 同不變量）
-  if (next.currentHp >= 1) next.deathSaves = { successes: 0, failures: 0 }
+  if (next.hp.current >= 1) next.deathSaves = { successes: 0, failures: 0 }
   return next
 }
 
@@ -163,6 +174,11 @@ export function formatCharacterTitle(
   const primary = classes[0]
   if (primary) parts.push(classLabelOf(primary.classKey), `Lv.${calculateTotalLevel(classes)}`)
   return parts.join(' ')
+}
+
+/** 挑戰等級顯示：契約存原始字串（如 "1/2"），UI 統一冠 "CR "；null 回空字串 */
+export function formatChallengeRating(challengeRating: string | null): string {
+  return challengeRating == null ? '' : `CR ${challengeRating}`
 }
 
 /** 速度顯示：有效速度（快照＋調整，夾 0）加單位；快照未知（null）則 em dash */

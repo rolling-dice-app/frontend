@@ -1,4 +1,4 @@
-import type { BattlefieldFaction, BattlefieldUnitKind } from '~/types/business/battlefield'
+import type { BattlefieldFaction, BattlefieldUnitKind } from '@rolling-dice-app/core'
 
 const faction: Readonly<Record<BattlefieldFaction, string>> = {
   player: '友軍',
@@ -27,6 +27,7 @@ export default {
   enterBattlefield: '進入戰場',
   createBattlefield: '建立戰場',
   hasBattlefield: '戰場進行中',
+  createDisabledHint: '同劇本已有戰場',
 
   // 工作區頂部
   battleMeta: '第 {seq} 場戰鬥',
@@ -52,7 +53,7 @@ export default {
   statAcHp: 'AC {ac}・HP {hp}',
   statHpAc: 'HP {current}/{max}・AC {ac}',
   statMember: 'AC {ac}・HP {hp}・速 {speed} 呎・先攻 {bonus}',
-  statTemplate: 'AC {ac}・HP {hp}・速 {speed} 呎・先攻 {bonus}',
+  statTemplate: 'AC {ac}・HP {hp}',
   conditionCount: '{count} 狀態',
 
   // 中欄（參戰列表＋回合工具列）
@@ -101,6 +102,7 @@ export default {
   conditionSelectAria: '選擇狀態',
   conditionNotePlaceholder: '備註（選填）',
   applyCondition: '套用',
+  conditionCapReached: '單一單位狀態已達上限',
   removeConditionAria: '移除狀態 {name}',
   attacksTitle: '攻擊',
   skillsTitle: '技能',
@@ -120,7 +122,9 @@ export default {
   memberUnavailable: '快照失敗 — 角色已停止分享或已刪除',
   removeMember: '移除成員',
   relinkMember: '重新連結',
-  notWiredYet: '此操作需串接後端後提供。',
+  relinkPlaceholder: '貼上新的角色分享連結',
+  relinkConfirm: '連結',
+  relinkInvalidLink: '無法從連結解析角色分享 ID，請確認貼的是角色分享連結。',
   adhocName: '名稱',
   adhocMaxHp: '最大 HP',
   adhocAc: 'AC',
@@ -157,4 +161,7 @@ export default {
   toastBattleEnded: '第 {seq} 場戰鬥結束。',
   toastBattleStarted: '第 {seq} 場戰鬥開始 — 請擲先攻。',
   toastDeleted: '戰場已刪除。',
+  toastMemberRemoved: '已自團務出席名單移除成員。',
+  toastMemberRelinked: '已重新連結成員角色卡。',
+  unitCapReached: '戰場單位數已達上限，請先移除部分單位。',
 }

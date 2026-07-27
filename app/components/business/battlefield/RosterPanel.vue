@@ -120,7 +120,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { BattlefieldTemplateSource, BattlefieldUnit } from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
+import type { BattlefieldTemplateSource } from '~/types/business/battlefield'
 
 const { t } = useI18n()
 
@@ -142,9 +143,9 @@ const otherUnits = computed(() => props.rosterUnits.filter((u) => u.kind !== 'ch
 
 const unitStatLine = (unit: BattlefieldUnit): string => {
   const base = t('battlefield.statHpAc', {
-    current: unit.currentHp,
-    max: unit.maxHp,
-    ac: unit.currentAc,
+    current: unit.hp.current,
+    max: effectiveMaxHp(unit),
+    ac: effectiveAc(unit),
   })
   return unit.conditions.length > 0
     ? `${base}・${t('battlefield.conditionCount', { count: unit.conditions.length })}`

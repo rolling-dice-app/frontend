@@ -90,7 +90,7 @@
           class="flex items-baseline gap-1 text-[22px] font-bold leading-tight tabular-nums"
           :class="currentHpClass"
         >
-          {{ unit.currentHp }}
+          {{ unit.hp.current }}
         </span>
         <BusinessBattlefieldHpQuickControls
           :name="unit.name"
@@ -106,13 +106,13 @@
           {{ t('battlefield.hpTemp') }}
         </span>
         <span class="text-[22px] font-bold leading-tight text-info tabular-nums">{{
-          unit.tempHp
+          unit.hp.tempHp
         }}</span>
         <span class="flex items-center gap-0.5">
           <button
             type="button"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-panel-3 hover:text-content disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="unit.tempHp <= 0"
+            :disabled="unit.hp.tempHp <= 0"
             :aria-label="`${t('battlefield.hpTemp')} -1`"
             @click="emit('adjustTemp', -1)"
           >
@@ -135,12 +135,21 @@
         <span class="text-[11px] tracking-wide text-content-muted">
           {{ t('battlefield.hpMax') }}
         </span>
-        <span class="text-[22px] font-bold leading-tight tabular-nums">{{ unit.maxHp }}</span>
+        <span class="flex items-baseline gap-1 text-[22px] font-bold leading-tight tabular-nums">
+          {{ unitEffectiveMaxHp }}
+          <span
+            v-if="unit.hp.maxAdjustment !== 0"
+            class="text-[11px] font-semibold"
+            :class="unit.hp.maxAdjustment > 0 ? 'text-success-hover' : 'text-danger-hover'"
+          >
+            ({{ formatModifier(unit.hp.maxAdjustment) }})
+          </span>
+        </span>
         <span class="flex items-center gap-0.5">
           <button
             type="button"
             class="flex size-7 items-center justify-center rounded-md text-content-muted hover:bg-panel-3 hover:text-content disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="unit.maxHp <= 1"
+            :disabled="unitEffectiveMaxHp <= 1"
             :aria-label="`${t('battlefield.hpMax')} -1`"
             @click="emit('adjustMax', -1)"
           >
@@ -164,13 +173,13 @@
           {{ t('battlefield.acLabel') }}
         </span>
         <span class="flex items-baseline gap-1 text-[22px] font-bold leading-tight tabular-nums">
-          {{ unit.currentAc }}
+          {{ unitEffectiveAc }}
           <span
-            v-if="acAdjustment !== 0"
+            v-if="unit.acAdjustment !== 0"
             class="text-[11px] font-semibold"
-            :class="acAdjustment > 0 ? 'text-success-hover' : 'text-danger-hover'"
+            :class="unit.acAdjustment > 0 ? 'text-success-hover' : 'text-danger-hover'"
           >
-            ({{ formatModifier(acAdjustment) }})
+            ({{ formatModifier(unit.acAdjustment) }})
           </span>
         </span>
         <span class="flex items-center gap-0.5">
@@ -282,7 +291,7 @@
     </div>
 
     <BusinessBattlefieldDeathSavesSection
-      v-if="unit.currentHp === 0"
+      v-if="unit.hp.current === 0"
       :successes="unit.deathSaves.successes"
       :failures="unit.deathSaves.failures"
       @set-success="(value) => emit('setDeathSaveSuccesses', value)"
@@ -321,7 +330,14 @@
           :aria-label="t('battlefield.conditionNotePlaceholder')"
           @keydown.enter="onApplyCondition"
         />
-        <CommonAppButton type="button" variant="neutral" size="xs" @click="onApplyCondition">
+        <CommonAppButton
+          type="button"
+          variant="neutral"
+          size="xs"
+          :disabled="atConditionCap"
+          :title="atConditionCap ? t('battlefield.conditionCapReached') : undefined"
+          @click="onApplyCondition"
+        >
           ＋{{ t('battlefield.applyCondition') }}
         </CommonAppButton>
       </div>
@@ -356,18 +372,20 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { CONDITION_KEYS } from '@rolling-dice-app/core'
-import type { ClassKey, ConditionKey, SkillKey } from '@rolling-dice-app/core'
+import { CHARACTER_TEXT_LIMITS, CONDITION_KEYS, VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type {
   BattlefieldAttackEntry,
   BattlefieldFaction,
   BattlefieldUnit,
-} from '~/types/business/battlefield'
+  ClassKey,
+  ConditionKey,
+  SkillKey,
+} from '@rolling-dice-app/core'
 import type { RollMode } from '~/types/business/dice'
 import { FACTION_ORDER } from '~/constants/battlefield'
 
-/** 與 store 端 renameUnit 的截斷上限一致 */
-const UNIT_NAME_MAX_LENGTH = 30
+/** 與 store 端 renameUnit 的截斷上限一致（core caps） */
+const UNIT_NAME_MAX_LENGTH = CHARACTER_TEXT_LIMITS.SHORT
 
 const { t } = useI18n()
 
@@ -379,12 +397,13 @@ const props = defineProps<{
 
 const classLabelOf = (key: ClassKey) => t(`class.label.${key}`)
 
-// character 由快照 race/classes 組「種族 主職業 Lv.總等級」；monster/adhoc 用 title 原字
-const unitTitle = computed(() =>
-  props.unit.kind === 'character'
-    ? formatCharacterTitle(props.unit.race, props.unit.classes, classLabelOf)
-    : props.unit.title,
-)
+// character 由快照 race/classes 組「種族 主職業 Lv.總等級」；monster 顯示 CR、adhoc 無補充
+const unitTitle = computed(() => {
+  if (props.unit.kind === 'character')
+    return formatCharacterTitle(props.unit.race, props.unit.classes, classLabelOf)
+  if (props.unit.kind === 'monster') return formatChallengeRating(props.unit.challengeRating)
+  return ''
+})
 
 const emit = defineEmits<{
   rename: [name: string]
@@ -413,15 +432,21 @@ const emit = defineEmits<{
 
 const hasSkills = computed(() => Object.keys(props.unit.skills).length > 0)
 
-const acAdjustment = computed(() => props.unit.currentAc - props.unit.baseAc)
+// 有效值＝快照基準＋臨時調整（調整值模型）；badge 顯示調整量
+const unitEffectiveAc = computed(() => effectiveAc(props.unit))
+const unitEffectiveMaxHp = computed(() => effectiveMaxHp(props.unit))
 
 // 有效速度＝快照＋調整（夾 0）；speed 為 null（adhoc 未填）時整卡顯示 em dash
 const effectiveSpeed = computed(() =>
   props.unit.speed == null ? null : Math.max(0, props.unit.speed + props.unit.speedAdjustment),
 )
 
+const atConditionCap = computed(
+  () => props.unit.conditions.length >= VALIDATION_LIMITS.maxConditionsPerBattlefieldUnit,
+)
+
 const currentHpClass = computed(() => {
-  const tier = hpRatioTier(props.unit.currentHp, props.unit.maxHp)
+  const tier = hpRatioTier(props.unit.hp.current, unitEffectiveMaxHp.value)
   if (tier === 'crit') return 'text-danger-hover'
   if (tier === 'low') return 'text-warning'
   return 'text-content'
@@ -449,6 +474,7 @@ const conditionDraftKey = ref<ConditionKey>(CONDITION_KEYS[0] ?? 'blinded')
 const conditionDraftNote = ref('')
 
 const onApplyCondition = (): void => {
+  if (atConditionCap.value) return
   const note = conditionDraftNote.value.trim()
   emit('addCondition', conditionDraftKey.value, note === '' ? null : note)
   conditionDraftNote.value = ''

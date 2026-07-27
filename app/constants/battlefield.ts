@@ -1,4 +1,4 @@
-import type { BattlefieldFaction } from '~/types/business/battlefield'
+import type { BattlefieldFaction } from '@rolling-dice-app/core'
 
 /** 陣營圓點底色（完整 class 字串，Tailwind 掃描需要字面值） */
 export const FACTION_DOT_CLASS: Readonly<Record<BattlefieldFaction, string>> = {

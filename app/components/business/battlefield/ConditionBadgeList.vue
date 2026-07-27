@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { BattlefieldCondition } from '~/types/business/battlefield'
+import type { BattlefieldCondition } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

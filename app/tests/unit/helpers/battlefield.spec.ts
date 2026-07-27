@@ -5,6 +5,9 @@ import {
   applyHealToHp,
   buildMonsterInstanceName,
   combatantsOf,
+  effectiveAc,
+  effectiveMaxHp,
+  formatChallengeRating,
   formatCharacterTitle,
   hpRatioTier,
   nextTurnTarget,
@@ -27,38 +30,80 @@ const KEEP_ALL: EndBattleKeepFlags = {
   keepAdjustments: true,
 }
 
+describe('effectiveMaxHp / effectiveAc', () => {
+  it('有效值＝快照基準＋臨時調整', () => {
+    const unit = createMockBattlefieldUnit({
+      maxHp: 20,
+      hp: { current: 20, tempHp: 0, maxAdjustment: 5 },
+      ac: 15,
+      acAdjustment: -2,
+    })
+    expect(effectiveMaxHp(unit)).toBe(25)
+    expect(effectiveAc(unit)).toBe(13)
+  })
+
+  it('有效最大 HP 下限 1、有效 AC 下限 0', () => {
+    const unit = createMockBattlefieldUnit({
+      maxHp: 5,
+      hp: { current: 1, tempHp: 0, maxAdjustment: -99 },
+      ac: 10,
+      acAdjustment: -99,
+    })
+    expect(effectiveMaxHp(unit)).toBe(1)
+    expect(effectiveAc(unit)).toBe(0)
+  })
+})
+
 describe('applyDamageToHp', () => {
-  it('臨時 HP 先扣，剩餘才扣當前 HP', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 27, currentHp: 12, tempHp: 5 })
-    expect(applyDamageToHp(unit, 6)).toEqual({ currentHp: 11, tempHp: 0 })
+  it('臨時 HP 先扣，剩餘才扣當前 HP；maxAdjustment 原樣保留', () => {
+    const unit = createMockBattlefieldUnit({
+      maxHp: 27,
+      hp: { current: 12, tempHp: 5, maxAdjustment: 3 },
+    })
+    expect(applyDamageToHp(unit, 6)).toEqual({ current: 11, tempHp: 0, maxAdjustment: 3 })
   })
 
   it('傷害小於臨時 HP 時當前 HP 不動', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 27, currentHp: 12, tempHp: 5 })
-    expect(applyDamageToHp(unit, 3)).toEqual({ currentHp: 12, tempHp: 2 })
+    const unit = createMockBattlefieldUnit({
+      maxHp: 27,
+      hp: { current: 12, tempHp: 5, maxAdjustment: 0 },
+    })
+    expect(applyDamageToHp(unit, 3)).toEqual({ current: 12, tempHp: 2, maxAdjustment: 0 })
   })
 
   it('當前 HP 下限 0，不出現負值', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 7, currentHp: 3 })
-    expect(applyDamageToHp(unit, 99)).toEqual({ currentHp: 0, tempHp: 0 })
+    const unit = createMockBattlefieldUnit({
+      maxHp: 7,
+      hp: { current: 3, tempHp: 0, maxAdjustment: 0 },
+    })
+    expect(applyDamageToHp(unit, 99)).toEqual({ current: 0, tempHp: 0, maxAdjustment: 0 })
   })
 
   it('amount <= 0 為 no-op', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 10, currentHp: 8, tempHp: 2 })
-    expect(applyDamageToHp(unit, 0)).toEqual({ currentHp: 8, tempHp: 2 })
-    expect(applyDamageToHp(unit, -5)).toEqual({ currentHp: 8, tempHp: 2 })
+    const unit = createMockBattlefieldUnit({
+      maxHp: 10,
+      hp: { current: 8, tempHp: 2, maxAdjustment: 0 },
+    })
+    expect(applyDamageToHp(unit, 0)).toEqual({ current: 8, tempHp: 2, maxAdjustment: 0 })
+    expect(applyDamageToHp(unit, -5)).toEqual({ current: 8, tempHp: 2, maxAdjustment: 0 })
   })
 })
 
 describe('applyHealToHp', () => {
-  it('回復上限為 maxHp，且不影響臨時 HP', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 20, currentHp: 15, tempHp: 3 })
-    expect(applyHealToHp(unit, 99)).toEqual({ currentHp: 20, tempHp: 3 })
+  it('回復上限為有效最大 HP（含調整），且不影響臨時 HP', () => {
+    const unit = createMockBattlefieldUnit({
+      maxHp: 20,
+      hp: { current: 15, tempHp: 3, maxAdjustment: 2 },
+    })
+    expect(applyHealToHp(unit, 99)).toEqual({ current: 22, tempHp: 3, maxAdjustment: 2 })
   })
 
   it('amount <= 0 為 no-op', () => {
-    const unit = createMockBattlefieldUnit({ maxHp: 20, currentHp: 15 })
-    expect(applyHealToHp(unit, 0)).toEqual({ currentHp: 15, tempHp: 0 })
+    const unit = createMockBattlefieldUnit({
+      maxHp: 20,
+      hp: { current: 15, tempHp: 0, maxAdjustment: 0 },
+    })
+    expect(applyHealToHp(unit, 0)).toEqual({ current: 15, tempHp: 0, maxAdjustment: 0 })
   })
 })
 
@@ -141,12 +186,11 @@ describe('resetUnitAfterBattle', () => {
     createMockBattlefieldUnit({
       faction: 'enemy',
       inCombat: true,
-      maxHp: 30,
-      baseMaxHp: 25,
-      currentHp: 18,
-      tempHp: 4,
-      currentAc: 17,
-      baseAc: 15,
+      maxHp: 25,
+      hp: { current: 18, tempHp: 4, maxAdjustment: 5 },
+      ac: 15,
+      acAdjustment: 2,
+      speedAdjustment: -10,
       initiative: 12,
       conditions: [{ id: 'c1', key: 'prone', note: null }],
     })
@@ -166,46 +210,57 @@ describe('resetUnitAfterBattle', () => {
 
   it('全保留時 HP／狀態／調整值不動', () => {
     const next = resetUnitAfterBattle(combatEnemy(), KEEP_ALL)
-    expect(next.currentHp).toBe(18)
-    expect(next.tempHp).toBe(4)
+    expect(next.hp).toEqual({ current: 18, tempHp: 4, maxAdjustment: 5 })
     expect(next.conditions).toHaveLength(1)
-    expect(next.currentAc).toBe(17)
-    expect(next.maxHp).toBe(30)
+    expect(next.acAdjustment).toBe(2)
+    expect(next.speedAdjustment).toBe(-10)
   })
 
-  it('取消保留當前 HP＝回復滿血；取消臨時 HP＝清空；取消狀態＝全移除', () => {
+  it('取消保留當前 HP＝回復滿血（含調整上限）；取消臨時 HP＝清空；取消狀態＝全移除', () => {
     const next = resetUnitAfterBattle(combatEnemy(), {
       ...KEEP_ALL,
       keepCurrentHp: false,
       keepTempHp: false,
       keepConditions: false,
     })
-    expect(next.currentHp).toBe(next.maxHp)
-    expect(next.tempHp).toBe(0)
+    expect(next.hp.current).toBe(30) // maxHp 25 + maxAdjustment 5
+    expect(next.hp.tempHp).toBe(0)
     expect(next.conditions).toEqual([])
   })
 
-  it('取消保留調整值＝AC／最大 HP 回快照基準，且先重置上限再滿血', () => {
+  it('取消保留調整值＝三個調整值歸零，且先重置上限再滿血（不吃已調上限）', () => {
     const next = resetUnitAfterBattle(combatEnemy(), {
       ...KEEP_ALL,
       keepAdjustments: false,
       keepCurrentHp: false,
     })
-    expect(next.currentAc).toBe(15)
-    expect(next.maxHp).toBe(25)
-    expect(next.currentHp).toBe(25)
+    expect(next.acAdjustment).toBe(0)
+    expect(next.hp.maxAdjustment).toBe(0)
+    expect(next.speedAdjustment).toBe(0)
+    expect(next.hp.current).toBe(25) // 回快照基準 maxHp，而非 30
+  })
+
+  it('保留當前 HP 但重置調整值時，當前 HP clamp 回快照上限', () => {
+    const overhealed = createMockBattlefieldUnit({
+      faction: 'player',
+      inCombat: true,
+      maxHp: 25,
+      hp: { current: 30, tempHp: 0, maxAdjustment: 5 },
+    })
+    const next = resetUnitAfterBattle(overhealed, { ...KEEP_ALL, keepAdjustments: false })
+    expect(next.hp.current).toBe(25)
   })
 
   it('未參戰單位不套保留項（僅清先攻）', () => {
     const bench = createMockBattlefieldUnit({
       inCombat: false,
       maxHp: 10,
-      currentHp: 4,
+      hp: { current: 4, tempHp: 0, maxAdjustment: 0 },
       initiative: 7,
     })
     const next = resetUnitAfterBattle(bench, { ...KEEP_ALL, keepCurrentHp: false })
     expect(next.initiative).toBeNull()
-    expect(next.currentHp).toBe(4)
+    expect(next.hp.current).toBe(4)
   })
 })
 
@@ -244,6 +299,14 @@ describe('formatCharacterTitle', () => {
   })
 })
 
+describe('formatChallengeRating', () => {
+  it('存原始字串、UI 冠 "CR "；null 回空字串', () => {
+    expect(formatChallengeRating('1/2')).toBe('CR 1/2')
+    expect(formatChallengeRating('5')).toBe('CR 5')
+    expect(formatChallengeRating(null)).toBe('')
+  })
+})
+
 describe('speedDisplay', () => {
   it('有效速度＝快照＋調整加單位（夾 0）、快照未知則 em dash', () => {
     expect(speedDisplay({ speed: 30, speedAdjustment: 0 }, '呎')).toBe('30 呎')
@@ -258,19 +321,19 @@ describe('resetUnitAfterBattle — 死亡豁免', () => {
     createMockBattlefieldUnit({
       inCombat: true,
       maxHp: 20,
-      currentHp: 0,
+      hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
       deathSaves: { successes: 2, failures: 1 },
     })
 
   it('回復滿血（不保留當前 HP）時死亡豁免歸零', () => {
     const next = resetUnitAfterBattle(downed(), { ...KEEP_ALL, keepCurrentHp: false })
-    expect(next.currentHp).toBe(20)
+    expect(next.hp.current).toBe(20)
     expect(next.deathSaves).toEqual({ successes: 0, failures: 0 })
   })
 
   it('保留當前 HP 且仍為 0 時計數保留', () => {
     const next = resetUnitAfterBattle(downed(), KEEP_ALL)
-    expect(next.currentHp).toBe(0)
+    expect(next.hp.current).toBe(0)
     expect(next.deathSaves).toEqual({ successes: 2, failures: 1 })
   })
 })

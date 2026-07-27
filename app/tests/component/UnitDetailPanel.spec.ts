@@ -4,15 +4,24 @@ import { t } from '~/i18n'
 import AppButton from '~/components/common/AppButton.vue'
 import UnitDetailPanel from '~/components/business/battlefield/UnitDetailPanel.vue'
 import { formatModifier } from '~/helpers/ability'
-import { formatCharacterTitle, hpRatioTier } from '~/helpers/battlefield'
+import {
+  effectiveAc,
+  effectiveMaxHp,
+  formatChallengeRating,
+  formatCharacterTitle,
+  hpRatioTier,
+} from '~/helpers/battlefield'
 import { calculateTotalLevel } from '~/helpers/character'
 import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
-import type { BattlefieldUnit } from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)
   vi.stubGlobal('hpRatioTier', hpRatioTier)
   vi.stubGlobal('formatCharacterTitle', formatCharacterTitle)
+  vi.stubGlobal('formatChallengeRating', formatChallengeRating)
+  vi.stubGlobal('effectiveAc', effectiveAc)
+  vi.stubGlobal('effectiveMaxHp', effectiveMaxHp)
   vi.stubGlobal('calculateTotalLevel', calculateTotalLevel)
 })
 
@@ -58,9 +67,9 @@ const mountPanel = (unit: Partial<BattlefieldUnit> = {}, isActive = false) =>
         faction: 'enemy',
         inCombat: true,
         maxHp: 7,
-        currentHp: 7,
-        currentAc: 15,
-        baseAc: 15,
+        hp: { current: 7, tempHp: 0, maxAdjustment: 0 },
+        ac: 15,
+        acAdjustment: 0,
         speed: 30,
         speedAdjustment: 0,
         initiativeBonus: 2,
@@ -121,7 +130,7 @@ describe('UnitDetailPanel', () => {
   })
 
   it('臨時／最大 HP／AC／先攻的 ±1 鈕 emit 對應 delta', async () => {
-    const wrapper = mountPanel({ tempHp: 2 })
+    const wrapper = mountPanel({ hp: { current: 7, tempHp: 2, maxAdjustment: 0 } })
     await buttonByLabel(wrapper, `${t('battlefield.hpTemp')} -1`).trigger('click')
     await buttonByLabel(wrapper, `${t('battlefield.hpTemp')} +1`).trigger('click')
     expect(wrapper.emitted('adjustTemp')).toEqual([[-1], [1]])
@@ -137,7 +146,7 @@ describe('UnitDetailPanel', () => {
   })
 
   it('臨時 HP 為 0 時 -1 鈕停用', () => {
-    const wrapper = mountPanel({ tempHp: 0 })
+    const wrapper = mountPanel({ hp: { current: 7, tempHp: 0, maxAdjustment: 0 } })
     expect(
       buttonByLabel(wrapper, `${t('battlefield.hpTemp')} -1`).attributes('disabled'),
     ).toBeDefined()
@@ -169,9 +178,16 @@ describe('UnitDetailPanel', () => {
     expect(wrapper.emitted('rename')).toHaveLength(1)
   })
 
-  it('AC 有調整量時顯示 (±N)', () => {
-    const wrapper = mountPanel({ currentAc: 17, baseAc: 15 })
+  it('AC 有調整量時顯示有效值與 (±N)', () => {
+    const wrapper = mountPanel({ ac: 15, acAdjustment: 2 })
+    expect(wrapper.text()).toContain('17')
     expect(wrapper.text()).toContain('(+2)')
+  })
+
+  it('最大 HP 有調整量時顯示有效值與 (±N)', () => {
+    const wrapper = mountPanel({ maxHp: 7, hp: { current: 7, tempHp: 0, maxAdjustment: 3 } })
+    expect(wrapper.text()).toContain('10')
+    expect(wrapper.text()).toContain('(+3)')
   })
 
   it('速度卡顯示有效速度（快照＋調整）與 (±N)；±鈕 emit adjustSpeed', async () => {
@@ -190,7 +206,7 @@ describe('UnitDetailPanel', () => {
     )
   })
 
-  it('character 由快照組「種族 主職業 Lv.總等級」；monster 顯示 title 原字', () => {
+  it('character 由快照組「種族 主職業 Lv.總等級」；monster 由 challengeRating 組 CR 顯示', () => {
     const character = mountPanel({
       kind: 'character',
       race: '人類',
@@ -198,7 +214,7 @@ describe('UnitDetailPanel', () => {
     })
     expect(character.text()).toContain(`人類 ${t('class.label.fighter')} Lv.5`)
 
-    const monster = mountPanel({ title: 'CR 1' })
+    const monster = mountPanel({ challengeRating: '1' })
     expect(monster.text()).toContain('CR 1')
   })
 
@@ -219,7 +235,10 @@ describe('UnitDetailPanel — 死亡豁免 / 攻擊 / 技能', () => {
     const alive = mountPanel()
     expect(alive.find('[data-death-saves]').exists()).toBe(false)
 
-    const downed = mountPanel({ currentHp: 0, deathSaves: { successes: 1, failures: 0 } })
+    const downed = mountPanel({
+      hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
+      deathSaves: { successes: 1, failures: 0 },
+    })
     const section = downed.findComponent({ name: 'DeathSavesSectionStub' })
     expect(section.exists()).toBe(true)
     expect(section.props()).toMatchObject({ successes: 1, failures: 0 })

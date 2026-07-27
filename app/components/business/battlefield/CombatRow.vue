@@ -48,7 +48,7 @@
         />
         <span class="truncate text-[13px] font-semibold">{{ unit.name }}</span>
         <span
-          v-if="unit.currentHp === 0"
+          v-if="unit.hp.current === 0"
           class="shrink-0 text-danger-hover"
           :title="t('battlefield.downMark')"
           >☠</span
@@ -61,14 +61,14 @@
 
     <span class="flex min-w-0 flex-col gap-1">
       <BusinessBattlefieldHpBar
-        :current-hp="unit.currentHp"
-        :max-hp="unit.maxHp"
-        :temp-hp="unit.tempHp"
+        :current-hp="unit.hp.current"
+        :max-hp="unitEffectiveMaxHp"
+        :temp-hp="unit.hp.tempHp"
       />
       <span class="whitespace-nowrap text-[11px] text-content-muted tabular-nums">
-        <b :class="hpNumberClass">{{ unit.currentHp }}</b
-        >/{{ unit.maxHp
-        }}<span v-if="unit.tempHp > 0" class="text-info-hover"> +{{ unit.tempHp }}</span>
+        <b :class="hpNumberClass">{{ unit.hp.current }}</b
+        >/{{ unitEffectiveMaxHp
+        }}<span v-if="unit.hp.tempHp > 0" class="text-info-hover"> +{{ unit.hp.tempHp }}</span>
       </span>
     </span>
 
@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { BattlefieldUnit } from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
 import { FACTION_DOT_CLASS } from '~/constants/battlefield'
 
 const { t } = useI18n()
@@ -118,8 +118,10 @@ const emit = defineEmits<{
   dragStart: [event: PointerEvent]
 }>()
 
+const unitEffectiveMaxHp = computed(() => effectiveMaxHp(props.unit))
+
 const hpNumberClass = computed(() => {
-  const tier = hpRatioTier(props.unit.currentHp, props.unit.maxHp)
+  const tier = hpRatioTier(props.unit.hp.current, unitEffectiveMaxHp.value)
   if (tier === 'crit') return 'text-danger-hover'
   if (tier === 'low') return 'text-warning'
   return 'text-content'

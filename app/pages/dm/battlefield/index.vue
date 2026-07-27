@@ -89,17 +89,21 @@
                 {{ t('battlefield.enterBattlefield') }}
               </CommonAppButton>
             </template>
-            <CommonAppButton
-              v-else
-              type="button"
-              variant="secondary"
-              size="sm"
-              class="ml-auto"
-              :disabled="creating"
-              @click="onCreate(option)"
-            >
-              {{ t('battlefield.createBattlefield') }}
-            </CommonAppButton>
+            <template v-else>
+              <span v-if="containerHasBattlefield(option)" class="text-[11px] text-content-muted">{{
+                t('battlefield.createDisabledHint')
+              }}</span>
+              <CommonAppButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                class="ml-auto"
+                :disabled="creating || containerHasBattlefield(option)"
+                @click="onCreate(option)"
+              >
+                {{ t('battlefield.createBattlefield') }}
+              </CommonAppButton>
+            </template>
           </div>
         </div>
       </div>
@@ -108,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BattlefieldSessionOption } from '~/types/business/battlefield'
+import type { BattlefieldSessionOption } from '@rolling-dice-app/core'
 
 definePageMeta({ middleware: 'auth', noindex: true })
 
@@ -128,6 +132,10 @@ const { status, refresh } = useAsyncData(
 
 const options = computed<BattlefieldSessionOption[]>(() => battlefieldStore.sessionOptions)
 
+// 一劇本（container）同時至多一戰場：同 containerId 已有戰場者停用建立（前端預擋雙 UNIQUE）
+const containerHasBattlefield = (option: BattlefieldSessionOption): boolean =>
+  options.value.some((o) => o.containerId === option.containerId && o.battlefieldId != null)
+
 const creating = ref(false)
 
 const onCreate = async (option: BattlefieldSessionOption): Promise<void> => {
@@ -138,6 +146,8 @@ const onCreate = async (option: BattlefieldSessionOption): Promise<void> => {
     await navigateTo(`/dm/battlefield/${created.id}`)
   } catch (err) {
     apiErrorToast.handle(err)
+    // 競態兜底（他端剛建立）：重抓選項讓卡片切到「進入戰場」
+    if (apiErrorCodeOf(err) === 'BATTLEFIELD_ALREADY_EXISTS') void refresh()
   } finally {
     creating.value = false
   }

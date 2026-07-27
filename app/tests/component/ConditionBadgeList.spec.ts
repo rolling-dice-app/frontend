@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { t } from '~/i18n'
 import ConditionBadgeList from '~/components/business/battlefield/ConditionBadgeList.vue'
-import type { BattlefieldCondition } from '~/types/business/battlefield'
+import type { BattlefieldCondition } from '@rolling-dice-app/core'
 
 const conditions: BattlefieldCondition[] = [
   { id: 'c1', key: 'poisoned', note: '蛛毒，長休解除' },

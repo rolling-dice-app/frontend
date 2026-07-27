@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import UnitAttackRow from '~/components/business/battlefield/UnitAttackRow.vue'
 import { formatModifier } from '~/helpers/ability'
-import type { BattlefieldAttackEntry } from '~/types/business/battlefield'
+import type { BattlefieldAttackEntry } from '@rolling-dice-app/core'
 
 beforeEach(() => {
   vi.stubGlobal('formatModifier', formatModifier)

@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
-import type { BattlefieldUnit } from '~/types/business/battlefield'
+import type { BattlefieldUnit } from '@rolling-dice-app/core'
 
 const { t } = useI18n()
 

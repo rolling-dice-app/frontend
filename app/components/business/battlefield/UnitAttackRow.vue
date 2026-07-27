@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { Icon } from '@ui'
 import { formatDamageDiceSummary, getHitBonusColorClass } from '~/helpers/combat'
-import type { BattlefieldAttackEntry } from '~/types/business/battlefield'
+import type { BattlefieldAttackEntry } from '@rolling-dice-app/core'
 import type { RollMode } from '~/types/business/dice'
 
 const { t } = useI18n()

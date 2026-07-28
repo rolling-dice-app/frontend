@@ -186,7 +186,90 @@ translated string:
   `dm-session-container-confirm` (shared by the modal's create and rename modes),
   per-row `dm-session-delete`, `dm-session-delete-confirm`, `dm-session-log-save`.
   **Scoped out on purpose**: member editing (`MemberEditModal`) and the
-  semi-structured reward fields (`LogRewardItemList`) — each is its own slice.
+  attendance / reward fields — each has its own slice, below.
+
+  Note on the DM session member roster: the container's standing roster is edited
+  in `MemberEditModal`, whose three per-row inputs all carry a _translated_
+  `aria-label` that repeats on every row, so each takes a `data-testid`
+  (`dm-session-member-player-name` / `-character-name` / `-link`); the i18n-only
+  add-row and confirm buttons take `dm-session-member-add` /
+  `dm-session-members-confirm`, and the info card's trigger takes
+  `dm-session-edit-members`. The per-row delete button needs none — its
+  `aria-label` carries the player name, and it is a `button`, so it can never
+  collide with the roster chip, which is a **link** to `/share/:shareId` and is
+  therefore matched by href (route shape, not a label). The slice holds a single
+  row, so the field selectors are unqualified rather than assuming a row-nesting
+  shape. Linking commits on **blur or Enter only** (not on input), and the
+  `POST /share/characters/resolve` must be awaited: the read-only character name
+  and the player-name snapshot (m7.2 — a linked member's player name is the
+  owner's display name, hence `SEEDED_DISPLAY_NAME` in `helpers/auth.ts`) only
+  land once it resolves.
+
+  Note on DM session attendance / rewards (two testid groups, no display testid):
+  attendance chips need none — the chip is a toggle button whose accessible name
+  is the member's player name (user data) and whose `aria-pressed` already
+  carries the state. Attendance is **prefilled with the whole standing roster**
+  (the DM de-selects absentees), so the round-trip toggles a member _off_, not
+  on. The coin and exp fields keep their element ids
+  (`#dm-session-log-money-<key>`, `#dm-session-log-exp`); only
+  `LogRewardItemList` gets testids (`dm-session-reward-item` / `-player` /
+  `-remark` / `-add` / `-delete`) — same repeated-translated-`aria-label`
+  situation as the roster rows. Values are read back by re-opening the edit form
+  (the currency slice's pattern), which also proves `itemRewards`' replace-whole-
+  list write really drops a removed row.
+
+  Note on the battlefield entry list: the list is keyed by **session logs**, not
+  containers — a battlefield's `sessionId` is a log id (`listSessionOptions` in
+  `backend/src/repositories/battlefields.ts` projects `dmSessionLogs.id`), so two
+  logs of one container render two cards while only one may own a battlefield;
+  the sibling's create button is `disabled`, pre-blocking the DB UNIQUE. The
+  cards have no per-card landmark, so the create / enter buttons carry
+  `battlefield-create` / `battlefield-enter` plus an `aria-label` bearing
+  `option.sessionTitle` — the same testid-(verb) + `aria-label*=<name>`-(row)
+  pairing as `monster-delete`, and a genuine a11y improvement (in a grid, a bare
+  "建立戰場" tells a screen-reader user nothing about _which_ session).
+
+  Note on battlefield units: the three unit sources take three different snapshot
+  paths (a party member from a _shared_ character, a monster from a template, an
+  ad-hoc unit typed in), which is why one slice drives all three. Everything
+  upstream — shared character, monster template, container, logs — is seeded
+  through the API. The setup drawer's tabs are matched by `data-tab` (non-i18n,
+  mirroring `@ui` Tabs' `data-value`); the ad-hoc fields keep element ids
+  (`#battlefield-adhoc-name` / `-max-hp` / `-ac` / `-speed` / `-init-bonus`,
+  the `#monster-name` precedent); and the i18n-only actions carry
+  `battlefield-import-member` / `battlefield-add-template` (each pinned by testid
+  - `aria-label*=<name>`), `battlefield-create-adhoc-join`,
+    `battlefield-reinforce`, `battlefield-delete`, `battlefield-delete-confirm`.
+    Combat rows need no testid: the row is a `role="button"` whose `aria-label`
+    carries the unit name, and its HP reads as plain `current/max` digits. The
+    drawer is closed with **Escape** before asserting on the workspace behind it.
+
+  Note on battlefield combat: persistence here is unlike every other slice — the
+  store debounces a PATCH of the **whole** `units` projection (with `updatedAt`
+  as an optimistic-lock token) and then re-GETs to pick up the fresh token. A
+  hard reload does _not_ run the route-leave flush, so every assertion that
+  outlives a reload goes through `BattlefieldPom.waitForPersist`, which awaits
+  the PATCH _and_ its follow-up GET. Because each PATCH carries the full state,
+  one awaited persist also covers every earlier un-awaited edit.
+  `battlefield-round-meta` mirrors the round and battle sequence onto
+  `data-round` / `data-battle-sequence`, so those two numbers are never read out
+  of the translated "第 N 場 | Round N" chip. `battlefield-next-turn`,
+  `battlefield-sort-initiative`, `battlefield-end-battle`,
+  `battlefield-end-battle-confirm`, `battlefield-damage` and
+  `battlefield-hp-amount` are i18n-only buttons/fields; note the damage and heal
+  controls share one translated `aria-label` shape carrying the unit name, so the
+  name alone cannot tell them apart. The start-next-battle testid is on the
+  **toolbar** button only — the ended-state banner renders a second one at the
+  same time, and a duplicate testid would trip strict mode.
+  Ordering is asserted by comparing two rows' positions among the rows inside
+  `battlefield-combat-list`; the scope matters because `role="button"` is _not_
+  unique to `CombatRow` — the layout's `BottomNavDrawer` handle sets it too, so
+  an unscoped match would fold unrelated elements into the ordering. Round
+  arithmetic is measured as a delta over
+  one full cycle rather than hard-coded — where the turn marker starts is not
+  guaranteed. **Scoped out on purpose**: dice rolls (random by design, covered by
+  `tests/unit/composables/useBattlefieldDiceRolls.spec.ts`), drag reordering,
+  and the faction / condition / death-save controls (covered by component tests).
 
   Note on multi-field fills (`helpers/form.ts`): `CommonAppInput` defaults to
   `selectOnFocus`, implemented as `requestAnimationFrame(() => target.select())`.
@@ -231,5 +314,10 @@ translated string:
   validated (https, no trailing slash).
 - **Session ids must stay high-entropy random** (`uuid().defaultRandom()`). The
   seeded-cookie approach assumes session ids are unguessable.
+- **Seeding goes through the real endpoints**, never hand-written rows, so the
+  create contracts stay the single source of truth. `helpers/api.ts` carries the
+  shared transport (cookie + the `Origin` that `requireSameOrigin` demands); the
+  `seed*` helpers on top of it are one per resource. A helper that starts failing
+  with a 400 is reporting a contract change, not a harness bug.
 - **Cookie host-sharing** assumes `:3000`/`:3001` share the `localhost` host. If the
   app ever spans real cross-origin hosts, revisit the `addCookies` scope.

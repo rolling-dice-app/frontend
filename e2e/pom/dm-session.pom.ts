@@ -1,3 +1,4 @@
+import type { CurrencyKey } from '@rolling-dice-app/core'
 import type { Locator, Page } from '@playwright/test'
 import { fillSettled } from '../helpers/form'
 import { waitHydrated } from '../helpers/hydrate'
@@ -169,5 +170,70 @@ export class DmSessionPom {
   async gotoLogUpdate(containerId: string, logId: string): Promise<void> {
     await this.page.locator(`main a[href="/dm/session/${containerId}/log/${logId}/update"]`).click()
     await this.page.waitForURL(`/dm/session/${containerId}/log/${logId}/update`)
+  }
+
+  /** Open the log create form directly (for containers seeded through the API). */
+  async gotoLogCreate(containerId: string): Promise<void> {
+    await this.page.goto(`/dm/session/${containerId}/log/create`)
+    await waitHydrated(this.page)
+  }
+
+  /** Open a log's edit form directly, e.g. to read saved values back. */
+  async gotoLogUpdateDirect(containerId: string, logId: string): Promise<void> {
+    await this.page.goto(`/dm/session/${containerId}/log/${logId}/update`)
+    await waitHydrated(this.page)
+  }
+
+  // ── attendance ────────────────────────────────────────────────────────────
+
+  /**
+   * A standing-roster attendance chip. The chip is a toggle button whose
+   * accessible name is the member's player name (user data, locale-stable), and
+   * whose `aria-pressed` carries the attending state — so no testid is needed.
+   * Attendance is prefilled as "everyone attends"; the DM de-selects absentees.
+   */
+  attendanceChip(playerName: string): Locator {
+    return this.page.getByRole('button', { name: playerName })
+  }
+
+  // ── rewards ───────────────────────────────────────────────────────────────
+
+  /** A coin field of the log's money rewards, by its existing element id. */
+  moneyField(key: CurrencyKey): Locator {
+    return this.page.locator(`#dm-session-log-money-${key}`)
+  }
+
+  expField(): Locator {
+    return this.page.locator('#dm-session-log-exp')
+  }
+
+  async addRewardRow(): Promise<void> {
+    await this.page.getByTestId('dm-session-reward-add').click()
+  }
+
+  async removeRewardRow(): Promise<void> {
+    await this.page.getByTestId('dm-session-reward-delete').click()
+  }
+
+  /**
+   * An item-reward row field. All three share a translated `aria-label` that
+   * repeats per row, so they are pinned by testid; the slice holds a single row,
+   * so no row scoping is needed.
+   */
+  rewardField(kind: 'item' | 'player' | 'remark'): Locator {
+    return this.page.getByTestId(`dm-session-reward-${kind}`)
+  }
+
+  /** Fill the reward row through `fillSettled` — three adjacent inputs. */
+  async fillRewardRow(row: { item: string; player: string; remark: string }): Promise<void> {
+    await fillSettled(this.page, '[data-testid="dm-session-reward-item"]', row.item)
+    await fillSettled(this.page, '[data-testid="dm-session-reward-player"]', row.player)
+    await fillSettled(this.page, '[data-testid="dm-session-reward-remark"]', row.remark)
+  }
+
+  /** Fill the numeric reward fields; `fillSettled` for the same rAF reason. */
+  async fillRewardTotals({ gp, exp }: { gp: string; exp: string }): Promise<void> {
+    await fillSettled(this.page, '#dm-session-log-money-gp', gp)
+    await fillSettled(this.page, '#dm-session-log-exp', exp)
   }
 }

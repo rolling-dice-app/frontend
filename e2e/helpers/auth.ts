@@ -7,6 +7,13 @@ export interface SeededUser {
 }
 
 /**
+ * `display_name` given to every seeded user. Exported because flows that link a
+ * shared character snapshot the *owner's* display name (e.g. the DM session
+ * member roster overwrites the player name with it), so specs assert on it.
+ */
+export const SEEDED_DISPLAY_NAME = 'Test User'
+
+/**
  * Seed one active user + a non-expired session directly into the throwaway DB,
  * returning the session id to drop into the `rd_session` cookie.
  *
@@ -26,7 +33,7 @@ export async function seedAuthedUser(email?: string): Promise<SeededUser> {
 
   const [user] = await sql<{ id: string }[]>`
     insert into users (email, display_name, oauth_provider, oauth_subject)
-    values (${email ?? `user-${unique}@test.local`}, 'Test User', 'google', ${`oauth-${unique}`})
+    values (${email ?? `user-${unique}@test.local`}, ${SEEDED_DISPLAY_NAME}, 'google', ${`oauth-${unique}`})
     returning id
   `
   if (!user) throw new Error('seedAuthedUser: user insert returned empty')

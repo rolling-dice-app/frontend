@@ -155,11 +155,13 @@ describe('useAuthStore — logout()', () => {
     const spellsReset = vi.fn()
     const monsterTemplateReset = vi.fn()
     const dmSessionReset = vi.fn()
+    const battlefieldReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
     vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
     vi.stubGlobal('useDmSessionStore', () => ({ reset: dmSessionReset }))
+    vi.stubGlobal('useBattlefieldStore', () => ({ reset: battlefieldReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -175,6 +177,7 @@ describe('useAuthStore — logout()', () => {
     expect(spellsReset).toHaveBeenCalledOnce()
     expect(monsterTemplateReset).toHaveBeenCalledOnce()
     expect(dmSessionReset).toHaveBeenCalledOnce()
+    expect(battlefieldReset).toHaveBeenCalledOnce()
   })
 })
 
@@ -186,11 +189,13 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     const spellsReset = vi.fn()
     const monsterTemplateReset = vi.fn()
     const dmSessionReset = vi.fn()
+    const battlefieldReset = vi.fn()
     vi.stubGlobal('useCharacterStore', () => ({ reset: characterReset }))
     vi.stubGlobal('useCharacterInventoryStore', () => ({ reset: inventoryReset }))
     vi.stubGlobal('useCharacterSpellsStore', () => ({ reset: spellsReset }))
     vi.stubGlobal('useMonsterTemplateStore', () => ({ reset: monsterTemplateReset }))
     vi.stubGlobal('useDmSessionStore', () => ({ reset: dmSessionReset }))
+    vi.stubGlobal('useBattlefieldStore', () => ({ reset: battlefieldReset }))
 
     const store = useAuthStore()
     store.user = sampleUser
@@ -205,6 +210,7 @@ describe('useAuthStore — clearSessionBoundState()', () => {
     expect(spellsReset).toHaveBeenCalledOnce()
     expect(monsterTemplateReset).toHaveBeenCalledOnce()
     expect(dmSessionReset).toHaveBeenCalledOnce()
+    expect(battlefieldReset).toHaveBeenCalledOnce()
   })
 })
 

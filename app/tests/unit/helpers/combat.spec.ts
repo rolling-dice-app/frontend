@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { formatDamageSummary, getHitBonusColorClass } from '~/helpers/combat'
+import {
+  formatDamageDiceSummary,
+  formatDamageSummary,
+  getHitBonusColorClass,
+} from '~/helpers/combat'
 import { getAbilityModifier } from '~/helpers/ability'
 import type { AttackDraft, TotalAbilityScores } from '~/types/business/character-form'
 
@@ -247,5 +251,29 @@ describe('getHitBonusColorClass', () => {
 
   it('負數回傳 danger 色', () => {
     expect(getHitBonusColorClass(-1)).toBe('text-danger')
+  })
+})
+
+describe('formatDamageDiceSummary', () => {
+  it('空陣列回傳 —', () => {
+    expect(formatDamageDiceSummary([])).toBe('—')
+  })
+
+  it('多行以 + 串接、不套屬性 mod', () => {
+    expect(
+      formatDamageDiceSummary([
+        { id: 'a', dieType: 8, count: 1, bonus: 3, damageType: 'piercing' },
+        { id: 'b', dieType: 8, count: 2, bonus: null, damageType: 'poison' },
+      ]),
+    ).toBe('1d8+3 穿刺 + 2d8 毒素')
+  })
+
+  it('純加值行渲染定額傷害；空行被過濾', () => {
+    expect(
+      formatDamageDiceSummary([
+        { id: 'a', dieType: null, count: 0, bonus: 10, damageType: 'acid' },
+        { id: 'b', dieType: null, count: 0, bonus: 0, damageType: null },
+      ]),
+    ).toBe('10 酸蝕')
   })
 })

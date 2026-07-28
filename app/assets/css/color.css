@@ -117,6 +117,18 @@
   --rd--color-statblock-rule: #7d2b2b;
   --rd--color-statblock-rule-text: #b78a8a;
 
+  /* ─── Faction（battlefield） ────────────────────────────────────────────────
+     戰場單位陣營色：玩家＝info 家族鋼藍、敵方＝statblock rule 提亮一階的磨舊
+     暗紅、中立＝暖灰。soft 為半透明底，供陣營 chip 背景疊在 surface / panel 上。
+     用於：即時戰場的陣營圓點、陣營 chip、陣營切換 segment
+  ─────────────────────────────────────────────────────────────────────────── */
+  --rd--color-faction-player: #5d96d8;
+  --rd--color-faction-player-soft: rgba(76, 127, 184, 0.16);
+  --rd--color-faction-enemy: #b0524f;
+  --rd--color-faction-enemy-soft: rgba(125, 43, 43, 0.25);
+  --rd--color-faction-neutral: #8d8482;
+  --rd--color-faction-neutral-soft: rgba(125, 116, 110, 0.18);
+
   /* ─── Semantic — Info ───────────────────────────────────────────────────────
      冷鋼藍。中性、系統感，提供資訊時不帶情緒張力。
      用於：提示訊息、說明區塊、中性狀態標籤、載入中

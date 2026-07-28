@@ -35,6 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
     useCharacterSpellsStore().reset()
     useMonsterTemplateStore().reset()
     useDmSessionStore().reset()
+    useBattlefieldStore().reset()
   }
 
   const refresh = async () => {

@@ -63,6 +63,7 @@ export default {
     restoreCooldown: '角色剛還原不久，{minutes} 分鐘後才能再刪除',
     rateLimited: '操作過於頻繁，請稍後再試',
     dmSessionMemberShareIdInvalid: '成員的角色卡分享連結已失效，請重新確認後再送出',
+    battlefieldAlreadyExists: '該劇本已有進行中的戰場',
     serverError: '伺服器暫時無法回應，請稍後再試',
     network: '網路連線出問題，請檢查連線',
   },

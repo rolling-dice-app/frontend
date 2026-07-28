@@ -89,6 +89,14 @@
   --color-statblock-rule: var(--rd--color-statblock-rule);
   --color-statblock-rule-text: var(--rd--color-statblock-rule-text);
 
+  /* faction（battlefield） */
+  --color-faction-player: var(--rd--color-faction-player);
+  --color-faction-player-soft: var(--rd--color-faction-player-soft);
+  --color-faction-enemy: var(--rd--color-faction-enemy);
+  --color-faction-enemy-soft: var(--rd--color-faction-enemy-soft);
+  --color-faction-neutral: var(--rd--color-faction-neutral);
+  --color-faction-neutral-soft: var(--rd--color-faction-neutral-soft);
+
   /* semantic — info */
   --color-info: var(--rd--color-info);
   --color-info-hover: var(--rd--color-info-hover);

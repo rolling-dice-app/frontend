@@ -7,7 +7,7 @@
       class="flex shrink-0 items-center justify-between border-b border-border-soft px-3 py-2"
     >
       <h3 id="roll-output-label" class="font-display text-sm font-bold text-content">
-        {{ t('combat.rollResults') }}
+        {{ title ?? t('combat.rollResults') }}
       </h3>
       <button
         type="button"
@@ -27,7 +27,11 @@
       <ul v-else class="divide-y divide-border-soft">
         <li v-for="entry in entries" :key="entry.id" class="px-3 py-2 text-xs">
           <div class="flex items-baseline justify-between gap-2">
-            <span class="font-semibold text-content">{{ entry.label }}</span>
+            <span class="font-semibold text-content">
+              <span v-if="entry.unitName" class="font-normal text-content-muted"
+                >{{ entry.unitName }}・</span
+              >{{ entry.label }}</span
+            >
             <span
               v-if="
                 entry.kind !== 'attack-damage' &&
@@ -149,6 +153,8 @@ const { t } = useI18n()
 
 defineProps<{
   entries: RollEntry[]
+  /** 標題覆寫；未提供時用 combat.rollResults */
+  title?: string
 }>()
 
 const emit = defineEmits<{

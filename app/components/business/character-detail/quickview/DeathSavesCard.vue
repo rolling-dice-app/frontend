@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { rollD20 } from '~/helpers/dice'
+import { resolveDeathSaveRoll, rollD20 } from '~/helpers/dice'
 
 const { t } = useI18n()
 
@@ -132,18 +132,15 @@ const onRoll = (): void => {
     isFumble,
   })
 
-  if (isCritical) {
+  const resolution = resolveDeathSaveRoll(chosen)
+  if (resolution.outcome === 'recover') {
     emit('rollNat20')
     return
   }
-  if (isFumble) {
-    emit('setFailure', Math.min(3, props.failures + 2))
-    return
-  }
-  if (chosen >= 10) {
-    emit('setSuccess', Math.min(3, props.successes + 1))
+  if (resolution.outcome === 'success') {
+    emit('setSuccess', Math.min(3, props.successes + resolution.amount))
   } else {
-    emit('setFailure', Math.min(3, props.failures + 1))
+    emit('setFailure', Math.min(3, props.failures + resolution.amount))
   }
 }
 </script>

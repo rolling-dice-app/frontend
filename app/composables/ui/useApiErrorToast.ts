@@ -79,6 +79,12 @@ const ERROR_MESSAGE_MAP: Partial<Record<ApiErrorCode, ErrorMapping>> = {
   STALE_DM_SESSION_CONTAINER_VERSION: { messageKey: 'ui.error.staleVersion' },
   /** 團務紀錄 PATCH 撞 race（同筆團務在他端被修改） */
   STALE_DM_SESSION_LOG_VERSION: { messageKey: 'ui.error.staleVersion' },
+  /** 戰場 PATCH 撞 race（另開 tab／其他裝置操作同一戰場）；本地未送出編輯已被 server 版本覆蓋 */
+  STALE_BATTLEFIELD_VERSION: { messageKey: 'ui.error.staleVersion' },
+
+  // ─ 建立競態：同劇本／團務的戰場剛被他端建立，雙 UNIQUE 擋下。
+  /** 該團務或劇本已有戰場（入口頁已預擋，此為競態兜底） */
+  BATTLEFIELD_ALREADY_EXISTS: { messageKey: 'ui.error.battlefieldAlreadyExists' },
 
   // ─ Backend-tracked cooldown：時間限制由 backend 把關，client 無法事先得知是否已過期。
   /** 還原角色卡後 7 天 cooldown 內又按刪除；details.cooldownEndsAt 帶剩餘時間 */

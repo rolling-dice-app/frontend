@@ -22,6 +22,8 @@ interface BaseRollEntry {
   id: string
   rolledAt: number
   label: string
+  /** 擲骰所屬單位名（戰場 log 用）；速查頁不填 */
+  unitName?: string
 }
 
 /** d20 類擲骰結果（屬性 / 豁免 / 技能 / 攻擊命中 / 先攻） */

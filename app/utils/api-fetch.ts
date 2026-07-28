@@ -12,3 +12,10 @@ export const isFetchError = (err: unknown): err is FetchError => {
   if (typeof err !== 'object' || err === null) return false
   return 'statusCode' in err || 'response' in err
 }
+
+/** 從 FetchError 取 backend error envelope 的 code（`{ error: code }`）；非 FetchError 或無 code 回 undefined */
+export const apiErrorCodeOf = (err: unknown): string | undefined => {
+  if (!isFetchError(err)) return undefined
+  const data = err.data as { error?: unknown } | undefined
+  return typeof data?.error === 'string' ? data.error : undefined
+}

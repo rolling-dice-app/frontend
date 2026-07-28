@@ -108,6 +108,7 @@
           </div>
           <button
             type="button"
+            data-testid="dm-session-edit-members"
             :aria-label="t('dmSession.container.editMembers')"
             class="flex size-11 shrink-0 items-center justify-center rounded-md text-content-muted transition-colors duration-150 hover:bg-surface-raised hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="membersOpen = true"

@@ -12,6 +12,10 @@ import { DmSessionPom } from '../pom/dm-session.pom'
  * `dm-session-containers` + its `session-logs` sub-resource → Postgres.
  * A plain `authedPage` suffices: free plan allows `maxDmSessionContainers: 10`
  * and `maxDmSessionLogsPerContainer: 100` (`backend/src/lib/plan-limits.ts`).
+ *
+ * Out of scope here, each with its own slice: the container's standing member
+ * roster (`dm-session-members.spec.ts`) and the log's attendance / reward fields
+ * (`dm-session-log-rewards.spec.ts`).
  */
 test('DM session container + log round-trip persists to the database', async ({ authedPage }) => {
   const pom = new DmSessionPom(authedPage)

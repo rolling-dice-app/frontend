@@ -27,7 +27,12 @@
         <CommonAppButton type="button" variant="ghost" @click="emit('update:open', false)">
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton type="button" variant="primary" @click="onConfirm">
+        <CommonAppButton
+          type="button"
+          variant="primary"
+          data-testid="battlefield-end-battle-confirm"
+          @click="onConfirm"
+        >
           {{ t('battlefield.endBattle') }}
         </CommonAppButton>
       </div>

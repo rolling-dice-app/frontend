@@ -55,7 +55,13 @@
           </span>
         </div>
         <div class="ml-auto flex flex-wrap items-center gap-1.5">
-          <CommonAppButton type="button" variant="neutral" size="sm" @click="setupOpen = true">
+          <CommonAppButton
+            type="button"
+            variant="neutral"
+            size="sm"
+            data-testid="battlefield-reinforce"
+            @click="setupOpen = true"
+          >
             ＋ {{ t('battlefield.reinforce') }}
           </CommonAppButton>
           <CommonAppButton
@@ -63,15 +69,18 @@
             type="button"
             variant="neutral"
             size="sm"
+            data-testid="battlefield-end-battle"
             @click="endBattleOpen = true"
           >
             {{ t('battlefield.endBattle') }}
           </CommonAppButton>
+          <!-- 同一時刻與下方 banner 的「開始下一場」並存，testid 只掛這顆避免重複 -->
           <CommonAppButton
             v-else
             type="button"
             variant="primary"
             size="sm"
+            data-testid="battlefield-start-next"
             @click="onStartNextBattle"
           >
             {{ t('battlefield.startNextBattle', { seq: battlefield.battleSequence + 1 }) }}
@@ -81,6 +90,7 @@
             variant="danger"
             outline
             size="sm"
+            data-testid="battlefield-delete"
             @click="deleteOpen = true"
           >
             {{ t('battlefield.deleteBattlefield') }}
@@ -291,6 +301,7 @@
             <CommonAppButton
               type="button"
               variant="danger"
+              data-testid="battlefield-delete-confirm"
               :disabled="deleting"
               @click="onDeleteConfirm"
             >

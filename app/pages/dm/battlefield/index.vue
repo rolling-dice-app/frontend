@@ -84,6 +84,8 @@
                 variant="primary"
                 size="sm"
                 class="ml-auto"
+                data-testid="battlefield-enter"
+                :aria-label="`${t('battlefield.enterBattlefield')} ${option.sessionTitle}`"
                 @click="navigateTo(`/dm/battlefield/${option.battlefieldId}`)"
               >
                 {{ t('battlefield.enterBattlefield') }}
@@ -98,6 +100,8 @@
                 variant="secondary"
                 size="sm"
                 class="ml-auto"
+                data-testid="battlefield-create"
+                :aria-label="`${t('battlefield.createBattlefield')} ${option.sessionTitle}`"
                 :disabled="creating || containerHasBattlefield(option)"
                 @click="onCreate(option)"
               >

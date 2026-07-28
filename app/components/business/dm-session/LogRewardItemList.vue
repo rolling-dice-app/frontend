@@ -11,6 +11,7 @@
         <div class="flex items-center gap-2">
           <CommonAppInput
             :model-value="reward.item"
+            data-testid="dm-session-reward-item"
             size="sm"
             outline
             :maxlength="CHARACTER_TEXT_LIMITS.ITEM"
@@ -21,6 +22,7 @@
           />
           <button
             type="button"
+            data-testid="dm-session-reward-delete"
             :aria-label="`${t('ui.action.delete')} ${t('dmSession.log.rewards.thisReward')}`"
             class="flex size-8 shrink-0 items-center justify-center rounded-md text-content-faint transition-colors duration-150 hover:text-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="onRemove(reward.id)"
@@ -31,6 +33,7 @@
         <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <CommonAppInput
             :model-value="reward.player"
+            data-testid="dm-session-reward-player"
             size="sm"
             outline
             :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
@@ -42,6 +45,7 @@
           />
           <CommonAppInput
             :model-value="reward.remark"
+            data-testid="dm-session-reward-remark"
             size="sm"
             outline
             :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
@@ -61,6 +65,7 @@
 
     <button
       type="button"
+      data-testid="dm-session-reward-add"
       :disabled="atMax"
       class="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       @click="onAdd"

@@ -2,6 +2,7 @@
   <span class="inline-flex items-center gap-0.5">
     <button
       type="button"
+      data-testid="battlefield-damage"
       :aria-label="t('battlefield.damageAria', { name })"
       :title="t('battlefield.damageTitle')"
       :disabled="amount <= 0"
@@ -12,6 +13,7 @@
     </button>
     <CommonAppInput
       :model-value="String(amount)"
+      data-testid="battlefield-hp-amount"
       :radius="0"
       type="number"
       size="sm"

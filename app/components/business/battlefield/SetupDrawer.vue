@@ -19,6 +19,7 @@
           :key="tab"
           type="button"
           role="tab"
+          :data-tab="tab"
           class="rounded-md px-3 py-1 text-[13px]"
           :class="
             activeTab === tab
@@ -77,6 +78,8 @@
                 type="button"
                 variant="primary"
                 size="sm"
+                data-testid="battlefield-import-member"
+                :aria-label="`${t('battlefield.importMember')} ${member.name}`"
                 @click="emit('importMember', member.shareId)"
               >
                 {{ t('battlefield.importMember') }}
@@ -163,6 +166,8 @@
               type="button"
               variant="primary"
               size="sm"
+              data-testid="battlefield-add-template"
+              :aria-label="`${t('battlefield.join')} ${template.name}`"
               :title="t('battlefield.joinTemplateTitle')"
               @click="emit('addTemplate', template.id)"
             >
@@ -177,6 +182,7 @@
             <label class="col-span-full flex flex-col gap-1 text-[11px] text-content-muted">
               {{ t('battlefield.adhocName') }} <span class="sr-only">*</span>
               <CommonAppInput
+                id="battlefield-adhoc-name"
                 :model-value="adhocName"
                 :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
                 class="w-full"
@@ -186,6 +192,7 @@
             <label class="flex flex-col gap-1 text-[11px] text-content-muted">
               {{ t('battlefield.adhocMaxHp') }}
               <CommonAppInput
+                id="battlefield-adhoc-max-hp"
                 :model-value="adhocMaxHp"
                 type="number"
                 class="w-full"
@@ -195,6 +202,7 @@
             <label class="flex flex-col gap-1 text-[11px] text-content-muted">
               {{ t('battlefield.adhocAc') }}
               <CommonAppInput
+                id="battlefield-adhoc-ac"
                 :model-value="adhocAc"
                 type="number"
                 class="w-full"
@@ -204,6 +212,7 @@
             <label class="flex flex-col gap-1 text-[11px] text-content-muted">
               {{ t('battlefield.adhocSpeed') }}
               <CommonAppInput
+                id="battlefield-adhoc-speed"
                 :model-value="adhocSpeed"
                 type="number"
                 class="w-full"
@@ -213,6 +222,7 @@
             <label class="flex flex-col gap-1 text-[11px] text-content-muted">
               {{ t('battlefield.adhocInitBonus') }}
               <CommonAppInput
+                id="battlefield-adhoc-init-bonus"
                 :model-value="adhocInitBonus"
                 type="number"
                 class="w-full"
@@ -234,6 +244,7 @@
               type="button"
               variant="primary"
               size="sm"
+              data-testid="battlefield-create-adhoc-join"
               :disabled="!canCreateAdhoc"
               @click="onCreateAdhoc(true)"
             >

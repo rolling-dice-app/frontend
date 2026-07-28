@@ -26,6 +26,7 @@
                  未連結或連結已失效（snapshot 不再自癒）可手動編輯 -->
             <CommonAppInput
               :model-value="member.playerName"
+              data-testid="dm-session-member-player-name"
               size="sm"
               outline
               :readonly="member.character?.available === true"
@@ -40,6 +41,7 @@
             />
             <CommonAppInput
               :model-value="characterNameOf(member)"
+              data-testid="dm-session-member-character-name"
               size="sm"
               outline
               readonly
@@ -61,6 +63,7 @@
           <div class="mt-2">
             <CommonAppInput
               :model-value="linkInputs[member.id] ?? ''"
+              data-testid="dm-session-member-link"
               size="sm"
               outline
               :placeholder="t('dmSession.member.linkPlaceholder')"
@@ -112,6 +115,7 @@
 
       <button
         type="button"
+        data-testid="dm-session-member-add"
         :disabled="atMax"
         class="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-content-muted transition-colors duration-150 hover:bg-surface hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         @click="onAddRow"
@@ -134,6 +138,7 @@
         <CommonAppButton
           type="button"
           variant="primary"
+          data-testid="dm-session-members-confirm"
           :disabled="anyResolving || anyBlocking"
           :loading="submitting"
           @click="onConfirm"

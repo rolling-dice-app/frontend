@@ -5,7 +5,7 @@
   >
     {{ t('battlefield.combatEmpty') }}
   </div>
-  <div v-else class="flex flex-col">
+  <div v-else data-testid="battlefield-combat-list" class="flex flex-col">
     <div
       v-for="unit in displayUnits"
       :key="unit.id"

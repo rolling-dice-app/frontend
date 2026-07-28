@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-wrap items-center gap-1.5">
     <span
+      data-testid="battlefield-round-meta"
+      :data-battle-sequence="battleSequence"
+      :data-round="round"
       class="inline-flex min-h-7 items-center gap-1 rounded-lg border border-border-soft bg-canvas-inset px-2.5 text-sm font-bold tabular-nums"
     >
       <small class="text-xs font-medium text-content-muted">
@@ -21,6 +24,7 @@
       type="button"
       variant="primary"
       size="xs"
+      data-testid="battlefield-next-turn"
       :disabled="disabled"
       @click="emit('nextTurn')"
     >
@@ -34,6 +38,7 @@
       type="button"
       variant="ghost"
       size="sm"
+      data-testid="battlefield-sort-initiative"
       :title="t('battlefield.sortByInitiativeTitle')"
       @click="emit('sortInitiative')"
     >

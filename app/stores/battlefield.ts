@@ -1,4 +1,3 @@
-import { toRaw } from 'vue'
 import {
   BATTLEFIELD_LIMITS,
   CHARACTER_TEXT_LIMITS,
@@ -212,7 +211,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     if (!bf) return
     const snapshot = dirty.snapshot()
     try {
-      const raw = structuredClone(toRaw(bf))
+      // `toRaw` 只剝一層：任何以 units.map / units.filter 重建過的陣列，元素仍是
+      // reactive proxy（如 endBattle / removeUnit），而 structuredClone 對 proxy
+      // 直接丟 DataCloneError，會讓整條持久化靜默失敗。DTO 契約本就是純 JSON，
+      // 故改用 JSON round-trip 取脫勾快照，與 proxy 深度無關。
+      const raw = JSON.parse(JSON.stringify(bf)) as BattlefieldDTO
       const body: BattlefieldUpdateBody = {
         updatedAt: raw.updatedAt,
         battleSequence: raw.battleSequence,

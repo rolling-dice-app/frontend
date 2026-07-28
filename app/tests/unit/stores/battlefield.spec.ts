@@ -390,6 +390,42 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     )
   })
 
+  // 迴歸：endBattle / removeUnit 以 map / filter 重建 units，元素會是 reactive
+  // proxy；快照若用 structuredClone 會丟 DataCloneError，讓持久化整條靜默失敗
+  // （PATCH 從未送出，只剩重試與 persistError）。
+  it('endBattle / removeUnit 重建 units 後仍送得出 PATCH', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    store.createAdhocUnit(
+      battlefieldId,
+      { name: '留下', maxHp: 20, ac: 10, speed: 30, initiativeBonus: 0 },
+      true,
+    )!
+    const dropped = store.createAdhocUnit(
+      battlefieldId,
+      { name: '移除', maxHp: 20, ac: 10, speed: 30, initiativeBonus: 0 },
+      false,
+    )!
+    await store.flushPersist(battlefieldId)
+    server.updateBodies = []
+
+    store.endBattle(battlefieldId, {
+      keepCurrentHp: true,
+      keepTempHp: true,
+      keepConditions: true,
+      keepAdjustments: true,
+    })
+    await store.flushPersist(battlefieldId)
+    expect(server.updateBodies).toHaveLength(1)
+    expect(store.persistError).toBeNull()
+
+    server.updateBodies = []
+    store.removeUnit(battlefieldId, dropped.id)
+    await store.flushPersist(battlefieldId)
+    expect(server.updateBodies).toHaveLength(1)
+    expect(server.updateBodies[0]?.units).toHaveLength(1)
+    expect(store.persistError).toBeNull()
+  })
+
   it('PATCH 409 stale：不重試、以 server 版本覆蓋本地、曝露 persistError', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     const adhoc = store.createAdhocUnit(

@@ -72,6 +72,26 @@ describe('ContainerTitleModal', () => {
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual(['冒險劇本', undefined])
     })
 
+    it('備註前後空白於送出時修剪（判空與送出用同一個值）', async () => {
+      const wrapper = mountModal()
+
+      await titleInput(wrapper).setValue('冒險劇本')
+      await wrapper.find('textarea').setValue('  每週五開團  ')
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual(['冒險劇本', '每週五開團'])
+    })
+
+    it('備註只有空白時視為未填，remark 為 undefined 而非空白字串', async () => {
+      const wrapper = mountModal()
+
+      await titleInput(wrapper).setValue('冒險劇本')
+      await wrapper.find('textarea').setValue('   ')
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual(['冒險劇本', undefined])
+    })
+
     it('名稱為空時確認鈕 disabled、confirm 不 emit', async () => {
       const wrapper = mountModal()
 

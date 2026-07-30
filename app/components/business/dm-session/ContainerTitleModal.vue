@@ -113,9 +113,9 @@ const onOpenChange = (value: boolean): void => {
 // confirm 不自行關窗：成功後由父頁關閉，失敗保持開啟保留輸入
 const onConfirm = (): void => {
   if (!canSubmit.value || props.submitting) return
-  // remark 未填傳 undefined，不帶欄位交由 server 補預設
-  const remark =
-    props.mode === 'create' && remarkDraft.value.trim() !== '' ? remarkDraft.value : undefined
+  // remark 未填傳 undefined，不帶欄位交由 server 補預設；判空與送出用同一個 trim 後的值
+  const trimmedRemark = remarkDraft.value.trim()
+  const remark = props.mode === 'create' && trimmedRemark !== '' ? trimmedRemark : undefined
   emit('confirm', draft.value.trim(), remark)
 }
 </script>

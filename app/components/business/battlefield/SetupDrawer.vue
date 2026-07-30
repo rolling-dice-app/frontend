@@ -364,6 +364,18 @@ const onConfirmRelink = (memberId: string): void => {
     toast.error(t('battlefield.relinkInvalidLink'))
     return
   }
+  const target = props.members.find((m) => m.memberId === memberId)
+  // 連回原本那張：純 no-op，直接收起輸入不打 PATCH
+  if (target?.shareId === shareId) {
+    relinkTargetId.value = null
+    relinkLink.value = ''
+    return
+  }
+  // 後端只驗 member id 唯一，shareId 重複會被接受；名單以 shareId 作 v-for key，重複即撞 key
+  if (props.members.some((m) => m.memberId !== memberId && m.shareId === shareId)) {
+    toast.error(t('battlefield.relinkDuplicate'))
+    return
+  }
   emit('relinkMember', memberId, shareId)
   relinkTargetId.value = null
   relinkLink.value = ''

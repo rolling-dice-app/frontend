@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { MONSTER_DEFAULT_AC, MONSTER_DEFAULT_HP } from '@rolling-dice-app/core'
+import { MONSTER_DEFAULT_AC, MONSTER_DEFAULT_HP, type DamageDieEntry } from '@rolling-dice-app/core'
 import {
   buildDefaultMonsterView,
   buildMonsterTemplateCreateBody,
   buildMonsterTemplateUpdatePatch,
+  isMeaningfulDamageEntry,
   monsterTemplateToSummary,
   monsterTemplateToView,
+  resolveMonsterSavingThrow,
+  resolveMonsterSkillBonus,
 } from '~/helpers/monster'
 import { createMockMonsterFormState, createMockMonsterTemplate } from '~/tests/fixtures/monster'
 
@@ -43,6 +46,81 @@ describe('monsterTemplateToView / monsterTemplateToSummary', () => {
       ac: dto.ac,
       hp: dto.hp,
     })
+  })
+})
+
+describe('resolveMonsterSavingThrow / resolveMonsterSkillBonus', () => {
+  // STR 8（-1）、DEX 15（+2）、WIS 7（-2）：推導值與 0 可區分，才驗得出三態
+  const monster = createMockMonsterTemplate({
+    abilities: {
+      strength: 8,
+      dexterity: 15,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 7,
+      charisma: 10,
+    },
+    savingThrows: { dexterity: 4, strength: 0 },
+    skills: { stealth: 6, acrobatics: 0 },
+  })
+
+  it('有列出的豁免用列出的值', () => {
+    expect(resolveMonsterSavingThrow(monster, 'dexterity')).toBe(4)
+  })
+
+  it('明確填 0 的豁免維持 0，不退回屬性調整值', () => {
+    expect(resolveMonsterSavingThrow(monster, 'strength')).toBe(0)
+  })
+
+  it('未列出的豁免用該屬性的調整值', () => {
+    expect(resolveMonsterSavingThrow(monster, 'wisdom')).toBe(-2)
+  })
+
+  it('有列出的技能用列出的值，明確填 0 維持 0', () => {
+    expect(resolveMonsterSkillBonus(monster, 'stealth')).toBe(6)
+    expect(resolveMonsterSkillBonus(monster, 'acrobatics')).toBe(0)
+  })
+
+  it('未列出的技能依 SKILL_TO_ABILITY_MAP 取所屬屬性的調整值', () => {
+    expect(resolveMonsterSkillBonus(monster, 'athletics')).toBe(-1) // STR 8
+    expect(resolveMonsterSkillBonus(monster, 'sleightOfHand')).toBe(2) // DEX 15
+    expect(resolveMonsterSkillBonus(monster, 'perception')).toBe(-2) // WIS 7
+  })
+})
+
+describe('isMeaningfulDamageEntry', () => {
+  const entry = (overrides: Partial<DamageDieEntry> = {}): DamageDieEntry => ({
+    id: 'dd-x',
+    count: 0,
+    dieType: null,
+    bonus: null,
+    damageType: null,
+    ...overrides,
+  })
+
+  it('四欄全空的新增列不算有意義', () => {
+    expect(isMeaningfulDamageEntry(entry())).toBe(false)
+  })
+
+  it('只填 count 沒選骰面的半填列不算有意義', () => {
+    expect(isMeaningfulDamageEntry(entry({ count: 2 }))).toBe(false)
+  })
+
+  it('只選傷害類型不構成傷害', () => {
+    expect(isMeaningfulDamageEntry(entry({ damageType: 'slashing' }))).toBe(false)
+  })
+
+  it('bonus 為 0 等同未填', () => {
+    expect(isMeaningfulDamageEntry(entry({ bonus: 0 }))).toBe(false)
+  })
+
+  it('完整骰式算有意義', () => {
+    expect(isMeaningfulDamageEntry(entry({ count: 1, dieType: 6 }))).toBe(true)
+  })
+
+  it('無骰但有非零加值的純定額傷害算有意義', () => {
+    expect(isMeaningfulDamageEntry(entry({ bonus: 3 }))).toBe(true)
+    expect(isMeaningfulDamageEntry(entry({ bonus: -1 }))).toBe(true)
   })
 })
 

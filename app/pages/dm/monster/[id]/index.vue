@@ -134,9 +134,9 @@
             {{ t('monster.field.savingThrows') }}
             <span
               class="font-bold tabular-nums"
-              :class="getModifierColorClass(monster.savingThrows[key] ?? 0)"
+              :class="getModifierColorClass(resolveMonsterSavingThrow(monster, key))"
             >
-              {{ formatModifier(monster.savingThrows[key] ?? 0) }}
+              {{ formatModifier(resolveMonsterSavingThrow(monster, key)) }}
             </span>
           </p>
         </div>
@@ -291,10 +291,11 @@ const retryDetail = (): void => {
   void refresh()
 }
 
+// 只列有列出的技能（含明確填 0 者）；未列出者的推導值不進這條清單，否則 18 項恆滿。
 const skillText = computed(() => {
   const m = monster.value
   if (!m) return ''
-  return SKILL_KEYS.filter((key) => (m.skills[key] ?? 0) !== 0)
+  return SKILL_KEYS.filter((key) => m.skills[key] != null)
     .map((key) => `${t(`skill.label.${key}`)} ${formatModifier(m.skills[key] ?? 0)}`)
     .join(' · ')
 })

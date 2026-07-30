@@ -152,7 +152,7 @@ describe('monster-template store — createMonsterTemplate', () => {
 })
 
 describe('monster-template store — updateMonsterTemplate', () => {
-  it('無 diff 時不打 API，直接回 cache clone', async () => {
+  it('無 diff 時不打 API，回 unchanged 讓頁面不謊報「已儲存」', async () => {
     const m = createMockMonsterTemplate()
     mockGet.mockResolvedValue(m)
 
@@ -162,7 +162,7 @@ describe('monster-template store — updateMonsterTemplate', () => {
 
     const result = await store.updateMonsterTemplate(m.id, createMockMonsterFormState(m))
     expect(mockUpdate).not.toHaveBeenCalled()
-    expect(result).toEqual(m)
+    expect(result).toEqual({ status: 'unchanged', template: m })
   })
 
   it('有 diff 時 PATCH 只含變更欄位 + updatedAt，成功後 re-GET 刷 cache；列表不動（導頁後必重抓）', async () => {
@@ -185,12 +185,12 @@ describe('monster-template store — updateMonsterTemplate', () => {
 
     expect(mockUpdate).toHaveBeenCalledWith(m.id, { updatedAt: m.updatedAt, ac: 16 })
     expect(mockGet).toHaveBeenCalledTimes(2)
-    expect(result?.updatedAt).toBe(next.updatedAt)
+    expect(result).toEqual({ status: 'saved', template: next })
     expect(store.detailCache.get(m.id)).toEqual(next)
     expect(store.list).toEqual([monsterToSummary(other), monsterToSummary(m)])
   })
 
-  it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效、列表不動', async () => {
+  it('PATCH 成功但 re-GET 失敗：不拋錯、回 stale、cache 失效、列表不動', async () => {
     const other = createMockMonsterTemplate({ id: 'other-1', name: '別隻怪' })
     const m = createMockMonsterTemplate()
     mockList.mockResolvedValue([monsterToSummary(other), monsterToSummary(m)])
@@ -208,7 +208,7 @@ describe('monster-template store — updateMonsterTemplate', () => {
     )
 
     expect(mockUpdate).toHaveBeenCalledTimes(1)
-    expect(result).toBeNull()
+    expect(result).toEqual({ status: 'stale' })
     // 舊 lock token 已作廢：cache 必須失效，避免原地重試撞 409
     expect(store.detailCache.has(m.id)).toBe(false)
     expect(store.list.map((t) => t.id)).toEqual([other.id, m.id])

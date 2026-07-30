@@ -19,3 +19,15 @@ export type MonsterTemplateView = Omit<MonsterTemplateDTO, 'userId' | 'createdAt
  * submit 時由 buildMonsterTemplateUpdatePatch 對 store 快取的原始 DTO diff 出 PATCH body。
  */
 export type MonsterTemplateFormState = MonsterTemplateView
+
+/**
+ * 更新怪物模板的結果三態。頁面需區分才不會在無變更時謊報「已儲存」。
+ *
+ * - `saved`：PATCH 成功且已取得新副本
+ * - `unchanged`：無任何欄位變更，未發請求
+ * - `stale`：PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）
+ */
+export type MonsterTemplateSaveResult =
+  | { status: 'saved'; template: MonsterTemplateDTO }
+  | { status: 'unchanged'; template: MonsterTemplateDTO }
+  | { status: 'stale' }

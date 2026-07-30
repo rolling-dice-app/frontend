@@ -93,8 +93,10 @@ const onSave = async (next: MonsterTemplateView): Promise<void> => {
   if (isSaving.value) return
   isSaving.value = true
   try {
-    await monsterTemplateStore.updateMonsterTemplate(id, next)
-    toast.success(t('monster.savedHint'))
+    const result = await monsterTemplateStore.updateMonsterTemplate(id, next)
+    // 無變更時不謊報「已儲存」；導航行為不變，使用者按了確認就該離開編輯頁
+    if (result.status === 'unchanged') toast.info(t('monster.noChangesHint'), { kind: 'hint' })
+    else toast.success(t('monster.savedHint'))
     await navigateTo('/dm/monster')
   } catch (err) {
     // 撞 STALE_MONSTER_TEMPLATE_VERSION（他端已改）等 race 由 ERROR_MESSAGE_MAP 出專屬 toast

@@ -339,7 +339,8 @@ const saveAttack = (): void => {
   const entry: MonsterAttackDraft = {
     name: cleanText(draft.value.name),
     hitBonus: draft.value.hitBonus,
-    damageDice: draft.value.damageDice.map((e) => ({ ...e })),
+    // 未填任何骰與加值的空列不入庫：後端不擋，但顯示端會把它印成「0」
+    damageDice: draft.value.damageDice.filter(isMeaningfulDamageEntry).map((e) => ({ ...e })),
     comment: cleanTextOrNull(draft.value.comment),
   }
   if (editingId.value) {

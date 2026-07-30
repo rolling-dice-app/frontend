@@ -36,6 +36,9 @@
               :maxlength="CHARACTER_TEXT_LIMITS.SHORT"
               :placeholder="t('dmSession.member.playerName')"
               :aria-label="t('dmSession.member.playerName')"
+              :error-msg="
+                emptyNameIds.has(member.id) ? t('dmSession.member.playerNameRequired') : ''
+              "
               class="w-full flex-1"
               @update:model-value="(value: string) => (member.playerName = value)"
             />
@@ -233,8 +236,26 @@ const anyResolving = computed(() =>
 )
 
 /** 任一列處於 invalid / duplicate / error：確認會靜默解除該列原有連結，須先修正或清空輸入 */
-const anyBlocking = computed(() =>
-  Object.values(linkStates.value).some((state) => state.status !== 'resolving'),
+const anyBlocking = computed(
+  () =>
+    Object.values(linkStates.value).some((state) => state.status !== 'resolving') ||
+    emptyNameIds.value.size > 0,
+)
+
+/**
+ * 名字被清空、但仍帶著角色卡引用的列。後端 playerName 為 `trim().min(1)`，
+ * 且 members 是整列 replace，單列空字串會讓整包 PATCH 400、丟失所有修改。
+ *
+ * 不沿用「清空即丟棄」（未連結列的既有行為）：該列另有專用的移除鈕，
+ * 清名字多半是編輯到一半，靜默刪掉會連角色卡引用一起消失。
+ */
+const emptyNameIds = computed(
+  () =>
+    new Set(
+      draft.value
+        .filter((m) => m.playerName.trim() === '' && m.character !== null)
+        .map((m) => m.id),
+    ),
 )
 
 const clearLinkState = (id: string): void => {
@@ -307,8 +328,9 @@ const resolveRow = async (id: string, shareId: string): Promise<void> => {
       return
     }
     member.character = preview
-    // 連結成功即 snapshot PL 暱稱為玩家名稱（唯讀）；暱稱缺漏時保留原值
-    if (preview.ownerDisplayName) member.playerName = preview.ownerDisplayName
+    // 連結成功即 snapshot PL 暱稱為玩家名稱（唯讀）。available 時契約保證 name /
+    // ownerDisplayName 有值，後備鏈僅防禦，比照 LogForm 的既有寫法。
+    member.playerName = preview.ownerDisplayName ?? preview.name ?? preview.shareId
     clearLinkState(id)
   } catch (err) {
     if (!isCurrentRequest(id, shareId)) return

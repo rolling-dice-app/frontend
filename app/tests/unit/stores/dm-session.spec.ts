@@ -174,7 +174,7 @@ describe('dm-session store — createContainer', () => {
 })
 
 describe('dm-session store — updateContainer', () => {
-  it('無 diff 時不打 API，直接回 cache clone', async () => {
+  it('無 diff 時不打 API，回 unchanged 讓頁面不謊報「已儲存」', async () => {
     const c = createMockDmSessionContainer()
     mockGet.mockResolvedValue(c)
 
@@ -184,7 +184,7 @@ describe('dm-session store — updateContainer', () => {
 
     const result = await store.updateContainer(c.id, { title: c.title })
     expect(mockUpdate).not.toHaveBeenCalled()
-    expect(result).toEqual(c)
+    expect(result).toEqual({ status: 'unchanged', container: c })
   })
 
   it('有 diff 時 PATCH 只含變更欄位 + updatedAt（members 轉寫入形），成功後 re-GET 刷 cache；列表不動', async () => {
@@ -223,13 +223,13 @@ describe('dm-session store — updateContainer', () => {
       ],
     })
     expect(mockGet).toHaveBeenCalledTimes(2)
-    expect(result?.updatedAt).toBe(next.updatedAt)
+    expect(result).toEqual({ status: 'saved', container: next })
     expect(store.containerCache.get(c.id)).toEqual(next)
     // 列表不本地同步：update 發生在詳情頁，返回列表時必重抓
     expect(store.list).toEqual([containerToSummary(other), containerToSummary(c)])
   })
 
-  it('PATCH 成功但 re-GET 失敗：不拋錯、回 null、cache 失效', async () => {
+  it('PATCH 成功但 re-GET 失敗：不拋錯、回 stale、cache 失效', async () => {
     const c = createMockDmSessionContainer()
     mockGet.mockResolvedValueOnce(c).mockRejectedValueOnce(new Error('network down'))
     mockUpdate.mockResolvedValue(undefined)
@@ -241,7 +241,7 @@ describe('dm-session store — updateContainer', () => {
     const result = await store.updateContainer(c.id, { title: '新標題' })
 
     expect(mockUpdate).toHaveBeenCalledTimes(1)
-    expect(result).toBeNull()
+    expect(result).toEqual({ status: 'stale' })
     // 舊 lock token 已作廢：cache 必須失效，避免原地重試撞 409
     expect(store.containerCache.has(c.id)).toBe(false)
   })

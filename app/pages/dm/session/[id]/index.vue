@@ -303,11 +303,13 @@ const patchContainer = async (
   if (saving.value) return
   saving.value = true
   try {
-    const next = await dmSessionStore.updateContainer(id, patch)
+    const result = await dmSessionStore.updateContainer(id, patch)
     openRef.value = false
-    toast.success(t('dmSession.savedHint'))
-    // PATCH 已成功但 re-GET 失敗（回 null）：cache 已失效，重載拿新樂觀鎖 token
-    if (next === null) void refresh()
+    // 無變更時不謊報「已儲存」；使用者按了確認就該關窗
+    if (result.status === 'unchanged') toast.info(t('dmSession.noChangesHint'), { kind: 'hint' })
+    else toast.success(t('dmSession.savedHint'))
+    // PATCH 已成功但 re-GET 失敗：cache 已失效，重載拿新樂觀鎖 token
+    if (result.status === 'stale') void refresh()
   } catch (err) {
     apiErrorToast.handle(err)
   } finally {

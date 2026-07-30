@@ -584,7 +584,9 @@ describe('useBattlefieldStore — 單位建立', () => {
     seedDmLog()
     await store.loadMemberSources(battlefieldId)
 
-    const unit = store.importMember(battlefieldId, 'chs_available')
+    const imported = store.importMember(battlefieldId, 'chs_available')
+    expect(imported.ok).toBe(true)
+    const unit = imported.ok ? imported.unit : null
     expect(unit).toMatchObject({
       kind: 'character',
       faction: 'player',
@@ -604,22 +606,27 @@ describe('useBattlefieldStore — 單位建立', () => {
     expect(store.getBattlefieldById(battlefieldId)?.activeUnitId).toBe(unit?.id)
 
     const again = store.importMember(battlefieldId, 'chs_available')
-    expect(again?.id).toBe(unit?.id)
+    expect(again.ok && again.unit.id).toBe(unit?.id)
     expect(store.getBattlefieldById(battlefieldId)?.units).toHaveLength(1)
   })
 
-  it('importMember 對快照失敗成員回傳 null', async () => {
+  it('importMember 對快照失敗成員回 memberUnavailable（與達上限可區分）', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     seedDmLog()
     await store.loadMemberSources(battlefieldId)
-    expect(store.importMember(battlefieldId, 'chs_broken')).toBeNull()
+    expect(store.importMember(battlefieldId, 'chs_broken')).toEqual({
+      ok: false,
+      reason: 'memberUnavailable',
+    })
   })
 
   it('addMonsterInstance 快照模板詳情（cache miss 補抓）、challengeRating 存原始值、自動編號', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     monsterStore.details.set('tpl-goblin', GOBLIN_TEMPLATE)
 
-    const first = await store.addMonsterInstance(battlefieldId, 'tpl-goblin')
+    const created = await store.addMonsterInstance(battlefieldId, 'tpl-goblin')
+    expect(created.ok).toBe(true)
+    const first = created.ok ? created.unit : null
     expect(first).toMatchObject({
       kind: 'monster',
       faction: 'enemy',
@@ -637,12 +644,14 @@ describe('useBattlefieldStore — 單位建立', () => {
     expect(first?.skills).toEqual({ stealth: 6 })
 
     const second = await store.addMonsterInstance(battlefieldId, 'tpl-goblin')
-    expect(second?.name).toBe('哥布林 2')
+    expect(second.ok && second.unit.name).toBe('哥布林 2')
   })
 
-  it('addMonsterInstance 模板不存在回傳 null', async () => {
+  it('addMonsterInstance 模板載入失敗回 templateLoadFailed 並帶原始 error（供 apiErrorToast 分流）', async () => {
     const { store, battlefieldId } = await setupBattlefield()
-    expect(await store.addMonsterInstance(battlefieldId, 'tpl-nope')).toBeNull()
+    const result = await store.addMonsterInstance(battlefieldId, 'tpl-nope')
+    expect(result).toMatchObject({ ok: false, reason: 'templateLoadFailed' })
+    expect(result.ok === false && 'error' in result && result.error).toBeInstanceOf(Error)
     expect(monsterStore.loadDetailCalls).toBe(1)
   })
 
@@ -663,7 +672,7 @@ describe('useBattlefieldStore — 單位建立', () => {
     })
   })
 
-  it('達單位上限（50）時三種建立入口皆回 null／no-op', async () => {
+  it('達單位上限（50）時三種建立入口皆擋下，前兩者以 cap 為由（頁面才給得出上限提示）', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     seedDmLog()
     await store.loadMemberSources(battlefieldId)
@@ -671,8 +680,14 @@ describe('useBattlefieldStore — 單位建立', () => {
     const bf = store.getBattlefieldById(battlefieldId)!
     bf.units = Array.from({ length: 50 }, () => createMockBattlefieldUnit())
 
-    expect(store.importMember(battlefieldId, 'chs_available')).toBeNull()
-    expect(await store.addMonsterInstance(battlefieldId, 'tpl-goblin')).toBeNull()
+    expect(store.importMember(battlefieldId, 'chs_available')).toEqual({
+      ok: false,
+      reason: 'cap',
+    })
+    expect(await store.addMonsterInstance(battlefieldId, 'tpl-goblin')).toEqual({
+      ok: false,
+      reason: 'cap',
+    })
     expect(
       store.createAdhocUnit(
         battlefieldId,

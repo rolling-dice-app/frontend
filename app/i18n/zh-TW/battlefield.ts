@@ -125,6 +125,7 @@ export default {
   relinkPlaceholder: '貼上新的角色分享連結',
   relinkConfirm: '連結',
   relinkInvalidLink: '無法從連結解析角色分享 ID，請確認貼的是角色分享連結。',
+  relinkDuplicate: '此角色卡已由名單中其他成員連結。',
   adhocName: '名稱',
   adhocMaxHp: '最大 HP',
   adhocAc: 'AC',
@@ -164,4 +165,5 @@ export default {
   toastMemberRemoved: '已自團務出席名單移除成員。',
   toastMemberRelinked: '已重新連結成員角色卡。',
   unitCapReached: '戰場單位數已達上限，請先移除部分單位。',
+  memberImportUnavailable: '此成員的角色卡連結已失效，無法帶入戰場。',
 }

@@ -363,14 +363,42 @@ const diceRolls = useBattlefieldDiceRolls(battlefieldId)
 const rollLogEntries = diceRolls.entries
 
 // ── 持久化：離頁前 flush pending PATCH；重試後仍失敗（或 409 stale 覆蓋）由此 toast ──
+/** 離頁 flush 的等待上限；apiFetch 本身無 timeout，網路卡住時導航會無聲卡死 */
+const LEAVE_FLUSH_TIMEOUT_MS = 3000
+
 onBeforeRouteLeave(async () => {
-  await battlefieldStore.flushPersist(battlefieldId)
+  // 逾時不取消 flush：它會在背景跑完，只是不再擋著導航
+  await withTimeout(battlefieldStore.flushPersist(battlefieldId), LEAVE_FLUSH_TIMEOUT_MS)
+})
+
+// 分頁隱藏／關閉／重新整理：離頁 hook 不會跑，於此盡力刷出未存變更。
+// 頁面被瞬殺時仍可能來不及（要真正保證需 API 層支援 keepalive），故僅為 best-effort。
+const onVisibilityChange = (): void => {
+  if (document.visibilityState === 'hidden') void battlefieldStore.flushPersist(battlefieldId)
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 
 watch(
-  () => battlefieldStore.persistError,
+  () => battlefieldStore.persistErrorOf(battlefieldId),
   (err) => {
-    if (err != null) apiErrorToast.handle(err)
+    if (err == null) return
+    // 帶重試入口且不自動關閉：這是「變更沒存進去」的通知，滑掉就沒有第二次機會
+    apiErrorToast.handle(err, {
+      duration: 0,
+      action: {
+        label: t('battlefield.persistRetry'),
+        onClick: () => {
+          void battlefieldStore.retryPersist(battlefieldId)
+        },
+      },
+    })
   },
 )
 

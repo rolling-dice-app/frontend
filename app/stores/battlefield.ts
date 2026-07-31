@@ -37,7 +37,7 @@ import { toDmSessionMemberInputs } from '~/helpers/dm-session'
 import { rollDie } from '~/helpers/dice'
 import { useMonsterTemplateStore } from '~/stores/monster-template'
 import { createKeyedDirtyGuard } from '~/utils/dirty-guard'
-import { createSingleFlight } from '~/utils/single-flight'
+import { createKeyedSingleFlight, createSingleFlight } from '~/utils/single-flight'
 import { debounce, type DebouncedFn } from '~/utils/timing'
 
 const PERSIST_DEBOUNCE_MS = 300
@@ -64,7 +64,7 @@ export interface EnemyInitiativeRollResult extends InitiativeRollResult {
  * debounce PATCH（整份 updatable 投影＋updatedAt 樂觀鎖）→ re-GET 收斂 pipeline 持久化；
  * 高頻調整（HP／先攻等）合併送出，離散結構操作額外立即 flush。
  * 錯誤策略：409 stale 不重試、以 server 為準覆蓋本地；其他失敗自動重試一次後曝露
- * `persistError`（toast 由頁面處理，store 不碰 UI）。
+ * `persistErrorOf(id)`（toast 與重試入口由頁面處理，store 不碰 UI）。
  *
  * 讀取刻意不做 defensive clone（偏離 CRUD store 慣例）：戰場工作區是高頻互動的狀態機，
  * 頁面以 computed 直讀 store 反應式狀態、所有變更必經 action，clone 會斷開即時更新。
@@ -81,16 +81,24 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const listError = ref<unknown>(null)
   const listLoaded = ref(false)
 
-  const detailLoading = ref(false)
-  const detailError = ref<unknown>(null)
+  /** 詳情載入狀態 per-id：兩個戰場同時載入時，先完成者不再清掉另一個的 loading／error */
+  const detailLoadingIds = ref(new Set<string>())
+  const detailErrors = ref(new Map<string, unknown>())
 
   const membersLoading = ref(false)
   const membersError = ref<unknown>(null)
 
-  /** 自動重試仍失敗（或 409 stale）後曝露給頁面的最後一次持久化錯誤 */
-  const persistError = ref<unknown>(null)
+  /** 自動重試仍失敗（或 409 stale）後曝露給頁面的最後一次持久化錯誤，per-battlefieldId */
+  const persistErrors = ref(new Map<string, unknown>())
 
   const sessionOptions = computed<BattlefieldSessionOption[]>(() => sessionOptionList.value)
+
+  const isDetailLoading = (battlefieldId: string): boolean =>
+    detailLoadingIds.value.has(battlefieldId)
+  const detailErrorOf = (battlefieldId: string): unknown =>
+    detailErrors.value.get(battlefieldId) ?? null
+  const persistErrorOf = (battlefieldId: string): unknown =>
+    persistErrors.value.get(battlefieldId) ?? null
 
   /** 怪物模板來源：monster-template store 列表的輕量投影（速度／先攻於加入時抓詳情快照） */
   const templates = computed<BattlefieldTemplateSource[]>(() =>
@@ -146,6 +154,12 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
     retryScheduled: boolean
     retryTimer: ReturnType<typeof setTimeout> | null
+    /**
+     * PATCH 已成功但 re-GET 換 token 失敗：本地持有的 token 已被那次寫入作廢。
+     * 帶著它重送 PATCH 只會自造 409、再以 server 覆蓋本地（把期間的編輯靜默吃掉），
+     * 故下一輪必須先補一次 re-GET 換 token 才能繼續送。
+     */
+    tokenStale: boolean
   }
   const persistStates = new Map<string, PersistState>()
   /** PATCH 飛行期間是否又被 user 動過；避免 re-GET 覆蓋掉同時間的新改動 */
@@ -161,6 +175,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         inFlight: null,
         retryScheduled: false,
         retryTimer: null,
+        tokenStale: false,
       }
       persistStates.set(battlefieldId, state)
     }
@@ -177,6 +192,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
 
   /** 取消某戰場所有排程中的持久化（刪除／登出時用；不等待飛行中的 PATCH） */
   const cancelPersist = (battlefieldId: string): void => {
+    persistErrors.value.delete(battlefieldId)
     const state = persistStates.get(battlefieldId)
     if (!state) return
     state.debounced.cancel()
@@ -209,9 +225,19 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     }
   }
 
+  /**
+   * PATCH → re-GET 換 token。兩段的失敗語意不同，故分開處理：
+   * PATCH 失敗＝資料沒存到，可原地重試；re-GET 失敗＝**資料已存**，只是新 token 拿不到，
+   * 重送 PATCH 只會帶著作廢的 token 自造 409（比照 monster-template／dm-session 兩個 store
+   * 的「已存但副本不可得」處理，戰場先前把兩者混在同一條 catch）。
+   */
   const doPersist = async (battlefieldId: string, state: PersistState): Promise<void> => {
     const bf = battlefieldCache.value.get(battlefieldId)
     if (!bf) return
+
+    // 上一輪 re-GET 失敗過：先補換 token 才能安全重送
+    if (state.tokenStale && !(await refreshToken(battlefieldId, state))) return
+
     const snapshot = dirty.snapshot()
     try {
       // `toRaw` 只剝一層：任何以 units.map / units.filter 重建過的陣列，元素仍是
@@ -227,10 +253,15 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         // inProgress 已棄用（core @deprecated）：不再寫入，值留在 server 最後一次的狀態
         units: raw.units,
       }
-      const api = battlefields()
-      await api.update(battlefieldId, body)
-      // PATCH 204 無 body，重抓拿新 updatedAt（樂觀鎖 token）
-      const fresh = await api.get(battlefieldId)
+      await battlefields().update(battlefieldId, body)
+    } catch (err) {
+      await handlePatchError(battlefieldId, state, err)
+      return
+    }
+
+    // 到這裡 PATCH 已成功：後續失敗只影響「換到新 token」，不可再重送 PATCH。
+    try {
+      const fresh = await battlefields().get(battlefieldId)
       const current = battlefieldCache.value.get(battlefieldId)
       if (!current) return
       if (dirty.changedSince(battlefieldId, snapshot)) {
@@ -239,36 +270,84 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       } else {
         battlefieldCache.value.set(battlefieldId, fresh)
       }
-      persistError.value = null
+      persistErrors.value.delete(battlefieldId)
       state.retryScheduled = false
+      state.tokenStale = false
     } catch (err) {
-      const code = apiErrorCodeOf(err)
-      if (code === 'STALE_BATTLEFIELD_VERSION') {
-        // 資料已被其他來源改過：丟棄未送出的本地編輯，以 server 為準（單 DM MVP 決議）
-        state.debounced.cancel()
-        clearRetry(state)
-        await recoverFromServer(battlefieldId)
-        persistError.value = err
-        return
-      }
       if (isFetchError(err) && err.statusCode === 404) {
-        // 戰場已在他端刪除：清 cache，頁面落 NotFound 分支
-        state.debounced.cancel()
-        clearRetry(state)
         battlefieldCache.value.delete(battlefieldId)
         return
       }
-      if (!state.retryScheduled) {
-        state.retryScheduled = true
-        state.retryTimer = setTimeout(() => {
-          state.retryTimer = null
-          void runPersist(battlefieldId)
-        }, PERSIST_RETRY_MS)
-      } else {
-        // 重試已失敗：保留本地編輯（下次變更會再觸發 persist），曝露錯誤給頁面 toast
-        persistError.value = err
-      }
+      // 本地編輯全部保留（資料已在 server），只把 token 標成待補；
+      // 重試額度用完才曝露錯誤，避免自癒得了的情況也彈 toast
+      state.tokenStale = true
+      if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
     }
+  }
+
+  /** 只補 token、不動資料；成功回 true。失敗代表仍不可送出 PATCH。 */
+  const refreshToken = async (battlefieldId: string, state: PersistState): Promise<boolean> => {
+    try {
+      const fresh = await battlefields().get(battlefieldId)
+      const current = battlefieldCache.value.get(battlefieldId)
+      if (!current) return false
+      current.updatedAt = fresh.updatedAt
+      state.tokenStale = false
+      persistErrors.value.delete(battlefieldId)
+      return true
+    } catch (err) {
+      if (isFetchError(err) && err.statusCode === 404) {
+        battlefieldCache.value.delete(battlefieldId)
+        return false
+      }
+      if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
+      return false
+    }
+  }
+
+  const handlePatchError = async (
+    battlefieldId: string,
+    state: PersistState,
+    err: unknown,
+  ): Promise<void> => {
+    if (apiErrorCodeOf(err) === 'STALE_BATTLEFIELD_VERSION') {
+      // 資料已被其他來源改過：丟棄未送出的本地編輯，以 server 為準（單 DM MVP 決議）
+      state.debounced.cancel()
+      clearRetry(state)
+      state.tokenStale = false
+      await recoverFromServer(battlefieldId)
+      persistErrors.value.set(battlefieldId, err)
+      return
+    }
+    if (isFetchError(err) && err.statusCode === 404) {
+      // 戰場已在他端刪除：清 cache，頁面落 NotFound 分支
+      state.debounced.cancel()
+      clearRetry(state)
+      battlefieldCache.value.delete(battlefieldId)
+      return
+    }
+    // 重試額度用完才曝露：保留本地編輯（下次變更或手動重試會再觸發 persist）
+    if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
+  }
+
+  /** 一輪只排一次自動重試；額度已用掉回 false，由呼叫端決定曝露錯誤。 */
+  const scheduleRetry = (battlefieldId: string, state: PersistState): boolean => {
+    if (state.retryScheduled || state.retryTimer) return false
+    state.retryScheduled = true
+    state.retryTimer = setTimeout(() => {
+      state.retryTimer = null
+      void runPersist(battlefieldId)
+    }, PERSIST_RETRY_MS)
+    return true
+  }
+
+  /** 頁面「重試」入口：清掉錯誤並立刻再跑一輪（必要時先補 token） */
+  const retryPersist = async (battlefieldId: string): Promise<void> => {
+    const state = persistStates.get(battlefieldId)
+    if (!state) return
+    clearRetry(state)
+    persistErrors.value.delete(battlefieldId)
+    await runPersist(battlefieldId)
   }
 
   /** 409 stale 回復：re-GET 覆蓋本地；期間戰場若已消失（404）則清 cache */
@@ -323,22 +402,30 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   })
   const loadSessionOptions = (): Promise<BattlefieldSessionOption[]> => listFlight.run()
 
-  /** 回傳 null 表示戰場不存在（404，頁面顯示 NotFound）；其他錯誤設 detailError 後上拋 */
-  const loadBattlefield = async (battlefieldId: string): Promise<BattlefieldDTO | null> => {
-    detailLoading.value = true
-    detailError.value = null
-    try {
-      const bf = await battlefields().get(battlefieldId)
-      battlefieldCache.value.set(battlefieldId, bf)
-      return bf
-    } catch (error) {
-      if (isFetchError(error) && error.statusCode === 404) return null
-      detailError.value = error
-      throw error
-    } finally {
-      detailLoading.value = false
-    }
-  }
+  /**
+   * 單飛 per-id：同一戰場的並發載入（頁面 + middleware）共享同一輪 GET，
+   * 避免先發後到的舊結果覆蓋較新結果；不同戰場互不干擾。
+   * 回傳 null 表示戰場不存在（404，頁面顯示 NotFound）；其他錯誤設 detailError 後上拋。
+   */
+  const detailFlight = createKeyedSingleFlight(
+    async (battlefieldId: string): Promise<BattlefieldDTO | null> => {
+      detailLoadingIds.value.add(battlefieldId)
+      detailErrors.value.delete(battlefieldId)
+      try {
+        const bf = await battlefields().get(battlefieldId)
+        battlefieldCache.value.set(battlefieldId, bf)
+        return bf
+      } catch (error) {
+        if (isFetchError(error) && error.statusCode === 404) return null
+        detailErrors.value.set(battlefieldId, error)
+        throw error
+      } finally {
+        detailLoadingIds.value.delete(battlefieldId)
+      }
+    },
+  )
+  const loadBattlefield = (battlefieldId: string): Promise<BattlefieldDTO | null> =>
+    detailFlight.run(battlefieldId)
 
   /** 對外讀取：回傳 cache 內反應式物件（不 clone，見 store doc comment） */
   const getBattlefieldById = (battlefieldId: string): BattlefieldDTO | undefined =>
@@ -913,11 +1000,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     listLoading.value = false
     listError.value = null
     listLoaded.value = false
-    detailLoading.value = false
-    detailError.value = null
+    detailLoadingIds.value = new Set()
+    detailErrors.value = new Map()
     membersLoading.value = false
     membersError.value = null
-    persistError.value = null
+    persistErrors.value = new Map()
   }
 
   return {
@@ -927,11 +1014,12 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     listLoading,
     listError,
     listLoaded,
-    detailLoading,
-    detailError,
+    isDetailLoading,
+    detailErrorOf,
     membersLoading,
     membersError,
-    persistError,
+    persistErrorOf,
+    retryPersist,
     loadSessionOptions,
     loadBattlefield,
     getBattlefieldById,

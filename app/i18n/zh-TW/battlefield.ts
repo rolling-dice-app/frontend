@@ -150,6 +150,7 @@ export default {
   toastEnemiesRolled: '已為 {count} 個敵方單位擲先攻。',
   toastNoEnemies: '目前沒有在場敵人。',
   toastSorted: '已依先攻值重新排序。',
+  persistRetry: '重試儲存',
   toastBattleReset: '本場戰鬥已重置 — 請擲先攻。',
   toastBattleEnded: '第 {ended} 場戰鬥結束，進入第 {next} 場 — 請擲先攻。',
   toastDeleted: '戰場已刪除。',

@@ -174,3 +174,16 @@ describe('useApiErrorToast — mapping + fallback', () => {
     })
   })
 })
+
+describe('useApiErrorToast — toast options 透傳', () => {
+  it('duration 與 action 原樣傳給 toast（供「重試」入口用）', () => {
+    const onClick = vi.fn()
+    const { items } = useToast()
+    useApiErrorToast().handle(makeFetchError({ status: 500 }), {
+      duration: 0,
+      action: { label: '重試', onClick },
+    })
+    expect(items[0]?.duration).toBe(0)
+    expect(items[0]?.action?.label).toBe('重試')
+  })
+})

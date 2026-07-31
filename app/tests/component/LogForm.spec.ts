@@ -97,7 +97,9 @@ const DatePickerStub = {
 const TextAreaStub = {
   name: 'TextArea',
   props: ['modelValue', 'rows', 'maxlength', 'showCount', 'placeholder', 'border', 'maxHeight'],
-  template: '<textarea />',
+  emits: ['update:modelValue'],
+  template:
+    '<textarea :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 }
 
 const RewardListStub = {
@@ -373,6 +375,72 @@ describe('LogForm 臨時出席（分享連結優先、文字 fallback）', () =>
       await findButtonByText(wrapper, '儲存').trigger('click')
       const saved = wrapper.emitted('save')?.at(-1)?.[0] as DmSessionLogDraft
       expect(saved.itemRewards).toEqual([expect.objectContaining({ item: '長劍' })])
+    })
+
+    it('content 與獎勵列文字欄送出前 trim（判空與送出用同一個值）', async () => {
+      const wrapper = mountForm(makeDraft())
+
+      await wrapper.findComponent(RewardListStub).vm.$emit('update:rewards', [
+        { id: 'r1', item: '  長劍  ', player: '  Roger  ', remark: '  傳家寶  ' },
+        // item 只有空白 → 視為未填，整列丟棄
+        { id: 'r2', item: '   ', player: 'Bob', remark: '' },
+      ])
+      await wrapper.find('textarea').setValue('  今天打了哥布林  ')
+
+      await findButtonByText(wrapper, '儲存').trigger('click')
+      const saved = wrapper.emitted('save')?.at(-1)?.[0] as DmSessionLogDraft
+      expect(saved.content).toBe('今天打了哥布林')
+      expect(saved.itemRewards).toEqual([
+        expect.objectContaining({ item: '長劍', player: 'Roger', remark: '傳家寶' }),
+      ])
+    })
+  })
+
+  describe('出席上限', () => {
+    const MAX = 10
+    const rosterOf = (n: number) =>
+      Array.from({ length: n }, (_, i) =>
+        makeMember({ id: `row-${i}`, playerName: `玩家${i}`, character: null }),
+      )
+
+    it('達上限時常駐名單未出席者的 chip 被 disabled，已出席者仍可反選', () => {
+      const roster = rosterOf(MAX + 2)
+      // 前 MAX 位已出席，剩下兩位未出席
+      const wrapper = mountForm(makeDraft({ members: roster.slice(0, MAX) }), roster)
+
+      const chips = wrapper.findAll('button[aria-pressed]')
+      const attending = chips.filter((c) => c.attributes('aria-pressed') === 'true')
+      const absent = chips.filter((c) => c.attributes('aria-pressed') === 'false')
+
+      expect(attending).toHaveLength(MAX)
+      expect(absent).toHaveLength(2)
+      for (const chip of absent) expect(chip.attributes('disabled')).toBeDefined()
+      for (const chip of attending) expect(chip.attributes('disabled')).toBeUndefined()
+    })
+
+    it('達上限時臨時出席的輸入與加入鈕皆 disabled', () => {
+      const wrapper = mountForm(makeDraft({ members: rosterOf(MAX) }))
+
+      expect(adhocInput(wrapper).attributes('disabled')).toBeDefined()
+      expect(findButtonByText(wrapper, '加入').attributes('disabled')).toBeDefined()
+    })
+
+    it('未達上限時未出席者可加入，加到上限後其餘轉 disabled', async () => {
+      const roster = rosterOf(MAX + 1)
+      const wrapper = mountForm(makeDraft({ members: roster.slice(0, MAX - 1) }), roster)
+
+      const absentChips = () =>
+        wrapper
+          .findAll('button[aria-pressed="false"]')
+          .filter((c) => !('disabled' in c.attributes()))
+      expect(absentChips().length).toBeGreaterThan(0)
+
+      await absentChips()[0]!.trigger('click')
+
+      expect(wrapper.findAll('button[aria-pressed="true"]')).toHaveLength(MAX)
+      for (const chip of wrapper.findAll('button[aria-pressed="false"]')) {
+        expect(chip.attributes('disabled')).toBeDefined()
+      }
     })
   })
 })

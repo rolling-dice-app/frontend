@@ -5,7 +5,7 @@ import type {
   DmSessionLogDTO,
   DmSessionMemberDTO,
 } from '@rolling-dice-app/core'
-import type { DmSessionLogDraft } from '~/types/business/dm-session'
+import type { DmSessionContainerSaveResult, DmSessionLogDraft } from '~/types/business/dm-session'
 import {
   buildDmSessionContainerUpdateBody,
   buildDmSessionLogCreateBody,
@@ -92,17 +92,19 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     return cloneContainer(created)
   }
 
-  /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
+  /** 三態結果見 {@link DmSessionContainerSaveResult}；呼叫端需自行區分無變更與真的存成功。 */
   const updateContainer = async (
     id: string,
     patch: Partial<Pick<DmSessionContainerDTO, 'title' | 'remark'>> &
       Partial<{ members: DmSessionMemberDTO[] }>,
-  ): Promise<DmSessionContainerDTO | null> => {
+  ): Promise<DmSessionContainerSaveResult> => {
     const original = containerCache.value.get(id)
     if (!original) throw new Error('updateContainer: container not loaded')
 
     const body = buildDmSessionContainerUpdateBody(original, patch)
-    if (Object.keys(body).length <= 1) return cloneContainer(original)
+    if (Object.keys(body).length <= 1) {
+      return { status: 'unchanged', container: cloneContainer(original) }
+    }
 
     const api = dmSessionContainers()
     await api.update(id, body)
@@ -114,10 +116,10 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       // PATCH 已成功，re-GET 失敗不得誤報為儲存失敗；cache 內舊 lock token 已作廢，
       // 失效之避免原地重試撞 409，頁面重載時重抓。
       containerCache.value.delete(id)
-      return null
+      return { status: 'stale' }
     }
     containerCache.value.set(id, next)
-    return cloneContainer(next)
+    return { status: 'saved', container: cloneContainer(next) }
   }
 
   // hard-delete 無 deletedAt 分流，本地移除即與後端一致；cascade 以 containerId 清掉所屬紀錄 cache。

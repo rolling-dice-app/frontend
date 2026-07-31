@@ -504,13 +504,19 @@ const onSave = (): void => {
   const next: DmSessionLogDraft = {
     title: formState.title.trim(),
     date: formState.date,
-    content: formState.content,
+    content: formState.content.trim(),
     members: formState.members.map((m) => structuredClone(toRaw(m))),
     moneyRewards: { ...formState.moneyRewards },
     expRewards: formState.expRewards,
+    // 判空與送出用同一個 trim 後的值，避免只補空白的欄位存成非空
     itemRewards: formState.itemRewards
-      .filter((r) => r.item.trim() !== '')
-      .map((r) => structuredClone(toRaw(r))),
+      .map((r) => ({
+        ...structuredClone(toRaw(r)),
+        item: r.item.trim(),
+        player: r.player.trim(),
+        remark: r.remark.trim(),
+      }))
+      .filter((r) => r.item !== ''),
   }
   emit('save', next)
 }

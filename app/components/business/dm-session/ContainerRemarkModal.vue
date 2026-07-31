@@ -86,6 +86,6 @@ const onOpenChange = (value: boolean): void => {
 // confirm 不自行關窗：成功後由父頁關閉，失敗保持開啟保留輸入
 const onConfirm = (): void => {
   if (props.submitting) return
-  emit('confirm', draft.value)
+  emit('confirm', draft.value.trim())
 }
 </script>

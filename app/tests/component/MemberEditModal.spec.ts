@@ -277,7 +277,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
     })
 
-    it('解析成功但 ownerDisplayName 為 null：玩家名稱保留原值、仍轉唯讀', async () => {
+    it('解析成功但 ownerDisplayName 為 null：後備鏈退到角色名稱、仍轉唯讀', async () => {
       mockResolve.mockResolvedValue({
         previews: [makePreview(SHARE_A, { ownerDisplayName: null })],
       })
@@ -287,8 +287,22 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper).trigger('blur')
       await flushPromises()
 
-      expect(playerNameValue(wrapper)).toBe('Anna')
+      // 欄位轉唯讀後使用者補不了值，保留原值會讓空名字送不出去；退到 name 才有內容
+      expect(playerNameValue(wrapper)).toBe('艾莉絲')
       expect(playerNameInput(wrapper).attributes('readonly')).toBeDefined()
+    })
+
+    it('解析成功但暱稱與角色名皆為 null：後備鏈退到 shareId，不留空字串', async () => {
+      mockResolve.mockResolvedValue({
+        previews: [makePreview(SHARE_A, { ownerDisplayName: null, name: null })],
+      })
+      const wrapper = mountModal()
+
+      await linkInput(wrapper).setValue(linkOf(SHARE_A))
+      await linkInput(wrapper).trigger('blur')
+      await flushPromises()
+
+      expect(playerNameValue(wrapper)).toBe(SHARE_A)
     })
 
     it('失效連結（available: false）成員開窗：玩家名稱保留舊 snapshot 不覆寫、可編輯（snapshot 不再自癒，不必先解綁）', async () => {
@@ -314,6 +328,48 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
             character: expect.objectContaining({ shareId: SHARE_A, available: false }),
           }),
         ],
+      ])
+    })
+
+    it('失效連結列清空名字：confirm 被擋下並提示必填，不送出必定 400 的 payload', async () => {
+      const wrapper = mountModal([
+        makeMember({
+          character: makePreview(SHARE_A, {
+            available: false,
+            name: null,
+            ownerDisplayName: null,
+          }),
+        }),
+      ])
+
+      await playerNameInput(wrapper).setValue('   ')
+
+      expect(wrapper.text()).toContain('請填寫玩家名稱')
+      expect(playerNameInput(wrapper).attributes('aria-invalid')).toBe('true')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+
+      // 補回名字即恢復可送出
+      await playerNameInput(wrapper).setValue('Anna')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')).toHaveLength(1)
+    })
+
+    it('未連結列清空名字仍視為未填而丟棄（既有語意不變，不擋 confirm）', async () => {
+      const wrapper = mountModal([
+        makeMember({ id: 'row-1', playerName: 'Anna', character: null }),
+        makeMember({ id: 'row-2', playerName: 'Bob', character: null }),
+      ])
+
+      await wrapper.findAll('input[aria-label="玩家名稱"]')[0]!.setValue('')
+
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
+        [expect.objectContaining({ id: 'row-2', playerName: 'Bob' })],
       ])
     })
   })

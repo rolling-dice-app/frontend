@@ -20,6 +20,7 @@ export default {
   deleteLabel: '刪除劇本',
   deleteConfirm: '刪除後將一併移除旗下所有團務紀錄（無法還原），確定要刪除以下劇本？',
   savedHint: '已儲存',
+  noChangesHint: '沒有變更',
 
   // 劇本 detail 欄位
   container: {
@@ -43,6 +44,7 @@ export default {
   member: {
     playerName: '玩家名稱',
     playerNameLinkedHint: '已連結角色卡，玩家名稱自動使用玩家暱稱',
+    playerNameRequired: '請填寫玩家名稱，或移除整列',
     characterName: '角色名稱',
     characterLink: '角色卡連結',
     add: '新增成員',

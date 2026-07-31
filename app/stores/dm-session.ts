@@ -34,8 +34,7 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   const listLoading = ref(false)
   const listError = ref<unknown>(null)
 
-  /** 詳情載入狀態 per-id（容器與紀錄共用同一組 map，key 不重疊）：
-   * 兩筆詳情同時載入時，先完成者不再清掉另一筆的 loading／error */
+  /** 詳情載入狀態 per-id（容器與紀錄共用同一組 map，key 不重疊） */
   const detailLoadingIds = ref(new Set<string>())
   const detailErrors = ref(new Map<string, unknown>())
 
@@ -67,7 +66,7 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   })
   const loadList = (): Promise<DmSessionContainerSummaryDTO[]> => listFlight.run()
 
-  // 單飛 per-id：同一容器的並發載入共享同一輪 GET。
+  // 單飛 per-id：同一容器不並行載入。
   const containerFlight = createKeyedSingleFlight(
     async (id: string): Promise<DmSessionContainerDTO> => {
       detailLoadingIds.value.add(id)

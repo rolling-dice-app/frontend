@@ -81,7 +81,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const listError = ref<unknown>(null)
   const listLoaded = ref(false)
 
-  /** 詳情載入狀態 per-id：兩個戰場同時載入時，先完成者不再清掉另一個的 loading／error */
+  /** 詳情載入狀態 per-id（同時載入兩個戰場時互不干擾） */
   const detailLoadingIds = ref(new Set<string>())
   const detailErrors = ref(new Map<string, unknown>())
 
@@ -155,8 +155,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     retryScheduled: boolean
     retryTimer: ReturnType<typeof setTimeout> | null
     /**
-     * PATCH 已成功但 re-GET 換 token 失敗：本地持有的 token 已被那次寫入作廢。
-     * 帶著它重送 PATCH 只會自造 409、再以 server 覆蓋本地（把期間的編輯靜默吃掉），
+     * PATCH 已成功但 re-GET 換 token 失敗：本地 token 已作廢，帶著它重送會撞 409，
      * 故下一輪必須先補一次 re-GET 換 token 才能繼續送。
      */
     tokenStale: boolean
@@ -227,9 +226,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
 
   /**
    * PATCH → re-GET 換 token。兩段的失敗語意不同，故分開處理：
-   * PATCH 失敗＝資料沒存到，可原地重試；re-GET 失敗＝**資料已存**，只是新 token 拿不到，
-   * 重送 PATCH 只會帶著作廢的 token 自造 409（比照 monster-template／dm-session 兩個 store
-   * 的「已存但副本不可得」處理，戰場先前把兩者混在同一條 catch）。
+   * PATCH 失敗＝資料沒存到，可原地重試；re-GET 失敗＝資料已存、只是新 token 拿不到。
    */
   const doPersist = async (battlefieldId: string, state: PersistState): Promise<void> => {
     const bf = battlefieldCache.value.get(battlefieldId)
@@ -278,8 +275,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         battlefieldCache.value.delete(battlefieldId)
         return
       }
-      // 本地編輯全部保留（資料已在 server），只把 token 標成待補；
-      // 重試額度用完才曝露錯誤，避免自癒得了的情況也彈 toast
+      // 本地編輯全部保留（資料已在 server），只把 token 標成待補；額度用完才曝露錯誤
       state.tokenStale = true
       if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
     }
@@ -403,8 +399,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const loadSessionOptions = (): Promise<BattlefieldSessionOption[]> => listFlight.run()
 
   /**
-   * 單飛 per-id：同一戰場的並發載入（頁面 + middleware）共享同一輪 GET，
-   * 避免先發後到的舊結果覆蓋較新結果；不同戰場互不干擾。
+   * 單飛 per-id：同一戰場不並行載入（避免舊結果覆蓋新結果），不同戰場互不干擾。
    * 回傳 null 表示戰場不存在（404，頁面顯示 NotFound）；其他錯誤設 detailError 後上拋。
    */
   const detailFlight = createKeyedSingleFlight(

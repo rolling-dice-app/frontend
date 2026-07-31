@@ -101,8 +101,7 @@ export function throttle<Args extends unknown[]>(
 
 /**
  * 等 `promise`，但最多等 `ms` 毫秒；逾時即以 undefined 回傳，**不取消**原本的工作
- * （它仍會在背景跑完）。用於「不該無限期擋住使用者」的收尾動作，如離頁前刷出未存變更 ——
- * 底層 fetch 本身沒有 timeout，網路卡住時會讓導航無聲卡死。
+ * （它仍會在背景跑完）。用於不該無限期擋住使用者的收尾動作，如離頁前刷出未存變更。
  */
 export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
   let timer: ReturnType<typeof setTimeout> | undefined

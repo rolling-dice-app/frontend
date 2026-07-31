@@ -555,8 +555,6 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     expect(store.getBattlefieldById(battlefieldId)?.units[0]?.hp.current).toBe(25)
   })
 
-  // R3 迴歸：「PATCH 成功、re-GET 失敗」與「PATCH 失敗」語意不同 —— 前者資料已存，
-  // 帶著已作廢的 token 重送只會自造 409、再以 server 覆蓋本地，把期間的編輯靜默吃掉。
   it('PATCH 成功但 re-GET 失敗：自動重試補換 token，不自造 409、本地編輯不被覆蓋', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     const adhoc = store.createAdhocUnit(
@@ -596,7 +594,7 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     store.applyDamage(battlefieldId, adhoc.id, 5)
     await store.flushPersist(battlefieldId)
 
-    // PATCH 只送出那成功的一次；換 token 失敗期間不再重送（舊實作會在此撞 409）
+    // PATCH 只送出那成功的一次；換 token 失敗期間不再重送
     expect(server.updateBodies).toHaveLength(1)
     expect(server.conflicts).toBe(0)
     expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
@@ -635,7 +633,6 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     expect(server.battlefields.get(battlefieldId)?.units[0]?.hp.current).toBe(25)
   })
 
-  // B9：persistError 過去是單一 ref，離頁不清 → 下個戰場一進來就是髒的
   it('persistError per-id：一個戰場的錯誤不會沾到另一個戰場', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     const other = await store.createBattlefield('session-other')
@@ -691,7 +688,7 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
       store.loadBattlefield(first.id),
       store.loadBattlefield(first.id),
     ])
-    // 同 key 不並行 —— 先發後到的舊結果不會覆蓋較新結果
+    // 同 key 不並行
     expect(server.maxConcurrentGets).toBe(1)
     expect(a).toEqual(b)
   })

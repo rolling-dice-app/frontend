@@ -22,7 +22,7 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
   const listError = ref<unknown>(null)
   const listLoaded = ref(false)
 
-  /** 詳情載入狀態 per-id：兩筆詳情同時載入時，先完成者不再清掉另一筆的 loading／error */
+  /** 詳情載入狀態 per-id（同時載入多筆時互不干擾） */
   const detailLoadingIds = ref(new Set<string>())
   const detailErrors = ref(new Map<string, unknown>())
 
@@ -60,7 +60,7 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     await loadList()
   }
 
-  // 單飛 per-id：同一模板的並發載入（詳情頁 + 戰場加入怪物）共享同一輪 GET。
+  // 單飛 per-id：同一模板不並行載入。
   const detailFlight = createKeyedSingleFlight(async (id: string): Promise<MonsterTemplateDTO> => {
     detailLoadingIds.value.add(id)
     detailErrors.value.delete(id)

@@ -32,7 +32,7 @@ import type { ToastItem, ToastVariant } from '~/composables/ui/useToast'
 
 const { items, remove } = useToast()
 
-/** 操作即關閉該則通知：動作本身的結果會另外以新的通知回報 */
+/** 操作即關閉該則通知 */
 const onAction = (item: ToastItem): void => {
   item.action?.onClick()
   remove(item.id)

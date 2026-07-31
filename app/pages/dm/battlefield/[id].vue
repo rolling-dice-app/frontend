@@ -371,8 +371,8 @@ onBeforeRouteLeave(async () => {
   await withTimeout(battlefieldStore.flushPersist(battlefieldId), LEAVE_FLUSH_TIMEOUT_MS)
 })
 
-// 分頁隱藏／關閉／重新整理：離頁 hook 不會跑，於此盡力刷出未存變更。
-// 頁面被瞬殺時仍可能來不及（要真正保證需 API 層支援 keepalive），故僅為 best-effort。
+// 分頁隱藏／關閉／重新整理不會跑離頁 hook，於此盡力刷出未存變更（best-effort：
+// 頁面被瞬殺時仍可能來不及，要真正保證需 API 層支援 keepalive）。
 const onVisibilityChange = (): void => {
   if (document.visibilityState === 'hidden') void battlefieldStore.flushPersist(battlefieldId)
 }
@@ -389,7 +389,7 @@ watch(
   () => battlefieldStore.persistErrorOf(battlefieldId),
   (err) => {
     if (err == null) return
-    // 帶重試入口且不自動關閉：這是「變更沒存進去」的通知，滑掉就沒有第二次機會
+    // 帶重試入口且不自動關閉
     apiErrorToast.handle(err, {
       duration: 0,
       action: {

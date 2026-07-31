@@ -19,7 +19,6 @@ import type {
   AdhocUnitInput,
   BattlefieldMemberSource,
   BattlefieldTemplateSource,
-  EndBattleKeepFlags,
   ImportMemberResult,
 } from '~/types/business/battlefield'
 import {
@@ -30,6 +29,7 @@ import {
   effectiveMaxHp,
   nextTurnTarget,
   resetUnitAfterBattle,
+  resetUnitToSnapshotBaseline,
   sortCombatantsByInitiative,
 } from '~/helpers/battlefield'
 import { buildBattlefieldMemberSource } from '~/helpers/battlefield-snapshot'
@@ -39,9 +39,6 @@ import { useMonsterTemplateStore } from '~/stores/monster-template'
 import { createKeyedDirtyGuard } from '~/utils/dirty-guard'
 import { createSingleFlight } from '~/utils/single-flight'
 import { debounce, type DebouncedFn } from '~/utils/timing'
-
-/** 進場單位先排最後，擲先攻或拖曳後歸位 */
-const SORT_ORDER_LAST = 998
 
 const PERSIST_DEBOUNCE_MS = 300
 const PERSIST_RETRY_MS = 2000
@@ -130,7 +127,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const atUnitCap = (bf: BattlefieldDTO): boolean =>
     bf.units.length >= VALIDATION_LIMITS.maxUnitsPerBattlefield
 
-  /** 依先攻重排參戰單位的 sortOrder（穩定、null 最後） */
+  /** 入場給號：排在現有參戰單位之後（D-7；系統不自動重排，順序只由 DM 決定） */
+  const nextSortOrder = (bf: BattlefieldDTO): number =>
+    Math.min(combatantsOf(bf.units).length, BATTLEFIELD_LIMITS.UNIT_SORT_ORDER_MAX)
+
+  /** 依先攻重排參戰單位的 sortOrder；只有工具列「依先攻重排」會用到 */
   const resortByInitiative = (bf: BattlefieldDTO): void => {
     sortCombatantsByInitiative(combatantsOf(bf.units)).forEach((u, index) => {
       u.sortOrder = index
@@ -223,7 +224,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         battleSequence: raw.battleSequence,
         round: raw.round,
         activeUnitId: raw.activeUnitId,
-        inProgress: raw.inProgress,
+        // inProgress 已棄用（core @deprecated）：不再寫入，值留在 server 最後一次的狀態
         units: raw.units,
       }
       const api = battlefields()
@@ -481,12 +482,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       skills: { ...source.skills },
       initiativeBonus: source.totalInitiative,
       initiative: null,
-      sortOrder: SORT_ORDER_LAST,
+      sortOrder: nextSortOrder(bf),
       conditions: [],
       inCombat: true,
     }
     bf.units.push(created)
-    resortByInitiative(bf)
     if (bf.activeUnitId == null) bf.activeUnitId = created.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
@@ -538,12 +538,11 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       skills: { ...template.skills },
       initiativeBonus: template.initiativeBonus,
       initiative: null,
-      sortOrder: SORT_ORDER_LAST,
+      sortOrder: nextSortOrder(bf),
       conditions: [],
       inCombat: true,
     }
     bf.units.push(created)
-    resortByInitiative(bf)
     if (bf.activeUnitId == null) bf.activeUnitId = created.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
@@ -584,15 +583,12 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         BATTLEFIELD_LIMITS.UNIT_INITIATIVE_BONUS_ABS_MAX,
       ),
       initiative: null,
-      sortOrder: SORT_ORDER_LAST,
+      sortOrder: nextSortOrder(bf),
       conditions: [],
       inCombat: joinCombat,
     }
     bf.units.push(created)
-    if (joinCombat) {
-      resortByInitiative(bf)
-      if (bf.activeUnitId == null) bf.activeUnitId = created.id
-    }
+    if (joinCombat && bf.activeUnitId == null) bf.activeUnitId = created.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
     return created
@@ -602,9 +598,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const bf = requireBattlefield(battlefieldId)
     const target = requireUnit(bf, unitId)
     if (target.inCombat) return
+    target.sortOrder = nextSortOrder(bf)
     target.inCombat = true
-    target.sortOrder = SORT_ORDER_LAST
-    resortByInitiative(bf)
     if (bf.activeUnitId == null) bf.activeUnitId = target.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
@@ -617,9 +612,9 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     // 行動中單位退場：先把行動權交給下一位；軌上只剩自己則清空
     if (bf.activeUnitId === unitId) {
       const ordered = combatantsOf(bf.units).map((u) => u.id)
+      // 只交棒，不動輪次（D-4：輪次只由「上一位／下一位」更新）
       const step = nextTurnTarget(ordered, unitId, 1)
       bf.activeUnitId = step.activeUnitId === unitId ? null : step.activeUnitId
-      bf.round = Math.max(1, bf.round + step.roundDelta)
     }
     target.inCombat = false
     schedulePersist(battlefieldId)
@@ -772,7 +767,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const bf = requireBattlefield(battlefieldId)
     requireUnit(bf, unitId).initiative =
       value == null ? null : clampAbs(value, BATTLEFIELD_LIMITS.UNIT_INITIATIVE_ABS_MAX)
-    resortByInitiative(bf)
     schedulePersist(battlefieldId)
   }
 
@@ -783,7 +777,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       (target.initiative ?? 0) + delta,
       BATTLEFIELD_LIMITS.UNIT_INITIATIVE_ABS_MAX,
     )
-    resortByInitiative(bf)
     schedulePersist(battlefieldId)
   }
 
@@ -793,7 +786,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const target = requireUnit(bf, unitId)
     const roll = rollDie(20)
     target.initiative = roll + target.initiativeBonus
-    resortByInitiative(bf)
     schedulePersist(battlefieldId)
     return { roll, total: target.initiative }
   }
@@ -807,10 +799,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       enemy.initiative = roll + enemy.initiativeBonus
       return { unitId: enemy.id, name: enemy.name, roll, total: enemy.initiative }
     })
-    if (results.length > 0) {
-      resortByInitiative(bf)
-      schedulePersist(battlefieldId)
-    }
+    if (results.length > 0) schedulePersist(battlefieldId)
     return results
   }
 
@@ -859,39 +848,60 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const setActiveUnit = (battlefieldId: string, unitId: string): void => {
     const bf = requireBattlefield(battlefieldId)
     bf.activeUnitId = unitId
-    bf.inProgress = true
     schedulePersist(battlefieldId)
-  }
-
-  /** 重置戰場：清全員先攻與行動者、回合回到 1；單位與 HP 不動 */
-  const resetBattle = (battlefieldId: string): void => {
-    const bf = requireBattlefield(battlefieldId)
-    for (const u of combatantsOf(bf.units)) u.initiative = null
-    bf.round = 1
-    bf.activeUnitId = null
-    bf.inProgress = true
-    schedulePersist(battlefieldId)
-    void flushPersist(battlefieldId)
   }
 
   // ── 戰鬥段落 ───────────────────────────────────────────────────────────────
-  /** 結束本次戰鬥：必清項固定、保留項依彈窗勾選（helpers/resetUnitAfterBattle） */
-  const endBattle = (battlefieldId: string, flags: EndBattleKeepFlags): void => {
+  /**
+   * 重置戰鬥（D-3）。第 2 場以後走後端還原 API：快照是結束上一場時拍的，
+   * 還原後即「角色在場上、怪物在牌庫」，位置與狀態都由快照決定。
+   * 第 1 場沒有前一場故無快照，改以本地「狀態重置＋單位保留＋位置不動」定義初始狀態
+   * （maxHp / ac / speed 是建立時定格的快照基準，回到剛加入的樣子推導得出來）。
+   *
+   * 場次不動 —— 重置不是回退，還原到的就是當前這場的起點。
+   */
+  const resetBattle = async (battlefieldId: string): Promise<void> => {
     const bf = requireBattlefield(battlefieldId)
-    bf.units = bf.units.map((u) => resetUnitAfterBattle(u, flags))
-    bf.activeUnitId = null
-    bf.inProgress = false
+    if (bf.battleSequence > BATTLEFIELD_LIMITS.BATTLE_SEQUENCE_MIN) {
+      // 本地未送出的編輯先落地：還原帶的是 server 現值的 token，flush 後才不會自撞 409。
+      await flushPersist(battlefieldId)
+      const current = battlefieldCache.value.get(battlefieldId)
+      if (!current) return
+      try {
+        const restored = await battlefields().restore(battlefieldId, {
+          updatedAt: current.updatedAt,
+        })
+        battlefieldCache.value.set(battlefieldId, restored)
+        return
+      } catch (err) {
+        // 快照不存在（理論上只有資料被外部改過才會發生）：降級為本地重置，不讓 DM 卡住。
+        if (!isFetchError(err) || err.statusCode !== 404) throw err
+      }
+    }
+    resetBattleLocally(requireBattlefield(battlefieldId))
     schedulePersist(battlefieldId)
-    void flushPersist(battlefieldId)
+    await flushPersist(battlefieldId)
   }
 
-  /** @returns 新的場次序號（供 toast） */
-  const startNextBattle = (battlefieldId: string): number => {
+  /** 第 1 場（無快照）的重置：全員回快照基準、單位保留、位置不動 */
+  const resetBattleLocally = (bf: BattlefieldDTO): void => {
+    bf.units = bf.units.map((u) => resetUnitToSnapshotBaseline(u))
+    bf.round = 1
+    bf.activeUnitId = null
+  }
+
+  /**
+   * 結束本次戰鬥（D-2）：單位去留與歸零依 helpers/resetUnitAfterBattle（依 kind 判斷），
+   * 場次 +1、輪次回 1、清行動者。場次遞增會觸發後端拍下這一刻的快照供重置戰鬥還原。
+   *
+   * @returns 新的場次序號（供 toast）
+   */
+  const endBattle = (battlefieldId: string): number => {
     const bf = requireBattlefield(battlefieldId)
+    bf.units = bf.units.map((u) => resetUnitAfterBattle(u))
     bf.battleSequence = Math.min(bf.battleSequence + 1, BATTLEFIELD_LIMITS.BATTLE_SEQUENCE_MAX)
     bf.round = 1
     bf.activeUnitId = null
-    bf.inProgress = true
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
     return bf.battleSequence
@@ -965,7 +975,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     setActiveUnit,
     resetBattle,
     endBattle,
-    startNextBattle,
     reset,
   }
 })

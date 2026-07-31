@@ -32,14 +32,9 @@ export default {
   // 工作區頂部
   battleMeta: '第 {seq} 場戰鬥',
   roundMeta: 'Round {round}',
-  battleEndedMeta: '已結束',
   reinforce: '增援／建立',
   endBattle: '結束本次戰鬥',
-  startNextBattle: '開始第 {seq} 場戰鬥',
   deleteBattlefield: '刪除戰場',
-  endedBannerTitle: '第 {seq} 場戰鬥已結束。',
-  endedBannerBody:
-    '先攻與回合已重設、敵方單位已退出戰鬥（左欄可再參戰）；保留項目依結束彈窗的勾選。',
 
   // 左欄（戰場單位）
   rosterTitle: '戰場單位',
@@ -65,8 +60,9 @@ export default {
   rollAllEnemies: '敵人重骰先攻',
   sortByInitiative: '依先攻排序',
   sortByInitiativeTitle: '依先攻值重新排序',
-  resetBattle: '重置戰場',
-  resetBattleTitle: '清空全員先攻與行動者、回合回到 1（單位與 HP 不動）',
+  resetBattle: '重置戰鬥',
+  resetBattleTitle:
+    '把本場拉回開打前：第 2 場以後還原成上一場結束時的狀態，第 1 場則全員回到加入時的樣子（單位不會被移除）',
   moveUp: '上移',
   moveDown: '下移',
   dragHandleTitle: '拖曳調整順序',
@@ -138,11 +134,7 @@ export default {
   // 結束戰鬥彈窗
   endBattleTitle: '結束第 {seq} 場戰鬥',
   endBattleBody:
-    '將重設：全員先攻、當前行動者、回合數；敵方單位退出戰鬥（實例與 HP 保留，可再度參戰）。玩家與中立單位留在戰場。',
-  keepCurrentHp: '保留當前 HP（取消＝回復滿血）',
-  keepTempHp: '保留臨時 HP（取消＝清空）',
-  keepConditions: '保留狀態（取消＝全部移除）',
-  keepAdjustments: '保留其他調整值（取消＝重置 AC／最大 HP）',
+    '結束後直接進入下一場：場次 +1、回合回到 1、全員先攻清空。角色留在戰場並保留 HP、狀態與調整值；怪物與臨時單位退回左欄，狀態全部歸零。',
 
   // 刪除戰場彈窗
   deleteTitle: '刪除戰場（＝團務結束）',
@@ -158,9 +150,8 @@ export default {
   toastEnemiesRolled: '已為 {count} 個敵方單位擲先攻。',
   toastNoEnemies: '目前沒有在場敵人。',
   toastSorted: '已依先攻值重新排序。',
-  toastBattleReset: '戰場已重置。',
-  toastBattleEnded: '第 {seq} 場戰鬥結束。',
-  toastBattleStarted: '第 {seq} 場戰鬥開始 — 請擲先攻。',
+  toastBattleReset: '本場戰鬥已重置 — 請擲先攻。',
+  toastBattleEnded: '第 {ended} 場戰鬥結束，進入第 {next} 場 — 請擲先攻。',
   toastDeleted: '戰場已刪除。',
   toastMemberRemoved: '已自團務出席名單移除成員。',
   toastMemberRelinked: '已重新連結成員角色卡。',

@@ -6,8 +6,8 @@ import { BattlefieldPom } from '../pom/battlefield.pom'
 
 /**
  * Battlefield combat slice: initiative order, turn/round advance, HP edits and
- * the battle-segment state machine (end battle → start the next one), plus the
- * debounced persistence underneath all of them.
+ * the battle-segment state machine (ending a battle rolls into the next one),
+ * plus the debounced persistence underneath all of them.
  *
  * Initiative is typed in rather than rolled: the dice paths are random by
  * design and already covered by
@@ -45,9 +45,12 @@ test('battlefield initiative, turns, damage and battle segments persist', async 
   await pom.closeSetup()
   expect(await pom.unitIndex(slow)).toBeLessThan(await pom.unitIndex(fast))
 
-  // 2. Type initiatives, then sort → the higher roll moves to the top.
+  // 2. Type initiatives — the track does not re-sort itself; only drag and the
+  //    toolbar button change the order. Sorting explicitly then moves the higher
+  //    roll to the top.
   await pom.setInitiative(slow, '5')
   await pom.setInitiative(fast, '15')
+  expect(await pom.unitIndex(slow)).toBeLessThan(await pom.unitIndex(fast))
   await pom.waitForPersist(battlefield.id, () => pom.sortByInitiative())
   expect(await pom.unitIndex(fast)).toBeLessThan(await pom.unitIndex(slow))
 
@@ -76,18 +79,19 @@ test('battlefield initiative, turns, damage and battle segments persist', async 
   await expect(pom.unitRow(slow)).toContainText('13/20')
   await expect(pom.initiativeField(fast)).toHaveValue('15')
 
-  // 6. End the battle (keeping everything) → the next-battle control appears;
-  //    starting it bumps the sequence and resets the round.
+  // 6. End the battle → it rolls straight into the next segment: sequence +1,
+  //    round back to 1, and the ad-hoc units leave the track for the roster
+  //    (only characters stay on the field).
   await expect(pom.roundMeta()).toHaveAttribute('data-battle-sequence', '1')
   await pom.waitForPersist(battlefield.id, () => pom.endBattle())
-  await expect(pom.startNextBattleButton()).toBeVisible()
-
-  await pom.waitForPersist(battlefield.id, () => pom.startNextBattleButton().click())
   await expect(pom.roundMeta()).toHaveAttribute('data-battle-sequence', '2')
   await expect(pom.roundMeta()).toHaveAttribute('data-round', '1')
+  await expect(pom.unitRow(slow)).toBeHidden()
 
-  // 7. Reload → the new segment survived, and HP was kept as the modal asked.
+  // 7. Reload → the new segment survived; the damaged ad-hoc unit is back in the
+  //    roster reset to full HP.
   await pom.reload()
   await expect(pom.roundMeta()).toHaveAttribute('data-battle-sequence', '2')
-  await expect(pom.unitRow(slow)).toContainText('13/20')
+  await expect(pom.unitRow(slow)).toBeHidden()
+  await expect(pom.rosterEntry(slow)).toContainText('20/20')
 })

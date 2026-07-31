@@ -15,7 +15,7 @@
       type="button"
       variant="neutral"
       size="xs"
-      :disabled="disabled"
+      :disabled="disabled || round <= 1"
       @click="emit('prevTurn')"
     >
       ◂ {{ t('battlefield.prevTurn') }}

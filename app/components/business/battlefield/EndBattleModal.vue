@@ -11,17 +11,6 @@
   >
     <p class="text-[13px] text-content-muted">{{ t('battlefield.endBattleBody') }}</p>
 
-    <div class="mt-3 flex flex-col gap-1.5">
-      <label
-        v-for="item in items"
-        :key="item.key"
-        class="flex cursor-pointer items-center gap-2 text-[13px] text-content"
-      >
-        <input v-model="draft[item.key]" type="checkbox" class="size-4 shrink-0 accent-primary" />
-        {{ t(`battlefield.${item.labelKey}`) }}
-      </label>
-    </div>
-
     <template #footer>
       <div class="flex justify-end gap-2">
         <CommonAppButton type="button" variant="ghost" @click="emit('update:open', false)">
@@ -31,7 +20,7 @@
           type="button"
           variant="primary"
           data-testid="battlefield-end-battle-confirm"
-          @click="onConfirm"
+          @click="emit('confirm')"
         >
           {{ t('battlefield.endBattle') }}
         </CommonAppButton>
@@ -42,49 +31,18 @@
 
 <script setup lang="ts">
 import { Modal } from '@ui'
-import type { EndBattleKeepFlags } from '~/types/business/battlefield'
 
 const { t } = useI18n()
 
-const props = defineProps<{
+defineProps<{
   open: boolean
   battleSequence: number
 }>()
 
+// 單純確認：保留與否由 D-2 的規則（依 kind）決定，勾選已失去作用對象。
+// confirm 由父頁關窗（與 ContainerTitleModal 同一慣例）
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  confirm: [flags: EndBattleKeepFlags]
+  confirm: []
 }>()
-
-const items = [
-  { key: 'keepCurrentHp', labelKey: 'keepCurrentHp' },
-  { key: 'keepTempHp', labelKey: 'keepTempHp' },
-  { key: 'keepConditions', labelKey: 'keepConditions' },
-  { key: 'keepAdjustments', labelKey: 'keepAdjustments' },
-] as const
-
-const draft = reactive<EndBattleKeepFlags>({
-  keepCurrentHp: true,
-  keepTempHp: true,
-  keepConditions: true,
-  keepAdjustments: true,
-})
-
-// 每次開窗回到預設全保留
-watch(
-  () => props.open,
-  (next) => {
-    if (!next) return
-    draft.keepCurrentHp = true
-    draft.keepTempHp = true
-    draft.keepConditions = true
-    draft.keepAdjustments = true
-  },
-  { immediate: true },
-)
-
-// confirm 由父頁關窗（與 ContainerTitleModal 同一慣例）
-const onConfirm = (): void => {
-  emit('confirm', { ...draft })
-}
 </script>

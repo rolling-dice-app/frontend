@@ -9,6 +9,7 @@
         <div
           v-for="unit in characterUnits"
           :key="unit.id"
+          data-testid="battlefield-roster-row"
           class="flex items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
         >
           <span class="flex min-w-0 flex-1 flex-col">
@@ -85,6 +86,7 @@
         <div
           v-for="unit in otherUnits"
           :key="unit.id"
+          data-testid="battlefield-roster-row"
           class="flex items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
         >
           <span class="flex min-w-0 flex-1 flex-col">
@@ -138,7 +140,7 @@ const emit = defineEmits<{
 }>()
 
 const characterUnits = computed(() => props.rosterUnits.filter((u) => u.kind === 'character'))
-// 怪物實例退場後與 adhoc 一起列在「其他單位」，可再參戰（結束戰鬥 banner 的承諾）
+// 怪物實例結束戰鬥後退回這裡與 adhoc 並列在「其他單位」，下一場可再參戰
 const otherUnits = computed(() => props.rosterUnits.filter((u) => u.kind !== 'character'))
 
 const unitStatLine = (unit: BattlefieldUnit): string => {

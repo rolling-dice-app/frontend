@@ -12,23 +12,16 @@ import {
   hpRatioTier,
   nextTurnTarget,
   resetUnitAfterBattle,
+  resetUnitToSnapshotBaseline,
   rosterOf,
   sortCombatantsByInitiative,
   speedDisplay,
 } from '~/helpers/battlefield'
 import { calculateTotalLevel } from '~/helpers/character'
-import type { EndBattleKeepFlags } from '~/types/business/battlefield'
 import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
 
 // formatCharacterTitle 內部走 auto-import 呼叫 calculateTotalLevel
 vi.stubGlobal('calculateTotalLevel', calculateTotalLevel)
-
-const KEEP_ALL: EndBattleKeepFlags = {
-  keepCurrentHp: true,
-  keepTempHp: true,
-  keepConditions: true,
-  keepAdjustments: true,
-}
 
 describe('effectiveMaxHp / effectiveAc', () => {
   it('有效值＝快照基準＋臨時調整', () => {
@@ -129,6 +122,26 @@ describe('sortCombatantsByInitiative', () => {
     expect(sorted.map((u) => u.name)).toEqual(['c', 'a', 'd', 'b'])
   })
 
+  it('先攻平手時依 initiativeBonus 降冪（第二層 tie-break）', () => {
+    const a = createMockBattlefieldUnit({ name: 'a', initiative: 15, initiativeBonus: 1 })
+    const b = createMockBattlefieldUnit({ name: 'b', initiative: 15, initiativeBonus: 4 })
+    const c = createMockBattlefieldUnit({ name: 'c', initiative: 15, initiativeBonus: 2 })
+    expect(sortCombatantsByInitiative([a, b, c]).map((u) => u.name)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('未擲先攻的群組內部亦依 initiativeBonus 排', () => {
+    const a = createMockBattlefieldUnit({ name: 'a', initiative: null, initiativeBonus: 0 })
+    const b = createMockBattlefieldUnit({ name: 'b', initiative: 20, initiativeBonus: 0 })
+    const c = createMockBattlefieldUnit({ name: 'c', initiative: null, initiativeBonus: 3 })
+    expect(sortCombatantsByInitiative([a, b, c]).map((u) => u.name)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('先攻與加值都相同時維持原相對順序（穩定排序）', () => {
+    const a = createMockBattlefieldUnit({ name: 'a', initiative: 15, initiativeBonus: 2 })
+    const b = createMockBattlefieldUnit({ name: 'b', initiative: 15, initiativeBonus: 2 })
+    expect(sortCombatantsByInitiative([a, b]).map((u) => u.name)).toEqual(['a', 'b'])
+  })
+
   it('不改動輸入陣列', () => {
     const a = createMockBattlefieldUnit({ initiative: 1 })
     const b = createMockBattlefieldUnit({ initiative: 9 })
@@ -182,9 +195,8 @@ describe('buildMonsterInstanceName', () => {
 })
 
 describe('resetUnitAfterBattle', () => {
-  const combatEnemy = () =>
+  const dirtyUnit = (overrides: Parameters<typeof createMockBattlefieldUnit>[0] = {}) =>
     createMockBattlefieldUnit({
-      faction: 'enemy',
       inCombat: true,
       maxHp: 25,
       hp: { current: 18, tempHp: 4, maxAdjustment: 5 },
@@ -193,74 +205,97 @@ describe('resetUnitAfterBattle', () => {
       speedAdjustment: -10,
       initiative: 12,
       conditions: [{ id: 'c1', key: 'prone', note: null }],
+      ...overrides,
     })
 
-  it('必清：先攻歸 null；敵方退出戰鬥、玩家與中立留場', () => {
-    const enemy = resetUnitAfterBattle(combatEnemy(), KEEP_ALL)
-    expect(enemy.initiative).toBeNull()
-    expect(enemy.inCombat).toBe(false)
-
-    const player = resetUnitAfterBattle(
-      createMockBattlefieldUnit({ faction: 'player', inCombat: true, initiative: 9 }),
-      KEEP_ALL,
-    )
-    expect(player.initiative).toBeNull()
-    expect(player.inCombat).toBe(true)
-  })
-
-  it('全保留時 HP／狀態／調整值不動', () => {
-    const next = resetUnitAfterBattle(combatEnemy(), KEEP_ALL)
+  it('角色：留在場上、HP／臨時 HP／狀態／調整值全部保留，只清先攻', () => {
+    const next = resetUnitAfterBattle(dirtyUnit({ kind: 'character', faction: 'player' }))
+    expect(next.inCombat).toBe(true)
+    expect(next.initiative).toBeNull()
     expect(next.hp).toEqual({ current: 18, tempHp: 4, maxAdjustment: 5 })
     expect(next.conditions).toHaveLength(1)
     expect(next.acAdjustment).toBe(2)
     expect(next.speedAdjustment).toBe(-10)
   })
 
-  it('取消保留當前 HP＝回復滿血（含調整上限）；取消臨時 HP＝清空；取消狀態＝全移除', () => {
-    const next = resetUnitAfterBattle(combatEnemy(), {
-      ...KEEP_ALL,
-      keepCurrentHp: false,
-      keepTempHp: false,
-      keepConditions: false,
-    })
-    expect(next.hp.current).toBe(30) // maxHp 25 + maxAdjustment 5
-    expect(next.hp.tempHp).toBe(0)
+  it('怪物：退回牌庫並回到加入時的快照基準', () => {
+    const next = resetUnitAfterBattle(dirtyUnit({ kind: 'monster', faction: 'enemy' }))
+    expect(next.inCombat).toBe(false)
+    expect(next.initiative).toBeNull()
+    expect(next.hp).toEqual({ current: 25, tempHp: 0, maxAdjustment: 0 })
     expect(next.conditions).toEqual([])
-  })
-
-  it('取消保留調整值＝三個調整值歸零，且先重置上限再滿血（不吃已調上限）', () => {
-    const next = resetUnitAfterBattle(combatEnemy(), {
-      ...KEEP_ALL,
-      keepAdjustments: false,
-      keepCurrentHp: false,
-    })
     expect(next.acAdjustment).toBe(0)
-    expect(next.hp.maxAdjustment).toBe(0)
     expect(next.speedAdjustment).toBe(0)
-    expect(next.hp.current).toBe(25) // 回快照基準 maxHp，而非 30
   })
 
-  it('保留當前 HP 但重置調整值時，當前 HP clamp 回快照上限', () => {
-    const overhealed = createMockBattlefieldUnit({
-      faction: 'player',
-      inCombat: true,
-      maxHp: 25,
-      hp: { current: 30, tempHp: 0, maxAdjustment: 5 },
-    })
-    const next = resetUnitAfterBattle(overhealed, { ...KEEP_ALL, keepAdjustments: false })
+  it('adhoc 比照怪物退場歸零', () => {
+    const next = resetUnitAfterBattle(dirtyUnit({ kind: 'adhoc', faction: 'neutral' }))
+    expect(next.inCombat).toBe(false)
     expect(next.hp.current).toBe(25)
   })
 
-  it('未參戰單位不套保留項（僅清先攻）', () => {
-    const bench = createMockBattlefieldUnit({
-      inCombat: false,
-      maxHp: 10,
-      hp: { current: 4, tempHp: 0, maxAdjustment: 0 },
-      initiative: 7,
+  it('判斷依 kind 不依 faction：被魅惑而設為玩家陣營的怪物照樣退場歸零', () => {
+    const charmed = resetUnitAfterBattle(dirtyUnit({ kind: 'monster', faction: 'player' }))
+    expect(charmed.inCombat).toBe(false)
+    expect(charmed.hp.current).toBe(25)
+
+    // 反向：設為敵方陣營的角色仍留場保留
+    const infiltrator = resetUnitAfterBattle(dirtyUnit({ kind: 'character', faction: 'enemy' }))
+    expect(infiltrator.inCombat).toBe(true)
+    expect(infiltrator.hp.current).toBe(18)
+  })
+
+  it('牌庫裡的怪物一併歸零；牌庫裡的角色維持原狀（僅清先攻）', () => {
+    const benchMonster = resetUnitAfterBattle(
+      dirtyUnit({
+        kind: 'monster',
+        inCombat: false,
+        hp: { current: 3, tempHp: 0, maxAdjustment: 0 },
+      }),
+    )
+    expect(benchMonster.hp.current).toBe(25)
+
+    const benchCharacter = resetUnitAfterBattle(
+      dirtyUnit({
+        kind: 'character',
+        inCombat: false,
+        hp: { current: 3, tempHp: 0, maxAdjustment: 0 },
+      }),
+    )
+    expect(benchCharacter.inCombat).toBe(false)
+    expect(benchCharacter.hp.current).toBe(3)
+  })
+
+  it('不改動來源物件（含巢狀 hp／conditions）', () => {
+    const source = dirtyUnit({ kind: 'monster' })
+    resetUnitAfterBattle(source)
+    expect(source.hp).toEqual({ current: 18, tempHp: 4, maxAdjustment: 5 })
+    expect(source.conditions).toHaveLength(1)
+    expect(source.initiative).toBe(12)
+  })
+})
+
+describe('resetUnitToSnapshotBaseline', () => {
+  it('回到加入時的樣子，但不動 inCombat（第 1 場重置用）', () => {
+    const unit = createMockBattlefieldUnit({
+      kind: 'character',
+      inCombat: true,
+      maxHp: 30,
+      hp: { current: 2, tempHp: 6, maxAdjustment: -5 },
+      acAdjustment: 3,
+      speedAdjustment: 10,
+      initiative: 8,
+      conditions: [{ id: 'c1', key: 'poisoned', note: null }],
+      deathSaves: { successes: 1, failures: 2 },
     })
-    const next = resetUnitAfterBattle(bench, { ...KEEP_ALL, keepCurrentHp: false })
+    const next = resetUnitToSnapshotBaseline(unit)
+    expect(next.inCombat).toBe(true)
+    expect(next.hp).toEqual({ current: 30, tempHp: 0, maxAdjustment: 0 })
+    expect(next.acAdjustment).toBe(0)
+    expect(next.speedAdjustment).toBe(0)
+    expect(next.conditions).toEqual([])
+    expect(next.deathSaves).toEqual({ successes: 0, failures: 0 })
     expect(next.initiative).toBeNull()
-    expect(next.hp.current).toBe(4)
   })
 })
 
@@ -317,23 +352,24 @@ describe('speedDisplay', () => {
 })
 
 describe('resetUnitAfterBattle — 死亡豁免', () => {
-  const downed = () =>
+  const downed = (kind: 'character' | 'monster') =>
     createMockBattlefieldUnit({
+      kind,
       inCombat: true,
       maxHp: 20,
       hp: { current: 0, tempHp: 0, maxAdjustment: 0 },
       deathSaves: { successes: 2, failures: 1 },
     })
 
-  it('回復滿血（不保留當前 HP）時死亡豁免歸零', () => {
-    const next = resetUnitAfterBattle(downed(), { ...KEEP_ALL, keepCurrentHp: false })
-    expect(next.hp.current).toBe(20)
-    expect(next.deathSaves).toEqual({ successes: 0, failures: 0 })
-  })
-
-  it('保留當前 HP 且仍為 0 時計數保留', () => {
-    const next = resetUnitAfterBattle(downed(), KEEP_ALL)
+  it('角色以 HP 0 結束：HP 與豁免計數都延續到下一場（D-2）', () => {
+    const next = resetUnitAfterBattle(downed('character'))
     expect(next.hp.current).toBe(0)
     expect(next.deathSaves).toEqual({ successes: 2, failures: 1 })
+  })
+
+  it('怪物退場歸零時豁免計數一併清空', () => {
+    const next = resetUnitAfterBattle(downed('monster'))
+    expect(next.hp.current).toBe(20)
+    expect(next.deathSaves).toEqual({ successes: 0, failures: 0 })
   })
 })

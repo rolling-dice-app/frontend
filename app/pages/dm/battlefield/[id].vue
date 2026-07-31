@@ -65,7 +65,6 @@
             ＋ {{ t('battlefield.reinforce') }}
           </CommonAppButton>
           <CommonAppButton
-            v-if="battlefield.inProgress"
             type="button"
             variant="neutral"
             size="sm"
@@ -73,17 +72,6 @@
             @click="endBattleOpen = true"
           >
             {{ t('battlefield.endBattle') }}
-          </CommonAppButton>
-          <!-- 同一時刻與下方 banner 的「開始下一場」並存，testid 只掛這顆避免重複 -->
-          <CommonAppButton
-            v-else
-            type="button"
-            variant="primary"
-            size="sm"
-            data-testid="battlefield-start-next"
-            @click="onStartNextBattle"
-          >
-            {{ t('battlefield.startNextBattle', { seq: battlefield.battleSequence + 1 }) }}
           </CommonAppButton>
           <CommonAppButton
             type="button"
@@ -96,26 +84,6 @@
             {{ t('battlefield.deleteBattlefield') }}
           </CommonAppButton>
         </div>
-      </div>
-
-      <!-- 戰鬥已結束 banner -->
-      <div
-        v-if="!battlefield.inProgress"
-        class="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-ring-soft bg-primary-soft px-4 py-2.5 text-[13px] lg:shrink-0"
-      >
-        <b class="text-primary-hover">
-          {{ t('battlefield.endedBannerTitle', { seq: battlefield.battleSequence }) }}
-        </b>
-        <span class="text-content-soft">{{ t('battlefield.endedBannerBody') }}</span>
-        <CommonAppButton
-          type="button"
-          variant="primary"
-          size="sm"
-          class="ml-auto"
-          @click="onStartNextBattle"
-        >
-          {{ t('battlefield.startNextBattle', { seq: battlefield.battleSequence + 1 }) }}
-        </CommonAppButton>
       </div>
 
       <!-- 三欄工作區 -->
@@ -154,8 +122,10 @@
             </h2>
             <button
               type="button"
-              class="ml-auto rounded-md px-2 py-1 text-xs text-danger-hover hover:bg-danger-soft"
+              class="ml-auto rounded-md px-2 py-1 text-xs text-danger-hover hover:bg-danger-soft disabled:opacity-50"
               :title="t('battlefield.resetBattleTitle')"
+              :disabled="resetting"
+              data-testid="battlefield-reset-battle"
               @click="onResetBattle"
             >
               {{ t('battlefield.resetBattle') }}
@@ -277,7 +247,7 @@
         @relink-member="onRelinkMember"
       />
 
-      <!-- 結束戰鬥彈窗：逐項保留確認 -->
+      <!-- 結束戰鬥彈窗：單純確認 -->
       <BusinessBattlefieldEndBattleModal
         v-model:open="endBattleOpen"
         :battle-sequence="battlefield.battleSequence"
@@ -318,7 +288,7 @@
 import { onBeforeRouteLeave } from 'vue-router'
 import { Icon, Modal } from '@ui'
 import type { BattlefieldUnit } from '@rolling-dice-app/core'
-import type { AdhocUnitInput, EndBattleKeepFlags } from '~/types/business/battlefield'
+import type { AdhocUnitInput } from '~/types/business/battlefield'
 
 definePageMeta({
   middleware: 'auth',
@@ -427,10 +397,20 @@ const onSortInitiative = (): void => {
   toast.info(t('battlefield.toastSorted'))
 }
 
-const onResetBattle = (): void => {
-  battlefieldStore.resetBattle(battlefieldId)
-  selectedId.value = null
-  toast.info(t('battlefield.toastBattleReset'))
+const resetting = ref(false)
+
+const onResetBattle = async (): Promise<void> => {
+  if (resetting.value) return
+  resetting.value = true
+  try {
+    await battlefieldStore.resetBattle(battlefieldId)
+    selectedId.value = null
+    toast.info(t('battlefield.toastBattleReset'))
+  } catch (err) {
+    apiErrorToast.handle(err)
+  } finally {
+    resetting.value = false
+  }
 }
 
 const onSetInitiative = (unitId: string, value: number | null): void => {
@@ -526,17 +506,13 @@ const onRemoveUnit = (unitId: string): void => {
 const setupOpen = ref(false)
 const endBattleOpen = ref(false)
 
-const onEndBattleConfirm = (flags: EndBattleKeepFlags): void => {
-  const seq = battlefield.value?.battleSequence ?? 1
-  battlefieldStore.endBattle(battlefieldId, flags)
+// 結束即進入下一場（D-5：無「已結束」中間態）
+const onEndBattleConfirm = (): void => {
+  const ended = battlefield.value?.battleSequence ?? 1
+  const next = battlefieldStore.endBattle(battlefieldId)
   endBattleOpen.value = false
   selectedId.value = null
-  toast.info(t('battlefield.toastBattleEnded', { seq }))
-}
-
-const onStartNextBattle = (): void => {
-  const seq = battlefieldStore.startNextBattle(battlefieldId)
-  toast.info(t('battlefield.toastBattleStarted', { seq }))
+  toast.info(t('battlefield.toastBattleEnded', { ended, next }))
 }
 
 // ── 刪除戰場（hard-delete＝團務結束） ────────────────────────────────────────

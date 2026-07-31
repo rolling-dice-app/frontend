@@ -1,6 +1,7 @@
 import type {
   BattlefieldCreateBody,
   BattlefieldDTO,
+  BattlefieldRestoreBody,
   BattlefieldSessionOption,
   BattlefieldUpdateBody,
 } from '@rolling-dice-app/core'
@@ -26,6 +27,13 @@ export const battlefields = () => {
     update: async (id: string, body: BattlefieldUpdateBody): Promise<void> => {
       await apiFetch(`/battlefields/${encodeURIComponent(id)}`, { method: 'PATCH', body })
     },
+
+    /** 重置戰鬥：還原至本場次起始快照，回傳還原後的戰場（含新 token）；無快照時 404 */
+    restore: (id: string, body: BattlefieldRestoreBody): Promise<BattlefieldDTO> =>
+      apiFetch<BattlefieldDTO>(`/battlefields/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        body,
+      }),
 
     remove: async (id: string): Promise<void> => {
       await apiFetch(`/battlefields/${encodeURIComponent(id)}`, { method: 'DELETE' })

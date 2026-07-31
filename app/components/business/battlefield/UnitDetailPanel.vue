@@ -372,7 +372,12 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import { CHARACTER_TEXT_LIMITS, CONDITION_KEYS, VALIDATION_LIMITS } from '@rolling-dice-app/core'
+import {
+  BATTLEFIELD_LIMITS,
+  CHARACTER_TEXT_LIMITS,
+  CONDITION_KEYS,
+  VALIDATION_LIMITS,
+} from '@rolling-dice-app/core'
 import type {
   BattlefieldAttackEntry,
   BattlefieldFaction,
@@ -452,21 +457,24 @@ const currentHpClass = computed(() => {
   return 'text-content'
 })
 
+/**
+ * 名稱與先攻皆為未受控 input（`:value` + `@change`）。store 會 trim / clamp / 截斷，
+ * 結果與現值相同時 Vue 不會 patch DOM，輸入框會殘留使用者打的原始內容。
+ * 兩者都在提交後把正規值寫回 DOM。
+ */
 const onNameChange = (event: Event): void => {
-  const value = (event.target as HTMLInputElement).value.trim()
-  if (value) emit('rename', value)
-  // 空值不提交；還原顯示為現值
-  else (event.target as HTMLInputElement).value = props.unit.name
+  const input = event.target as HTMLInputElement
+  const value = input.value.trim()
+  // 空值不提交；store 另會截斷到 SHORT 上限，故一律以截斷後的值回寫
+  if (value) emit('rename', value.slice(0, UNIT_NAME_MAX_LENGTH))
+  input.value = value ? value.slice(0, UNIT_NAME_MAX_LENGTH) : props.unit.name
 }
 
 const onInitiativeChange = (event: Event): void => {
-  const raw = (event.target as HTMLInputElement).value.trim()
-  if (raw === '') {
-    emit('setInitiative', null)
-    return
-  }
-  const parsed = Number.parseInt(raw, 10)
-  emit('setInitiative', Number.isFinite(parsed) ? parsed : null)
+  const input = event.target as HTMLInputElement
+  const next = parseIntegerInput(input.value, undefined, BATTLEFIELD_LIMITS.UNIT_INITIATIVE_ABS_MAX)
+  emit('setInitiative', next)
+  input.value = next == null ? '' : String(next)
 }
 
 // ── 狀態新增 ─────────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import {
   hpRatioTier,
 } from '~/helpers/battlefield'
 import { calculateTotalLevel } from '~/helpers/character'
+import { parseIntegerInput } from '~/utils/parse'
 import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
 import type { BattlefieldUnit } from '@rolling-dice-app/core'
 
@@ -23,6 +24,7 @@ beforeEach(() => {
   vi.stubGlobal('effectiveAc', effectiveAc)
   vi.stubGlobal('effectiveMaxHp', effectiveMaxHp)
   vi.stubGlobal('calculateTotalLevel', calculateTotalLevel)
+  vi.stubGlobal('parseIntegerInput', parseIntegerInput)
 })
 
 afterEach(() => {
@@ -169,6 +171,32 @@ describe('UnitDetailPanel', () => {
     expect(wrapper.emitted('setInitiative')?.at(-1)).toEqual([null])
   })
 
+  it('先攻超出上限：emit clamp 後的值，且 DOM 不殘留超界輸入', async () => {
+    // store 已是 999 時再輸入 9999，clamp 後值不變 → Vue 不 patch DOM，
+    // 未回寫的話輸入框會一直顯示 9999
+    const wrapper = mountPanel({ initiative: 999 })
+    const input = wrapper.find<HTMLInputElement>(
+      `input[aria-label="${t('battlefield.initiativeAria', { name: '哥布林 1' })}"]`,
+    )
+
+    await input.setValue('9999')
+
+    expect(wrapper.emitted('setInitiative')?.at(-1)).toEqual([999])
+    expect(input.element.value).toBe('999')
+  })
+
+  it('先攻輸入非數字：emit null 並清空 DOM', async () => {
+    const wrapper = mountPanel()
+    const input = wrapper.find<HTMLInputElement>(
+      `input[aria-label="${t('battlefield.initiativeAria', { name: '哥布林 1' })}"]`,
+    )
+
+    await input.setValue('abc')
+
+    expect(wrapper.emitted('setInitiative')?.at(-1)).toEqual([null])
+    expect(input.element.value).toBe('')
+  })
+
   it('改名：change 提交修剪後名稱、空值不提交', async () => {
     const wrapper = mountPanel()
     const input = wrapper.find(`input[aria-label="${t('battlefield.nameAria')}"]`)
@@ -176,6 +204,28 @@ describe('UnitDetailPanel', () => {
     expect(wrapper.emitted('rename')?.at(-1)).toEqual(['哥布林斥候'])
     await input.setValue('   ')
     expect(wrapper.emitted('rename')).toHaveLength(1)
+  })
+
+  it('改名空值：DOM 還原為現值，不殘留空白', async () => {
+    const wrapper = mountPanel()
+    const input = wrapper.find<HTMLInputElement>(`input[aria-label="${t('battlefield.nameAria')}"]`)
+
+    await input.setValue('   ')
+
+    expect(wrapper.emitted('rename')).toBeUndefined()
+    expect(input.element.value).toBe('哥布林 1')
+  })
+
+  it('改名超過長度上限：emit 截斷後名稱，且 DOM 同步為截斷值', async () => {
+    const wrapper = mountPanel()
+    const input = wrapper.find<HTMLInputElement>(`input[aria-label="${t('battlefield.nameAria')}"]`)
+    const tooLong = '哥'.repeat(120)
+
+    await input.setValue(tooLong)
+
+    const emitted = wrapper.emitted('rename')?.at(-1)?.[0] as string
+    expect(emitted.length).toBeLessThan(tooLong.length)
+    expect(input.element.value).toBe(emitted)
   })
 
   it('AC 有調整量時顯示有效值與 (±N)', () => {

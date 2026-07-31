@@ -1,4 +1,9 @@
-import type { BattlefieldAttackEntry, ClassEntry, SkillKey } from '@rolling-dice-app/core'
+import type {
+  BattlefieldAttackEntry,
+  BattlefieldUnit,
+  ClassEntry,
+  SkillKey,
+} from '@rolling-dice-app/core'
 
 /**
  * m7.3 即時戰場 — UI-only 型別。
@@ -61,6 +66,26 @@ export interface AdhocUnitInput {
   speed: number
   initiativeBonus: number
 }
+
+/**
+ * 帶入出席成員的結果。失敗原因需可區分，否則頁面無法決定要顯示上限提示還是錯誤。
+ *
+ * - `cap`：已達戰場單位上限
+ * - `memberUnavailable`：該 shareId 不在出席名單，或角色卡連結已失效
+ */
+export type ImportMemberResult =
+  { ok: true; unit: BattlefieldUnit } | { ok: false; reason: 'cap' | 'memberUnavailable' }
+
+/**
+ * 加入怪物實例的結果。
+ *
+ * - `cap`：已達戰場單位上限
+ * - `templateLoadFailed`：模板詳情抓取失敗，`error` 交給 apiErrorToast 分流
+ */
+export type AddMonsterInstanceResult =
+  | { ok: true; unit: BattlefieldUnit }
+  | { ok: false; reason: 'cap' }
+  | { ok: false; reason: 'templateLoadFailed'; error: unknown }
 
 /** 結束戰鬥彈窗的逐項保留選擇（2026-07-16 決議） */
 export interface EndBattleKeepFlags {

@@ -15,10 +15,12 @@ import type {
   DmSessionMemberInput,
 } from '@rolling-dice-app/core'
 import type {
+  AddMonsterInstanceResult,
   AdhocUnitInput,
   BattlefieldMemberSource,
   BattlefieldTemplateSource,
   EndBattleKeepFlags,
+  ImportMemberResult,
 } from '~/types/business/battlefield'
 import {
   applyDamageToHp,
@@ -447,14 +449,17 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     )
 
   // ── 單位 ───────────────────────────────────────────────────────────────────
-  /** 帶入出席成員：滿 HP 快照、直接參戰（已拍板）；已帶入者 no-op 回傳既有單位、達單位上限回 null */
-  const importMember = (battlefieldId: string, shareId: string): BattlefieldUnit | null => {
+  /**
+   * 帶入出席成員：滿 HP 快照、直接參戰（已拍板）；已帶入者 no-op 回傳既有單位。
+   * 失敗以 reason 區分，呼叫端才給得出對應提示（原本各種失敗都塌成 null，UI 全靜默）。
+   */
+  const importMember = (battlefieldId: string, shareId: string): ImportMemberResult => {
     const bf = requireBattlefield(battlefieldId)
     const existing = bf.units.find((u) => u.kind === 'character' && u.shareId === shareId)
-    if (existing) return existing
-    if (atUnitCap(bf)) return null
+    if (existing) return { ok: true, unit: existing }
+    if (atUnitCap(bf)) return { ok: false, reason: 'cap' }
     const source = getMemberSources(battlefieldId).find((m) => m.shareId === shareId)
-    if (!source || !source.available) return null
+    if (!source || !source.available) return { ok: false, reason: 'memberUnavailable' }
     const created: BattlefieldUnit = {
       id: crypto.randomUUID(),
       kind: 'character',
@@ -485,21 +490,28 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     if (bf.activeUnitId == null) bf.activeUnitId = created.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
-    return created
+    return { ok: true, unit: created }
   }
 
-  /** 從怪物模板建立實例並直接參戰（已拍板取消兩段式）；自動編號。模板詳情不在 cache 時補抓一筆 */
+  /**
+   * 從怪物模板建立實例並直接參戰（已拍板取消兩段式）；自動編號。模板詳情不在 cache 時補抓一筆。
+   * 「模板載入失敗」與「達單位上限」以 reason 區分：前者要走 apiErrorToast，後者是上限提示。
+   */
   const addMonsterInstance = async (
     battlefieldId: string,
     templateId: string,
-  ): Promise<BattlefieldUnit | null> => {
+  ): Promise<AddMonsterInstanceResult> => {
     const monsterTemplateStore = useMonsterTemplateStore()
-    const template =
-      monsterTemplateStore.getById(templateId) ??
-      (await monsterTemplateStore.loadDetail(templateId).catch(() => null))
-    if (!template) return null
+    let template = monsterTemplateStore.getById(templateId)
+    if (!template) {
+      try {
+        template = await monsterTemplateStore.loadDetail(templateId)
+      } catch (error) {
+        return { ok: false, reason: 'templateLoadFailed', error }
+      }
+    }
     const bf = requireBattlefield(battlefieldId)
-    if (atUnitCap(bf)) return null
+    if (atUnitCap(bf)) return { ok: false, reason: 'cap' }
     const siblings = bf.units.filter((u) => u.templateId === templateId)
     const created: BattlefieldUnit = {
       id: crypto.randomUUID(),
@@ -535,7 +547,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     if (bf.activeUnitId == null) bf.activeUnitId = created.id
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
-    return created
+    return { ok: true, unit: created }
   }
 
   /** 手動臨時單位（進 MVP，已拍板）：純手填、預設中立；達單位上限回 null */

@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@ui'
-import type { BattlefieldUnit } from '@rolling-dice-app/core'
+import { BATTLEFIELD_LIMITS, type BattlefieldUnit } from '@rolling-dice-app/core'
 import { FACTION_DOT_CLASS } from '~/constants/battlefield'
 
 const { t } = useI18n()
@@ -131,13 +131,15 @@ const onRowActivate = (): void => {
   emit('select')
 }
 
+/**
+ * 先攻欄是未受控 input（`:value` + `@change`）。store 會把值 clamp 到
+ * ±UNIT_INITIATIVE_ABS_MAX，clamp 後若與現值相同，Vue 看不到變化就不會 patch DOM，
+ * 輸入框會殘留使用者打的超界數字。故在此就地 clamp 並把正規值寫回 DOM。
+ */
 const onInitiativeChange = (event: Event): void => {
-  const raw = (event.target as HTMLInputElement).value.trim()
-  if (raw === '') {
-    emit('setInitiative', null)
-    return
-  }
-  const parsed = Number.parseInt(raw, 10)
-  emit('setInitiative', Number.isFinite(parsed) ? parsed : null)
+  const input = event.target as HTMLInputElement
+  const next = parseIntegerInput(input.value, undefined, BATTLEFIELD_LIMITS.UNIT_INITIATIVE_ABS_MAX)
+  emit('setInitiative', next)
+  input.value = next == null ? '' : String(next)
 }
 </script>

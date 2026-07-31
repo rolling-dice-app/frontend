@@ -464,13 +464,23 @@ const onEnterCombat = (unitId: string): void => {
 }
 
 const onImportMember = (shareId: string): void => {
-  const created = battlefieldStore.importMember(battlefieldId, shareId)
-  if (created) toast.info(t('battlefield.toastJoined', { name: created.name }))
+  const result = battlefieldStore.importMember(battlefieldId, shareId)
+  if (result.ok) {
+    toast.info(t('battlefield.toastJoined', { name: result.unit.name }))
+    return
+  }
+  if (result.reason === 'cap') toast.error(t('battlefield.unitCapReached'))
+  else toast.error(t('battlefield.memberImportUnavailable'))
 }
 
 const onAddTemplate = async (templateId: string): Promise<void> => {
-  const created = await battlefieldStore.addMonsterInstance(battlefieldId, templateId)
-  if (created) toast.info(t('battlefield.toastJoined', { name: created.name }))
+  const result = await battlefieldStore.addMonsterInstance(battlefieldId, templateId)
+  if (result.ok) {
+    toast.info(t('battlefield.toastJoined', { name: result.unit.name }))
+    return
+  }
+  if (result.reason === 'cap') toast.error(t('battlefield.unitCapReached'))
+  else apiErrorToast.handle(result.error)
 }
 
 const onCreateAdhoc = (input: AdhocUnitInput, joinCombat: boolean): void => {

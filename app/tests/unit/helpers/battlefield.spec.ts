@@ -239,7 +239,7 @@ describe('resetUnitAfterBattle', () => {
     expect(charmed.inCombat).toBe(false)
     expect(charmed.hp.current).toBe(25)
 
-    // 反向：設為敵方陣營的角色仍留場保留
+    // 設為敵方陣營的角色仍留場保留
     const infiltrator = resetUnitAfterBattle(dirtyUnit({ kind: 'character', faction: 'enemy' }))
     expect(infiltrator.inCombat).toBe(true)
     expect(infiltrator.hp.current).toBe(18)

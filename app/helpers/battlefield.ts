@@ -67,11 +67,8 @@ export function rosterOf(units: BattlefieldUnit[]): BattlefieldUnit[] {
 }
 
 /**
- * 依先攻值回傳新的顯示順序（D-7 的四層排法）：
- * ① 未擲先攻（null）一律排最後 ② initiative 降冪 ③ initiativeBonus 降冪
- * ④ 維持當前顯示順序（穩定排序，最終保險）。第 ③ 層於未擲群組內部亦適用。
- *
- * 只有工具列「依先攻重排」會呼叫 —— 先攻值變動不觸發重排（順序控制權在 DM 手上）。
+ * 依先攻值回傳新的顯示順序，四層：① 未擲先攻（null）一律排最後 ② initiative 降冪
+ * ③ initiativeBonus 降冪（未擲群組內部亦適用）④ 維持當前顯示順序（穩定排序）。
  * 回傳排好序的單位陣列，不改動輸入。
  */
 export function sortCombatantsByInitiative(combatants: BattlefieldUnit[]): BattlefieldUnit[] {
@@ -134,8 +131,7 @@ export function buildMonsterInstanceName(
 
 /**
  * 回到加入戰場時的快照基準：滿血、清臨時 HP 與所有調整值、清狀態與死亡豁免、清先攻。
- * 不動 `inCombat`（位置由呼叫端決定）。maxHp / ac / speed 契約上是建立時定格的快照基準，
- * 故「剛加入的樣子」完全推導得出來，不需要後端快照。
+ * 不動 `inCombat`（位置由呼叫端決定）。
  */
 export function resetUnitToSnapshotBaseline(source: BattlefieldUnit): BattlefieldUnit {
   return {
@@ -150,14 +146,13 @@ export function resetUnitToSnapshotBaseline(source: BattlefieldUnit): Battlefiel
 }
 
 /**
- * 結束戰鬥的單位重設（D-2，2026-07-30 定案）。**判斷依 `kind` 不依 `faction`** ——
- * 被魅惑而設為玩家陣營的怪物本質仍是快照，結束戰鬥時照樣退回牌庫歸零。
+ * 結束戰鬥的單位重設，**依 `kind` 不依 `faction`**：
  *
  * - `character`：留在場上、HP／臨時 HP／狀態／調整值全部保留（死亡豁免隨 HP 保留）
  * - `monster` / `adhoc`：退回牌庫並回到快照基準
- * - 兩者共通：先攻一律清空（每場重擲）
+ * - 兩者共通：先攻一律清空
  *
- * 未參戰單位一併套用（牌庫裡的怪物下一場應是全新的，角色則本來就保留）。
+ * 未參戰單位一併套用。
  */
 export function resetUnitAfterBattle(source: BattlefieldUnit): BattlefieldUnit {
   if (source.kind === 'character') {

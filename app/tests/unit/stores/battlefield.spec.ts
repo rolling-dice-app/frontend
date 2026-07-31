@@ -898,7 +898,7 @@ describe('useBattlefieldStore — 回合狀態機', () => {
 
   it('leaveCombat 行動中單位退場：行動權交給下一位、輪次不動（D-4）', () => {
     const { store, bf } = seedLocal()
-    bf.activeUnitId = 'u-g2' // 軌尾：舊實作會在此進位
+    bf.activeUnitId = 'u-g2' // 軌尾
     const roundBefore = bf.round
     store.leaveCombat(bf.id, 'u-g2')
     expect(bf.activeUnitId).toBe('u-aliya')

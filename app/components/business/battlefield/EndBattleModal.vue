@@ -39,8 +39,7 @@ defineProps<{
   battleSequence: number
 }>()
 
-// 單純確認：保留與否由 D-2 的規則（依 kind）決定，勾選已失去作用對象。
-// confirm 由父頁關窗（與 ContainerTitleModal 同一慣例）
+// 單純確認；confirm 由父頁關窗（與 ContainerTitleModal 同一慣例）
 const emit = defineEmits<{
   'update:open': [value: boolean]
   confirm: []

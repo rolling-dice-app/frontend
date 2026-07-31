@@ -39,11 +39,10 @@ const confirmButton = (wrapper: Wrapper) =>
   wrapper.findAll('button').find((button) => button.text() === t('battlefield.endBattle'))!
 
 describe('EndBattleModal', () => {
-  it('標題帶場次序號、內文說明新規則，無保留勾選', () => {
+  it('標題帶場次序號、內文說明結束後的處置，無保留勾選', () => {
     const wrapper = mountModal()
     expect(wrapper.text()).toContain(t('battlefield.endBattleTitle', { seq: 2 }))
     expect(wrapper.text()).toContain(t('battlefield.endBattleBody'))
-    // D-2 後保留與否由 kind 決定，勾選已無作用對象
     expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(0)
   })
 

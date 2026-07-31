@@ -7,9 +7,7 @@ import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
 import type { BattlefieldUnit } from '@rolling-dice-app/core'
 
 /**
- * 拖曳排序是純前端幾何計算（以各列中線決定插入位置），與後端無關卻最刁鑽：
- * 指標移動要跨過門檻才算拖曳、插入位置取決於 getBoundingClientRect，
- * 而 jsdom 的 rect 一律是 0 —— 故逐列 stub rect 才能驅動真實分支。
+ * 拖曳排序以各列中線決定插入位置；jsdom 的 rect 一律是 0，故逐列 stub rect 才驅動得了。
  */
 const ROW_HEIGHT = 40
 

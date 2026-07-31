@@ -506,7 +506,6 @@ const onRemoveUnit = (unitId: string): void => {
 const setupOpen = ref(false)
 const endBattleOpen = ref(false)
 
-// 結束即進入下一場（D-5：無「已結束」中間態）
 const onEndBattleConfirm = (): void => {
   const ended = battlefield.value?.battleSequence ?? 1
   const next = battlefieldStore.endBattle(battlefieldId)

@@ -127,7 +127,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   const atUnitCap = (bf: BattlefieldDTO): boolean =>
     bf.units.length >= VALIDATION_LIMITS.maxUnitsPerBattlefield
 
-  /** 入場給號：排在現有參戰單位之後（D-7；系統不自動重排，順序只由 DM 決定） */
+  /** 入場給號：排在現有參戰單位之後 */
   const nextSortOrder = (bf: BattlefieldDTO): number =>
     Math.min(combatantsOf(bf.units).length, BATTLEFIELD_LIMITS.UNIT_SORT_ORDER_MAX)
 
@@ -612,7 +612,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     // 行動中單位退場：先把行動權交給下一位；軌上只剩自己則清空
     if (bf.activeUnitId === unitId) {
       const ordered = combatantsOf(bf.units).map((u) => u.id)
-      // 只交棒，不動輪次（D-4：輪次只由「上一位／下一位」更新）
+      // 只交棒，不動輪次（輪次只由「上一位／下一位」更新）
       const step = nextTurnTarget(ordered, unitId, 1)
       bf.activeUnitId = step.activeUnitId === unitId ? null : step.activeUnitId
     }
@@ -853,12 +853,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
 
   // ── 戰鬥段落 ───────────────────────────────────────────────────────────────
   /**
-   * 重置戰鬥（D-3）。第 2 場以後走後端還原 API：快照是結束上一場時拍的，
-   * 還原後即「角色在場上、怪物在牌庫」，位置與狀態都由快照決定。
-   * 第 1 場沒有前一場故無快照，改以本地「狀態重置＋單位保留＋位置不動」定義初始狀態
-   * （maxHp / ac / speed 是建立時定格的快照基準，回到剛加入的樣子推導得出來）。
-   *
-   * 場次不動 —— 重置不是回退，還原到的就是當前這場的起點。
+   * 重置戰鬥。第 2 場以後走後端還原 API，位置與狀態都由本場起始快照決定；
+   * 第 1 場無快照，走本地「全員回快照基準、單位保留、位置不動」。場次一律不動。
    */
   const resetBattle = async (battlefieldId: string): Promise<void> => {
     const bf = requireBattlefield(battlefieldId)
@@ -874,7 +870,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         battlefieldCache.value.set(battlefieldId, restored)
         return
       } catch (err) {
-        // 快照不存在（理論上只有資料被外部改過才會發生）：降級為本地重置，不讓 DM 卡住。
+        // 無快照可用：降級為本地重置
         if (!isFetchError(err) || err.statusCode !== 404) throw err
       }
     }
@@ -891,8 +887,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
   }
 
   /**
-   * 結束本次戰鬥（D-2）：單位去留與歸零依 helpers/resetUnitAfterBattle（依 kind 判斷），
-   * 場次 +1、輪次回 1、清行動者。場次遞增會觸發後端拍下這一刻的快照供重置戰鬥還原。
+   * 結束本次戰鬥：單位去留與歸零依 helpers/resetUnitAfterBattle，
+   * 場次 +1、輪次回 1、清行動者。場次遞增會觸發後端拍下這一刻的快照供還原使用。
    *
    * @returns 新的場次序號（供 toast）
    */

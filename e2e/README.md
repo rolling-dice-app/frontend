@@ -240,9 +240,12 @@ translated string:
   `battlefield-import-member` / `battlefield-add-template` (each pinned by testid
   - `aria-label*=<name>`), `battlefield-create-adhoc-join`,
     `battlefield-reinforce`, `battlefield-delete`, `battlefield-delete-confirm`.
-    Combat rows need no testid: the row is a `role="button"` whose `aria-label`
-    carries the unit name, and its HP reads as plain `current/max` digits. The
-    drawer is closed with **Escape** before asserting on the workspace behind it.
+    Combat rows carry `battlefield-combat-row` plus the unit name mirrored onto
+    `data-unit-name` (the row is not a button — it holds an initiative input and
+    two move buttons, so only the name block carries button semantics), and their
+    HP reads as plain `current/max` digits. Roster rows carry
+    `battlefield-roster-row`. The drawer is closed with **Escape** before
+    asserting on the workspace behind it.
 
   Note on battlefield combat: persistence here is unlike every other slice — the
   store debounces a PATCH of the **whole** `units` projection (with `updatedAt`
@@ -258,13 +261,10 @@ translated string:
   `battlefield-end-battle-confirm`, `battlefield-damage` and
   `battlefield-hp-amount` are i18n-only buttons/fields; note the damage and heal
   controls share one translated `aria-label` shape carrying the unit name, so the
-  name alone cannot tell them apart. The start-next-battle testid is on the
-  **toolbar** button only — the ended-state banner renders a second one at the
-  same time, and a duplicate testid would trip strict mode.
+  name alone cannot tell them apart. Ending a battle rolls straight into the next
+  one (sequence +1, round 1), so there is no start-next-battle control.
   Ordering is asserted by comparing two rows' positions among the rows inside
-  `battlefield-combat-list`; the scope matters because `role="button"` is _not_
-  unique to `CombatRow` — the layout's `BottomNavDrawer` handle sets it too, so
-  an unscoped match would fold unrelated elements into the ordering. Round
+  `battlefield-combat-list`, matched by `data-unit-name`. Round
   arithmetic is measured as a delta over
   one full cycle rather than hard-coded — where the turn marker starts is not
   guaranteed. **Scoped out on purpose**: dice rolls (random by design, covered by

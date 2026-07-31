@@ -7,12 +7,9 @@
         : 'bg-surface',
       selected ? 'ring-2 ring-inset ring-primary' : '',
     ]"
-    role="button"
-    tabindex="0"
-    :aria-label="t('battlefield.selectUnitAria', { name: unit.name })"
+    data-testid="battlefield-combat-row"
+    :data-unit-name="unit.name"
     @click="onRowActivate"
-    @keydown.enter.prevent="onRowActivate"
-    @keydown.space.prevent="onRowActivate"
   >
     <span
       class="select-none text-center text-sm text-content-faint"
@@ -40,7 +37,15 @@
     </span>
 
     <span class="flex min-w-0 flex-col gap-0.5">
-      <span class="flex min-w-0 items-center gap-1.5">
+      <!-- 選取入口是這顆真 button：整列曾掛 role="button"，但列內還有先攻 input 與上下移
+           按鈕 —— 互動元素不可巢狀於 button role。整列的 click 保留給指標操作。 -->
+      <button
+        type="button"
+        class="flex min-w-0 items-center gap-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        :aria-label="t('battlefield.selectUnitAria', { name: unit.name })"
+        :aria-pressed="selected"
+        @click.stop="onRowActivate"
+      >
         <span
           class="size-2 shrink-0 rounded-full"
           :class="FACTION_DOT_CLASS[unit.faction]"
@@ -53,7 +58,7 @@
           :title="t('battlefield.downMark')"
           >☠</span
         >
-      </span>
+      </button>
       <span v-if="unit.conditions.length > 0" class="flex flex-wrap gap-1">
         <BusinessBattlefieldConditionBadgeList :conditions="unit.conditions" :max="2" />
       </span>

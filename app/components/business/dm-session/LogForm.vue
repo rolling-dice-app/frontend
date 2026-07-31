@@ -210,6 +210,7 @@
           </CommonAppButton>
         </div>
         <p
+          v-if="adhocHint"
           role="status"
           class="mt-1 flex items-center gap-1 text-xs"
           :class="adhocHint?.tone === 'muted' ? 'text-content-muted' : 'text-danger'"

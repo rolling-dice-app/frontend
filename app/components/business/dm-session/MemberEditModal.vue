@@ -97,6 +97,7 @@
               </template>
             </CommonAppInput>
             <p
+              v-if="linkHint(member.id)"
               role="status"
               class="mt-1 flex items-center gap-1 text-xs"
               :class="linkHint(member.id)?.tone === 'muted' ? 'text-content-muted' : 'text-danger'"
@@ -195,8 +196,11 @@ const linkStates = ref<Record<string, LinkRowState>>({})
 
 // baseURL 結尾帶 '/'，故 share 段不另加前導 '/'
 const baseURL = useRuntimeConfig().app.baseURL
+// origin 明確標成 client-only：本元件開窗必然發生在 client，但別讓「唯一防線是
+// watcher 的 `if (!next) return` 早退」這件事繼續成立（SSR 下取 window 會直接爆）。
+// 不用 onMounted 收：開窗 watcher 是 immediate，掛載時就要拿得到值。
 const shareLinkOf = (shareId: string): string =>
-  `${window.location.origin}${baseURL}share/${shareId}`
+  `${typeof window === 'undefined' ? '' : window.location.origin}${baseURL}share/${shareId}`
 
 watch(
   () => props.open,

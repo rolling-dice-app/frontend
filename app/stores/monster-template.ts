@@ -1,6 +1,10 @@
 import { toRaw } from 'vue'
 import type { MonsterTemplateDTO, MonsterTemplateSummaryDTO } from '@rolling-dice-app/core'
-import type { MonsterTemplateFormState, MonsterTemplateView } from '~/types/business/monster'
+import type {
+  MonsterTemplateFormState,
+  MonsterTemplateSaveResult,
+  MonsterTemplateView,
+} from '~/types/business/monster'
 import {
   buildMonsterTemplateCreateBody,
   buildMonsterTemplateUpdatePatch,
@@ -81,16 +85,18 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     return cached ? cloneTemplate(cached) : undefined
   }
 
-  /** 回傳 null 表示 PATCH 已成功但 re-GET 失敗（資料已存，僅新副本暫不可得）。 */
+  /** 三態結果見 {@link MonsterTemplateSaveResult}；呼叫端需自行區分無變更與真的存成功。 */
   const updateMonsterTemplate = async (
     id: string,
     formState: MonsterTemplateFormState,
-  ): Promise<MonsterTemplateDTO | null> => {
+  ): Promise<MonsterTemplateSaveResult> => {
     const original = detailCache.value.get(id)
     if (!original) throw new Error('updateMonsterTemplate: template not loaded')
 
     const patch = buildMonsterTemplateUpdatePatch(original, formState)
-    if (Object.keys(patch).length <= 1) return cloneTemplate(original)
+    if (Object.keys(patch).length <= 1) {
+      return { status: 'unchanged', template: cloneTemplate(original) }
+    }
 
     const api = monsterTemplates()
     await api.update(id, patch)
@@ -102,11 +108,11 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
       // PATCH 已成功，re-GET 失敗不得誤報為儲存失敗；cache 內舊 lock token 已作廢，
       // 失效之避免原地重試撞 409，下次進入頁面重抓。
       detailCache.value.delete(id)
-      return null
+      return { status: 'stale' }
     }
     detailCache.value.set(id, next)
     // 列表不本地同步（含 updatedAt desc 置頂）：成功後必導列表，該頁必重抓
-    return cloneTemplate(next)
+    return { status: 'saved', template: cloneTemplate(next) }
   }
 
   // hard-delete 無 deletedAt 分流，本地移除即與後端一致，不需重載列表。

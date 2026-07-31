@@ -16,7 +16,7 @@
           type="number"
           size="sm"
           outline
-          placeholder="±0"
+          :placeholder="derivedBonusOf(key)"
           class="w-16"
           @update:model-value="onSkillInput(key, $event)"
         />
@@ -27,11 +27,16 @@
 
 <script setup lang="ts">
 import { CHARACTER_INT_LIMITS, SKILL_KEYS, type SkillKey } from '@rolling-dice-app/core'
+import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
 import type { MonsterTemplateFormState } from '~/types/business/monster'
 
 const { t } = useI18n()
 
 const formState = defineModel<MonsterTemplateFormState>('formState', { required: true })
+
+/** 未填時的 placeholder：顯示該技能所屬屬性的調整值，避免暗示「沒填 = 0」。 */
+const derivedBonusOf = (key: SkillKey): string =>
+  formatModifier(getAbilityModifier(formState.value.abilities[SKILL_TO_ABILITY_MAP[key]]))
 
 /** DTO 語意為「只列有的」：清空輸入時移除 key，而非留下 0 值。 */
 const onSkillInput = (key: SkillKey, raw: string): void => {

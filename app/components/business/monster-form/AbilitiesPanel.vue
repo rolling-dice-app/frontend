@@ -47,7 +47,7 @@
             type="number"
             size="sm"
             outline
-            placeholder="±0"
+            :placeholder="formatModifier(getAbilityModifier(formState.abilities[key]))"
             class="w-full text-center"
             @update:model-value="onSavingThrowInput(key, $event)"
           />

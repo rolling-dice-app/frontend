@@ -1,14 +1,51 @@
 import {
   buildMonsterTemplateCreateDefaults,
+  type AbilityKey,
   type DamageDieEntry,
   type MonsterTemplateCreateBody,
   type MonsterTemplateDTO,
   type MonsterTemplateSummaryDTO,
   type MonsterTemplateUpdateBody,
+  type SkillKey,
 } from '@rolling-dice-app/core'
 import type { MonsterTemplateFormState, MonsterTemplateView } from '~/types/business/monster'
+import { SKILL_TO_ABILITY_MAP } from '~/constants/dnd'
+import { getAbilityModifier } from '~/helpers/ability'
 import { cleanText, cleanTextOrNull } from '~/utils/text'
 import { deepEqual } from '~/utils/deep-equal'
+
+/** `savingThrows` / `skills` 的推導來源：只需要六屬性分數。 */
+type MonsterAbilities = Pick<MonsterTemplateView, 'abilities'>
+
+/**
+ * 豁免加值的三態解析：有列出者用列出的值（含明確的 `0`），未列出者用該屬性的調整值。
+ * 契約的 `Partial<Record<...>>` 只存被覆寫的項，fallback 規則由消費端負責。
+ */
+export function resolveMonsterSavingThrow(
+  monster: MonsterAbilities & Pick<MonsterTemplateView, 'savingThrows'>,
+  key: AbilityKey,
+): number {
+  return monster.savingThrows[key] ?? getAbilityModifier(monster.abilities[key])
+}
+
+/** 技能加值的三態解析，規則同 {@link resolveMonsterSavingThrow}，屬性依 `SKILL_TO_ABILITY_MAP`。 */
+export function resolveMonsterSkillBonus(
+  monster: MonsterAbilities & Pick<MonsterTemplateView, 'skills'>,
+  key: SkillKey,
+): number {
+  return monster.skills[key] ?? getAbilityModifier(monster.abilities[SKILL_TO_ABILITY_MAP[key]])
+}
+
+/**
+ * 傷害條目是否構成有意義的傷害：有骰（`count > 0` 且指定骰面）或有非零加值。
+ * 用於過濾「新增傷害列後未填任何值」與只填 `count` 的半填列 —— 兩者都會被
+ * {@link formatDamageDice} 印成 `0`。單獨的傷害類型不構成傷害。
+ */
+export function isMeaningfulDamageEntry(entry: DamageDieEntry): boolean {
+  const hasDice = entry.count > 0 && entry.dieType != null
+  const hasBonus = entry.bonus != null && entry.bonus !== 0
+  return hasDice || hasBonus
+}
 
 /**
  * 把單一傷害條目格式化為骰式字串（不含傷害類型 label，類型由呼叫端以 i18n 補）。

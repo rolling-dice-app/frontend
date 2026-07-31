@@ -18,6 +18,7 @@ export default {
   deleteLabel: '刪除怪物模板',
   deleteConfirm: '刪除後將永久移除（無法還原），確定要刪除以下怪物？',
   savedHint: '已儲存',
+  noChangesHint: '沒有變更',
 
   // 表單欄位分組小標
   formGroup: {

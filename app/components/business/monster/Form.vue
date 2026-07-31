@@ -44,8 +44,7 @@ import type { MonsterTemplateFormState, MonsterTemplateView } from '~/types/busi
 
 /**
  * 脫勾副本。用 JSON round-trip 而非 structuredClone(toRaw(...))：`toRaw` 只剝一層，
- * 子面板若整包替換（`{ ...formState, name }`），巢狀值仍是 reactive proxy，
- * structuredClone 會丟 DataCloneError 讓儲存整條靜默失敗。form state 契約本就是純 JSON。
+ * 子面板整包替換後巢狀值仍是 reactive proxy，structuredClone 會丟 DataCloneError。
  */
 const cloneFormState = (source: MonsterTemplateFormState): MonsterTemplateFormState =>
   JSON.parse(JSON.stringify(source)) as MonsterTemplateFormState
@@ -61,8 +60,7 @@ const { t } = useI18n()
 
 // 從 view 深拷一份本地 form state；提交時回拋給頁面，由頁面呼叫 store 打後端。
 // 必須是 ref 而非 reactive：子面板以 defineModel 綁 `v-model:form-state`，
-// 編譯出的 `onUpdate:formState` 是 `_isRef(formState) ? formState.value = $event : null` ——
-// 綁在 reactive 上時整包賦值會是編譯期 no-op，改動靜默消失且型別檢查照過。
+// 編譯出的 `onUpdate:formState` 只在 ref 上生效，綁 reactive 時整包賦值會是 no-op。
 const formState = ref<MonsterTemplateFormState>(cloneFormState(props.monster))
 
 const pageTitle = computed(

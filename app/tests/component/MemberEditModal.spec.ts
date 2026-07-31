@@ -402,7 +402,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper, 1).trigger('blur')
 
       expect(mockResolve).not.toHaveBeenCalled()
-      // 已連結的第一列沒有提示（不渲染 live region），故重複提示是唯一那一則
+      // 已連結的第一列沒有提示，故重複提示是唯一那一則
       const hints = wrapper.findAll('[role="status"]')
       expect(hints).toHaveLength(1)
       expect(hints[0]!.text()).toContain('此角色卡已在名單中')

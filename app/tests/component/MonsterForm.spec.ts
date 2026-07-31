@@ -6,10 +6,7 @@ import MonsterForm from '~/components/business/monster/Form.vue'
 import { createMockMonsterFormState, createMockMonsterTemplate } from '~/tests/fixtures/monster'
 import type { MonsterTemplateFormState } from '~/types/business/monster'
 
-/**
- * 迴歸（monster C2）：子面板以 defineModel 綁 v-model:form-state。父層若把 state 建在
- * reactive 上，編譯出的 onUpdate:formState 會是 no-op —— 整包賦值靜默消失、型別檢查照過。
- */
+/** 子面板以 defineModel 綁 v-model:form-state；父層建在 reactive 上時整包賦值會是 no-op。 */
 const ModelPanelStub = {
   name: 'ModelPanel',
   props: { formState: { type: Object, required: true } },
@@ -17,7 +14,6 @@ const ModelPanelStub = {
   template: '<button type="button" data-replace @click="replace">replace</button>',
   methods: {
     replace(this: { formState: MonsterTemplateFormState; $emit: (e: string, v: unknown) => void }) {
-      // defineModel 最自然的整包替換寫法
       this.$emit('update:formState', { ...this.formState, name: '整包換掉的名字' })
     },
   },

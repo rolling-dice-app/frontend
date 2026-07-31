@@ -103,9 +103,8 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     )
     containerCache.value.set(created.id, created)
     // 列表不本地同步：成功即導詳情，返回列表時必重抓。
-    // 「必重抓」依賴 Nuxt 的 `purgeCachedData` 預設為 true（deps 歸零時清 asyncData cache
-    // 並讓下次掛載重跑 initial fetch）；本專案未覆寫該 flag、頁面也無自訂 getCachedData。
-    // 若日後關掉它或改用自訂快取，這裡就得改為本地同步，否則會看到舊列表。
+    // 「必重抓」依賴 Nuxt `purgeCachedData` 預設為 true（deps 歸零時清 asyncData cache
+    // 並讓下次掛載重跑 initial fetch）；關掉它就得改為本地同步。
     return cloneContainer(created)
   }
 

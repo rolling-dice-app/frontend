@@ -36,9 +36,8 @@ import { buildBattlefieldMemberSource } from '~/helpers/battlefield-snapshot'
 import { toDmSessionMemberInputs } from '~/helpers/dm-session'
 import { rollDie } from '~/helpers/dice'
 import { useMonsterTemplateStore } from '~/stores/monster-template'
-import { createKeyedDirtyGuard } from '~/utils/dirty-guard'
+import { createPersistPipeline } from '~/utils/persist-pipeline'
 import { createKeyedSingleFlight, createSingleFlight } from '~/utils/single-flight'
-import { debounce, type DebouncedFn } from '~/utils/timing'
 
 const PERSIST_DEBOUNCE_MS = 300
 const PERSIST_RETRY_MS = 2000
@@ -146,97 +145,14 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     })
   }
 
-  // ── 持久化 pipeline（debounce PATCH → re-GET；比照 useCharacterCombatState） ─
-  interface PersistState {
-    debounced: DebouncedFn<[]>
-    /** 當前飛行中的 PATCH+GET；同步指派以確保 flush 路徑能立刻 await */
-    inFlight: Promise<void> | null
-    /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
-    retryScheduled: boolean
-    retryTimer: ReturnType<typeof setTimeout> | null
-    /**
-     * PATCH 已成功但 re-GET 換 token 失敗：本地 token 已作廢，帶著它重送會撞 409，
-     * 故下一輪必須先補一次 re-GET 換 token 才能繼續送。
-     */
-    tokenStale: boolean
-  }
-  const persistStates = new Map<string, PersistState>()
-  /** PATCH 飛行期間是否又被 user 動過；避免 re-GET 覆蓋掉同時間的新改動 */
-  const dirty = createKeyedDirtyGuard<string>()
+  // ── 持久化（編排走 utils/persist-pipeline，此處只提供戰場專屬的四個注入點） ──
+  const persist = createPersistPipeline<string>({
+    debounceMs: PERSIST_DEBOUNCE_MS,
+    retryMs: PERSIST_RETRY_MS,
 
-  const persistStateOf = (battlefieldId: string): PersistState => {
-    let state = persistStates.get(battlefieldId)
-    if (!state) {
-      state = {
-        debounced: debounce(() => {
-          void runPersist(battlefieldId)
-        }, PERSIST_DEBOUNCE_MS),
-        inFlight: null,
-        retryScheduled: false,
-        retryTimer: null,
-        tokenStale: false,
-      }
-      persistStates.set(battlefieldId, state)
-    }
-    return state
-  }
-
-  const clearRetry = (state: PersistState): void => {
-    if (state.retryTimer) {
-      clearTimeout(state.retryTimer)
-      state.retryTimer = null
-    }
-    state.retryScheduled = false
-  }
-
-  /** 取消某戰場所有排程中的持久化（刪除／登出時用；不等待飛行中的 PATCH） */
-  const cancelPersist = (battlefieldId: string): void => {
-    persistErrors.value.delete(battlefieldId)
-    const state = persistStates.get(battlefieldId)
-    if (!state) return
-    state.debounced.cancel()
-    clearRetry(state)
-    persistStates.delete(battlefieldId)
-  }
-
-  /** 所有變更 action 的統一出口：標記 dirty 並排入 debounce 送出 */
-  const schedulePersist = (battlefieldId: string): void => {
-    dirty.bump(battlefieldId)
-    persistStateOf(battlefieldId).debounced()
-  }
-
-  const runPersist = async (battlefieldId: string): Promise<void> => {
-    const state = persistStateOf(battlefieldId)
-    if (state.inFlight) {
-      // 飛行中再觸發：排成 trailing 一輪，帶最新 state 送出
-      state.debounced()
-      return
-    }
-    if (state.retryTimer) {
-      clearTimeout(state.retryTimer)
-      state.retryTimer = null
-    }
-    state.inFlight = doPersist(battlefieldId, state)
-    try {
-      await state.inFlight
-    } finally {
-      state.inFlight = null
-    }
-  }
-
-  /**
-   * PATCH → re-GET 換 token。兩段的失敗語意不同，故分開處理：
-   * PATCH 失敗＝資料沒存到，可原地重試；re-GET 失敗＝資料已存、只是新 token 拿不到。
-   */
-  const doPersist = async (battlefieldId: string, state: PersistState): Promise<void> => {
-    const bf = battlefieldCache.value.get(battlefieldId)
-    if (!bf) return
-
-    // 上一輪 re-GET 失敗過：先補換 token 才能安全重送
-    if (state.tokenStale && !(await refreshToken(battlefieldId, state))) return
-
-    const snapshot = dirty.snapshot()
-    try {
+    send: async (battlefieldId) => {
+      const bf = battlefieldCache.value.get(battlefieldId)
+      if (!bf) return
       // `toRaw` 只剝一層：任何以 units.map / units.filter 重建過的陣列，元素仍是
       // reactive proxy（如 endBattle / removeUnit），而 structuredClone 對 proxy
       // 直接丟 DataCloneError，會讓整條持久化靜默失敗。DTO 契約本就是純 JSON，
@@ -251,99 +167,59 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
         units: raw.units,
       }
       await battlefields().update(battlefieldId, body)
-    } catch (err) {
-      await handlePatchError(battlefieldId, state, err)
-      return
-    }
+    },
 
-    // 到這裡 PATCH 已成功：後續失敗只影響「換到新 token」，不可再重送 PATCH。
-    try {
+    refetch: async (battlefieldId, { tokenOnly }) => {
       const fresh = await battlefields().get(battlefieldId)
       const current = battlefieldCache.value.get(battlefieldId)
       if (!current) return
-      if (dirty.changedSince(battlefieldId, snapshot)) {
-        // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
-        current.updatedAt = fresh.updatedAt
-      } else {
-        battlefieldCache.value.set(battlefieldId, fresh)
+      // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
+      if (tokenOnly) current.updatedAt = fresh.updatedAt
+      else battlefieldCache.value.set(battlefieldId, fresh)
+    },
+
+    classifySendError: async (battlefieldId, err) => {
+      if (apiErrorCodeOf(err) === 'STALE_BATTLEFIELD_VERSION') {
+        // 資料已被其他來源改過：丟棄未送出的本地編輯，以 server 為準（單 DM MVP 決議）
+        await recoverFromServer(battlefieldId)
+        return 'expose'
       }
-      persistErrors.value.delete(battlefieldId)
-      state.retryScheduled = false
-      state.tokenStale = false
-    } catch (err) {
+      if (isFetchError(err) && err.statusCode === 404) {
+        // 戰場已在他端刪除：清 cache，頁面落 NotFound 分支
+        battlefieldCache.value.delete(battlefieldId)
+        return 'stop'
+      }
+      return 'retry'
+    },
+
+    classifyRefetchError: (battlefieldId, err) => {
       if (isFetchError(err) && err.statusCode === 404) {
         battlefieldCache.value.delete(battlefieldId)
-        return
+        return 'stop'
       }
-      // 本地編輯全部保留（資料已在 server），只把 token 標成待補；額度用完才曝露錯誤
-      state.tokenStale = true
-      if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
-    }
-  }
+      return 'retry'
+    },
 
-  /** 只補 token、不動資料；成功回 true。失敗代表仍不可送出 PATCH。 */
-  const refreshToken = async (battlefieldId: string, state: PersistState): Promise<boolean> => {
-    try {
-      const fresh = await battlefields().get(battlefieldId)
-      const current = battlefieldCache.value.get(battlefieldId)
-      if (!current) return false
-      current.updatedAt = fresh.updatedAt
-      state.tokenStale = false
-      persistErrors.value.delete(battlefieldId)
-      return true
-    } catch (err) {
-      if (isFetchError(err) && err.statusCode === 404) {
-        battlefieldCache.value.delete(battlefieldId)
-        return false
-      }
-      if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
-      return false
-    }
-  }
+    onError: (battlefieldId, err) => persistErrors.value.set(battlefieldId, err),
+    onSuccess: (battlefieldId) => persistErrors.value.delete(battlefieldId),
+  })
 
-  const handlePatchError = async (
-    battlefieldId: string,
-    state: PersistState,
-    err: unknown,
-  ): Promise<void> => {
-    if (apiErrorCodeOf(err) === 'STALE_BATTLEFIELD_VERSION') {
-      // 資料已被其他來源改過：丟棄未送出的本地編輯，以 server 為準（單 DM MVP 決議）
-      state.debounced.cancel()
-      clearRetry(state)
-      state.tokenStale = false
-      await recoverFromServer(battlefieldId)
-      persistErrors.value.set(battlefieldId, err)
-      return
-    }
-    if (isFetchError(err) && err.statusCode === 404) {
-      // 戰場已在他端刪除：清 cache，頁面落 NotFound 分支
-      state.debounced.cancel()
-      clearRetry(state)
-      battlefieldCache.value.delete(battlefieldId)
-      return
-    }
-    // 重試額度用完才曝露：保留本地編輯（下次變更或手動重試會再觸發 persist）
-    if (!scheduleRetry(battlefieldId, state)) persistErrors.value.set(battlefieldId, err)
-  }
+  /** 所有變更 action 的統一出口 */
+  const schedulePersist = (battlefieldId: string): void => persist.schedule(battlefieldId)
 
-  /** 一輪只排一次自動重試；額度已用掉回 false，由呼叫端決定曝露錯誤。 */
-  const scheduleRetry = (battlefieldId: string, state: PersistState): boolean => {
-    if (state.retryScheduled || state.retryTimer) return false
-    state.retryScheduled = true
-    state.retryTimer = setTimeout(() => {
-      state.retryTimer = null
-      void runPersist(battlefieldId)
-    }, PERSIST_RETRY_MS)
-    return true
-  }
-
-  /** 頁面「重試」入口：清掉錯誤並立刻再跑一輪（必要時先補 token） */
-  const retryPersist = async (battlefieldId: string): Promise<void> => {
-    const state = persistStates.get(battlefieldId)
-    if (!state) return
-    clearRetry(state)
+  /** 取消某戰場所有排程中的持久化（刪除／登出時用；不等待飛行中的請求） */
+  const cancelPersist = (battlefieldId: string): void => {
     persistErrors.value.delete(battlefieldId)
-    await runPersist(battlefieldId)
+    persist.cancel(battlefieldId)
+  }
+
+  /** 把 pending debounce／失敗重試立刻送出並等所有飛行中的請求結束；route-leave 前呼叫 */
+  const flushPersist = (battlefieldId: string): Promise<void> => persist.flush(battlefieldId)
+
+  /** 頁面「重試」入口：清掉錯誤並立刻再跑一輪（必要時先補換 token） */
+  const retryPersist = async (battlefieldId: string): Promise<void> => {
+    persistErrors.value.delete(battlefieldId)
+    await persist.run(battlefieldId)
   }
 
   /** 409 stale 回復：re-GET 覆蓋本地；期間戰場若已消失（404）則清 cache */
@@ -353,30 +229,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       battlefieldCache.value.set(battlefieldId, fresh)
     } catch (err) {
       if (isFetchError(err) && err.statusCode === 404) battlefieldCache.value.delete(battlefieldId)
-    }
-  }
-
-  /** 把 pending debounce／失敗重試立刻送出並等所有飛行中的 PATCH 結束；route-leave 前呼叫 */
-  const flushPersist = async (battlefieldId: string): Promise<void> => {
-    const state = persistStates.get(battlefieldId)
-    if (!state) return
-    while (true) {
-      state.debounced.flush()
-      if (state.inFlight) {
-        try {
-          await state.inFlight
-        } catch {
-          // 失敗已由 doPersist 內處理（排重試／persistError），不再向外拋
-        }
-        continue
-      }
-      if (state.retryTimer) {
-        clearTimeout(state.retryTimer)
-        state.retryTimer = null
-        void runPersist(battlefieldId)
-        continue
-      }
-      return
     }
   }
 
@@ -987,7 +839,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
 
   /** 清空所有 session-bound state；登出 / 換帳號 / 401 時由 auth store 統一呼叫。 */
   const reset = (): void => {
-    for (const battlefieldId of Array.from(persistStates.keys())) cancelPersist(battlefieldId)
+    persist.cancelAll()
     battlefieldCache.value = new Map()
     sessionOptionList.value = []
     memberSourcesCache.value = new Map()

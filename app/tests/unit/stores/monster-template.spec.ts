@@ -116,14 +116,16 @@ describe('monster-template store — loadDetail / getById', () => {
     expect(store.getById(m.id)).toEqual(m)
   })
 
-  it('失敗時 detailError 被設定且 rethrow', async () => {
+  it('失敗時 detailErrorOf(id) 被設定且 rethrow', async () => {
     const err = new Error('404-ish')
     mockGet.mockRejectedValue(err)
 
     const { useMonsterTemplateStore } = await import('~/stores/monster-template')
     const store = useMonsterTemplateStore()
     await expect(store.loadDetail('nope')).rejects.toThrow('404-ish')
-    expect(store.detailError).toBe(err)
+    expect(store.detailErrorOf('nope')).toBe(err)
+    // per-id：其他 id 不受影響
+    expect(store.detailErrorOf('other')).toBeNull()
   })
 })
 
@@ -301,6 +303,6 @@ describe('monster-template store — reset', () => {
     expect(store.detailCache.size).toBe(0)
     expect(store.listLoaded).toBe(false)
     expect(store.listError).toBeNull()
-    expect(store.detailError).toBeNull()
+    expect(store.detailErrorOf('any')).toBeNull()
   })
 })

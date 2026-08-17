@@ -11,7 +11,7 @@ import {
   buildDmSessionLogCreateBody,
   buildDmSessionLogUpdateBody,
 } from '~/helpers/dm-session'
-import { createSingleFlight } from '~/utils/single-flight'
+import { createKeyedSingleFlight, createSingleFlight } from '~/utils/single-flight'
 
 const cloneContainer = (c: DmSessionContainerDTO): DmSessionContainerDTO =>
   structuredClone(toRaw(c))
@@ -23,6 +23,9 @@ const cloneLog = (l: DmSessionLogDTO): DmSessionLogDTO => structuredClone(toRaw(
  * 內部走 /dm-session-containers API（含 session-logs 子資源）；
  * PATCH 以 cache 內 DTO 的 updatedAt 作樂觀鎖 token，204 後 re-GET 換新 token。
  */
+/** log 單飛 key 的組合分隔字元；uuid 不含此字元故不會誤切 */
+const LOG_KEY_SEPARATOR = '::'
+
 export const useDmSessionStore = defineStore('dmSession', () => {
   const list = ref<DmSessionContainerSummaryDTO[]>([])
   const containerCache = ref(new Map<string, DmSessionContainerDTO>())
@@ -31,8 +34,12 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   const listLoading = ref(false)
   const listError = ref<unknown>(null)
 
-  const detailLoading = ref(false)
-  const detailError = ref<unknown>(null)
+  /** 詳情載入狀態 per-id（容器與紀錄共用同一組 map，key 不重疊） */
+  const detailLoadingIds = ref(new Set<string>())
+  const detailErrors = ref(new Map<string, unknown>())
+
+  const isDetailLoading = (id: string): boolean => detailLoadingIds.value.has(id)
+  const detailErrorOf = (id: string): unknown => detailErrors.value.get(id) ?? null
 
   // 容器數是否達方案上限；limits 未就緒不視為達上限。
   const isAtContainerLimit = computed(() => {
@@ -59,20 +66,27 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   })
   const loadList = (): Promise<DmSessionContainerSummaryDTO[]> => listFlight.run()
 
-  const loadContainer = async (id: string): Promise<DmSessionContainerDTO> => {
-    detailLoading.value = true
-    detailError.value = null
-    try {
-      const container = await dmSessionContainers().get(id)
-      containerCache.value.set(id, container)
-      return cloneContainer(container)
-    } catch (error) {
-      detailError.value = error
-      throw error
-    } finally {
-      detailLoading.value = false
-    }
-  }
+  // 單飛 per-id：同一容器不並行載入。
+  const containerFlight = createKeyedSingleFlight(
+    async (id: string): Promise<DmSessionContainerDTO> => {
+      detailLoadingIds.value.add(id)
+      detailErrors.value.delete(id)
+      try {
+        const container = await dmSessionContainers().get(id)
+        containerCache.value.set(id, container)
+        return container
+      } catch (error) {
+        detailErrors.value.set(id, error)
+        throw error
+      } finally {
+        detailLoadingIds.value.delete(id)
+      }
+    },
+  )
+
+  /** 回傳防禦性 clone；共享同一輪 GET 的多個呼叫端各自拿到獨立副本。 */
+  const loadContainer = async (id: string): Promise<DmSessionContainerDTO> =>
+    cloneContainer(await containerFlight.run(id))
 
   /** 對外讀取：回傳防禦性 clone，呼叫端可安全改寫。 */
   const getContainerById = (id: string): DmSessionContainerDTO | undefined => {
@@ -133,20 +147,26 @@ export const useDmSessionStore = defineStore('dmSession', () => {
   }
 
   // ── 紀錄 ───────────────────────────────────────────────────────────────────
-  const loadLog = async (containerId: string, logId: string): Promise<DmSessionLogDTO> => {
-    detailLoading.value = true
-    detailError.value = null
+  // 單飛的 key 需同時帶容器與紀錄 id（getLog 兩者都要），故以分隔字元組合。
+  const logFlight = createKeyedSingleFlight(async (key: string): Promise<DmSessionLogDTO> => {
+    const [containerId = '', logId = ''] = key.split(LOG_KEY_SEPARATOR)
+    detailLoadingIds.value.add(logId)
+    detailErrors.value.delete(logId)
     try {
       const log = await dmSessionContainers().getLog(containerId, logId)
       logCache.value.set(logId, log)
-      return cloneLog(log)
+      return log
     } catch (error) {
-      detailError.value = error
+      detailErrors.value.set(logId, error)
       throw error
     } finally {
-      detailLoading.value = false
+      detailLoadingIds.value.delete(logId)
     }
-  }
+  })
+
+  /** 回傳防禦性 clone；共享同一輪 GET 的多個呼叫端各自拿到獨立副本。 */
+  const loadLog = async (containerId: string, logId: string): Promise<DmSessionLogDTO> =>
+    cloneLog(await logFlight.run(`${containerId}${LOG_KEY_SEPARATOR}${logId}`))
 
   /** 對外讀取：回傳防禦性 clone，呼叫端可安全改寫。 */
   const getLogById = (logId: string): DmSessionLogDTO | undefined => {
@@ -205,8 +225,8 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     logCache.value = new Map()
     listLoading.value = false
     listError.value = null
-    detailLoading.value = false
-    detailError.value = null
+    detailLoadingIds.value = new Set()
+    detailErrors.value = new Map()
   }
 
   return {
@@ -216,8 +236,8 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     isAtContainerLimit,
     listLoading,
     listError,
-    detailLoading,
-    detailError,
+    isDetailLoading,
+    detailErrorOf,
     loadList,
     loadContainer,
     getContainerById,

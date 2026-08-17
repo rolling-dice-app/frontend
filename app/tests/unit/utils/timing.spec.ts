@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { debounce, throttle } from '~/utils/timing'
+import { debounce, throttle, withTimeout } from '~/utils/timing'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -139,5 +139,33 @@ describe('throttle', () => {
 
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy).toHaveBeenCalledWith('a')
+  })
+})
+
+describe('withTimeout', () => {
+  it('在時限內完成則回傳結果', async () => {
+    await expect(withTimeout(Promise.resolve('done'), 100)).resolves.toBe('done')
+  })
+
+  it('逾時回 undefined，但不取消原本的工作', async () => {
+    const spy = vi.fn()
+    const slow = new Promise<string>((resolve) => {
+      setTimeout(() => {
+        spy()
+        resolve('late')
+      }, 500)
+    })
+    const result = withTimeout(slow, 100)
+    await vi.advanceTimersByTimeAsync(100)
+    await expect(result).resolves.toBeUndefined()
+
+    // 原工作仍會跑完（只是沒人等它）
+    await vi.advanceTimersByTimeAsync(400)
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('原工作失敗時照樣上拋', async () => {
+    // 斷言需同步接上，否則 rejection 會先被視為 unhandled
+    await expect(withTimeout(Promise.reject(new Error('boom')), 100)).rejects.toThrow('boom')
   })
 })

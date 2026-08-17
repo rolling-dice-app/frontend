@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useToast } from '~/composables/ui/useToast'
 
 beforeEach(() => {
@@ -139,6 +139,24 @@ describe('useToast — remove / clear', () => {
     info('c')
     clear()
     expect(items).toHaveLength(0)
+  })
+})
+
+describe('useToast — 操作入口（action）', () => {
+  it('預設無 action', () => {
+    const { items, error } = useToast()
+    error('壞了')
+    expect(items[0]?.action).toBeNull()
+  })
+
+  it('帶 action 時原樣保留；duration 0 表示不自動關閉', () => {
+    const { items, error } = useToast()
+    const onClick = vi.fn()
+    error('存不進去', { duration: 0, action: { label: '重試', onClick } })
+    expect(items[0]?.duration).toBe(0)
+    expect(items[0]?.action?.label).toBe('重試')
+    items[0]?.action?.onClick()
+    expect(onClick).toHaveBeenCalledTimes(1)
   })
 })
 

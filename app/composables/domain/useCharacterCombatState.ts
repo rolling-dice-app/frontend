@@ -9,7 +9,7 @@ import {
   type AbilityKey,
   type ClassKey,
 } from '@rolling-dice-app/core'
-import { createDirtyGuard } from '~/utils/dirty-guard'
+import { createPersistPipeline } from '~/utils/persist-pipeline'
 
 const PERSIST_DEBOUNCE_MS = 300
 const PERSIST_RETRY_MS = 2000
@@ -310,19 +310,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     if (!isReady.value || isResetting.value) return false
     // reset 會清空全部，故丟棄尚未發射的 pending 編輯（cancel 而非 flush）；
     // 但仍需等任何飛行中的 PATCH 結束，否則其 commit 會推進 server updatedAt 使 reset 樂觀鎖 409。
-    persist.cancel()
-    if (retryTimer) {
-      clearTimeout(retryTimer)
-      retryTimer = null
-    }
-    retryScheduled = false
-    if (inFlightPromise) {
-      try {
-        await inFlightPromise
-      } catch {
-        // 失敗已由 doPersist 內處理（排重試 / mutationError + toast），這裡只取最新 updatedAt
-      }
-    }
+    await persist.cancelAndSettle(characterId)
     mutationError.value = null
     isResetting.value = true
     isReady.value = false
@@ -340,44 +328,20 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     }
   }
 
-  // ─── Persist ──────────────────────────────────────────────────────────
+  // ─── Persist（編排走 utils/persist-pipeline，此處只提供四個注入點） ──────
 
-  /** 當前飛行中的 PATCH+GET pipeline；同步指派以確保 flush 路徑能立刻 await */
-  let inFlightPromise: Promise<void> | null = null
-  /** 在 PATCH 飛行期間是否又被 user 動過；用來避免 GET response 覆蓋掉同時間的新改動 */
-  const dirty = createDirtyGuard()
-  let patchSnapshot = dirty.snapshot()
-  /** 此輪失敗是否已用掉自動重試額度；成功後重置 */
-  let retryScheduled = false
-  let retryTimer: ReturnType<typeof setTimeout> | null = null
   /** 自動重試仍失敗後曝露給 UI 的最後一次錯誤；成功的 PATCH 會清空 */
   const mutationError = ref<unknown>(null)
-  const persist = debounce(() => {
-    void runPersist()
-  }, PERSIST_DEBOUNCE_MS)
 
-  async function runPersist(): Promise<void> {
-    if (inFlightPromise) {
-      persist()
-      return
-    }
-    if (retryTimer) {
-      clearTimeout(retryTimer)
-      retryTimer = null
-    }
-    inFlightPromise = doPersist()
-    try {
-      await inFlightPromise
-    } finally {
-      inFlightPromise = null
-    }
-  }
+  // 單一資源，故 key 固定為 characterId。
+  // Contract 假設：backend PATCH /combat-state 為純 setter — 不做 server-side clamp / normalize /
+  // 衍生欄位。否則 tokenOnly 分支只接 updatedAt 的策略會讓 local 與 server 在 user 飛行中又動的
+  // 欄位上偏離。
+  const persist = createPersistPipeline<string>({
+    debounceMs: PERSIST_DEBOUNCE_MS,
+    retryMs: PERSIST_RETRY_MS,
 
-  // Contract 假設：backend PATCH /combat-state 為純 setter — 不做 server-side clamp / normalize / 衍生欄位。
-  // 否則 dirty.changedSince 分支只接 updatedAt 的策略會讓 local 與 server 在 user 飛行中又動的欄位上偏離。
-  async function doPersist(): Promise<void> {
-    patchSnapshot = dirty.snapshot()
-    try {
+    send: async () => {
       const body: CombatStateUpdateDTO = {
         updatedAt: state.updatedAt,
         hp: { ...state.hp },
@@ -391,52 +355,46 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
         deathSaves: { ...state.deathSaves },
       }
       await characters().combatState.patch(characterId, body)
+    },
+
+    refetch: async (_key, { tokenOnly }) => {
       const fresh = await characters().combatState.get(characterId)
-      if (dirty.changedSince(patchSnapshot)) {
-        // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
-        state.updatedAt = fresh.updatedAt
-      } else {
-        await applyServerDto(fresh)
+      // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
+      if (tokenOnly) state.updatedAt = fresh.updatedAt
+      else await applyServerDto(fresh)
+    },
+
+    classifySendError: async (_key, err) => {
+      if (apiErrorCodeOf(err) === 'STALE_COMBAT_STATE_VERSION') {
+        // 資料已被其他來源改過：帶著作廢 token 重試只會再撞一次，改以 server 為準覆蓋本地
+        await recoverFromServer()
+        return 'expose'
       }
+      return 'retry'
+    },
+
+    onError: (_key, err) => {
+      mutationError.value = err
+      apiErrorToast.handle(err)
+    },
+    onSuccess: () => {
       mutationError.value = null
-      retryScheduled = false
-    } catch (err) {
-      if (!retryScheduled) {
-        retryScheduled = true
-        retryTimer = setTimeout(() => {
-          retryTimer = null
-          void runPersist()
-        }, PERSIST_RETRY_MS)
-      } else {
-        mutationError.value = err
-        apiErrorToast.handle(err)
-      }
+    },
+  })
+
+  /** 409 stale 回復：re-GET 覆蓋本地未存編輯，讓後續 PATCH 帶得到有效 token */
+  const recoverFromServer = async (): Promise<void> => {
+    try {
+      const fresh = await characters().combatState.get(characterId)
+      await applyServerDto(fresh)
+    } catch {
+      // 連 GET 都失敗：保持現狀，下次變更或 load() 會再試
     }
   }
 
-  /** 把 pending debounce / 失敗重試立刻送出並等所有飛行中的 PATCH 結束；rest 前用以避免本地未存變更被 server re-GET 覆蓋 */
-  const flushPersist = async (): Promise<void> => {
-    while (true) {
-      persist.flush()
-      if (inFlightPromise) {
-        try {
-          await inFlightPromise
-        } catch {
-          // 失敗已由 doPersist 內處理（排重試 / mutationError + toast），不再向外拋
-        }
-        continue
-      }
-      if (retryTimer) {
-        clearTimeout(retryTimer)
-        retryTimer = null
-        void runPersist()
-        continue
-      }
-      return
-    }
-  }
+  /** 把 pending debounce / 失敗重試立刻送出並等飛行中的請求結束；rest 前用以避免本地未存變更被覆蓋 */
+  const flushPersist = (): Promise<void> => persist.flush(characterId)
 
-  // 不把 state.updatedAt 納入 dep；server re-GET 寫回 updatedAt 不可觸發 persist。
   watch(
     () => ({
       hp: state.hp,
@@ -451,8 +409,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
     }),
     () => {
       if (!isReady.value) return
-      dirty.bump()
-      persist()
+      persist.schedule(characterId)
     },
     { deep: true },
   )
@@ -460,11 +417,7 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
   // scope dispose 只做純清理；保存最後一次寫入交由 caller 在 route leave 等可 await 的時機呼叫 flushPersist。
   if (getCurrentScope()) {
     onScopeDispose(() => {
-      persist.cancel()
-      if (retryTimer) {
-        clearTimeout(retryTimer)
-        retryTimer = null
-      }
+      persist.cancel(characterId)
     })
   }
 

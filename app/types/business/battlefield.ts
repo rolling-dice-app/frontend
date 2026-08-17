@@ -9,8 +9,8 @@ import type {
  * m7.3 即時戰場 — UI-only 型別。
  *
  * 契約型別（BattlefieldDTO / BattlefieldUnit / BattlefieldSessionOption 等）
- * 一律 import `@rolling-dice-app/core`（12.1.0 起）；本檔僅保留不進 core 的
- * 前端組合型別：快照來源、表單輸入、結束戰鬥保留旗標。
+ * 一律 import `@rolling-dice-app/core`（12.2.0 起）；本檔僅保留不進 core 的
+ * 前端組合型別：快照來源、表單輸入、操作結果。
  */
 
 /**
@@ -86,11 +86,3 @@ export type AddMonsterInstanceResult =
   | { ok: true; unit: BattlefieldUnit }
   | { ok: false; reason: 'cap' }
   | { ok: false; reason: 'templateLoadFailed'; error: unknown }
-
-/** 結束戰鬥彈窗的逐項保留選擇（2026-07-16 決議） */
-export interface EndBattleKeepFlags {
-  keepCurrentHp: boolean
-  keepTempHp: boolean
-  keepConditions: boolean
-  keepAdjustments: boolean
-}

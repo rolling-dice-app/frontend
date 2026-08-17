@@ -4,7 +4,6 @@ import type {
   ClassEntry,
   ClassKey,
 } from '@rolling-dice-app/core'
-import type { EndBattleKeepFlags } from '~/types/business/battlefield'
 
 /** 有效最大 HP＝快照基準＋臨時調整，下限 1（調整值模型，比照 combat-state） */
 export function effectiveMaxHp(unit: Pick<BattlefieldUnit, 'maxHp' | 'hp'>): number {
@@ -68,8 +67,9 @@ export function rosterOf(units: BattlefieldUnit[]): BattlefieldUnit[] {
 }
 
 /**
- * 依先攻值回傳新的顯示順序：先攻降冪、null 排最後、平手維持現有相對順序
- * （穩定排序；平手由拖曳／上下移手動覆蓋）。回傳排好序的單位陣列，不改動輸入。
+ * 依先攻值回傳新的顯示順序，四層：① 未擲先攻（null）一律排最後 ② initiative 降冪
+ * ③ initiativeBonus 降冪（未擲群組內部亦適用）④ 維持當前顯示順序（穩定排序）。
+ * 回傳排好序的單位陣列，不改動輸入。
  */
 export function sortCombatantsByInitiative(combatants: BattlefieldUnit[]): BattlefieldUnit[] {
   return combatants
@@ -77,10 +77,13 @@ export function sortCombatantsByInitiative(combatants: BattlefieldUnit[]): Battl
     .sort((a, b) => {
       const ai = a.u.initiative
       const bi = b.u.initiative
-      if (ai == null && bi == null) return a.index - b.index
-      if (ai == null) return 1
-      if (bi == null) return -1
-      if (bi !== ai) return bi - ai
+      const aUnrolled = ai == null
+      const bUnrolled = bi == null
+      if (aUnrolled !== bUnrolled) return aUnrolled ? 1 : -1
+      if (ai != null && bi != null && ai !== bi) return bi - ai
+      if (a.u.initiativeBonus !== b.u.initiativeBonus) {
+        return b.u.initiativeBonus - a.u.initiativeBonus
+      }
       return a.index - b.index
     })
     .map((x) => x.u)
@@ -127,37 +130,41 @@ export function buildMonsterInstanceName(
 }
 
 /**
- * 結束戰鬥的單位重設（2026-07-16 決議）：
- * 必清＝先攻；敵方退出戰鬥（實例保留）、玩家與中立留場。
- * 保留項由 flags 逐項決定；「其他調整值」重置會把 AC／最大 HP／速度調整歸零，
- * 且先套調整值重置再套滿血，避免以調整後上限回血。
+ * 回到加入戰場時的快照基準：滿血、清臨時 HP 與所有調整值、清狀態與死亡豁免、清先攻。
+ * 不動 `inCombat`（位置由呼叫端決定）。
  */
-export function resetUnitAfterBattle(
-  source: BattlefieldUnit,
-  flags: EndBattleKeepFlags,
-): BattlefieldUnit {
-  const next: BattlefieldUnit = {
+export function resetUnitToSnapshotBaseline(source: BattlefieldUnit): BattlefieldUnit {
+  return {
     ...source,
-    hp: { ...source.hp },
-    conditions: source.conditions.map((c) => ({ ...c })),
-    deathSaves: { ...source.deathSaves },
+    hp: { current: source.maxHp, tempHp: 0, maxAdjustment: 0 },
+    acAdjustment: 0,
+    speedAdjustment: 0,
+    conditions: [],
+    deathSaves: { successes: 0, failures: 0 },
     initiative: null,
-    inCombat: source.inCombat && source.faction !== 'enemy',
   }
-  if (source.inCombat) {
-    if (!flags.keepAdjustments) {
-      next.acAdjustment = 0
-      next.hp.maxAdjustment = 0
-      next.speedAdjustment = 0
-      next.hp.current = Math.min(next.hp.current, effectiveMaxHp(next))
+}
+
+/**
+ * 結束戰鬥的單位重設，**依 `kind` 不依 `faction`**：
+ *
+ * - `character`：留在場上、HP／臨時 HP／狀態／調整值全部保留（死亡豁免隨 HP 保留）
+ * - `monster` / `adhoc`：退回牌庫並回到快照基準
+ * - 兩者共通：先攻一律清空
+ *
+ * 未參戰單位一併套用。
+ */
+export function resetUnitAfterBattle(source: BattlefieldUnit): BattlefieldUnit {
+  if (source.kind === 'character') {
+    return {
+      ...source,
+      hp: { ...source.hp },
+      conditions: source.conditions.map((c) => ({ ...c })),
+      deathSaves: { ...source.deathSaves },
+      initiative: null,
     }
-    if (!flags.keepCurrentHp) next.hp.current = effectiveMaxHp(next)
-    if (!flags.keepTempHp) next.hp.tempHp = 0
-    if (!flags.keepConditions) next.conditions = []
   }
-  // HP ≥ 1 死亡豁免歸零（與 store clearDeathSavesIfUp 同不變量）
-  if (next.hp.current >= 1) next.deathSaves = { successes: 0, failures: 0 }
-  return next
+  return { ...resetUnitToSnapshotBaseline(source), inCombat: false }
 }
 
 /**

@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import { t } from '~/i18n'
 import AppButton from '~/components/common/AppButton.vue'
 import EndBattleModal from '~/components/business/battlefield/EndBattleModal.vue'
-import type { EndBattleKeepFlags } from '~/types/business/battlefield'
 
 const ModalStub = {
   name: 'Modal',
@@ -39,55 +38,20 @@ type Wrapper = ReturnType<typeof mountModal>
 const confirmButton = (wrapper: Wrapper) =>
   wrapper.findAll('button').find((button) => button.text() === t('battlefield.endBattle'))!
 
-const lastConfirm = (wrapper: Wrapper): EndBattleKeepFlags => {
-  const events = wrapper.emitted('confirm')!
-  return events[events.length - 1]![0] as EndBattleKeepFlags
-}
-
 describe('EndBattleModal', () => {
-  it('標題帶場次序號、四個保留項預設全勾', () => {
+  it('標題帶場次序號、內文說明結束後的處置，無保留勾選', () => {
     const wrapper = mountModal()
     expect(wrapper.text()).toContain(t('battlefield.endBattleTitle', { seq: 2 }))
-    const boxes = wrapper.findAll('input[type="checkbox"]')
-    expect(boxes).toHaveLength(4)
-    for (const box of boxes) {
-      expect((box.element as HTMLInputElement).checked).toBe(true)
-    }
+    expect(wrapper.text()).toContain(t('battlefield.endBattleBody'))
+    expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(0)
   })
 
-  it('全保留確認：emit 全 true 的 flags，且不自行關窗', async () => {
+  it('確認：emit 無 payload 的 confirm，且不自行關窗', async () => {
     const wrapper = mountModal()
     await confirmButton(wrapper).trigger('click')
-    expect(lastConfirm(wrapper)).toEqual({
-      keepCurrentHp: true,
-      keepTempHp: true,
-      keepConditions: true,
-      keepAdjustments: true,
-    })
+    expect(wrapper.emitted('confirm')).toHaveLength(1)
+    expect(wrapper.emitted('confirm')![0]).toEqual([])
     expect(wrapper.emitted('update:open')).toBeUndefined()
-  })
-
-  it('取消勾選反映在 confirm payload', async () => {
-    const wrapper = mountModal()
-    const boxes = wrapper.findAll('input[type="checkbox"]')
-    await boxes[0]!.setValue(false) // keepCurrentHp
-    await boxes[2]!.setValue(false) // keepConditions
-    await confirmButton(wrapper).trigger('click')
-    expect(lastConfirm(wrapper)).toEqual({
-      keepCurrentHp: false,
-      keepTempHp: true,
-      keepConditions: false,
-      keepAdjustments: true,
-    })
-  })
-
-  it('重新開窗回到預設全保留', async () => {
-    const wrapper = mountModal()
-    await wrapper.findAll('input[type="checkbox"]')[1]!.setValue(false)
-    await wrapper.setProps({ open: false })
-    await wrapper.setProps({ open: true })
-    await confirmButton(wrapper).trigger('click')
-    expect(lastConfirm(wrapper).keepTempHp).toBe(true)
   })
 
   it('取消鈕 emit update:open false', async () => {
@@ -95,5 +59,10 @@ describe('EndBattleModal', () => {
     const cancel = wrapper.findAll('button').find((b) => b.text() === t('ui.action.cancel'))!
     await cancel.trigger('click')
     expect(wrapper.emitted('update:open')?.at(-1)).toEqual([false])
+  })
+
+  it('open=false 時不渲染', () => {
+    const wrapper = mountModal({ open: false })
+    expect(wrapper.find('[data-modal]').exists()).toBe(false)
   })
 })

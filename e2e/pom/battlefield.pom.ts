@@ -83,6 +83,14 @@ export class BattlefieldPom {
   }
 
   /**
+   * A unit's row in the left-hand roster (units on the battlefield but not in
+   * the current fight). Ad-hoc units and monsters land here when a battle ends.
+   */
+  rosterEntry(name: string): Locator {
+    return this.page.getByTestId('battlefield-roster-row').filter({ hasText: name })
+  }
+
+  /**
    * A unit's position in the combat list, for ordering assertions. Scoped to the
    * list container: `role="button"` is not unique to `CombatRow` (the layout's
    * `BottomNavDrawer` handle carries it too), so an unscoped match would fold
@@ -143,15 +151,14 @@ export class BattlefieldPom {
     return this.page.getByTestId('battlefield-round-meta')
   }
 
-  /** End the current battle, keeping everything (the modal's default flags). */
+  /**
+   * End the current battle. Ending rolls straight into the next segment
+   * (sequence +1, round 1) — there is no "ended" intermediate state, so the
+   * modal is a plain confirmation.
+   */
   async endBattle(): Promise<void> {
     await this.page.getByTestId('battlefield-end-battle').click()
     await this.page.getByTestId('battlefield-end-battle-confirm').click()
-  }
-
-  /** The start-next-battle control; only rendered once the battle has ended. */
-  startNextBattleButton(): Locator {
-    return this.page.getByTestId('battlefield-start-next')
   }
 
   // ── reinforcement drawer ──────────────────────────────────────────────────

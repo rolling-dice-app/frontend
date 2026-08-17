@@ -1,5 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { BATTLEFIELD_LIMITS } from '@rolling-dice-app/core'
 import type {
   BattlefieldDTO,
   BattlefieldSessionOption,
@@ -38,10 +39,17 @@ const server = vi.hoisted(() => {
   let stamp = 0
   return {
     battlefields: new Map<string, BattlefieldDTO>(),
+    /** 比照 backend：場次遞增時拍照，每戰場只留最新一份 */
+    snapshots: new Map<
+      string,
+      Pick<BattlefieldDTO, 'battleSequence' | 'round' | 'activeUnitId' | 'units'>
+    >(),
     options: [] as BattlefieldSessionOption[],
     updateBodies: [] as BattlefieldUpdateBody[],
+    restoreCalls: [] as string[],
     nextUpdateError: null as unknown,
     nextGetError: null as unknown,
+    nextRestoreError: null as unknown,
     createCounter: 0,
     nextStamp(): string {
       stamp += 1
@@ -49,10 +57,13 @@ const server = vi.hoisted(() => {
     },
     reset(): void {
       this.battlefields.clear()
+      this.snapshots.clear()
       this.options = []
       this.updateBodies = []
+      this.restoreCalls = []
       this.nextUpdateError = null
       this.nextGetError = null
+      this.nextRestoreError = null
       this.createCounter = 0
       stamp = 0
     },
@@ -101,12 +112,41 @@ vi.stubGlobal('battlefields', () => ({
     const bf = server.battlefields.get(id)
     if (!bf) throw fetchError(404, 'BATTLEFIELD_NOT_FOUND')
     if (body.updatedAt !== bf.updatedAt) throw fetchError(409, 'STALE_BATTLEFIELD_VERSION')
+    const prevSequence = bf.battleSequence
     const { updatedAt: _token, ...rest } = body
     Object.assign(bf, structuredClone(rest))
     bf.updatedAt = server.nextStamp()
+    if (bf.battleSequence > prevSequence) {
+      server.snapshots.set(id, {
+        battleSequence: bf.battleSequence,
+        round: bf.round,
+        activeUnitId: bf.activeUnitId,
+        units: structuredClone(bf.units),
+      })
+    }
+  },
+  restore: async (id: string, body: { updatedAt: string }) => {
+    server.restoreCalls.push(id)
+    if (server.nextRestoreError) {
+      const err = server.nextRestoreError
+      server.nextRestoreError = null
+      throw err
+    }
+    const bf = server.battlefields.get(id)
+    if (!bf) throw fetchError(404, 'BATTLEFIELD_NOT_FOUND')
+    if (body.updatedAt !== bf.updatedAt) throw fetchError(409, 'STALE_BATTLEFIELD_VERSION')
+    const snapshot = server.snapshots.get(id)
+    if (!snapshot || snapshot.battleSequence !== bf.battleSequence)
+      throw fetchError(404, 'BATTLEFIELD_SNAPSHOT_NOT_FOUND')
+    bf.round = snapshot.round
+    bf.activeUnitId = snapshot.activeUnitId
+    bf.units = structuredClone(snapshot.units)
+    bf.updatedAt = server.nextStamp()
+    return structuredClone(bf)
   },
   remove: async (id: string) => {
     server.battlefields.delete(id)
+    server.snapshots.delete(id)
   },
 }))
 
@@ -382,7 +422,9 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
 
     expect(server.updateBodies).toHaveLength(1)
     const body = server.updateBodies[0]!
-    expect(body).toMatchObject({ battleSequence: 1, round: 1, inProgress: true })
+    expect(body).toMatchObject({ battleSequence: 1, round: 1 })
+    // inProgress 已棄用，不再寫入
+    expect(body).not.toHaveProperty('inProgress')
     expect(body.units?.[0]).toMatchObject({ hp: { current: 23 }, acAdjustment: 1 })
     // token 已換新（後續 PATCH 不會 409）
     expect(store.getBattlefieldById(battlefieldId)?.updatedAt).toBe(
@@ -408,12 +450,7 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     await store.flushPersist(battlefieldId)
     server.updateBodies = []
 
-    store.endBattle(battlefieldId, {
-      keepCurrentHp: true,
-      keepTempHp: true,
-      keepConditions: true,
-      keepAdjustments: true,
-    })
+    store.endBattle(battlefieldId)
     await store.flushPersist(battlefieldId)
     expect(server.updateBodies).toHaveLength(1)
     expect(store.persistError).toBeNull()
@@ -859,11 +896,14 @@ describe('useBattlefieldStore — 回合狀態機', () => {
     expect(bf.round).toBe(1)
   })
 
-  it('leaveCombat 行動中單位退場：行動權交給下一位', () => {
+  it('leaveCombat 行動中單位退場：行動權交給下一位、輪次不動（D-4）', () => {
     const { store, bf } = seedLocal()
-    store.leaveCombat(bf.id, 'u-aliya')
-    expect(bf.activeUnitId).toBe('u-luna')
-    expect(bf.units.find((u) => u.id === 'u-aliya')?.inCombat).toBe(false)
+    bf.activeUnitId = 'u-g2' // 軌尾
+    const roundBefore = bf.round
+    store.leaveCombat(bf.id, 'u-g2')
+    expect(bf.activeUnitId).toBe('u-aliya')
+    expect(bf.round).toBe(roundBefore)
+    expect(bf.units.find((u) => u.id === 'u-g2')?.inCombat).toBe(false)
   })
 
   it('reorderUnits 依 id 順序重寫 sortOrder；moveUnit 與相鄰互換', () => {
@@ -876,56 +916,192 @@ describe('useBattlefieldStore — 回合狀態機', () => {
     expect(combatIds(bf).slice(0, 2)).toEqual([second, first])
   })
 
-  it('resetBattle 清參戰先攻與行動者、round 回 1；單位與 HP 不動', () => {
+  it('resetBattle（第 1 場，無快照）：全員回快照基準、單位保留、位置不動', async () => {
     const { store, bf } = seedLocal()
-    store.resetBattle(bf.id)
+    store.applyDamage(bf.id, 'u-luna', 8)
+    store.addCondition(bf.id, 'u-aliya', 'stunned', null)
+
+    await store.resetBattle(bf.id)
+
+    expect(server.restoreCalls).toEqual([]) // 第 1 場不打還原 API
     expect(bf.round).toBe(1)
     expect(bf.activeUnitId).toBeNull()
-    for (const u of bf.units.filter((x) => x.inCombat)) {
-      expect(u.initiative).toBeNull()
-    }
-    expect(bf.units.find((u) => u.id === 'u-luna')?.hp.current).toBe(12)
+    expect(bf.units.every((u) => u.initiative === null)).toBe(true)
+    expect(bf.units.find((u) => u.id === 'u-luna')?.hp).toEqual({
+      current: 12,
+      tempHp: 0,
+      maxAdjustment: 0,
+    })
+    expect(bf.units.find((u) => u.id === 'u-aliya')?.conditions).toEqual([])
+    // 位置不動：怪物仍在場上、皮波仍在牌庫
+    expect(bf.units.find((u) => u.id === 'u-g1')?.inCombat).toBe(true)
+    expect(bf.units.find((u) => u.id === 'u-pipo')?.inCombat).toBe(false)
   })
 })
 
 describe('useBattlefieldStore — 戰鬥段落', () => {
-  const KEEP_ALL = {
-    keepCurrentHp: true,
-    keepTempHp: true,
-    keepConditions: true,
-    keepAdjustments: true,
-  }
-
-  it('endBattle：敵方退出（實例保留）、全員先攻清空、inProgress=false', () => {
+  it('endBattle：場次 +1、輪次回 1、清行動者與全員先攻', () => {
     const { store, bf } = seedLocal()
-    store.endBattle(bf.id, KEEP_ALL)
+    expect(store.endBattle(bf.id)).toBe(2)
     const next = store.getBattlefieldById(bf.id)!
-    expect(next.inProgress).toBe(false)
+    expect(next.battleSequence).toBe(2)
+    expect(next.round).toBe(1)
     expect(next.activeUnitId).toBeNull()
-    expect(next.units.filter((u) => u.faction === 'enemy').every((u) => !u.inCombat)).toBe(true)
-    expect(next.units.filter((u) => u.faction === 'enemy')).toHaveLength(2)
     expect(next.units.every((u) => u.initiative === null)).toBe(true)
-    expect(next.units.find((u) => u.id === 'u-luna')?.inCombat).toBe(true)
-    expect(next.units.find((u) => u.id === 'u-luna')?.hp.current).toBe(12)
   })
 
-  it('endBattle 取消保留當前 HP：參戰單位回滿血、未參戰不動', () => {
+  it('endBattle：角色留場保留狀態、怪物與 adhoc 退牌庫歸零（依 kind）', () => {
     const { store, bf } = seedLocal()
-    store.applyDamage(bf.id, 'u-luna', 8) // temp 5 先扣 → current 9
-    store.applyDamage(bf.id, 'u-pipo', 6) // 未參戰 16 → 10
-    store.endBattle(bf.id, { ...KEEP_ALL, keepCurrentHp: false })
+    store.applyDamage(bf.id, 'u-luna', 8) // 臨時 5 先扣 → current 9
+    store.applyDamage(bf.id, 'u-g1', 4) // 怪物 7 → 3
+
+    store.endBattle(bf.id)
     const next = store.getBattlefieldById(bf.id)!
-    expect(next.units.find((u) => u.id === 'u-luna')?.hp.current).toBe(12)
-    expect(next.units.find((u) => u.id === 'u-pipo')?.hp.current).toBe(10)
+    const luna = next.units.find((u) => u.id === 'u-luna')!
+    const goblin = next.units.find((u) => u.id === 'u-g1')!
+
+    expect(luna.inCombat).toBe(true)
+    expect(luna.hp.current).toBe(9)
+    expect(goblin.inCombat).toBe(false)
+    expect(goblin.hp).toEqual({ current: 7, tempHp: 0, maxAdjustment: 0 })
+    // 實例保留（不刪單位）
+    expect(next.units).toHaveLength(5)
   })
 
-  it('startNextBattle：場次遞增、round 回 1、恢復進行中', () => {
+  it('endBattle：場次到達上限不再遞增', () => {
     const { store, bf } = seedLocal()
-    store.endBattle(bf.id, KEEP_ALL)
-    expect(store.startNextBattle(bf.id)).toBe(2)
-    expect(bf.round).toBe(1)
-    expect(bf.inProgress).toBe(true)
-    expect(bf.activeUnitId).toBeNull()
+    bf.battleSequence = BATTLEFIELD_LIMITS.BATTLE_SEQUENCE_MAX
+    expect(store.endBattle(bf.id)).toBe(BATTLEFIELD_LIMITS.BATTLE_SEQUENCE_MAX)
+  })
+
+  it('resetBattle（第 2 場以後）：走還原 API，以回應覆蓋本地並換新 token', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const unit = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    // 結束第 1 場 → server 拍下第 2 場起始快照
+    store.endBattle(battlefieldId)
+    await store.flushPersist(battlefieldId)
+    // 第 2 場打到一半
+    store.applyDamage(battlefieldId, unit.id, 12)
+    store.stepTurn(battlefieldId, 1)
+    await store.flushPersist(battlefieldId)
+
+    await store.resetBattle(battlefieldId)
+
+    expect(server.restoreCalls).toEqual([battlefieldId])
+    const next = store.getBattlefieldById(battlefieldId)!
+    expect(next.battleSequence).toBe(2) // 場次不因還原而回退
+    expect(next.round).toBe(1)
+    expect(next.units.find((u) => u.id === unit.id)?.hp.current).toBe(30)
+    expect(next.updatedAt).toBe(server.battlefields.get(battlefieldId)?.updatedAt)
+  })
+
+  it('resetBattle：還原前先 flush，未送出的編輯不會讓還原自撞 409', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )
+    store.endBattle(battlefieldId)
+    await store.flushPersist(battlefieldId)
+    // 只 schedule 不 flush：本地 token 仍是舊的
+    store.stepTurn(battlefieldId, 1)
+
+    await store.resetBattle(battlefieldId)
+    expect(store.persistError).toBeNull()
+    expect(store.getBattlefieldById(battlefieldId)?.round).toBe(1)
+  })
+
+  it('resetBattle：還原 404（快照遺失）時降級為本地重置', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const unit = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    store.endBattle(battlefieldId)
+    await store.flushPersist(battlefieldId)
+    store.applyDamage(battlefieldId, unit.id, 12)
+    await store.flushPersist(battlefieldId)
+    server.snapshots.delete(battlefieldId)
+
+    await store.resetBattle(battlefieldId)
+
+    const next = store.getBattlefieldById(battlefieldId)!
+    expect(next.units.find((u) => u.id === unit.id)?.hp.current).toBe(30)
+    expect(next.round).toBe(1)
+  })
+
+  it('resetBattle：還原 409 上拋給頁面（不吞錯）', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )
+    store.endBattle(battlefieldId)
+    await store.flushPersist(battlefieldId)
+    server.nextRestoreError = fetchError(409, 'STALE_BATTLEFIELD_VERSION')
+
+    await expect(store.resetBattle(battlefieldId)).rejects.toMatchObject({ statusCode: 409 })
+  })
+})
+
+describe('useBattlefieldStore — 先攻軌排序（D-7）', () => {
+  it('先攻變動不觸發重排：設值／加減／單擲／敵人重擲後順序原封不動', () => {
+    const { store, bf } = seedLocal()
+    const before = combatIds(bf)
+
+    store.setInitiative(bf.id, 'u-g2', 30) // 最低變最高
+    expect(combatIds(bf)).toEqual(before)
+
+    store.adjustInitiative(bf.id, 'u-g1', 25)
+    expect(combatIds(bf)).toEqual(before)
+
+    store.rollInitiative(bf.id, 'u-luna')
+    expect(combatIds(bf)).toEqual(before)
+
+    store.rollAllEnemyInitiatives(bf.id)
+    expect(combatIds(bf)).toEqual(before)
+  })
+
+  it('拖曳排好的順序不會被後續先攻變動洗掉', () => {
+    const { store, bf } = seedLocal()
+    const manual = [...combatIds(bf)].reverse()
+    store.reorderUnits(bf.id, manual)
+    store.rollInitiative(bf.id, 'u-aliya')
+    expect(combatIds(bf)).toEqual(manual)
+  })
+
+  it('sortByInitiative（工具列）才依先攻重排，平手看 initiativeBonus', () => {
+    const { store, bf } = seedLocal()
+    store.setInitiative(bf.id, 'u-aliya', 10)
+    store.setInitiative(bf.id, 'u-luna', 10)
+    bf.units.find((u) => u.id === 'u-luna')!.initiativeBonus = 5
+    store.sortByInitiative(bf.id)
+    // 哥布林 1 先攻 10 加值 2、露娜 10 加值 5、艾莉亞 10 加值 0（fixture 預設）
+    expect(combatIds(bf)).toEqual(['u-luna', 'u-g1', 'u-aliya', 'u-g2'])
+  })
+
+  it('入場依序給號：排在現有參戰單位之後，不插隊', () => {
+    const { store, bf } = seedLocal()
+    const joined = store.createAdhocUnit(
+      bf.id,
+      { name: '新來的', maxHp: 10, ac: 10, speed: 30, initiativeBonus: 99 },
+      true,
+    )!
+    expect(joined.sortOrder).toBe(4) // 已有 4 個參戰單位
+    expect(combatIds(bf).at(-1)).toBe(joined.id)
+  })
+
+  it('從牌庫參戰同樣排在軌尾', () => {
+    const { store, bf } = seedLocal()
+    store.enterCombat(bf.id, 'u-pipo')
+    expect(combatIds(bf).at(-1)).toBe('u-pipo')
   })
 })
 

@@ -126,14 +126,14 @@ describe('dm-session store — loadContainer / getContainerById', () => {
     expect(store.getContainerById(c.id)).toEqual(c)
   })
 
-  it('失敗時 detailError 被設定且 rethrow（404 交由頁面分流）', async () => {
+  it('失敗時 detailErrorOf(id) 被設定且 rethrow（404 交由頁面分流）', async () => {
     const err = new Error('404-ish')
     mockGet.mockRejectedValue(err)
 
     const { useDmSessionStore } = await import('~/stores/dm-session')
     const store = useDmSessionStore()
     await expect(store.loadContainer('nope')).rejects.toThrow('404-ish')
-    expect(store.detailError).toBe(err)
+    expect(store.detailErrorOf('nope')).toBe(err)
   })
 })
 
@@ -298,14 +298,14 @@ describe('dm-session store — loadLog / getLogById', () => {
     expect(store.getLogById(log.id)).toEqual(log)
   })
 
-  it('失敗時 detailError 被設定且 rethrow（404 交由頁面分流）', async () => {
+  it('失敗時 detailErrorOf(id) 被設定且 rethrow（404 交由頁面分流）', async () => {
     const err = new Error('404-ish')
     mockGetLog.mockRejectedValue(err)
 
     const { useDmSessionStore } = await import('~/stores/dm-session')
     const store = useDmSessionStore()
     await expect(store.loadLog('dsc-001', 'nope')).rejects.toThrow('404-ish')
-    expect(store.detailError).toBe(err)
+    expect(store.detailErrorOf('nope')).toBe(err)
   })
 })
 
@@ -545,6 +545,6 @@ describe('dm-session store — reset', () => {
     expect(store.containerCache.size).toBe(0)
     expect(store.logCache.size).toBe(0)
     expect(store.listError).toBeNull()
-    expect(store.detailError).toBeNull()
+    expect(store.detailErrorOf('any')).toBeNull()
   })
 })

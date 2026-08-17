@@ -13,6 +13,15 @@
     <div class="flex items-center gap-2">
       <Icon v-if="item.icon" :name="item.icon" :size="20" :color="accentColor(item.variant)" />
       <span>{{ item.message }}</span>
+      <button
+        v-if="item.action"
+        type="button"
+        data-testid="toast-action"
+        class="ml-1 shrink-0 rounded-md border border-white/40 px-2 py-0.5 text-xs font-bold hover:bg-white/15"
+        @click="onAction(item)"
+      >
+        {{ item.action.label }}
+      </button>
     </div>
   </Toast>
 </template>
@@ -22,6 +31,12 @@ import { Icon, Toast } from '@ui'
 import type { ToastItem, ToastVariant } from '~/composables/ui/useToast'
 
 const { items, remove } = useToast()
+
+/** 操作即關閉該則通知 */
+const onAction = (item: ToastItem): void => {
+  item.action?.onClick()
+  remove(item.id)
+}
 
 const bgColor = (item: ToastItem): string => {
   if (item.kind === 'system') return 'var(--color-toast-system-bg)'

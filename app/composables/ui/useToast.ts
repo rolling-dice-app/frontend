@@ -5,6 +5,12 @@ import type { IconName, ToastX, ToastY } from '@ui'
 export type ToastVariant = 'success' | 'error' | 'info'
 export type ToastKind = 'system' | 'hint'
 
+/** 通知上的單一操作入口（如失敗後的「重試」）；點擊後該則通知即關閉 */
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastItem {
   id: string
   message: string
@@ -14,6 +20,7 @@ export interface ToastItem {
   duration: number
   x: ToastX
   y: ToastY
+  action: ToastAction | null
 }
 
 export interface ToastOptions {
@@ -23,6 +30,8 @@ export interface ToastOptions {
   kind?: ToastKind
   x?: ToastX
   y?: ToastY
+  /** 操作入口；需要使用者有時間點擊時，記得一併把 duration 設長或設 0（不自動關閉） */
+  action?: ToastAction
 }
 
 export interface UseToastReturn {
@@ -65,6 +74,7 @@ const push = (variant: ToastVariant, message: string, options?: ToastOptions): s
     duration: options?.duration ?? (variant === 'error' ? ERROR_DURATION : DEFAULT_DURATION),
     x: options?.x ?? (kind === 'system' ? SYSTEM_X : HINT_X),
     y: options?.y ?? (kind === 'system' ? SYSTEM_Y : HINT_Y),
+    action: options?.action ?? null,
   })
   return id
 }

@@ -146,7 +146,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper).setValue(linkOf(SHARE_A))
 
       expect(mockResolve).not.toHaveBeenCalled()
-      expect(wrapper.find('[role="status"]').text()).toBe('')
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
       expect(iconNames(wrapper)).not.toContain('check-circle')
       expect(iconNames(wrapper)).not.toContain('alert-circle')
       expect(wrapper.find('.animate-spin').exists()).toBe(false)
@@ -182,7 +182,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper).trigger('blur')
 
       expect(mockResolve).not.toHaveBeenCalled()
-      expect(wrapper.find('[role="status"]').text()).toBe('')
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
       expect(iconNames(wrapper)).toContain('check-circle')
     })
 
@@ -388,7 +388,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       expect(iconNames(wrapper)).toContain('alert-circle')
 
       await linkInput(wrapper).setValue('not-a-link-2')
-      expect(wrapper.find('[role="status"]').text()).toBe('')
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
       expect(iconNames(wrapper)).not.toContain('alert-circle')
     })
 
@@ -402,9 +402,11 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper, 1).trigger('blur')
 
       expect(mockResolve).not.toHaveBeenCalled()
-      const hint = wrapper.findAll('[role="status"]')[1]!
-      expect(hint.text()).toContain('此角色卡已在名單中')
-      expect(hint.classes()).toContain('text-danger')
+      // 已連結的第一列沒有提示，故重複提示是唯一那一則
+      const hints = wrapper.findAll('[role="status"]')
+      expect(hints).toHaveLength(1)
+      expect(hints[0]!.text()).toContain('此角色卡已在名單中')
+      expect(hints[0]!.classes()).toContain('text-danger')
     })
   })
 
@@ -459,7 +461,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await flushPromises()
 
       expect(charNameValue(wrapper)).toBe('')
-      expect(wrapper.find('[role="status"]').text()).toBe('')
+      expect(wrapper.find('[role="status"]').exists()).toBe(false)
     })
   })
 
@@ -539,7 +541,8 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await linkInput(wrapper, 0).trigger('blur')
 
       expect(linkInput(wrapper, 1).attributes('disabled')).toBeUndefined()
-      expect(wrapper.findAll('[role="status"]')[1]!.text()).toBe('')
+      // 提示只出現在 resolving 的那一列（無提示的列不渲染 live region）
+      expect(wrapper.findAll('[role="status"]')).toHaveLength(1)
     })
   })
 

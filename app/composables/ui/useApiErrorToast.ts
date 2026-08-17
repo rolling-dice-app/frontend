@@ -1,5 +1,6 @@
 import { isApiErrorCode, type ApiErrorCode } from '@rolling-dice-app/core'
 import { isFetchError } from '~/utils/api-fetch'
+import type { ToastOptions } from '~/composables/ui/useToast'
 import { createLogger } from '~/utils/log'
 import type { InterpolationParams, MessagePath } from '~/i18n'
 
@@ -125,9 +126,10 @@ export const useApiErrorToast = () => {
     return t('ui.message.systemError')
   }
 
-  const handle = (err: unknown, options: { toastMessage?: string } = {}): void => {
+  const handle = (err: unknown, options: { toastMessage?: string } & ToastOptions = {}): void => {
+    const { toastMessage, ...toastOptions } = options
     const normalized = extractError(err)
-    toast.error(options.toastMessage ?? resolveMessage(normalized))
+    toast.error(toastMessage ?? resolveMessage(normalized), toastOptions)
     // production 只印 sanitized 欄位；原始 err 可能含 request/response headers 等敏感資料，僅 dev 印出
     logger.error('[unhandled API error]', {
       code: normalized.code,

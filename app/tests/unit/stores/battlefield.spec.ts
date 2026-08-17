@@ -47,8 +47,15 @@ const server = vi.hoisted(() => {
     options: [] as BattlefieldSessionOption[],
     updateBodies: [] as BattlefieldUpdateBody[],
     restoreCalls: [] as string[],
+    getCalls: 0,
     nextUpdateError: null as unknown,
     nextGetError: null as unknown,
+    /** 依序丟出的 GET 錯誤（可排多個回合） */
+    getErrors: [] as unknown[],
+    /** 送出 409 STALE 的次數；R3 的核心不變量是「不得自造 409」 */
+    conflicts: 0,
+    concurrentGets: 0,
+    maxConcurrentGets: 0,
     nextRestoreError: null as unknown,
     createCounter: 0,
     nextStamp(): string {
@@ -61,8 +68,13 @@ const server = vi.hoisted(() => {
       this.options = []
       this.updateBodies = []
       this.restoreCalls = []
+      this.getCalls = 0
       this.nextUpdateError = null
       this.nextGetError = null
+      this.getErrors = []
+      this.conflicts = 0
+      this.concurrentGets = 0
+      this.maxConcurrentGets = 0
       this.nextRestoreError = null
       this.createCounter = 0
       stamp = 0
@@ -73,14 +85,24 @@ const server = vi.hoisted(() => {
 vi.stubGlobal('battlefields', () => ({
   sessionOptions: async () => structuredClone(server.options),
   get: async (id: string) => {
-    if (server.nextGetError) {
-      const err = server.nextGetError
-      server.nextGetError = null
-      throw err
+    server.getCalls += 1
+    server.concurrentGets += 1
+    server.maxConcurrentGets = Math.max(server.maxConcurrentGets, server.concurrentGets)
+    try {
+      // 讓出一個 microtask，並行才觀察得到（fake 若全同步則永遠量到 1）
+      await Promise.resolve()
+      if (server.getErrors.length > 0) throw server.getErrors.shift()
+      if (server.nextGetError) {
+        const err = server.nextGetError
+        server.nextGetError = null
+        throw err
+      }
+      const bf = server.battlefields.get(id)
+      if (!bf) throw fetchError(404, 'BATTLEFIELD_NOT_FOUND')
+      return structuredClone(bf)
+    } finally {
+      server.concurrentGets -= 1
     }
-    const bf = server.battlefields.get(id)
-    if (!bf) throw fetchError(404, 'BATTLEFIELD_NOT_FOUND')
-    return structuredClone(bf)
   },
   create: async (body: { sessionId: string }) => {
     if ([...server.battlefields.values()].some((bf) => bf.sessionId === body.sessionId))
@@ -111,7 +133,10 @@ vi.stubGlobal('battlefields', () => ({
     }
     const bf = server.battlefields.get(id)
     if (!bf) throw fetchError(404, 'BATTLEFIELD_NOT_FOUND')
-    if (body.updatedAt !== bf.updatedAt) throw fetchError(409, 'STALE_BATTLEFIELD_VERSION')
+    if (body.updatedAt !== bf.updatedAt) {
+      server.conflicts += 1
+      throw fetchError(409, 'STALE_BATTLEFIELD_VERSION')
+    }
     const prevSequence = bf.battleSequence
     const { updatedAt: _token, ...rest } = body
     Object.assign(bf, structuredClone(rest))
@@ -367,14 +392,16 @@ describe('useBattlefieldStore — 資源', () => {
     expect(store.listLoaded).toBe(true)
   })
 
-  it('loadBattlefield 404 回傳 null（NotFound 分流）、其他錯誤設 detailError 後上拋', async () => {
+  it('loadBattlefield 404 回傳 null（NotFound 分流）、其他錯誤設 detailErrorOf 後上拋', async () => {
     const store = useBattlefieldStore()
     expect(await store.loadBattlefield('nope')).toBeNull()
-    expect(store.detailError).toBeNull()
+    expect(store.detailErrorOf('nope')).toBeNull()
 
     server.nextGetError = fetchError(500, 'INTERNAL')
     await expect(store.loadBattlefield('nope')).rejects.toThrow()
-    expect(store.detailError).not.toBeNull()
+    expect(store.detailErrorOf('nope')).not.toBeNull()
+    // per-id：另一個戰場的狀態不被牽連
+    expect(store.detailErrorOf('other-bf')).toBeNull()
   })
 
   it('createBattlefield POST 進 cache 並同步入口選項 battlefieldId', async () => {
@@ -453,17 +480,17 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     store.endBattle(battlefieldId)
     await store.flushPersist(battlefieldId)
     expect(server.updateBodies).toHaveLength(1)
-    expect(store.persistError).toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
 
     server.updateBodies = []
     store.removeUnit(battlefieldId, dropped.id)
     await store.flushPersist(battlefieldId)
     expect(server.updateBodies).toHaveLength(1)
     expect(server.updateBodies[0]?.units).toHaveLength(1)
-    expect(store.persistError).toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
   })
 
-  it('PATCH 409 stale：不重試、以 server 版本覆蓋本地、曝露 persistError', async () => {
+  it('PATCH 409 stale：不重試、以 server 版本覆蓋本地、曝露 persistErrorOf', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     const adhoc = store.createAdhocUnit(
       battlefieldId,
@@ -483,7 +510,7 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     const recovered = store.getBattlefieldById(battlefieldId)!
     expect(recovered.units[0]?.hp.current).toBe(30)
     expect(recovered.updatedAt).toBe(serverBf.updatedAt)
-    expect(store.persistError).not.toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
     expect(server.updateBodies.filter((b) => b.updatedAt !== serverBf.updatedAt)).toHaveLength(2)
   })
 
@@ -500,11 +527,11 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     store.applyDamage(battlefieldId, adhoc.id, 5)
     await store.flushPersist(battlefieldId)
 
-    expect(store.persistError).toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
     expect(server.battlefields.get(battlefieldId)?.units[0]?.hp.current).toBe(25)
   })
 
-  it('PATCH 重試後仍失敗：曝露 persistError、保留本地編輯', async () => {
+  it('PATCH 重試後仍失敗：曝露 persistErrorOf、保留本地編輯', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     const adhoc = store.createAdhocUnit(
       battlefieldId,
@@ -523,9 +550,157 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     failTwice()
     await flushing
 
-    expect(store.persistError).not.toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
     // 本地編輯保留（未被 server 覆蓋）
     expect(store.getBattlefieldById(battlefieldId)?.units[0]?.hp.current).toBe(25)
+  })
+
+  it('PATCH 成功但 re-GET 失敗：自動重試補換 token，不自造 409、本地編輯不被覆蓋', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const adhoc = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    await store.flushPersist(battlefieldId)
+    server.updateBodies = []
+
+    server.getErrors = [Object.assign(new Error('network'), { statusCode: undefined })]
+    store.applyDamage(battlefieldId, adhoc.id, 5)
+    await store.flushPersist(battlefieldId)
+
+    expect(server.conflicts).toBe(0)
+    // 重送時帶的是補換過的 token，不是那顆已作廢的
+    const tokens = server.updateBodies.map((b) => b.updatedAt)
+    expect(new Set(tokens).size).toBe(tokens.length)
+    // 資料兩邊一致，錯誤自癒後不殘留
+    expect(store.getBattlefieldById(battlefieldId)?.units[0]?.hp.current).toBe(25)
+    expect(server.battlefields.get(battlefieldId)?.units[0]?.hp.current).toBe(25)
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
+  })
+
+  it('re-GET 持續失敗：曝露錯誤，且在換到新 token 前不再送出 PATCH', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const adhoc = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    await store.flushPersist(battlefieldId)
+    server.updateBodies = []
+
+    const netError = () => Object.assign(new Error('network'), { statusCode: undefined })
+    server.getErrors = [netError(), netError(), netError()]
+    store.applyDamage(battlefieldId, adhoc.id, 5)
+    await store.flushPersist(battlefieldId)
+
+    // PATCH 只送出那成功的一次；換 token 失敗期間不再重送
+    expect(server.updateBodies).toHaveLength(1)
+    expect(server.conflicts).toBe(0)
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
+    // 本地編輯保留，資料其實已存在 server
+    expect(store.getBattlefieldById(battlefieldId)?.units[0]?.hp.current).toBe(25)
+    expect(server.battlefields.get(battlefieldId)?.units[0]?.hp.current).toBe(25)
+
+    // 網路恢復後，手動重試先補 token 再續送
+    server.getErrors = []
+    await store.retryPersist(battlefieldId)
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
+    expect(server.conflicts).toBe(0)
+  })
+
+  it('retryPersist：清錯誤並重跑一輪（頁面 toast 的重試入口）', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const adhoc = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    await store.flushPersist(battlefieldId)
+
+    const failTwice = () => {
+      server.nextUpdateError = Object.assign(new Error('network'), { statusCode: undefined })
+    }
+    failTwice()
+    store.applyDamage(battlefieldId, adhoc.id, 5)
+    const flushing = store.flushPersist(battlefieldId)
+    failTwice()
+    await flushing
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
+
+    await store.retryPersist(battlefieldId)
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
+    expect(server.battlefields.get(battlefieldId)?.units[0]?.hp.current).toBe(25)
+  })
+
+  it('persistError per-id：一個戰場的錯誤不會沾到另一個戰場', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const other = await store.createBattlefield('session-other')
+    const adhoc = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    await store.flushPersist(battlefieldId)
+
+    const failTwice = () => {
+      server.nextUpdateError = Object.assign(new Error('network'), { statusCode: undefined })
+    }
+    failTwice()
+    store.applyDamage(battlefieldId, adhoc.id, 5)
+    const flushing = store.flushPersist(battlefieldId)
+    failTwice()
+    await flushing
+
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
+    expect(store.persistErrorOf(other.id)).toBeNull()
+  })
+
+  it('deleteBattlefield 一併清掉該戰場的 persistError', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const adhoc = store.createAdhocUnit(
+      battlefieldId,
+      { name: '木樁', maxHp: 30, ac: 10, speed: 0, initiativeBonus: 0 },
+      true,
+    )!
+    await store.flushPersist(battlefieldId)
+
+    const failTwice = () => {
+      server.nextUpdateError = Object.assign(new Error('network'), { statusCode: undefined })
+    }
+    failTwice()
+    store.applyDamage(battlefieldId, adhoc.id, 5)
+    const flushing = store.flushPersist(battlefieldId)
+    failTwice()
+    await flushing
+    expect(store.persistErrorOf(battlefieldId)).not.toBeNull()
+
+    await store.deleteBattlefield(battlefieldId)
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
+  })
+
+  it('同一戰場的並發 loadBattlefield 不並行（單飛：排成前後兩輪，後到者拿最新結果）', async () => {
+    const store = useBattlefieldStore()
+    const first = await store.createBattlefield('session-flight-1')
+    server.maxConcurrentGets = 0
+
+    const [a, b] = await Promise.all([
+      store.loadBattlefield(first.id),
+      store.loadBattlefield(first.id),
+    ])
+    // 同 key 不並行
+    expect(server.maxConcurrentGets).toBe(1)
+    expect(a).toEqual(b)
+  })
+
+  it('不同戰場的載入互不阻塞（per-key 獨立）', async () => {
+    const store = useBattlefieldStore()
+    const first = await store.createBattlefield('session-flight-1')
+    const second = await store.createBattlefield('session-flight-2')
+    server.maxConcurrentGets = 0
+
+    await Promise.all([store.loadBattlefield(first.id), store.loadBattlefield(second.id)])
+    expect(server.maxConcurrentGets).toBe(2)
   })
 
   it('persist 途中戰場被他端刪除（404）：清 cache 落 NotFound', async () => {
@@ -1012,7 +1187,7 @@ describe('useBattlefieldStore — 戰鬥段落', () => {
     store.stepTurn(battlefieldId, 1)
 
     await store.resetBattle(battlefieldId)
-    expect(store.persistError).toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
     expect(store.getBattlefieldById(battlefieldId)?.round).toBe(1)
   })
 
@@ -1138,11 +1313,11 @@ describe('useBattlefieldStore — 死亡豁免', () => {
 
 describe('useBattlefieldStore — reset', () => {
   it('reset 清空所有 session-bound state', async () => {
-    const { store } = await setupBattlefield()
+    const { store, battlefieldId } = await setupBattlefield()
     store.reset()
     expect(store.sessionOptions).toHaveLength(0)
     expect(store.listLoaded).toBe(false)
-    expect(store.persistError).toBeNull()
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
     await store.loadSessionOptions()
     expect(store.sessionOptions).toHaveLength(1)
   })

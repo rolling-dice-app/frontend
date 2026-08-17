@@ -10,7 +10,7 @@ import {
   buildMonsterTemplateUpdatePatch,
   monsterTemplateToSummary,
 } from '~/helpers/monster'
-import { createSingleFlight } from '~/utils/single-flight'
+import { createKeyedSingleFlight, createSingleFlight } from '~/utils/single-flight'
 
 const cloneTemplate = (t: MonsterTemplateDTO): MonsterTemplateDTO => structuredClone(toRaw(t))
 
@@ -22,8 +22,12 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
   const listError = ref<unknown>(null)
   const listLoaded = ref(false)
 
-  const detailLoading = ref(false)
-  const detailError = ref<unknown>(null)
+  /** 詳情載入狀態 per-id（同時載入多筆時互不干擾） */
+  const detailLoadingIds = ref(new Set<string>())
+  const detailErrors = ref(new Map<string, unknown>())
+
+  const isDetailLoading = (id: string): boolean => detailLoadingIds.value.has(id)
+  const detailErrorOf = (id: string): unknown => detailErrors.value.get(id) ?? null
 
   // 模板數是否達方案上限；hard-delete 無 trash，全列表即計數。limits 未就緒不視為達上限。
   const isAtMonsterTemplateLimit = computed(() => {
@@ -56,20 +60,25 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     await loadList()
   }
 
-  const loadDetail = async (id: string): Promise<MonsterTemplateDTO> => {
-    detailLoading.value = true
-    detailError.value = null
+  // 單飛 per-id：同一模板不並行載入。
+  const detailFlight = createKeyedSingleFlight(async (id: string): Promise<MonsterTemplateDTO> => {
+    detailLoadingIds.value.add(id)
+    detailErrors.value.delete(id)
     try {
       const template = await monsterTemplates().get(id)
       detailCache.value.set(id, template)
-      return cloneTemplate(template)
+      return template
     } catch (error) {
-      detailError.value = error
+      detailErrors.value.set(id, error)
       throw error
     } finally {
-      detailLoading.value = false
+      detailLoadingIds.value.delete(id)
     }
-  }
+  })
+
+  /** 回傳防禦性 clone；共享同一輪 GET 的多個呼叫端各自拿到獨立副本。 */
+  const loadDetail = async (id: string): Promise<MonsterTemplateDTO> =>
+    cloneTemplate(await detailFlight.run(id))
 
   const createMonsterTemplate = async (view: MonsterTemplateView): Promise<MonsterTemplateDTO> => {
     const created = await monsterTemplates().create(buildMonsterTemplateCreateBody(view))
@@ -129,8 +138,8 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     listLoaded.value = false
     listLoading.value = false
     listError.value = null
-    detailLoading.value = false
-    detailError.value = null
+    detailLoadingIds.value = new Set()
+    detailErrors.value = new Map()
   }
 
   return {
@@ -140,8 +149,8 @@ export const useMonsterTemplateStore = defineStore('monsterTemplate', () => {
     listLoading,
     listError,
     listLoaded,
-    detailLoading,
-    detailError,
+    isDetailLoading,
+    detailErrorOf,
     loadList,
     ensureListLoaded,
     loadDetail,

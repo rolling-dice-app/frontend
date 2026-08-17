@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { onBeforeUnmount } from 'vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { t } from '~/i18n'
 import CombatList from '~/components/business/battlefield/CombatList.vue'
 import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
@@ -10,15 +9,6 @@ import type { BattlefieldUnit } from '@rolling-dice-app/core'
  * 拖曳排序以各列中線決定插入位置；jsdom 的 rect 一律是 0，故逐列 stub rect 才驅動得了。
  */
 const ROW_HEIGHT = 40
-
-// onBeforeUnmount 不在 tests/setup 的 auto-import 清單內（此為第一個用到它的元件測試）
-beforeEach(() => {
-  vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
-})
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
 
 /** CombatRow 的替身：只保留拖曳把手與名稱，避免耦合到真實列的內部結構 */
 const CombatRowStub = {

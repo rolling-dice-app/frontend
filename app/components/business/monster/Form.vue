@@ -42,6 +42,13 @@
 <script setup lang="ts">
 import type { MonsterTemplateFormState, MonsterTemplateView } from '~/types/business/monster'
 
+/**
+ * 脫勾副本。用 JSON round-trip 而非 structuredClone(toRaw(...))：`toRaw` 只剝一層，
+ * 子面板整包替換後巢狀值仍是 reactive proxy，structuredClone 會丟 DataCloneError。
+ */
+const cloneFormState = (source: MonsterTemplateFormState): MonsterTemplateFormState =>
+  JSON.parse(JSON.stringify(source)) as MonsterTemplateFormState
+
 const props = withDefaults(
   defineProps<{ monster: MonsterTemplateView; mode?: 'create' | 'edit' }>(),
   { mode: 'edit' },
@@ -52,18 +59,20 @@ const emit = defineEmits<{ save: [value: MonsterTemplateView] }>()
 const { t } = useI18n()
 
 // 從 view 深拷一份本地 form state；提交時回拋給頁面，由頁面呼叫 store 打後端。
-const formState = reactive<MonsterTemplateFormState>(structuredClone(toRaw(props.monster)))
+// 必須是 ref 而非 reactive：子面板以 defineModel 綁 `v-model:form-state`，
+// 編譯出的 `onUpdate:formState` 只在 ref 上生效，綁 reactive 時整包賦值會是 no-op。
+const formState = ref<MonsterTemplateFormState>(cloneFormState(props.monster))
 
 const pageTitle = computed(
   () =>
-    formState.name.trim() ||
+    formState.value.name.trim() ||
     (props.mode === 'create' ? t('monster.createTitle') : t('monster.editTitle')),
 )
 
-const canSubmit = computed(() => formState.name.trim().length > 0)
+const canSubmit = computed(() => formState.value.name.trim().length > 0)
 
 const onSave = (): void => {
   if (!canSubmit.value) return
-  emit('save', structuredClone(toRaw(formState)))
+  emit('save', cloneFormState(formState.value))
 }
 </script>

@@ -97,6 +97,7 @@
               </template>
             </CommonAppInput>
             <p
+              v-if="linkHint(member.id)"
               role="status"
               class="mt-1 flex items-center gap-1 text-xs"
               :class="linkHint(member.id)?.tone === 'muted' ? 'text-content-muted' : 'text-danger'"
@@ -195,8 +196,10 @@ const linkStates = ref<Record<string, LinkRowState>>({})
 
 // baseURL 結尾帶 '/'，故 share 段不另加前導 '/'
 const baseURL = useRuntimeConfig().app.baseURL
+// origin 為 client-only：SSR 下取 window 會爆，故以 typeof 守；
+// 不用 onMounted 收 —— 開窗 watcher 是 immediate，掛載當下就要拿得到值。
 const shareLinkOf = (shareId: string): string =>
-  `${window.location.origin}${baseURL}share/${shareId}`
+  `${typeof window === 'undefined' ? '' : window.location.origin}${baseURL}share/${shareId}`
 
 watch(
   () => props.open,

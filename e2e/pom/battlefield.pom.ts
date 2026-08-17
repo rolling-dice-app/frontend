@@ -8,8 +8,8 @@ import { waitHydrated } from '../helpers/hydrate'
  * (`/dm/battlefield/:id`).
  *
  * Selector policy (see e2e/README.md): stable, non-i18n hooks first —
- *   - combat / roster rows by the unit name carried in their `aria-label`
- *     (user data; the row itself is a `role="button"`)
+ *   - combat rows by `data-unit-name` (user data mirrored onto the row) and
+ *     roster rows by `battlefield-roster-row` + the name they render
  *   - the setup drawer's tabs by `data-tab` (mirrors `@ui` Tabs' `data-value`)
  *   - the ad-hoc unit fields by their element ids (`#battlefield-adhoc-*`)
  *   - `data-testid` only on the i18n-only buttons, each per-row one pinned by
@@ -74,12 +74,12 @@ export class BattlefieldPom {
   }
 
   /**
-   * A unit's row in the combat list. The row is a `role="button"` whose
-   * accessible name is a translated sentence carrying the unit name, so the name
-   * substring is the locale-stable part to match on.
+   * A unit's row in the combat list, matched on the name mirrored onto
+   * `data-unit-name`. The row itself is not a button — the row holds an input and
+   * two move buttons, so only the name block carries the button semantics.
    */
   unitRow(name: string): Locator {
-    return this.page.locator(`[role="button"][aria-label*="${name}"]`)
+    return this.page.locator(`[data-testid="battlefield-combat-row"][data-unit-name="${name}"]`)
   }
 
   /**
@@ -90,21 +90,16 @@ export class BattlefieldPom {
     return this.page.getByTestId('battlefield-roster-row').filter({ hasText: name })
   }
 
-  /**
-   * A unit's position in the combat list, for ordering assertions. Scoped to the
-   * list container: `role="button"` is not unique to `CombatRow` (the layout's
-   * `BottomNavDrawer` handle carries it too), so an unscoped match would fold
-   * unrelated elements into the ordering.
-   */
+  /** A unit's position in the combat list, for ordering assertions. */
   async unitIndex(name: string): Promise<number> {
     // Reading the list is a one-shot evaluate with no auto-waiting, and the
     // workspace fetches client-only — so wait for the row itself first.
     await this.unitRow(name).waitFor()
-    const labels = await this.page
+    const names = await this.page
       .getByTestId('battlefield-combat-list')
-      .locator('[role="button"]')
-      .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''))
-    const index = labels.findIndex((label) => label.includes(name))
+      .locator('[data-testid="battlefield-combat-row"]')
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-unit-name') ?? ''))
+    const index = names.indexOf(name)
     if (index < 0) throw new Error(`unit "${name}" is not in the combat list`)
     return index
   }

@@ -14,26 +14,41 @@
         role="tablist"
         :aria-label="t('battlefield.setupTitle')"
       >
+        <!-- roving tabindex：整組頁籤只佔一個 Tab 停留點，左右鍵在頁籤間移動（WAI-ARIA tabs pattern） -->
         <button
           v-for="tab in TABS"
+          :id="tabId(tab)"
           :key="tab"
+          :ref="(el) => setTabEl(tab, el)"
           type="button"
           role="tab"
           :data-tab="tab"
+          :aria-controls="panelId(tab)"
+          :aria-selected="activeTab === tab"
+          :tabindex="activeTab === tab ? 0 : -1"
           class="rounded-md px-3 py-1 text-[13px]"
           :class="
             activeTab === tab
               ? 'bg-surface-3 font-semibold text-content'
               : 'text-content-muted hover:text-content'
           "
-          :aria-selected="activeTab === tab"
           @click="activeTab = tab"
+          @keydown.left.prevent="moveTabFocus(-1)"
+          @keydown.right.prevent="moveTabFocus(1)"
+          @keydown.home.prevent="focusTab(TABS[0]!)"
+          @keydown.end.prevent="focusTab(TABS[TABS.length - 1]!)"
         >
           {{ t(`battlefield.${TAB_LABEL_KEY[tab]}`) }}
         </button>
       </div>
 
-      <div class="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1">
+      <div
+        :id="panelId(activeTab)"
+        role="tabpanel"
+        :aria-labelledby="tabId(activeTab)"
+        tabindex="0"
+        class="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1"
+      >
         <!-- 出席角色：經 shareId 快照帶入（滿 HP）；快照失敗顯示錯誤卡 -->
         <template v-if="activeTab === 'members'">
           <div
@@ -300,6 +315,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import { Drawer } from '@ui'
 import { CHARACTER_TEXT_LIMITS } from '@rolling-dice-app/core'
 import type { BattlefieldUnit, ClassKey } from '@rolling-dice-app/core'
@@ -343,6 +359,28 @@ const emit = defineEmits<{
 }>()
 
 const activeTab = ref<SetupTab>('members')
+
+// tab ↔ tabpanel 的 id 對應（aria-controls / aria-labelledby 兩邊互指）
+const tabId = (tab: SetupTab): string => `battlefield-setup-tab-${tab}`
+const panelId = (tab: SetupTab): string => `battlefield-setup-panel-${tab}`
+
+const tabEls = new Map<SetupTab, HTMLElement>()
+const setTabEl = (tab: SetupTab, el: Element | ComponentPublicInstance | null): void => {
+  if (el instanceof HTMLElement) tabEls.set(tab, el)
+  else tabEls.delete(tab)
+}
+
+const focusTab = (tab: SetupTab): void => {
+  activeTab.value = tab
+  tabEls.get(tab)?.focus()
+}
+
+/** 左右鍵在頁籤間循環移動，並同步切換面板（tabs pattern 的 automatic activation） */
+const moveTabFocus = (dir: 1 | -1): void => {
+  const index = TABS.indexOf(activeTab.value)
+  const next = TABS[(index + dir + TABS.length) % TABS.length]
+  if (next) focusTab(next)
+}
 
 const memberUnitOf = (shareId: string): BattlefieldUnit | undefined =>
   props.units.find((u) => u.kind === 'character' && u.shareId === shareId)

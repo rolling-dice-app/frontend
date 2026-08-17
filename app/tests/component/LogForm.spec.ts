@@ -143,6 +143,8 @@ const addViaInput = async (wrapper: Wrapper, value: string) => {
 }
 
 const statusHint = (wrapper: Wrapper) => wrapper.find('[role="status"]')
+/** 無提示時整個 live region 不渲染（避免螢幕閱讀器有常駐空 region） */
+const hasStatusHint = (wrapper: Wrapper) => statusHint(wrapper).exists()
 
 describe('LogForm 臨時出席（分享連結優先、文字 fallback）', () => {
   describe('純文字路徑', () => {
@@ -154,7 +156,7 @@ describe('LogForm 臨時出席（分享連結優先、文字 fallback）', () =>
       expect(mockResolve).not.toHaveBeenCalled()
       expect(wrapper.text()).toContain('NewGuy')
       expect(adhocInputValue(wrapper)).toBe('')
-      expect(statusHint(wrapper).text()).toBe('')
+      expect(hasStatusHint(wrapper)).toBe(false)
     })
 
     it('Enter 與加入鈕等效', async () => {
@@ -291,10 +293,10 @@ describe('LogForm 臨時出席（分享連結優先、文字 fallback）', () =>
 
       await addViaInput(wrapper, linkOf(SHARE_A))
       await flushPromises()
-      expect(statusHint(wrapper).text()).not.toBe('')
+      expect(hasStatusHint(wrapper)).toBe(true)
 
       await adhocInput(wrapper).setValue('edited')
-      expect(statusHint(wrapper).text()).toBe('')
+      expect(hasStatusHint(wrapper)).toBe(false)
     })
   })
 
@@ -333,7 +335,7 @@ describe('LogForm 臨時出席（分享連結優先、文字 fallback）', () =>
       await flushPromises()
 
       expect(wrapper.find('button[aria-label^="移除出席"]').exists()).toBe(false)
-      expect(statusHint(wrapper).text()).toBe('')
+      expect(hasStatusHint(wrapper)).toBe(false)
     })
   })
 

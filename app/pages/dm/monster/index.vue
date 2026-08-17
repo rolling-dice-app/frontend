@@ -247,24 +247,3 @@ const onDeleteConfirm = async (): Promise<void> => {
   }
 }
 </script>
-
-<style scoped>
-/* 空狀態 hero 光暈：緩慢呼吸（非 animate-pulse），對齊角色列表空狀態份量 */
-.empty-glow {
-  animation: empty-glow-breathe 7s ease-in-out infinite alternate;
-}
-@keyframes empty-glow-breathe {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .empty-glow {
-    animation: none;
-    opacity: 0.7;
-  }
-}
-</style>

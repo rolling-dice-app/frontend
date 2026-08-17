@@ -102,7 +102,9 @@ export const useDmSessionStore = defineStore('dmSession', () => {
       remark === undefined ? { title } : { title, remark },
     )
     containerCache.value.set(created.id, created)
-    // 列表不本地同步：成功即導詳情，返回列表時必重抓
+    // 列表不本地同步：成功即導詳情，返回列表時必重抓。
+    // 「必重抓」依賴 Nuxt `purgeCachedData` 預設為 true（deps 歸零時清 asyncData cache
+    // 並讓下次掛載重跑 initial fetch）；關掉它就得改為本地同步。
     return cloneContainer(created)
   }
 
@@ -184,6 +186,7 @@ export const useDmSessionStore = defineStore('dmSession', () => {
     )
     logCache.value.set(created.id, created)
     // container.sessions 不本地同步：成功即導 log 詳情，容器頁重進時必重抓
+    // （同 createContainer 的註解：依賴 Nuxt `purgeCachedData` 預設值）。
     return cloneLog(created)
   }
 

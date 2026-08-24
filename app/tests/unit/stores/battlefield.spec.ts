@@ -842,7 +842,7 @@ describe('useBattlefieldStore — 單位建立', () => {
     expect(first).toMatchObject({
       kind: 'monster',
       faction: 'enemy',
-      name: '哥布林',
+      name: '哥布林 1',
       challengeRating: '1/4',
       maxHp: 7,
       hp: { current: 7, tempHp: 0, maxAdjustment: 0 },

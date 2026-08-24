@@ -177,20 +177,24 @@ describe('nextTurnTarget', () => {
 })
 
 describe('buildMonsterInstanceName', () => {
-  it('第一隻用模板原名', () => {
-    expect(buildMonsterInstanceName('哥布林', 0, [])).toBe('哥布林')
+  it('第一隻即帶編號 1（不用模板原名）', () => {
+    expect(buildMonsterInstanceName('哥布林', 0, [])).toBe('哥布林 1')
   })
 
   it('之後依既有數量遞增編號', () => {
-    expect(buildMonsterInstanceName('哥布林', 2, ['哥布林', '哥布林 2'])).toBe('哥布林 3')
+    expect(buildMonsterInstanceName('哥布林', 2, ['哥布林 1', '哥布林 2'])).toBe('哥布林 3')
   })
 
   it('撞名時往後找空號（實例可能被改名或移除）', () => {
     expect(buildMonsterInstanceName('哥布林', 1, ['哥布林 2'])).toBe('哥布林 3')
   })
 
-  it('原名已被占用（如 seed 直接編號）時直接進編號序', () => {
-    expect(buildMonsterInstanceName('哥布林', 0, ['哥布林'])).toBe('哥布林 1')
+  it('場上既有的無編號實例（舊資料）不占用編號序', () => {
+    expect(buildMonsterInstanceName('哥布林', 1, ['哥布林'])).toBe('哥布林 2')
+  })
+
+  it('其他模板的同號實例不影響本模板編號', () => {
+    expect(buildMonsterInstanceName('狼', 0, ['哥布林 1'])).toBe('狼 1')
   })
 })
 

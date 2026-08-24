@@ -62,6 +62,11 @@ beforeEach(() => {
     },
   }))
   vi.stubGlobal('useApiErrorToast', () => ({ handle: mockApiErrorHandle }))
+  // utils/api-fetch 走 auto-import；測試以同形狀 stub 供給
+  vi.stubGlobal('apiErrorCodeOf', (err: unknown): string | undefined => {
+    const data = (err as { data?: { error?: unknown } } | null)?.data
+    return typeof data?.error === 'string' ? data.error : undefined
+  })
   vi.stubGlobal('useToast', () => ({ success: mockToastSuccess, error: mockToastError }))
 })
 
@@ -634,14 +639,15 @@ describe('useCharacterCombatState — 持久化', () => {
     await nextTick()
     expect(cs.state.hp.current).toBe(20)
 
-    // 解開 PATCH1，GET1 回傳 server 端「只看到第一次 damage」的狀態（hp=25）
+    // 解開 PATCH1，GET1 回傳 server 端「只看到第一次 damage」的狀態（hp=25）。
+    // 用 advanceTimersByTimeAsync(0) 排乾微任務，而非數 nextTick 次數 —— 後者會把斷言
+    // 綁在 pipeline 的 async 層數上。
     resolvePatch1()
-    await nextTick()
+    await vi.advanceTimersByTimeAsync(0)
     resolveGet1(
       buildDto({ hp: { current: 25, tempHp: 0, maxAdjustment: 0 }, updatedAt: REFRESH_UPDATED_AT }),
     )
-    await nextTick()
-    await nextTick()
+    await vi.advanceTimersByTimeAsync(0)
 
     // user 的第二次 damage 不可被覆蓋；token 仍應更新
     expect(cs.state.hp.current).toBe(20)
@@ -693,6 +699,62 @@ describe('useCharacterCombatState — 持久化', () => {
     expect(mockPatch).toHaveBeenCalledTimes(2)
     expect(mockApiErrorHandle).toHaveBeenCalledTimes(1)
     expect(cs.mutationError.value).toBe(err)
+  })
+
+  // 409 分流：帶著已作廢的 token 重試必然再撞一次，故不重試、改以 server 覆蓋本地
+  it('PATCH 409 stale：不重試、以 server 為準覆蓋本地、曝露 mutationError', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockGet.mockClear()
+
+    const stale = Object.assign(new Error('conflict'), {
+      statusCode: 409,
+      data: { error: 'STALE_COMBAT_STATE_VERSION' },
+    })
+    mockPatch.mockRejectedValue(stale)
+    // 回復用的 GET：server 端的真相（他端已把 HP 改成 7）
+    mockGet.mockResolvedValue(
+      buildDto({ hp: { current: 7, tempHp: 0, maxAdjustment: 0 }, updatedAt: REFRESH_UPDATED_AT }),
+    )
+
+    cs.damageHp(5)
+    await flushPersist()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // 不重試（舊實作會用同一顆作廢 token 再撞一次 409）
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+
+    // 本地已被 server 覆蓋，token 也換成有效的
+    expect(cs.state.hp.current).toBe(7)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+    expect(cs.mutationError.value).toBe(stale)
+  })
+
+  it('PATCH 成功但 re-GET 失敗：不重送 PATCH，下一輪先補換 token', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const cs = useCharacterCombatState(CHAR_ID, ref(30))
+    await cs.load()
+    mockPatch.mockClear()
+    mockGet.mockClear()
+    mockGet.mockRejectedValueOnce(new Error('network'))
+
+    cs.damageHp(5)
+    await flushPersist()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // PATCH 只送一次（資料已存進 server，重送只會帶著作廢 token 撞 409）
+    expect(mockPatch).toHaveBeenCalledTimes(1)
+    // 本地編輯保留
+    expect(cs.state.hp.current).toBe(25)
+
+    // 自動重試：先補換 token 才送出後續變更
+    mockGet.mockResolvedValue(buildDto({ updatedAt: REFRESH_UPDATED_AT }))
+    await vi.advanceTimersByTimeAsync(PERSIST_RETRY_MS)
+    expect(cs.state.updatedAt).toBe(REFRESH_UPDATED_AT)
+    expect(cs.mutationError.value).toBeNull()
   })
 
   it('暴露 mutationError 後 user 再次編輯，下一次成功 PATCH 應清空 mutationError', async () => {

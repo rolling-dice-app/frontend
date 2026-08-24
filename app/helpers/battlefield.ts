@@ -114,7 +114,7 @@ export function nextTurnTarget(
 }
 
 /**
- * 怪物實例顯示名：同模板第一隻用模板原名，之後依既有數量遞增編號；
+ * 怪物實例顯示名：一律帶編號（第一隻即為「模板名 1」），依既有數量遞增；
  * 與現存名稱撞名時往後找到空號為止（實例可能被手動改名或移除）。
  */
 export function buildMonsterInstanceName(
@@ -122,7 +122,6 @@ export function buildMonsterInstanceName(
   existingCount: number,
   existingNames: string[],
 ): string {
-  if (existingCount === 0 && !existingNames.includes(templateName)) return templateName
   const taken = new Set(existingNames)
   let n = existingCount + 1
   while (taken.has(`${templateName} ${n}`)) n += 1

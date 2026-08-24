@@ -28,6 +28,8 @@ test('battlefield creation, unit sources and deletion round-trip', async ({
   const sessionA = `Session-A-${suffix}`
   const sessionB = `Session-B-${suffix}`
   const templateName = `E2E-Goblin-${suffix}`
+  // Monster instances are always numbered, so the first one added is "<template> 1".
+  const monsterInstanceName = `${templateName} 1`
   const adhocName = `E2E-Bandit-${suffix}`
 
   const character = await seedCharacter(seededUser.sessionId)
@@ -82,13 +84,13 @@ test('battlefield creation, unit sources and deletion round-trip', async ({
   await pom.closeSetup()
 
   await expect(pom.unitRow(character.name)).toBeVisible()
-  await expect(pom.unitRow(templateName)).toBeVisible()
+  await expect(pom.unitRow(monsterInstanceName)).toBeVisible()
   await expect(pom.unitRow(adhocName)).toBeVisible()
 
   // 5. Reload → all three units came back from the database.
   await pom.reload()
   await expect(pom.unitRow(character.name)).toBeVisible()
-  await expect(pom.unitRow(templateName)).toBeVisible()
+  await expect(pom.unitRow(monsterInstanceName)).toBeVisible()
   await expect(pom.unitRow(adhocName)).toBeVisible()
 
   // 6. Delete the battlefield → session A can host a new one again.

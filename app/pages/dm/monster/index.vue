@@ -240,6 +240,7 @@ const onDeleteConfirm = async (): Promise<void> => {
     await monsterTemplateStore.removeMonsterTemplate(pendingDelete.value.id)
     confirmOpen.value = false
     pendingDelete.value = null
+    toast.success(t('monster.deletedHint'))
   } catch (err) {
     apiErrorToast.handle(err)
   } finally {

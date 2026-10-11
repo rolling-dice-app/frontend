@@ -264,6 +264,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const toast = useToast()
 const route = useRoute()
 const id = getRouteParam(route.params.id)
 const apiErrorToast = useApiErrorToast()
@@ -343,6 +344,7 @@ const onDeleteConfirm = async (): Promise<void> => {
   try {
     await monsterTemplateStore.removeMonsterTemplate(id)
     confirmOpen.value = false
+    toast.success(t('monster.deletedHint'))
     await navigateTo('/dm/monster')
   } catch (err) {
     apiErrorToast.handle(err)

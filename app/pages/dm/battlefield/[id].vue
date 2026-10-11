@@ -245,7 +245,6 @@
         @create-adhoc="onCreateAdhoc"
         @enter="onEnterCombat"
         @remove-unit="onRemoveUnit"
-        @remove-member="onRemoveMember"
         @relink-member="onRelinkMember"
       />
 
@@ -509,15 +508,6 @@ const onCreateAdhoc = (input: AdhocUnitInput, joinCombat: boolean): void => {
 }
 
 // ── 成員名單修復（走 m7.2 團務 log PATCH；成功後 store 會重跑 hydrate） ──────
-const onRemoveMember = async (memberId: string): Promise<void> => {
-  try {
-    await battlefieldStore.removeSessionMember(battlefieldId, memberId)
-    toast.info(t('battlefield.toastMemberRemoved'))
-  } catch (err) {
-    apiErrorToast.handle(err)
-  }
-}
-
 const onRelinkMember = async (memberId: string, shareId: string): Promise<void> => {
   try {
     await battlefieldStore.relinkSessionMember(battlefieldId, memberId, shareId)

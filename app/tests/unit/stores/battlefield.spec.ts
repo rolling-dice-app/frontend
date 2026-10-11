@@ -791,34 +791,30 @@ describe('useBattlefieldStore — 出席成員 hydrate 與修復', () => {
     expect(sources[0]).toMatchObject({ shareId: 'chs_available', available: false })
   })
 
-  it('removeSessionMember：members 整列 replace 排除該員、失效 shareId 收斂 null、重跑 hydrate', async () => {
+  it('relinkSessionMember：members 整列 replace 並替換該員 characterShareId、成功後重跑 hydrate；PATCH 失敗仍重抓 log 刷新 token 後上拋', async () => {
     const { store, battlefieldId } = await setupBattlefield()
     seedDmLog()
     await store.loadMemberSources(battlefieldId)
-    const getLogCallsBefore = dmServer.getLogCalls
+    const getLogCallsBeforeRelink = dmServer.getLogCalls
 
-    await store.removeSessionMember(battlefieldId, 'member-b')
+    await store.relinkSessionMember(battlefieldId, 'member-b', 'chs_new')
 
     expect(dmServer.updateLogBodies).toHaveLength(1)
     const body = dmServer.updateLogBodies[0]!
     expect(body.updatedAt).toBe('2026-07-01T00:00:00.000Z')
     expect(body.members).toEqual([
       { id: 'member-a', playerName: '玩家A', characterShareId: 'chs_available' },
+      { id: 'member-b', playerName: '玩家B', characterShareId: 'chs_new' },
       { id: 'member-c', playerName: '純PL', characterShareId: null },
     ])
-    expect(dmServer.getLogCalls).toBe(getLogCallsBefore + 1)
-  })
+    expect(dmServer.getLogCalls).toBe(getLogCallsBeforeRelink + 1)
 
-  it('relinkSessionMember：替換該員 characterShareId；PATCH 失敗仍重抓 log 刷新 token 後上拋', async () => {
-    const { store, battlefieldId } = await setupBattlefield()
-    seedDmLog()
-    await store.loadMemberSources(battlefieldId)
-
-    await store.relinkSessionMember(battlefieldId, 'member-b', 'chs_new')
+    // 其他成員的失效連結原樣保留，不被順手清空（否則該員自戰場名單消失、無法再重新連結）
+    await store.relinkSessionMember(battlefieldId, 'member-a', 'chs_other_a')
     expect(dmServer.updateLogBodies.at(-1)?.members).toContainEqual({
       id: 'member-b',
       playerName: '玩家B',
-      characterShareId: 'chs_new',
+      characterShareId: 'chs_broken',
     })
 
     const getLogCallsBefore = dmServer.getLogCalls

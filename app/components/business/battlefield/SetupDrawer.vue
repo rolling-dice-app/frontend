@@ -116,14 +116,6 @@
                     type="button"
                     variant="neutral"
                     size="sm"
-                    @click="emit('removeMember', member.memberId)"
-                  >
-                    {{ t('battlefield.removeMember') }}
-                  </CommonAppButton>
-                  <CommonAppButton
-                    type="button"
-                    variant="neutral"
-                    size="sm"
                     @click="toggleRelink(member.memberId)"
                   >
                     {{ t('battlefield.relinkMember') }}
@@ -354,7 +346,6 @@ const emit = defineEmits<{
   createAdhoc: [input: AdhocUnitInput, joinCombat: boolean]
   enter: [unitId: string]
   removeUnit: [unitId: string]
-  removeMember: [memberId: string]
   relinkMember: [memberId: string, shareId: string]
 }>()
 

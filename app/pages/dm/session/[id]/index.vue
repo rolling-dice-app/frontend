@@ -251,8 +251,6 @@ const toast = useToast()
 const apiErrorToast = useApiErrorToast()
 const dmSessionStore = useDmSessionStore()
 
-useHead({ title: t('dmSession.detailTitle') })
-
 const maxMembers = VALIDATION_LIMITS.maxMembersPerDmSessionContainer
 
 // 與列表同步：私有資料不進 SSR HTML / payload。id 在本次 mount 內恆定（route 變動走 page key remount）。
@@ -263,6 +261,9 @@ const { status, error, refresh } = useAsyncData(
 )
 
 const container = computed(() => dmSessionStore.getContainerById(id))
+
+// 分頁標題用劇本名稱以區分不同劇本；載入前退回通用標題
+useHead({ title: () => container.value?.title || t('dmSession.detailTitle') })
 
 // 真 404（劇本不存在 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
 const isNotFound = computed(

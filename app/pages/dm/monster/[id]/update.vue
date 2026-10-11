@@ -63,8 +63,6 @@ const id = getRouteParam(route.params.id)
 const apiErrorToast = useApiErrorToast()
 const monsterTemplateStore = useMonsterTemplateStore()
 
-useHead({ title: t('monster.editTitle') })
-
 // 與 detail 頁同步：私有資料不進 SSR HTML / payload；PATCH 需要的 updatedAt 由 store detailCache 保管。
 const { status, error, refresh } = useAsyncData(
   () => `monster-template-update-${id}`,
@@ -76,6 +74,9 @@ const monsterView = computed<MonsterTemplateView | undefined>(() => {
   const dto = monsterTemplateStore.getById(id)
   return dto ? monsterTemplateToView(dto) : undefined
 })
+
+// 分頁標題用怪物名稱以區分不同模板；載入前退回通用標題
+useHead({ title: () => monsterView.value?.name || t('monster.editTitle') })
 
 // 真 404 走 NotFound；其餘暫時性錯誤走可重試三態（對齊 detail 頁）。
 const isNotFound = computed(

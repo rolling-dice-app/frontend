@@ -303,8 +303,6 @@ const toast = useToast()
 const apiErrorToast = useApiErrorToast()
 const route = useRoute()
 
-useHead({ title: t('battlefield.listTitle') })
-
 const battlefieldStore = useBattlefieldStore()
 const monsterTemplateStore = useMonsterTemplateStore()
 const battlefieldId = getRouteParam(route.params.id)
@@ -335,6 +333,14 @@ const sessionOption = computed(() =>
   battlefieldStore.sessionOptions.find((o) => o.sessionId === battlefield.value?.sessionId),
 )
 const memberSources = computed(() => battlefieldStore.getMemberSources(battlefieldId))
+
+// 戰場本身無名稱，分頁標題與頂部工具帶同來源（劇本／團務名）；載入前退回通用標題
+useHead({
+  title: () =>
+    [sessionOption.value?.containerTitle, sessionOption.value?.sessionTitle]
+      .filter(Boolean)
+      .join('・') || t('battlefield.listTitle'),
+})
 
 const combatants = computed<BattlefieldUnit[]>(() =>
   battlefield.value ? combatantsOf(battlefield.value.units) : [],

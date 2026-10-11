@@ -66,8 +66,6 @@ const toast = useToast()
 const apiErrorToast = useApiErrorToast()
 const dmSessionStore = useDmSessionStore()
 
-useHead({ title: t('dmSession.log.editTitle') })
-
 // 表單同時需要紀錄本體與劇本常駐名單（出席 toggle chips）。
 const { status, error, refresh } = useAsyncData(
   () => `dm-session-log-update-${logId}`,
@@ -89,6 +87,9 @@ const draft = computed<DmSessionLogDraft | undefined>(() => {
   const { id: _id, containerId: _containerId, createdAt: _c, updatedAt: _u, ...rest } = dto
   return rest
 })
+
+// 分頁標題用團務名稱以區分不同紀錄；載入前退回通用標題
+useHead({ title: () => draft.value?.title || t('dmSession.log.editTitle') })
 
 // 真 404（紀錄或劇本不存在 / 不屬於此劇本 / 非擁有者，Promise.all 任一 GET 404 都進 error）
 // 走 NotFound；其餘暫時性錯誤走可重試三態。

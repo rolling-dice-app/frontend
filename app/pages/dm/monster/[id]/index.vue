@@ -276,8 +276,6 @@ const id = getRouteParam(route.params.id)
 const apiErrorToast = useApiErrorToast()
 const monsterTemplateStore = useMonsterTemplateStore()
 
-useHead({ title: t('monster.detailTitle') })
-
 // 與列表同步：私有資料不進 SSR HTML / payload。id 在本次 mount 內恆定（route 變動走 page key remount）。
 const { status, error, refresh } = useAsyncData(
   () => `monster-template-${id}`,
@@ -286,6 +284,9 @@ const { status, error, refresh } = useAsyncData(
 )
 
 const monster = computed(() => monsterTemplateStore.getById(id))
+
+// 分頁標題用怪物名稱以區分不同模板；載入前退回通用標題
+useHead({ title: () => monster.value?.name || t('monster.detailTitle') })
 
 // 真 404（模板不存在 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
 const isNotFound = computed(

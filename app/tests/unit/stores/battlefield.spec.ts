@@ -48,6 +48,7 @@ const server = vi.hoisted(() => {
     updateBodies: [] as BattlefieldUpdateBody[],
     restoreCalls: [] as string[],
     getCalls: 0,
+    getGate: null as Promise<void> | null,
     nextUpdateError: null as unknown,
     nextGetError: null as unknown,
     /** 依序丟出的 GET 錯誤（可排多個回合） */
@@ -69,6 +70,7 @@ const server = vi.hoisted(() => {
       this.updateBodies = []
       this.restoreCalls = []
       this.getCalls = 0
+      this.getGate = null
       this.nextUpdateError = null
       this.nextGetError = null
       this.getErrors = []
@@ -91,6 +93,8 @@ vi.stubGlobal('battlefields', () => ({
     try {
       // 讓出一個 microtask，並行才觀察得到（fake 若全同步則永遠量到 1）
       await Promise.resolve()
+      // 測試可掛 gate 把 GET 卡在飛行中，觀察期間的本地變更
+      if (server.getGate) await server.getGate
       if (server.getErrors.length > 0) throw server.getErrors.shift()
       if (server.nextGetError) {
         const err = server.nextGetError
@@ -457,6 +461,42 @@ describe('useBattlefieldStore — 持久化 pipeline', () => {
     expect(store.getBattlefieldById(battlefieldId)?.updatedAt).toBe(
       server.battlefields.get(battlefieldId)?.updatedAt,
     )
+  })
+
+  // 迴歸：PATCH 成功後換 token 的 re-GET 飛行期間本地又被改動，回來的 server 資料
+  // 不可整包覆蓋本地——那筆新變更還沒送出，蓋掉就永久遺失（快速連點兩個單位參戰）。
+  it('re-GET 飛行期間的本地變更不被 server 資料覆蓋，並由下一輪送出', async () => {
+    const { store, battlefieldId } = await setupBattlefield()
+    const adhoc = (name: string) =>
+      store.createAdhocUnit(
+        battlefieldId,
+        { name, maxHp: 20, ac: 10, speed: 30, initiativeBonus: 0 },
+        false,
+      )!
+    const a = adhoc('A')
+    const b = adhoc('B')
+    await store.flushPersist(battlefieldId)
+    server.updateBodies = []
+
+    let releaseGet: () => void = () => {}
+    server.getGate = new Promise<void>((res) => {
+      releaseGet = res
+    })
+    const getsBefore = server.getCalls
+    store.enterCombat(battlefieldId, a.id)
+    // 等 A 的 PATCH 落地、re-GET 已發出並卡在 gate
+    await vi.waitFor(() => expect(server.getCalls).toBe(getsBefore + 1))
+    store.enterCombat(battlefieldId, b.id)
+    server.getGate = null
+    releaseGet()
+    await store.flushPersist(battlefieldId)
+
+    const unitOf = (id: string) =>
+      store.getBattlefieldById(battlefieldId)?.units.find((u) => u.id === id)
+    expect(unitOf(a.id)?.inCombat).toBe(true)
+    expect(unitOf(b.id)?.inCombat).toBe(true)
+    expect(server.battlefields.get(battlefieldId)?.units.every((u) => u.inCombat)).toBe(true)
+    expect(store.persistErrorOf(battlefieldId)).toBeNull()
   })
 
   // 迴歸：endBattle / removeUnit 以 map / filter 重建 units，元素會是 reactive

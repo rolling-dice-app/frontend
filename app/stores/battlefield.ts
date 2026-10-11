@@ -169,12 +169,12 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       await battlefields().update(battlefieldId, body)
     },
 
-    refetch: async (battlefieldId, { tokenOnly }) => {
+    refetch: async (battlefieldId, { isTokenOnly }) => {
       const fresh = await battlefields().get(battlefieldId)
       const current = battlefieldCache.value.get(battlefieldId)
       if (!current) return
-      // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
-      if (tokenOnly) current.updatedAt = fresh.updatedAt
+      // 飛行期間（含上面這次 GET）user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
+      if (isTokenOnly()) current.updatedAt = fresh.updatedAt
       else battlefieldCache.value.set(battlefieldId, fresh)
     },
 

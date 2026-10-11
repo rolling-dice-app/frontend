@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <!-- 出席角色（已帶入、未參戰） -->
+    <!-- 出席角色（已帶入；參戰中的也列出，參戰鈕 disabled） -->
     <div class="flex flex-col pb-1.5">
       <h3 class="px-3 pb-1 pt-2 text-[11px] font-bold tracking-wider text-content-faint">
         {{ t('battlefield.groupCharacters') }}
@@ -10,34 +10,48 @@
           v-for="unit in characterUnits"
           :key="unit.id"
           data-testid="battlefield-roster-row"
-          class="flex items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
+          class="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
+          :class="unit.id === selectedId ? 'ring-2 ring-inset ring-primary' : ''"
+          @click="emit('select', unit.id)"
         >
           <span class="flex min-w-0 flex-1 flex-col">
-            <span class="truncate font-semibold">{{ unit.name }}</span>
+            <!-- 選取入口是這顆真 button（比照 CombatRow）；整列的 click 保留給指標操作 -->
+            <button
+              type="button"
+              class="truncate text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              :aria-label="t('battlefield.selectUnitAria', { name: unit.name })"
+              :aria-pressed="unit.id === selectedId"
+              @click.stop="emit('select', unit.id)"
+            >
+              {{ unit.name }}
+            </button>
             <span class="text-[11px] text-content-muted tabular-nums">{{
               unitStatLine(unit)
             }}</span>
           </span>
-          <CommonAppButton
-            type="button"
-            variant="primary"
-            size="xs"
-            @click="emit('enter', unit.id)"
-          >
-            {{ t('battlefield.join') }}
-          </CommonAppButton>
-          <button
-            type="button"
-            class="flex size-7 shrink-0 items-center justify-center rounded-md text-danger-hover hover:bg-panel-2"
-            :aria-label="`${t('battlefield.removeUnit')} ${unit.name}`"
-            @click="emit('removeUnit', unit.id)"
-          >
-            <Icon name="close" :size="14" />
-          </button>
+          <span class="flex shrink-0 items-center gap-2" @click.stop>
+            <CommonAppButton
+              type="button"
+              variant="primary"
+              size="xs"
+              :disabled="unit.inCombat"
+              @click="emit('enter', unit.id)"
+            >
+              {{ t('battlefield.join') }}
+            </CommonAppButton>
+            <button
+              type="button"
+              class="flex size-7 shrink-0 items-center justify-center rounded-md text-danger-hover hover:bg-panel-2"
+              :aria-label="`${t('battlefield.removeUnit')} ${unit.name}`"
+              @click="emit('removeUnit', unit.id)"
+            >
+              <Icon name="close" :size="14" />
+            </button>
+          </span>
         </div>
       </template>
       <p v-else class="px-3 py-1.5 text-[11px] text-content-muted">
-        {{ t('battlefield.groupEmpty') }}
+        {{ t('battlefield.groupCharactersEmpty') }}
       </p>
     </div>
 
@@ -77,7 +91,7 @@
       </div>
     </div>
 
-    <!-- 其他單位：手動臨時單位＋退場的怪物實例 -->
+    <!-- 其他單位：怪物實例＋手動臨時單位（參戰中的也列出，參戰鈕 disabled） -->
     <div class="flex flex-col border-t border-panel-border pb-1.5">
       <h3 class="px-3 pb-1 pt-2 text-[11px] font-bold tracking-wider text-content-faint">
         {{ t('battlefield.groupOthers') }}
@@ -87,34 +101,48 @@
           v-for="unit in otherUnits"
           :key="unit.id"
           data-testid="battlefield-roster-row"
-          class="flex items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
+          class="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[13px] hover:bg-panel-2"
+          :class="unit.id === selectedId ? 'ring-2 ring-inset ring-primary' : ''"
+          @click="emit('select', unit.id)"
         >
           <span class="flex min-w-0 flex-1 flex-col">
-            <span class="truncate font-semibold">{{ unit.name }}</span>
+            <!-- 選取入口是這顆真 button（比照 CombatRow）；整列的 click 保留給指標操作 -->
+            <button
+              type="button"
+              class="truncate text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              :aria-label="t('battlefield.selectUnitAria', { name: unit.name })"
+              :aria-pressed="unit.id === selectedId"
+              @click.stop="emit('select', unit.id)"
+            >
+              {{ unit.name }}
+            </button>
             <span class="text-[11px] text-content-muted tabular-nums">{{
               unitStatLine(unit)
             }}</span>
           </span>
-          <CommonAppButton
-            type="button"
-            variant="primary"
-            size="xs"
-            @click="emit('enter', unit.id)"
-          >
-            {{ t('battlefield.join') }}
-          </CommonAppButton>
-          <button
-            type="button"
-            class="flex size-7 shrink-0 items-center justify-center rounded-md text-danger-hover hover:bg-panel-2"
-            :aria-label="`${t('battlefield.removeUnit')} ${unit.name}`"
-            @click="emit('removeUnit', unit.id)"
-          >
-            <Icon name="close" :size="14" />
-          </button>
+          <span class="flex shrink-0 items-center gap-2" @click.stop>
+            <CommonAppButton
+              type="button"
+              variant="primary"
+              size="xs"
+              :disabled="unit.inCombat"
+              @click="emit('enter', unit.id)"
+            >
+              {{ t('battlefield.join') }}
+            </CommonAppButton>
+            <button
+              type="button"
+              class="flex size-7 shrink-0 items-center justify-center rounded-md text-danger-hover hover:bg-panel-2"
+              :aria-label="`${t('battlefield.removeUnit')} ${unit.name}`"
+              @click="emit('removeUnit', unit.id)"
+            >
+              <Icon name="close" :size="14" />
+            </button>
+          </span>
         </div>
       </template>
       <p v-else class="px-3 py-1.5 text-[11px] text-content-muted">
-        {{ t('battlefield.groupEmpty') }}
+        {{ t('battlefield.groupOthersEmpty') }}
       </p>
     </div>
   </div>
@@ -128,20 +156,24 @@ import type { BattlefieldTemplateSource } from '~/types/business/battlefield'
 const { t } = useI18n()
 
 const props = defineProps<{
-  /** 未參戰單位（戰場可用庫） */
-  rosterUnits: BattlefieldUnit[]
+  /** 戰場全部單位；面板自行分組 */
+  units: BattlefieldUnit[]
+  /** 右欄目前顯示的單位；對應列加選取外框 */
+  selectedId: string | null
   templates: BattlefieldTemplateSource[]
 }>()
 
 const emit = defineEmits<{
+  select: [unitId: string]
   enter: [unitId: string]
   addTemplate: [templateId: string]
   removeUnit: [unitId: string]
 }>()
 
-const characterUnits = computed(() => props.rosterUnits.filter((u) => u.kind === 'character'))
-// 怪物實例結束戰鬥後退回這裡與 adhoc 並列在「其他單位」，下一場可再參戰
-const otherUnits = computed(() => props.rosterUnits.filter((u) => u.kind !== 'character'))
+// 角色不論是否參戰都列出，DM 才看得出哪些出席角色已帶入戰場
+const characterUnits = computed(() => props.units.filter((u) => u.kind === 'character'))
+// 同模板的怪物實例排在一起，adhoc 殿後
+const otherUnits = computed(() => sortOtherUnits(props.units.filter((u) => u.kind !== 'character')))
 
 const unitStatLine = (unit: BattlefieldUnit): string => {
   const base = t('battlefield.statHpAc', {

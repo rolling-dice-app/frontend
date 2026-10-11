@@ -61,9 +61,26 @@ export function combatantsOf(units: BattlefieldUnit[]): BattlefieldUnit[] {
   return units.filter((u) => u.inCombat).sort((a, b) => a.sortOrder - b.sortOrder)
 }
 
-/** 未參戰單位（戰場可用庫） */
-export function rosterOf(units: BattlefieldUnit[]): BattlefieldUnit[] {
-  return units.filter((u) => !u.inCombat)
+/**
+ * 左欄「其他單位」的顯示序：同模板的怪物實例排在一起，模板組依第一隻實例的加入先後，
+ * 組內依名稱自然排序（「哥布林 2」在「哥布林 10」之前）；無模板的 adhoc 殿後、維持原序。
+ */
+export function sortOtherUnits(units: BattlefieldUnit[]): BattlefieldUnit[] {
+  const groups = new Map<string, BattlefieldUnit[]>()
+  const untemplated: BattlefieldUnit[] = []
+  for (const unit of units) {
+    if (unit.templateId == null) {
+      untemplated.push(unit)
+      continue
+    }
+    const group = groups.get(unit.templateId)
+    if (group) group.push(unit)
+    else groups.set(unit.templateId, [unit])
+  }
+  const templated = [...groups.values()].flatMap((group) =>
+    group.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
+  )
+  return [...templated, ...untemplated]
 }
 
 /**

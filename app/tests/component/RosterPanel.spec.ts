@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { t } from '~/i18n'
 import AppButton from '~/components/common/AppButton.vue'
 import RosterPanel from '~/components/business/battlefield/RosterPanel.vue'
-import { effectiveAc, effectiveMaxHp } from '~/helpers/battlefield'
+import { effectiveAc, effectiveMaxHp, sortOtherUnits } from '~/helpers/battlefield'
 import { createMockBattlefieldUnit } from '~/tests/fixtures/battlefield'
 import type { BattlefieldUnit } from '@rolling-dice-app/core'
 import type { BattlefieldTemplateSource } from '~/types/business/battlefield'
@@ -11,6 +11,7 @@ import type { BattlefieldTemplateSource } from '~/types/business/battlefield'
 beforeEach(() => {
   vi.stubGlobal('effectiveAc', effectiveAc)
   vi.stubGlobal('effectiveMaxHp', effectiveMaxHp)
+  vi.stubGlobal('sortOtherUnits', sortOtherUnits)
 })
 
 afterEach(() => {
@@ -60,9 +61,12 @@ const templates: BattlefieldTemplateSource[] = [
   { id: 't-1', name: '座狼', challengeRating: '1/4', hp: 11, ac: 13 },
 ]
 
-const mountPanel = (rosterUnits: BattlefieldUnit[] = [character, monster, adhoc]) =>
+const mountPanel = (
+  units: BattlefieldUnit[] = [character, monster, adhoc],
+  selectedId: string | null = null,
+) =>
   mount(RosterPanel, {
-    props: { rosterUnits, templates },
+    props: { units, templates, selectedId },
     global: {
       stubs: { Icon: IconStub, Button: ButtonStub },
       components: { CommonAppButton: AppButton },
@@ -144,9 +148,94 @@ describe('RosterPanel', () => {
     expect(wrapper.emitted('addTemplate')?.at(-1)).toEqual(['t-1'])
   })
 
-  it('分組為空時顯示「皆已參戰」提示', () => {
+  it('參戰中的角色仍列在「出席角色」：參戰鈕 disabled、移除鈕照常 emit', async () => {
+    const fighting = { ...character, inCombat: true }
+    const wrapper = mountPanel([fighting])
+    const row = rowOf(wrapper, '艾莉亞')
+    const join = row.findAll('button').find((b) => b.text() === t('battlefield.join'))!
+
+    expect(join.attributes('disabled')).toBeDefined()
+    await join.trigger('click')
+    expect(wrapper.emitted('enter')).toBeUndefined()
+
+    await row.find(`[aria-label="${t('battlefield.removeUnit')} 艾莉亞"]`).trigger('click')
+    expect(wrapper.emitted('removeUnit')?.at(-1)).toEqual(['u-aliya'])
+  })
+
+  it('未參戰的角色參戰鈕可按', () => {
+    const wrapper = mountPanel([character])
+    const join = rowOf(wrapper, '艾莉亞')
+      .findAll('button')
+      .find((b) => b.text() === t('battlefield.join'))!
+    expect(join.attributes('disabled')).toBeUndefined()
+  })
+
+  it('參戰中的怪物與 adhoc 仍列在「其他單位」：參戰鈕 disabled、移除鈕照常 emit', async () => {
+    const wrapper = mountPanel([
+      { ...monster, inCombat: true },
+      { ...adhoc, inCombat: true },
+    ])
+    expect(wrapper.findAll('[data-testid="battlefield-roster-row"]')).toHaveLength(2)
+
+    const row = rowOf(wrapper, '哥布林 1')
+    const join = row.findAll('button').find((b) => b.text() === t('battlefield.join'))!
+    expect(join.attributes('disabled')).toBeDefined()
+
+    await row.find(`[aria-label="${t('battlefield.removeUnit')} 哥布林 1"]`).trigger('click')
+    expect(wrapper.emitted('removeUnit')?.at(-1)).toEqual(['u-g1'])
+  })
+
+  it('其他單位依模板分組排序，adhoc 殿後', () => {
+    const goblin2 = { ...monster, id: 'u-g2', name: '哥布林 2', templateId: 't-goblin' }
+    const goblin1 = { ...monster, templateId: 't-goblin' }
+    const gnoll = { ...monster, id: 'u-n1', name: '豺狼人 1', templateId: 't-gnoll' }
+    const wrapper = mountPanel([goblin2, adhoc, gnoll, goblin1])
+    const names = wrapper
+      .findAll('[data-testid="battlefield-roster-row"]')
+      .map((row) => row.find('button').text())
+    expect(names).toEqual(['哥布林 1', '哥布林 2', '豺狼人 1', '皮波'])
+  })
+
+  it('點單位列或名稱鈕 emit select；參戰／移除鈕不觸發選取', async () => {
+    const wrapper = mountPanel()
+
+    await rowOf(wrapper, '艾莉亞').trigger('click')
+    expect(wrapper.emitted('select')?.at(-1)).toEqual(['u-aliya'])
+
+    const row = rowOf(wrapper, '哥布林 1')
+    await row
+      .find(`[aria-label="${t('battlefield.selectUnitAria', { name: '哥布林 1' })}"]`)
+      .trigger('click')
+    expect(wrapper.emitted('select')?.at(-1)).toEqual(['u-g1'])
+    expect(wrapper.emitted('select')).toHaveLength(2)
+
+    await row
+      .findAll('button')
+      .find((b) => b.text() === t('battlefield.join'))!
+      .trigger('click')
+    await row.find(`[aria-label="${t('battlefield.removeUnit')} 哥布林 1"]`).trigger('click')
+    expect(wrapper.emitted('select')).toHaveLength(2)
+  })
+
+  it('selectedId 對應的列帶選取外框與 aria-pressed', () => {
+    const wrapper = mountPanel(undefined, 'u-g1')
+    const pressed = (name: string) =>
+      rowOf(wrapper, name)
+        .find(`[aria-label="${t('battlefield.selectUnitAria', { name })}"]`)
+        .attributes('aria-pressed')
+
+    expect(rowOf(wrapper, '哥布林 1').classes()).toContain('ring-primary')
+    expect(pressed('哥布林 1')).toBe('true')
+    expect(rowOf(wrapper, '艾莉亞').classes()).not.toContain('ring-primary')
+    expect(pressed('艾莉亞')).toBe('false')
+  })
+
+  it('空狀態文案分流：沒有角色顯示「沒有參戰角色」、沒有其他單位顯示「沒有其他單位」', () => {
     const wrapper = mountPanel([])
-    const hints = wrapper.findAll('p').filter((p) => p.text() === t('battlefield.groupEmpty'))
-    expect(hints).toHaveLength(2) // 出席角色、其他單位
+    const texts = wrapper.findAll('p').map((p) => p.text())
+    expect(texts).toEqual([
+      t('battlefield.groupCharactersEmpty'),
+      t('battlefield.groupOthersEmpty'),
+    ])
   })
 })

@@ -539,17 +539,20 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     void flushPersist(battlefieldId)
   }
 
+  /** 行動中單位離開軌道前先把行動權交給下一位；軌上只剩自己則清空。非行動中單位為 no-op */
+  const handOffTurn = (bf: BattlefieldDTO, unitId: string): void => {
+    if (bf.activeUnitId !== unitId) return
+    const ordered = combatantsOf(bf.units).map((u) => u.id)
+    // 只交棒，不動輪次（輪次只由「上一位／下一位」更新）
+    const step = nextTurnTarget(ordered, unitId, 1)
+    bf.activeUnitId = step.activeUnitId === unitId ? null : step.activeUnitId
+  }
+
   const leaveCombat = (battlefieldId: string, unitId: string): void => {
     const bf = requireBattlefield(battlefieldId)
     const target = requireUnit(bf, unitId)
     if (!target.inCombat) return
-    // 行動中單位退場：先把行動權交給下一位；軌上只剩自己則清空
-    if (bf.activeUnitId === unitId) {
-      const ordered = combatantsOf(bf.units).map((u) => u.id)
-      // 只交棒，不動輪次（輪次只由「上一位／下一位」更新）
-      const step = nextTurnTarget(ordered, unitId, 1)
-      bf.activeUnitId = step.activeUnitId === unitId ? null : step.activeUnitId
-    }
+    handOffTurn(bf, unitId)
     target.inCombat = false
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)
@@ -557,7 +560,8 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
 
   const removeUnit = (battlefieldId: string, unitId: string): void => {
     const bf = requireBattlefield(battlefieldId)
-    if (bf.activeUnitId === unitId) bf.activeUnitId = null
+    // 參戰中直接移除＝退出戰鬥＋移除：行動權比照退場交棒，不讓回合停住
+    handOffTurn(bf, unitId)
     bf.units = bf.units.filter((u) => u.id !== unitId)
     schedulePersist(battlefieldId)
     void flushPersist(battlefieldId)

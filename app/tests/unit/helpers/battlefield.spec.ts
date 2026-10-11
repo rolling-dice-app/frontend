@@ -13,7 +13,7 @@ import {
   nextTurnTarget,
   resetUnitAfterBattle,
   resetUnitToSnapshotBaseline,
-  rosterOf,
+  sortOtherUnits,
   sortCombatantsByInitiative,
   speedDisplay,
 } from '~/helpers/battlefield'
@@ -303,13 +303,49 @@ describe('resetUnitToSnapshotBaseline', () => {
   })
 })
 
-describe('combatantsOf / rosterOf', () => {
-  it('參戰依 sortOrder 排序、未參戰進 roster', () => {
+describe('combatantsOf', () => {
+  it('只取參戰單位並依 sortOrder 排序', () => {
     const a = createMockBattlefieldUnit({ inCombat: true, sortOrder: 2 })
     const b = createMockBattlefieldUnit({ inCombat: false })
     const c = createMockBattlefieldUnit({ inCombat: true, sortOrder: 0 })
     expect(combatantsOf([a, b, c]).map((u) => u.id)).toEqual([c.id, a.id])
-    expect(rosterOf([a, b, c]).map((u) => u.id)).toEqual([b.id])
+  })
+})
+
+describe('sortOtherUnits', () => {
+  const monsterOf = (templateId: string, name: string) =>
+    createMockBattlefieldUnit({ kind: 'monster', templateId, name })
+  const adhocOf = (name: string) =>
+    createMockBattlefieldUnit({ kind: 'adhoc', templateId: null, name })
+
+  it('同模板排在一起：模板組依第一隻的加入先後，adhoc 殿後維持原序', () => {
+    const units = [
+      monsterOf('t-goblin', '哥布林 1'),
+      adhocOf('皮波'),
+      monsterOf('t-gnoll', '豺狼人 1'),
+      monsterOf('t-goblin', '哥布林 2'),
+      adhocOf('阿土'),
+      monsterOf('t-gnoll', '豺狼人 2'),
+    ]
+    expect(sortOtherUnits(units).map((u) => u.name)).toEqual([
+      '哥布林 1',
+      '哥布林 2',
+      '豺狼人 1',
+      '豺狼人 2',
+      '皮波',
+      '阿土',
+    ])
+  })
+
+  it('組內依名稱自然排序（2 在 10 之前），且不改動傳入陣列', () => {
+    const units = [
+      monsterOf('t-goblin', '哥布林 10'),
+      monsterOf('t-goblin', '哥布林 2'),
+      monsterOf('t-goblin', '哥布林 1'),
+    ]
+    const before = units.map((u) => u.name)
+    expect(sortOtherUnits(units).map((u) => u.name)).toEqual(['哥布林 1', '哥布林 2', '哥布林 10'])
+    expect(units.map((u) => u.name)).toEqual(before)
   })
 })
 

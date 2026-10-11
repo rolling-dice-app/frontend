@@ -1121,6 +1121,29 @@ describe('useBattlefieldStore — 回合狀態機', () => {
     expect(bf.units.find((u) => u.id === 'u-g2')?.inCombat).toBe(false)
   })
 
+  it('removeUnit 行動中單位：行動權交給下一位、輪次不動，單位自戰場移除', () => {
+    const { store, bf } = seedLocal()
+    bf.activeUnitId = 'u-g2' // 軌尾
+    const roundBefore = bf.round
+    store.removeUnit(bf.id, 'u-g2')
+    expect(bf.activeUnitId).toBe('u-aliya')
+    expect(bf.round).toBe(roundBefore)
+    expect(bf.units.some((u) => u.id === 'u-g2')).toBe(false)
+  })
+
+  it('removeUnit 非行動中單位不動行動權；軌上只剩自己時清空', () => {
+    const { store, bf } = seedLocal()
+    bf.activeUnitId = 'u-aliya'
+    store.removeUnit(bf.id, 'u-g2')
+    expect(bf.activeUnitId).toBe('u-aliya')
+
+    for (const id of combatIds(bf).filter((unitId) => unitId !== 'u-aliya')) {
+      store.removeUnit(bf.id, id)
+    }
+    store.removeUnit(bf.id, 'u-aliya')
+    expect(bf.activeUnitId).toBeNull()
+  })
+
   it('reorderUnits 依 id 順序重寫 sortOrder；moveUnit 與相鄰互換', () => {
     const { store, bf } = seedLocal()
     const reversed = [...combatIds(bf)].reverse()

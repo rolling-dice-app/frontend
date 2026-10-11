@@ -102,7 +102,12 @@ watch(
   { immediate: true },
 )
 
-const canSubmit = computed(() => draft.value.trim().length > 0)
+// rename 模式下名稱未變不送出，避免無效更新
+const canSubmit = computed(() => {
+  const trimmed = draft.value.trim()
+  if (trimmed.length === 0) return false
+  return props.mode === 'create' || trimmed !== props.initialTitle
+})
 
 /** 關窗單一入口：submitting 期間忽略（含 ESC / header X / 取消鈕） */
 const onOpenChange = (value: boolean): void => {

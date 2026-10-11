@@ -60,6 +60,18 @@ describe('ContainerRemarkModal', () => {
     expect(wrapper.find<HTMLTextAreaElement>('textarea').element.value).toBe('每週五開團')
   })
 
+  it('備註未變（含只差前後空白）時確認鈕 disabled、confirm 不 emit', async () => {
+    const wrapper = mountModal({ remark: '每週五開團' })
+
+    expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+
+    await wrapper.find('textarea').setValue('  每週五開團  ')
+    expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+    await findButtonByText(wrapper, '確認')!.trigger('click')
+
+    expect(wrapper.emitted('confirm')).toBeUndefined()
+  })
+
   it('confirm 送出 trim 後的備註，且不自行關窗', async () => {
     const wrapper = mountModal()
 

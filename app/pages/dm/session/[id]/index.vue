@@ -305,9 +305,8 @@ const patchContainer = async (
   try {
     const result = await dmSessionStore.updateContainer(id, patch)
     openRef.value = false
-    // 無變更時不謊報「已儲存」；使用者按了確認就該關窗
-    if (result.status === 'unchanged') toast.info(t('dmSession.noChangesHint'), { kind: 'hint' })
-    else toast.success(t('dmSession.savedHint'))
+    // 無變更已由各彈窗擋下；萬一仍走到這裡就只關窗，不謊報「已儲存」
+    if (result.status !== 'unchanged') toast.success(t('dmSession.savedHint'))
     // PATCH 已成功但 re-GET 失敗：cache 已失效，重載拿新樂觀鎖 token
     if (result.status === 'stale') void refresh()
   } catch (err) {

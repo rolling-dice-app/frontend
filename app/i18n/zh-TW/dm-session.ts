@@ -20,7 +20,6 @@ export default {
   deleteLabel: '刪除劇本',
   deleteConfirm: '刪除後將一併移除旗下所有團務紀錄（無法還原），確定要刪除以下劇本？',
   savedHint: '已儲存',
-  noChangesHint: '沒有變更',
 
   // 劇本 detail 欄位
   container: {

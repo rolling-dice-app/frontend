@@ -1,5 +1,5 @@
 <template>
-  <BusinessMonsterForm :monster="draft" mode="create" @save="onSave" />
+  <BusinessMonsterForm :monster="draft" mode="create" :submitting="isSaving" @save="onSave" />
 </template>
 
 <script setup lang="ts">

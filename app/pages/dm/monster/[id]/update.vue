@@ -41,6 +41,7 @@
       :key="monsterView.id"
       :monster="monsterView"
       mode="edit"
+      :submitting="isSaving"
       @save="onSave"
     />
   </div>

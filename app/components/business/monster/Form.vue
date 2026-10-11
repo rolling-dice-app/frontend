@@ -5,6 +5,7 @@
         <CommonAppButton
           variant="primary"
           :disabled="!canSubmit"
+          :loading="submitting"
           class="ml-auto min-w-22 whitespace-nowrap"
           data-testid="monster-save"
           @click="onSave"
@@ -50,8 +51,8 @@ const cloneFormState = (source: MonsterTemplateFormState): MonsterTemplateFormSt
   JSON.parse(JSON.stringify(source)) as MonsterTemplateFormState
 
 const props = withDefaults(
-  defineProps<{ monster: MonsterTemplateView; mode?: 'create' | 'edit' }>(),
-  { mode: 'edit' },
+  defineProps<{ monster: MonsterTemplateView; mode?: 'create' | 'edit'; submitting?: boolean }>(),
+  { mode: 'edit', submitting: false },
 )
 
 const emit = defineEmits<{ save: [value: MonsterTemplateView] }>()
@@ -72,7 +73,7 @@ const pageTitle = computed(
 const canSubmit = computed(() => formState.value.name.trim().length > 0)
 
 const onSave = (): void => {
-  if (!canSubmit.value) return
+  if (!canSubmit.value || props.submitting) return
   emit('save', cloneFormState(formState.value))
 }
 </script>

@@ -83,8 +83,8 @@ export class BattlefieldPom {
   }
 
   /**
-   * A unit's row in the left-hand roster (units on the battlefield but not in
-   * the current fight). Ad-hoc units and monsters land here when a battle ends.
+   * A unit's row in the left-hand roster, which lists every unit on the
+   * battlefield whether or not it is in the current fight.
    */
   rosterEntry(name: string): Locator {
     return this.page.getByTestId('battlefield-roster-row').filter({ hasText: name })

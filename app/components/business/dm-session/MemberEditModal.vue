@@ -143,7 +143,7 @@
           type="button"
           variant="primary"
           data-testid="dm-session-members-confirm"
-          :disabled="anyResolving || anyBlocking"
+          :disabled="anyResolving || anyBlocking || !hasChanges"
           :loading="submitting"
           @click="onConfirm"
         >
@@ -159,7 +159,9 @@ import { toRaw } from 'vue'
 import { Icon, Modal } from '@ui'
 import { CHARACTER_TEXT_LIMITS, VALIDATION_LIMITS } from '@rolling-dice-app/core'
 import type { DmSessionMemberDTO } from '@rolling-dice-app/core'
+import { toDmSessionMemberInputs } from '~/helpers/dm-session'
 import { parseShareIdFromLink } from '~/helpers/share'
+import { deepEqual } from '~/utils/deep-equal'
 
 const { t } = useI18n()
 const apiErrorToast = useApiErrorToast()
@@ -246,19 +248,24 @@ const anyBlocking = computed(
 )
 
 /**
- * 名字被清空、但仍帶著角色卡引用的列。後端 playerName 為 `trim().min(1)`，
+ * 名字為空的列（含剛新增的空白列）。後端 playerName 為 `trim().min(1)`，
  * 且 members 是整列 replace，單列空字串會讓整包 PATCH 400、丟失所有修改。
  *
- * 不沿用「清空即丟棄」（未連結列的既有行為）：該列另有專用的移除鈕，
- * 清名字多半是編輯到一半，靜默刪掉會連角色卡引用一起消失。
+ * 不靜默丟棄：該列另有專用的移除鈕，空名字多半是編輯到一半，
+ * 丟掉會讓確認變成無效更新，或連既有成員一起消失。
  */
 const emptyNameIds = computed(
+  () => new Set(draft.value.filter((m) => m.playerName.trim() === '').map((m) => m.id)),
+)
+
+const trimmedDraft = computed(() =>
+  draft.value.map((m) => ({ ...m, playerName: m.playerName.trim() })),
+)
+
+/** 與 store 的 diff 同一套比較基準（寫入形）；名單未變時不讓確認送出無效更新 */
+const hasChanges = computed(
   () =>
-    new Set(
-      draft.value
-        .filter((m) => m.playerName.trim() === '' && m.character !== null)
-        .map((m) => m.id),
-    ),
+    !deepEqual(toDmSessionMemberInputs(trimmedDraft.value), toDmSessionMemberInputs(props.members)),
 )
 
 const clearLinkState = (id: string): void => {
@@ -387,12 +394,9 @@ const onOpenChange = (value: boolean): void => {
   emit('update:open', value)
 }
 
-/** 名字修剪後為空且未連結的列視為未填，確認時丟棄；不自行關窗，成功後由父頁關閉 */
+/** 送出修剪後的名單；不自行關窗，成功後由父頁關閉 */
 const onConfirm = (): void => {
-  if (anyResolving.value || anyBlocking.value || props.submitting) return
-  const cleaned = draft.value
-    .map((m) => ({ ...m, playerName: m.playerName.trim() }))
-    .filter((m) => m.playerName !== '' || m.character !== null)
-  emit('confirm', cleaned)
+  if (anyResolving.value || anyBlocking.value || !hasChanges.value || props.submitting) return
+  emit('confirm', trimmedDraft.value)
 }
 </script>

@@ -12,10 +12,13 @@ export type PersistFailureVerdict = 'retry' | 'stop' | 'expose'
 
 export interface RefetchContext {
   /**
-   * true 表示送出期間本地又被改過：只能接 server 的並行控制 token，
+   * 回 true 表示這一輪開始後本地又被改過：只能接 server 的並行控制 token，
    * 不可用 server 資料覆蓋本地（那些新改動還沒送出去）。
+   *
+   * 必須在抓取完成、套用結果的當下才呼叫：抓取本身也在飛行中，
+   * 期間的本地變更同樣不可被覆蓋，提早取值會漏掉這段。
    */
-  tokenOnly: boolean
+  isTokenOnly: () => boolean
 }
 
 export interface PersistPipelineOptions<TKey> {
@@ -23,7 +26,7 @@ export interface PersistPipelineOptions<TKey> {
   send: (key: TKey) => Promise<void>
   /**
    * 重新抓取並套用結果（換並行控制 token）。在 `send` 成功後呼叫；
-   * 亦用於「上一輪換 token 失敗」的補救，此時 `tokenOnly` 為 true。
+   * 亦用於「上一輪換 token 失敗」的補救，此時 `isTokenOnly()` 恆為 true。
    */
   refetch: (key: TKey, context: RefetchContext) => Promise<void>
   /** `send` 失敗的分類；預設一律 `retry`。 */
@@ -148,7 +151,7 @@ export function createPersistPipeline<TKey>(
   /** 只補換 token、不動資料；成功回 true。失敗代表仍不可送出。 */
   const recoverToken = async (key: TKey, state: PipelineState): Promise<boolean> => {
     try {
-      await options.refetch(key, { tokenOnly: true })
+      await options.refetch(key, { isTokenOnly: () => true })
       state.tokenStale = false
       return true
     } catch (error) {
@@ -175,7 +178,7 @@ export function createPersistPipeline<TKey>(
 
     // 到這裡資料已存進 server：後續失敗只影響「換到新 token」，不可再重送。
     try {
-      await options.refetch(key, { tokenOnly: dirty.changedSince(key, snapshot) })
+      await options.refetch(key, { isTokenOnly: () => dirty.changedSince(key, snapshot) })
       state.retryScheduled = false
       state.tokenStale = false
       options.onSuccess(key)

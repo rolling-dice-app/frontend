@@ -37,7 +37,13 @@
         >
           {{ t('ui.action.cancel') }}
         </CommonAppButton>
-        <CommonAppButton type="button" variant="primary" :loading="submitting" @click="onConfirm">
+        <CommonAppButton
+          type="button"
+          variant="primary"
+          :disabled="!canSubmit"
+          :loading="submitting"
+          @click="onConfirm"
+        >
           {{ t('ui.action.confirm') }}
         </CommonAppButton>
       </div>
@@ -77,6 +83,9 @@ watch(
   { immediate: true },
 )
 
+// 備註未變不送出，避免無效更新
+const canSubmit = computed(() => draft.value.trim() !== props.remark)
+
 /** 關窗單一入口：submitting 期間忽略（含 ESC / header X / 取消鈕） */
 const onOpenChange = (value: boolean): void => {
   if (props.submitting) return
@@ -85,7 +94,7 @@ const onOpenChange = (value: boolean): void => {
 
 // confirm 不自行關窗：成功後由父頁關閉，失敗保持開啟保留輸入
 const onConfirm = (): void => {
-  if (props.submitting) return
+  if (!canSubmit.value || props.submitting) return
   emit('confirm', draft.value.trim())
 }
 </script>

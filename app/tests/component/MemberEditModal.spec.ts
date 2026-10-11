@@ -351,25 +351,77 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
       await findButtonByText(wrapper, '確認')!.trigger('click')
       expect(wrapper.emitted('confirm')).toBeUndefined()
 
-      // 補回名字即恢復可送出
-      await playerNameInput(wrapper).setValue('Anna')
+      // 補上名字即恢復可送出
+      await playerNameInput(wrapper).setValue('Annie')
       expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
       await findButtonByText(wrapper, '確認')!.trigger('click')
       expect(wrapper.emitted('confirm')).toHaveLength(1)
     })
 
-    it('未連結列清空名字仍視為未填而丟棄（既有語意不變，不擋 confirm）', async () => {
+    it('未連結列清空名字：confirm 被擋下並提示必填，不靜默丟棄該列', async () => {
       const wrapper = mountModal([
         makeMember({ id: 'row-1', playerName: 'Anna', character: null }),
         makeMember({ id: 'row-2', playerName: 'Bob', character: null }),
       ])
 
-      await wrapper.findAll('input[aria-label="玩家名稱"]')[0]!.setValue('')
+      await playerNameInput(wrapper, 0).setValue('')
+
+      expect(wrapper.text()).toContain('請填寫玩家名稱')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+    })
+
+    it('新增的空白列立即擋下 confirm；填上名字後可送出並帶上該列', async () => {
+      const wrapper = mountModal([makeMember({ id: 'row-1', playerName: 'Anna', character: null })])
+
+      await findButtonByText(wrapper, '新增成員')!.trigger('click')
+
+      expect(wrapper.text()).toContain('請填寫玩家名稱')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+
+      await playerNameInput(wrapper, 1).setValue('  Bob  ')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
+        [
+          expect.objectContaining({ id: 'row-1', playerName: 'Anna' }),
+          expect.objectContaining({ playerName: 'Bob', character: null }),
+        ],
+      ])
+    })
+  })
+
+  describe('無變更不送出', () => {
+    it('名單未改動時 confirm disabled、不 emit；改名後可送出，改回原值再度 disabled', async () => {
+      const wrapper = mountModal([makeMember({ id: 'row-1', playerName: 'Anna', character: null })])
+
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+
+      await playerNameInput(wrapper).setValue('Annie')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
+
+      // 只差前後空白視為未變（送出前會 trim）
+      await playerNameInput(wrapper).setValue(' Anna ')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+    })
+
+    it('開窗時玩家名稱被最新暱稱自癒：視為有變更，可直接 confirm 寫回', async () => {
+      const wrapper = mountModal([
+        makeMember({
+          playerName: '舊暱稱',
+          character: makePreview(SHARE_A, { ownerDisplayName: '新暱稱' }),
+        }),
+      ])
 
       expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeUndefined()
       await findButtonByText(wrapper, '確認')!.trigger('click')
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual([
-        [expect.objectContaining({ id: 'row-2', playerName: 'Bob' })],
+        [expect.objectContaining({ playerName: '新暱稱' })],
       ])
     })
   })
@@ -638,6 +690,7 @@ describe('MemberEditModal（連結角色卡自動解析）', () => {
     it('confirm 後不自行關窗（由父頁於成功分支關閉）', async () => {
       const wrapper = mountModal()
 
+      await playerNameInput(wrapper).setValue('Annie')
       await findButtonByText(wrapper, '確認')!.trigger('click')
 
       expect(wrapper.emitted('confirm')).toHaveLength(1)

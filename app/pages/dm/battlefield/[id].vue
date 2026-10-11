@@ -102,8 +102,10 @@
           </div>
           <div class="scrollbar-hidden lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             <BusinessBattlefieldRosterPanel
-              :roster-units="rosterUnits"
+              :units="battlefield.units"
               :templates="battlefieldStore.templates"
+              :selected-id="selectedUnit?.id ?? null"
+              @select="(unitId) => (selectedId = unitId)"
               @enter="onEnterCombat"
               @add-template="onAddTemplate"
               @remove-unit="onRemoveUnit"
@@ -337,9 +339,6 @@ const memberSources = computed(() => battlefieldStore.getMemberSources(battlefie
 const combatants = computed<BattlefieldUnit[]>(() =>
   battlefield.value ? combatantsOf(battlefield.value.units) : [],
 )
-const rosterUnits = computed<BattlefieldUnit[]>(() =>
-  battlefield.value ? rosterOf(battlefield.value.units) : [],
-)
 
 // ── 右欄選取：手動選取優先；回合推進時清除 → 面板跟隨行動中單位（demo 決議） ──
 const selectedId = ref<string | null>(null)
@@ -347,9 +346,8 @@ const selectedId = ref<string | null>(null)
 const selectedUnit = computed<BattlefieldUnit | null>(() => {
   const bf = battlefield.value
   if (!bf) return null
-  const manual = selectedId.value
-    ? combatants.value.find((u) => u.id === selectedId.value)
-    : undefined
+  // 左欄也能選取，故不限參戰中的單位
+  const manual = selectedId.value ? bf.units.find((u) => u.id === selectedId.value) : undefined
   if (manual) return manual
   const active = bf.activeUnitId ? bf.units.find((u) => u.id === bf.activeUnitId) : undefined
   return active ?? combatants.value[0] ?? null

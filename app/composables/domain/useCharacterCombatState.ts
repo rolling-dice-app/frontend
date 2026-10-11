@@ -357,10 +357,10 @@ export function useCharacterCombatState(characterId: string, baseMaxHp: Ref<numb
       await characters().combatState.patch(characterId, body)
     },
 
-    refetch: async (_key, { tokenOnly }) => {
+    refetch: async (_key, { isTokenOnly }) => {
       const fresh = await characters().combatState.get(characterId)
-      // 飛行期間 user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
-      if (tokenOnly) state.updatedAt = fresh.updatedAt
+      // 飛行期間（含上面這次 GET）user 又動了 state；只接新 token，data 留給下一輪 persist 帶出
+      if (isTokenOnly()) state.updatedAt = fresh.updatedAt
       else await applyServerDto(fresh)
     },
 

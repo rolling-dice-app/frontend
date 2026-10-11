@@ -115,6 +115,18 @@ describe('ContainerTitleModal', () => {
       expect(wrapper.emitted('confirm')?.at(-1)).toEqual(['新名稱', undefined])
       expect(wrapper.emitted('update:open')).toBeUndefined()
     })
+
+    it('名稱未變（含只差前後空白）時確認鈕 disabled、confirm 不 emit', async () => {
+      const wrapper = mountModal({ mode: 'rename', initialTitle: '舊名稱' })
+
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+
+      await titleInput(wrapper).setValue('  舊名稱  ')
+      expect(findButtonByText(wrapper, '確認')!.attributes('disabled')).toBeDefined()
+      await findButtonByText(wrapper, '確認')!.trigger('click')
+
+      expect(wrapper.emitted('confirm')).toBeUndefined()
+    })
   })
 
   describe('submitting 協議', () => {

@@ -41,8 +41,8 @@ const createHarness = () => {
         throw err
       }
     },
-    refetch: async (key, { tokenOnly }) => {
-      h.refetchCalls.push({ key, tokenOnly })
+    refetch: async (key, { isTokenOnly }) => {
+      h.refetchCalls.push({ key, tokenOnly: isTokenOnly() })
       if (h.nextRefetchError) {
         const err = h.nextRefetchError
         h.nextRefetchError = null
@@ -97,8 +97,8 @@ describe('createPersistPipeline — 送出與合併', () => {
       debounceMs: DEBOUNCE_MS,
       retryMs: RETRY_MS,
       send: () => gate,
-      refetch: async (_key, { tokenOnly }) => {
-        refetchCalls.push(tokenOnly)
+      refetch: async (_key, { isTokenOnly }) => {
+        refetchCalls.push(isTokenOnly())
       },
       onError: () => {},
       onSuccess: () => {},
@@ -111,6 +111,41 @@ describe('createPersistPipeline — 送出與合併', () => {
     await drain()
 
     expect(refetchCalls).toEqual([true])
+  })
+
+  it('重抓期間才被改過：抓取完成後取值仍為 tokenOnly=true，且排出 trailing 一輪', async () => {
+    const tokenOnlyAtApply: boolean[] = []
+    let sendCalls = 0
+    let releaseFetch: () => void = () => {}
+    let gate: Promise<void> | null = new Promise<void>((res) => {
+      releaseFetch = res
+    })
+    const pipeline = createPersistPipeline<string>({
+      debounceMs: DEBOUNCE_MS,
+      retryMs: RETRY_MS,
+      send: async () => {
+        sendCalls += 1
+      },
+      refetch: async (_key, { isTokenOnly }) => {
+        if (gate) await gate
+        tokenOnlyAtApply.push(isTokenOnly())
+      },
+      onError: () => {},
+      onSuccess: () => {},
+    })
+
+    pipeline.schedule(KEY)
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS) // 送出完成，卡在重抓
+    expect(sendCalls).toBe(1)
+    pipeline.schedule(KEY) // 重抓飛行中再次變更
+    gate = null
+    releaseFetch()
+    await drain()
+    expect(tokenOnlyAtApply).toEqual([true])
+
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS)
+    expect(sendCalls).toBe(2)
+    expect(tokenOnlyAtApply).toEqual([true, false])
   })
 
   it('不同 key 互不干擾', async () => {

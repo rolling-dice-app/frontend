@@ -51,7 +51,7 @@
       class="divide-y divide-divider rounded-lg border border-border-soft bg-canvas-elevated p-4 sm:p-6"
     >
       <!-- 身分 + 核心數值 -->
-      <div class="space-y-3 pb-4">
+      <div class="space-y-3 border-b-0">
         <p v-if="monster.size || monster.alignment" class="text-sm text-content-muted">
           <span v-if="monster.size">{{ t(`character.size.${monster.size}`) }}</span>
           <span v-if="monster.size && monster.alignment">，</span>
@@ -101,17 +101,18 @@
             </p>
           </div>
         </div>
-
-        <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響，與列表卡同 token -->
-        <svg
-          viewBox="0 0 400 5"
-          preserveAspectRatio="none"
-          class="h-1.25 w-full"
-          aria-hidden="true"
-        >
-          <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
-        </svg>
       </div>
+
+      <!-- MM 風格錐形分隔線：本頁唯一沉浸殘響，與列表卡同 token。
+           取代核心數值與屬性之間的 divide-y 橫線，故前一區與它自身都關掉底線（border-b-0） -->
+      <svg
+        viewBox="0 0 400 5"
+        preserveAspectRatio="none"
+        class="mt-3 h-1.25 w-full border-b-0"
+        aria-hidden="true"
+      >
+        <polygon points="0,0 400,2.5 0,5" fill="var(--color-statblock-rule)" />
+      </svg>
 
       <!-- 屬性 -->
       <div class="grid grid-cols-3 gap-3 py-4 sm:grid-cols-6">
@@ -132,9 +133,14 @@
           <p class="text-xl font-bold text-content tabular-nums">{{ monster.abilities[key] }}</p>
           <p class="mt-1 border-t border-divider pt-1 text-xs text-content-muted">
             {{ t('monster.field.savingThrows') }}
+            <!-- 明確設定者粗體上色；未設定、由屬性調整值推導者淡色，粗細同時作為非色彩線索 -->
             <span
-              class="font-bold tabular-nums"
-              :class="getModifierColorClass(resolveMonsterSavingThrow(monster, key))"
+              class="tabular-nums"
+              :class="
+                monster.savingThrows[key] != null
+                  ? ['font-bold', getModifierColorClass(resolveMonsterSavingThrow(monster, key))]
+                  : 'font-normal'
+              "
             >
               {{ formatModifier(resolveMonsterSavingThrow(monster, key)) }}
             </span>

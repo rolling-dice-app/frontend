@@ -240,6 +240,10 @@
         :members="memberSources"
         :templates="battlefieldStore.templates"
         :units="battlefield.units"
+        :members-loading="battlefieldStore.membersLoading"
+        :members-error="battlefieldStore.membersError != null"
+        :session-log-to="`/dm/session/${battlefield.containerId}/log/${battlefield.sessionId}`"
+        @retry-members="onRetryMembers"
         @import-member="onImportMember"
         @add-template="onAddTemplate"
         @create-adhoc="onCreateAdhoc"
@@ -507,7 +511,12 @@ const onCreateAdhoc = (input: AdhocUnitInput, joinCombat: boolean): void => {
   )
 }
 
-// ── 成員名單修復（走 m7.2 團務 log PATCH；成功後 store 會重跑 hydrate） ──────
+// ── 成員名單修復 ──────
+// hydrate 失敗後的重試入口；錯誤已記在 store 的 membersError，由抽屜呈現
+const onRetryMembers = (): void => {
+  void battlefieldStore.loadMemberSources(battlefieldId).catch(() => {})
+}
+
 const onRelinkMember = async (memberId: string, shareId: string): Promise<void> => {
   try {
     await battlefieldStore.relinkSessionMember(battlefieldId, memberId, shareId)

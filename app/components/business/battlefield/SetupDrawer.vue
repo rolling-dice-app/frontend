@@ -51,6 +51,42 @@
       >
         <!-- 出席角色：經 shareId 快照帶入（滿 HP）；快照失敗顯示錯誤卡 -->
         <template v-if="activeTab === 'members'">
+          <!-- hydrate 失敗：名單可能是空的或舊的，兩者都要給重試入口 -->
+          <div
+            v-if="membersError"
+            role="alert"
+            class="flex items-center justify-between gap-2 rounded-lg border border-danger bg-danger-soft px-3 py-2"
+          >
+            <span class="text-sm text-danger-hover">{{ t('battlefield.membersLoadFailed') }}</span>
+            <CommonAppButton
+              type="button"
+              variant="warning"
+              size="sm"
+              @click="emit('retryMembers')"
+            >
+              {{ t('ui.state.retry') }}
+            </CommonAppButton>
+          </div>
+          <!-- 名單為空時才分辨載入中／真的沒有；已有名單時重抓不閃爍 -->
+          <template v-if="members.length === 0">
+            <p
+              v-if="membersLoading"
+              role="status"
+              aria-live="polite"
+              class="py-6 text-center text-sm text-content-muted"
+            >
+              {{ t('ui.state.loading') }}
+            </p>
+            <p v-else-if="!membersError" class="py-6 text-center text-sm text-content-muted">
+              {{ t('battlefield.membersEmpty') }}
+              <NuxtLink
+                :to="sessionLogTo"
+                class="ml-1 text-primary underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {{ t('battlefield.membersEmptyLink') }}
+              </NuxtLink>
+            </p>
+          </template>
           <div
             v-for="member in members"
             :key="member.shareId"
@@ -333,12 +369,21 @@ const classLabelOf = (key: ClassKey) => t(`class.label.${key}`)
 
 const open = defineModel<boolean>('open', { required: true })
 
-const props = defineProps<{
-  members: BattlefieldMemberSource[]
-  templates: BattlefieldTemplateSource[]
-  /** 全部戰場單位：計算成員帶入狀態與未參戰 strip */
-  units: BattlefieldUnit[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    members: BattlefieldMemberSource[]
+    templates: BattlefieldTemplateSource[]
+    /** 全部戰場單位：計算成員帶入狀態與未參戰 strip */
+    units: BattlefieldUnit[]
+    /** 出席成員 hydrate 進行中 */
+    membersLoading?: boolean
+    /** 出席成員 hydrate 失敗（例如團務紀錄 GET 掛掉） */
+    membersError?: boolean
+    /** 這場團務紀錄的頁面路徑：名單為空時引導 DM 去加人 */
+    sessionLogTo: string
+  }>(),
+  { membersLoading: false, membersError: false },
+)
 
 const emit = defineEmits<{
   importMember: [shareId: string]
@@ -347,6 +392,7 @@ const emit = defineEmits<{
   enter: [unitId: string]
   removeUnit: [unitId: string]
   relinkMember: [memberId: string, shareId: string]
+  retryMembers: []
 }>()
 
 const activeTab = ref<SetupTab>('members')

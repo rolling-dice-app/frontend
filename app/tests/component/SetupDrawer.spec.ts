@@ -61,11 +61,25 @@ const unavailableMember = (
   playerName: string,
 ): BattlefieldMemberSource => ({ memberId, shareId, playerName, available: false })
 
-const mountDrawer = (members: BattlefieldMemberSource[]) =>
+const SESSION_LOG_TO = '/dm/session/container-1/log/session-1'
+
+const NuxtLinkStub = { name: 'NuxtLink', props: ['to'], template: '<a :href="to"><slot /></a>' }
+
+const mountDrawer = (
+  members: BattlefieldMemberSource[],
+  state: { membersLoading?: boolean; membersError?: boolean } = {},
+) =>
   mount(SetupDrawer, {
-    props: { open: true, members, templates: [], units: [] },
+    props: {
+      open: true,
+      members,
+      templates: [],
+      units: [],
+      sessionLogTo: SESSION_LOG_TO,
+      ...state,
+    },
     global: {
-      stubs: { Drawer: DrawerStub, Icon: IconStub, Button: ButtonStub },
+      stubs: { Drawer: DrawerStub, Icon: IconStub, Button: ButtonStub, NuxtLink: NuxtLinkStub },
       components: { CommonAppInput: AppInput, CommonAppButton: AppButton },
       mocks: { formatModifier, formatCharacterTitle, parseIntegerInput },
     },
@@ -121,5 +135,41 @@ describe('SetupDrawer — 重新連結（B8 重複 shareId）', () => {
 
     expect(mockToastError).not.toHaveBeenCalled()
     expect(wrapper.emitted('relinkMember')?.at(-1)).toEqual(['m-1', SHARE_B])
+  })
+})
+
+describe('SetupDrawer — 出席成員三態（F1）', () => {
+  it('名單為空且載入中：顯示載入狀態，不顯示空狀態', () => {
+    const wrapper = mountDrawer([], { membersLoading: true })
+
+    expect(wrapper.find('[role="status"]').text()).toBe(t('ui.state.loading'))
+    expect(wrapper.text()).not.toContain(t('battlefield.membersEmpty'))
+  })
+
+  it('載入失敗：顯示錯誤與重試鈕，點擊 emit retryMembers；不誤報為空名單', async () => {
+    const wrapper = mountDrawer([], { membersError: true })
+
+    expect(wrapper.find('[role="alert"]').text()).toContain(t('battlefield.membersLoadFailed'))
+    expect(wrapper.text()).not.toContain(t('battlefield.membersEmpty'))
+
+    await findButtonByText(wrapper, t('ui.state.retry'))[0]!.trigger('click')
+    expect(wrapper.emitted('retryMembers')).toHaveLength(1)
+  })
+
+  it('名單為空且非載入、無錯誤：顯示空狀態與前往團務紀錄的連結', () => {
+    const wrapper = mountDrawer([])
+
+    expect(wrapper.text()).toContain(t('battlefield.membersEmpty'))
+    expect(wrapper.find('a').attributes('href')).toBe(SESSION_LOG_TO)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
+  it('已有名單時重抓：照常顯示名單，不切成載入狀態', () => {
+    const wrapper = mountDrawer([unavailableMember('m-1', SHARE_A, 'Anna')], {
+      membersLoading: true,
+    })
+
+    expect(wrapper.text()).toContain('Anna')
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
   })
 })

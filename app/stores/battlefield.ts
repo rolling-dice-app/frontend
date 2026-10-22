@@ -355,8 +355,7 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     const bf = requireBattlefield(battlefieldId)
     const log = sessionLogCache.value.get(battlefieldId)
     if (!log) throw new Error(`session log not loaded: ${battlefieldId}`)
-    // 失效連結收斂為 null（helpers/dm-session 慣例）：帶失效 shareId 會被 backend 當新連結 422 拒絕
-    const members = mutate(toDmSessionMemberInputs(log.members, { collapseUnavailable: true }))
+    const members = mutate(toDmSessionMemberInputs(log.members))
     try {
       await dmSessionContainers().updateLog(bf.containerId, bf.sessionId, {
         updatedAt: log.updatedAt,
@@ -368,10 +367,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
       })
     }
   }
-
-  /** 自團務出席名單移除成員（快照失效的修復動作之一）；走 m7.2 log PATCH，非戰場 endpoint */
-  const removeSessionMember = (battlefieldId: string, memberId: string): Promise<void> =>
-    patchSessionMembers(battlefieldId, (members) => members.filter((m) => m.id !== memberId))
 
   /** 重新連結成員的角色卡 shareId；backend 驗證有效性（失效回 422） */
   const relinkSessionMember = (
@@ -878,7 +873,6 @@ export const useBattlefieldStore = defineStore('battlefield', () => {
     deleteBattlefield,
     getMemberSources,
     loadMemberSources,
-    removeSessionMember,
     relinkSessionMember,
     flushPersist,
     importMember,

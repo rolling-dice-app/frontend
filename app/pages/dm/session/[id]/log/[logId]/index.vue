@@ -168,8 +168,6 @@ const logId = getRouteParam(route.params.logId)
 const apiErrorToast = useApiErrorToast()
 const dmSessionStore = useDmSessionStore()
 
-useHead({ title: t('dmSession.log.detailTitle') })
-
 const { status, error, refresh } = useAsyncData(
   () => `dm-session-log-${logId}`,
   () => dmSessionStore.loadLog(id, logId),
@@ -180,6 +178,9 @@ const log = computed(() => {
   const cached = dmSessionStore.getLogById(logId)
   return cached && cached.containerId === id ? cached : undefined
 })
+
+// 分頁標題用團務名稱以區分不同紀錄；載入前退回通用標題
+useHead({ title: () => log.value?.title || t('dmSession.log.detailTitle') })
 
 // 真 404（紀錄不存在 / 不屬於該劇本 / 非擁有者）走 NotFound；其餘暫時性錯誤走可重試三態。
 const isNotFound = computed(

@@ -240,13 +240,15 @@
         :members="memberSources"
         :templates="battlefieldStore.templates"
         :units="battlefield.units"
+        :members-loading="battlefieldStore.membersLoading"
+        :members-error="battlefieldStore.membersError != null"
+        :session-log-to="`/dm/session/${battlefield.containerId}/log/${battlefield.sessionId}`"
+        @retry-members="onRetryMembers"
         @import-member="onImportMember"
         @add-template="onAddTemplate"
         @create-adhoc="onCreateAdhoc"
-        @enter="onEnterCombat"
-        @remove-unit="onRemoveUnit"
-        @remove-member="onRemoveMember"
         @relink-member="onRelinkMember"
+        @recheck-member="onRecheckMember"
       />
 
       <!-- 結束戰鬥彈窗：單純確認 -->
@@ -303,8 +305,6 @@ const toast = useToast()
 const apiErrorToast = useApiErrorToast()
 const route = useRoute()
 
-useHead({ title: t('battlefield.listTitle') })
-
 const battlefieldStore = useBattlefieldStore()
 const monsterTemplateStore = useMonsterTemplateStore()
 const battlefieldId = getRouteParam(route.params.id)
@@ -335,6 +335,14 @@ const sessionOption = computed(() =>
   battlefieldStore.sessionOptions.find((o) => o.sessionId === battlefield.value?.sessionId),
 )
 const memberSources = computed(() => battlefieldStore.getMemberSources(battlefieldId))
+
+// 戰場本身無名稱，分頁標題與頂部工具帶同來源（劇本／團務名）；載入前退回通用標題
+useHead({
+  title: () =>
+    [sessionOption.value?.containerTitle, sessionOption.value?.sessionTitle]
+      .filter(Boolean)
+      .join('・') || t('battlefield.listTitle'),
+})
 
 const combatants = computed<BattlefieldUnit[]>(() =>
   battlefield.value ? combatantsOf(battlefield.value.units) : [],
@@ -502,14 +510,10 @@ const onCreateAdhoc = (input: AdhocUnitInput, joinCombat: boolean): void => {
   )
 }
 
-// ── 成員名單修復（走 m7.2 團務 log PATCH；成功後 store 會重跑 hydrate） ──────
-const onRemoveMember = async (memberId: string): Promise<void> => {
-  try {
-    await battlefieldStore.removeSessionMember(battlefieldId, memberId)
-    toast.info(t('battlefield.toastMemberRemoved'))
-  } catch (err) {
-    apiErrorToast.handle(err)
-  }
+// ── 成員名單修復 ──────
+// hydrate 失敗後的重試入口；錯誤已記在 store 的 membersError，由抽屜呈現
+const onRetryMembers = (): void => {
+  void battlefieldStore.loadMemberSources(battlefieldId).catch(() => {})
 }
 
 const onRelinkMember = async (memberId: string, shareId: string): Promise<void> => {
@@ -519,6 +523,21 @@ const onRelinkMember = async (memberId: string, shareId: string): Promise<void> 
   } catch (err) {
     apiErrorToast.handle(err)
   }
+}
+
+// 貼回同一張角色卡：shareId 不變，只重抓確認擁有者是否已恢復分享
+const onRecheckMember = async (memberId: string): Promise<void> => {
+  try {
+    await battlefieldStore.loadMemberSources(battlefieldId)
+  } catch {
+    // 錯誤已記在 store 的 membersError，由抽屜呈現
+    return
+  }
+  const member = battlefieldStore
+    .getMemberSources(battlefieldId)
+    .find((m) => m.memberId === memberId)
+  if (member?.available) toast.info(t('battlefield.toastMemberRelinked'))
+  else toast.error(t('battlefield.relinkStillUnavailable'))
 }
 
 const onRemoveUnit = (unitId: string): void => {

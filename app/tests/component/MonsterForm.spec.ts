@@ -21,11 +21,12 @@ const ModelPanelStub = {
 
 const PassThroughStub = { template: '<div />' }
 
-const mountForm = () =>
+const mountForm = (submitting = false) =>
   mount(MonsterForm, {
     props: {
       monster: createMockMonsterFormState(createMockMonsterTemplate(), { name: '哥布林' }),
       mode: 'edit' as const,
+      submitting,
     },
     global: {
       stubs: {
@@ -78,5 +79,14 @@ describe('monster Form — v-model:form-state 資料流', () => {
     const payload = wrapper.emitted('save')?.at(-1)?.[0] as MonsterTemplateFormState
     await wrapper.find('[data-replace]').trigger('click')
     expect(payload.name).toBe('哥布林')
+  })
+})
+
+describe('monster Form — 儲存中', () => {
+  it('submitting 時儲存鈕鎖定，且不再 emit save', async () => {
+    const wrapper = mountForm(true)
+    expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
+    await saveButton(wrapper).trigger('click')
+    expect(wrapper.emitted('save')).toBeUndefined()
   })
 })

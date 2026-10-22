@@ -48,12 +48,12 @@ export default {
     characterLink: '角色卡連結',
     add: '新增成員',
     unavailable: '角色不存在或連結失效',
-    invalidLink: '無法辨識的分享連結',
+    invalidLink: '無法辨識的分享連結或 ID',
     duplicate: '此角色卡已在名單中',
     resolving: '解析角色卡中…',
     resolveFailed: '找不到對應的角色卡',
     resolveError: '解析失敗',
-    linkPlaceholder: '貼上角色卡分享連結',
+    linkPlaceholder: '貼上角色卡分享連結或 ID',
   },
 
   // 時間軸
@@ -102,7 +102,7 @@ export default {
     attendance: {
       adhocLabel: '臨時出席',
       adhocAdd: '加入',
-      adhocPlaceholder: '玩家名稱或角色卡分享連結',
+      adhocPlaceholder: '玩家名稱、角色卡分享連結或 ID',
       rosterEmptyHint: '此劇本尚未建立常駐名單，可直接新增臨時出席',
       remove: '移除出席',
     },

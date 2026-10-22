@@ -25,8 +25,15 @@ describe('parseShareIdFromLink', () => {
     expect(parseShareIdFromLink(`http://localhost:3000/share/${VALID}`)).toBe(VALID)
   })
 
-  it('純 shareId（沒有路徑前綴）不接受', () => {
-    expect(parseShareIdFromLink(VALID)).toBeNull()
+  it('純 shareId（沒有路徑前綴）直接接受，前後空白會被 trim', () => {
+    expect(parseShareIdFromLink(VALID)).toBe(VALID)
+    expect(parseShareIdFromLink(`  ${VALID}  `)).toBe(VALID)
+  })
+
+  it('純 shareId 長度不符或夾帶其他字元回 null', () => {
+    expect(parseShareIdFromLink('chs_tooShort')).toBeNull()
+    expect(parseShareIdFromLink(`${VALID}x`)).toBeNull()
+    expect(parseShareIdFromLink(`id: ${VALID}`)).toBeNull()
   })
 
   it('完全無關字串回 null', () => {

@@ -247,8 +247,6 @@
         @import-member="onImportMember"
         @add-template="onAddTemplate"
         @create-adhoc="onCreateAdhoc"
-        @enter="onEnterCombat"
-        @remove-unit="onRemoveUnit"
         @relink-member="onRelinkMember"
       />
 

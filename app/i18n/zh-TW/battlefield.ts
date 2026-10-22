@@ -112,7 +112,7 @@ export default {
 
   // 增援 drawer
   setupTitle: '增援／建立單位',
-  importMember: '帶入並參戰（滿 HP）',
+  importMember: '參戰',
   alreadyJoined: '已參戰',
   alreadyImported: '已帶入',
   memberRole: '出席成員',
@@ -132,7 +132,6 @@ export default {
   adhocInitBonus: '先攻加值',
   createUnit: '建立單位',
   createAndJoin: '直接參戰',
-  benchTitle: '未參戰單位（{count}）',
 
   // 結束戰鬥彈窗
   endBattleTitle: '結束第 {seq} 場戰鬥',

@@ -295,48 +295,6 @@
             </CommonAppButton>
           </div>
         </template>
-
-        <!-- 未參戰單位 strip（跨 tab 常駐） -->
-        <div v-if="benchUnits.length > 0" class="border-t border-panel-border pt-2.5">
-          <h3 class="mb-1.5 text-xs text-content-faint">
-            {{ t('battlefield.benchTitle', { count: benchUnits.length }) }}
-          </h3>
-          <div
-            v-for="unit in benchUnits"
-            :key="unit.id"
-            class="flex items-center gap-2.5 px-1 py-1.5"
-          >
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="truncate text-[13px] font-semibold">{{ unit.name }}</span>
-              <span class="text-xs text-content-muted tabular-nums">
-                {{
-                  t('battlefield.statHpAc', {
-                    current: unit.hp.current,
-                    max: effectiveMaxHp(unit),
-                    ac: effectiveAc(unit),
-                  })
-                }}
-              </span>
-            </span>
-            <CommonAppButton
-              type="button"
-              variant="primary"
-              size="sm"
-              @click="emit('enter', unit.id)"
-            >
-              {{ t('battlefield.join') }}
-            </CommonAppButton>
-            <CommonAppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="text-danger-hover"
-              @click="emit('removeUnit', unit.id)"
-            >
-              {{ t('battlefield.removeUnit') }}
-            </CommonAppButton>
-          </div>
-        </div>
       </div>
     </div>
   </Drawer>
@@ -373,7 +331,7 @@ const props = withDefaults(
   defineProps<{
     members: BattlefieldMemberSource[]
     templates: BattlefieldTemplateSource[]
-    /** 全部戰場單位：計算成員帶入狀態與未參戰 strip */
+    /** 全部戰場單位：計算成員帶入狀態 */
     units: BattlefieldUnit[]
     /** 出席成員 hydrate 進行中 */
     membersLoading?: boolean
@@ -389,8 +347,6 @@ const emit = defineEmits<{
   importMember: [shareId: string]
   addTemplate: [templateId: string]
   createAdhoc: [input: AdhocUnitInput, joinCombat: boolean]
-  enter: [unitId: string]
-  removeUnit: [unitId: string]
   relinkMember: [memberId: string, shareId: string]
   retryMembers: []
 }>()
@@ -421,8 +377,6 @@ const moveTabFocus = (dir: 1 | -1): void => {
 
 const memberUnitOf = (shareId: string): BattlefieldUnit | undefined =>
   props.units.find((u) => u.kind === 'character' && u.shareId === shareId)
-
-const benchUnits = computed(() => props.units.filter((u) => !u.inCombat))
 
 // ── 重新連結（貼分享連結 → 解析 shareId 後交頁面送 log PATCH） ───────────────
 const relinkTargetId = ref<string | null>(null)

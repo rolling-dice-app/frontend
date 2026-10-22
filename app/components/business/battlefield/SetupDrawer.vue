@@ -348,6 +348,7 @@ const emit = defineEmits<{
   addTemplate: [templateId: string]
   createAdhoc: [input: AdhocUnitInput, joinCombat: boolean]
   relinkMember: [memberId: string, shareId: string]
+  recheckMember: [memberId: string]
   retryMembers: []
 }>()
 
@@ -394,8 +395,9 @@ const onConfirmRelink = (memberId: string): void => {
     return
   }
   const target = props.members.find((m) => m.memberId === memberId)
-  // 連回原本那張：純 no-op，直接收起輸入不打 PATCH
+  // 連回原本那張：log 上的 shareId 不變，不打 PATCH；改交頁面重抓，確認擁有者是否已恢復分享
   if (target?.shareId === shareId) {
+    emit('recheckMember', memberId)
     relinkTargetId.value = null
     relinkLink.value = ''
     return

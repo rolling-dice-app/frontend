@@ -119,13 +119,14 @@ describe('SetupDrawer — 重新連結（B8 重複 shareId）', () => {
     expect(wrapper.emitted('relinkMember')).toBeUndefined()
   })
 
-  it('連回自己原本那張：視為 no-op，不提示也不 emit', async () => {
+  it('連回自己原本那張：不 emit relinkMember，改 emit recheckMember 交頁面重抓', async () => {
     const wrapper = mountDrawer([unavailableMember('m-1', SHARE_A, 'Anna')])
 
     await relink(wrapper, 0, linkOf(SHARE_A))
 
     expect(mockToastError).not.toHaveBeenCalled()
     expect(wrapper.emitted('relinkMember')).toBeUndefined()
+    expect(wrapper.emitted('recheckMember')?.at(-1)).toEqual(['m-1'])
   })
 
   it('連結到未被使用的角色卡：正常 emit', async () => {

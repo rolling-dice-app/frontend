@@ -248,6 +248,7 @@
         @add-template="onAddTemplate"
         @create-adhoc="onCreateAdhoc"
         @relink-member="onRelinkMember"
+        @recheck-member="onRecheckMember"
       />
 
       <!-- 結束戰鬥彈窗：單純確認 -->
@@ -522,6 +523,21 @@ const onRelinkMember = async (memberId: string, shareId: string): Promise<void> 
   } catch (err) {
     apiErrorToast.handle(err)
   }
+}
+
+// 貼回同一張角色卡：shareId 不變，只重抓確認擁有者是否已恢復分享
+const onRecheckMember = async (memberId: string): Promise<void> => {
+  try {
+    await battlefieldStore.loadMemberSources(battlefieldId)
+  } catch {
+    // 錯誤已記在 store 的 membersError，由抽屜呈現
+    return
+  }
+  const member = battlefieldStore
+    .getMemberSources(battlefieldId)
+    .find((m) => m.memberId === memberId)
+  if (member?.available) toast.info(t('battlefield.toastMemberRelinked'))
+  else toast.error(t('battlefield.relinkStillUnavailable'))
 }
 
 const onRemoveUnit = (unitId: string): void => {
